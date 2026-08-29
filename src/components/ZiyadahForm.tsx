@@ -37,13 +37,13 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!idSantri || !surahName) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      storageService.saveZiyadah({
+    try {
+      await storageService.saveZiyadah({
         idSantri,
         surah: surahName,
         surahNumber: selectedSurah.number,
@@ -59,8 +59,12 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
       setTimeout(() => {
         setShowSuccessToast(false);
         onSuccess();
-      }, 1200);
-    }, 400);
+      }, 900);
+    } catch (err) {
+      console.error('Error saving ziyadah:', err);
+      setIsSubmitting(false);
+      alert('Terjadi kendala saat menyimpan data Ziyadah ke Cloud. Silakan coba kembali.');
+    }
   };
 
   return (

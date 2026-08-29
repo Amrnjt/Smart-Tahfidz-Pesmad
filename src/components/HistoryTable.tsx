@@ -88,9 +88,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     return matchesSearch && matchesType && matchesNilai;
   });
 
-  const handleDelete = (item: CombinedItem) => {
+  const handleDelete = async (item: CombinedItem) => {
     if (confirm(`Apakah Anda yakin ingin menghapus rekaman setoran ${item.type} untuk ${item.namaSantri}?`)) {
-      storageService.deleteRecord(item.type, item.id);
+      await storageService.deleteRecord(item.type, item.id);
       onDataChanged();
     }
   };

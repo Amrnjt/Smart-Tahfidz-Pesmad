@@ -2,6 +2,7 @@ import React from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, ActiveTab } from '../types';
 import { Users, CalendarCheck, BookOpen, RotateCw, PlusCircle, ArrowRight, Award, Sparkles } from 'lucide-react';
 import { HafalanStatsChart } from './HafalanStatsChart';
+import { PesmadLogo } from './PesmadLogo';
 
 interface UstadzDashboardProps {
   currentUser: User;
@@ -34,24 +35,29 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   return (
     <div className="space-y-6">
       {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 rounded-3xl p-6 text-white shadow-md relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-700/80 border border-emerald-500/50 text-emerald-200">
-                Pesantren Madrasah Darul Fikri
-              </span>
-              <span className="text-xs text-emerald-200 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                Portal Pembimbing Tahfidz
-              </span>
+      <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 rounded-3xl p-6 sm:p-7 text-white shadow-md relative overflow-hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-1.5 flex items-center justify-center border-2 border-emerald-400/80 shadow-lg flex-shrink-0">
+              <PesmadLogo size="lg" className="w-full h-full" />
             </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold mt-2 tracking-tight">
-              Ahlan wa Sahlan, {currentUser.nama}
-            </h2>
-            <p className="text-xs sm:text-sm text-emerald-200/90 mt-1 max-w-xl">
-              Tahfidz al-Qur'an • Jl. Budi Utomo No. 190 Kepohbaru Bojonegoro. Pantau hafalan santri, input setoran Ziyadah & Muroja'ah.
-            </p>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-700/80 border border-emerald-500/50 text-emerald-200">
+                  Pesantren Madrasah Darul Fikri
+                </span>
+                <span className="text-xs text-emerald-200 flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  Portal Pembimbing Tahfidz
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-extrabold mt-1.5 tracking-tight">
+                Ahlan wa Sahlan, {currentUser.nama}
+              </h2>
+              <p className="text-xs sm:text-sm text-emerald-200/90 mt-1 max-w-xl">
+                Tahfidz al-Qur'an • MTsN 3 Bojonegoro • Jl. Budi Utomo No. 190 Kepohbaru. Pantau hafalan santri, input setoran Ziyadah & Muroja'ah.
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-center">

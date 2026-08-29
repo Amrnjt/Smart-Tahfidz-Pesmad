@@ -32,7 +32,54 @@ function cleanForFirestore<T>(data: T): T {
 }
 
 export const storageService = {
-  // Synchronous fallback getters from LocalStorage for instant UI response
+  async authenticate(usernameInput: string, passwordInput: string): Promise<{ success: boolean; user?: User; message?: string }> {
+    const cleanUser = usernameInput.trim().toLowerCase();
+    const cleanPass = passwordInput.trim();
+
+    if (!cleanUser || !cleanPass) {
+      return { success: false, message: 'Harap masukkan Username / ID Santri dan Password.' };
+    }
+
+    // 1. Try local cache first for instant response
+    const localUsers = this.getUsers();
+    let matched = localUsers.find(
+      u => u.username && u.username.trim().toLowerCase() === cleanUser && u.password === cleanPass
+    );
+
+    // 2. If not matched in local cache, query Firestore directly to ensure newly created accounts on other devices or fresh sessions are immediately authenticated
+    if (!matched) {
+      try {
+        const querySnap = await getDocs(collection(db, COLLECTIONS.USERS));
+        const remoteUsers: User[] = [];
+        querySnap.forEach((docSnap) => {
+          const u = docSnap.data() as User;
+          if (u && u.username) {
+            remoteUsers.push(u);
+            if (u.username.trim().toLowerCase() === cleanUser && u.password === cleanPass) {
+              matched = u;
+            }
+          }
+        });
+
+        // Update local cache if remote has latest accounts
+        if (remoteUsers.length > 0) {
+          localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(remoteUsers));
+        }
+      } catch (err) {
+        console.warn('Direct Firestore authentication fallback error:', err);
+      }
+    }
+
+    if (matched) {
+      this.setSession(matched);
+      return { success: true, user: matched };
+    }
+
+    return {
+      success: false,
+      message: 'Username / ID Santri atau Password salah. Silakan periksa kembali huruf besar/kecil atau PIN Anda.'
+    };
+  },
   getUsers(): User[] {
     const data = localStorage.getItem(STORAGE_KEYS.USERS);
     if (!data) {
@@ -528,8 +575,12 @@ export const storageService = {
     
     // Ensure unique ID if not provided or to prevent collisions
     const ensuredUser: User = {
-      ...user,
-      id: user.id || `USR-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
+      id: user.id || `USR-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
+      username: user.username ? user.username.trim().toLowerCase() : '',
+      password: user.password ? user.password.trim() : '123',
+      role: user.role || 'Ustadz',
+      nama: user.nama ? user.nama.trim() : 'Ustadz Pengajar',
+      idSantri: user.role === 'Ustadz' ? '' : (user.idSantri || '')
     };
 
     const existingIndex = users.findIndex(u => u.username.toLowerCase() === ensuredUser.username.toLowerCase());
@@ -541,7 +592,7 @@ export const storageService = {
 
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
 
-    // Cloud Firestore save
+    // Cloud Firestore save directly
     try {
       await setDoc(doc(db, COLLECTIONS.USERS, ensuredUser.id), cleanForFirestore(ensuredUser));
     } catch (e) {
@@ -552,9 +603,14 @@ export const storageService = {
   },
 
   async updateUser(id: string, updatedData: Partial<User>): Promise<boolean> {
+    const cleanUpdate = { ...updatedData };
+    if (cleanUpdate.username) cleanUpdate.username = cleanUpdate.username.trim().toLowerCase();
+    if (cleanUpdate.password) cleanUpdate.password = cleanUpdate.password.trim();
+    if (cleanUpdate.nama) cleanUpdate.nama = cleanUpdate.nama.trim();
+
     const users = this.getUsers().map(u => {
       if (u.id === id) {
-        return { ...u, ...updatedData };
+        return { ...u, ...cleanUpdate };
       }
       return u;
     });
@@ -563,7 +619,7 @@ export const storageService = {
     // Update active session if the edited user is currently logged in
     const currentSession = this.getSession();
     if (currentSession && currentSession.id === id) {
-      this.setSession({ ...currentSession, ...updatedData });
+      this.setSession({ ...currentSession, ...cleanUpdate });
     }
 
     // Cloud Firestore update

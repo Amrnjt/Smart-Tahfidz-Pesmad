@@ -23,13 +23,13 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!idSantri || !surahAtauJuz) return;
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      storageService.saveMurojaah({
+    try {
+      await storageService.saveMurojaah({
         idSantri,
         surahAtauJuz: surahAtauJuz.trim(),
         nilai,
@@ -42,8 +42,12 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
       setTimeout(() => {
         setShowSuccessToast(false);
         onSuccess();
-      }, 1200);
-    }, 400);
+      }, 900);
+    } catch (err) {
+      console.error('Error saving murojaah:', err);
+      setIsSubmitting(false);
+      alert('Terjadi kendala saat menyimpan data Murojaah ke Cloud. Silakan coba kembali.');
+    }
   };
 
   const quickPills = [

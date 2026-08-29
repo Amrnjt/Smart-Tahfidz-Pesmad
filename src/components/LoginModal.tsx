@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { User, UserRole } from '../types';
+import { User } from '../types';
 import { storageService } from '../services/storageService';
-import { BookOpen, UserCheck, Lock, AlertCircle, ArrowRight, Shield, Users, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { UserCheck, Lock, AlertCircle, ArrowRight, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { PesmadLogo } from './PesmadLogo';
 
 interface LoginViewProps {
   onLoginSuccess: (user: User) => void;
@@ -13,131 +14,57 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedRoleHint, setSelectedRoleHint] = useState<UserRole | 'ALL'>('ALL');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg('');
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const result = await storageService.authenticate(username, password);
       setIsLoading(false);
-      const users = storageService.getUsers();
-      const trimmedUser = username.trim().toLowerCase();
-      const trimmedPass = password.trim();
 
-      const matched = users.find(
-        u => u.username.toLowerCase() === trimmedUser && u.password === trimmedPass
-      );
-
-      if (matched) {
-        storageService.setSession(matched);
-        onLoginSuccess(matched);
+      if (result.success && result.user) {
+        onLoginSuccess(result.user);
       } else {
-        setErrorMsg('Username / ID Santri atau Password salah. Silakan periksa kembali kredensial Anda.');
+        setErrorMsg(result.message || 'Username atau Password salah. Silakan periksa kembali.');
       }
-    }, 400);
+    } catch (err) {
+      setIsLoading(false);
+      setErrorMsg('Terjadi kesalahan saat memproses login. Silakan coba lagi.');
+    }
   };
 
   return (
-    <div className="max-w-xl mx-auto my-4 sm:my-8 px-3 sm:px-4">
+    <div className="max-w-md mx-auto my-6 sm:my-12 px-3 sm:px-4">
       <div className="bg-white rounded-3xl shadow-xl border border-slate-200/90 overflow-hidden">
         {/* Header Banner */}
         <div className="bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-950 p-6 sm:p-8 text-center text-white relative">
-          <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl mx-auto flex items-center justify-center border border-white/20 shadow-inner mb-3.5">
-            <BookOpen className="w-8 h-8 text-emerald-300" />
+          <div className="w-20 h-20 bg-white rounded-3xl mx-auto flex items-center justify-center p-2 border-2 border-emerald-400/80 shadow-xl mb-3.5 transform transition-transform hover:scale-105">
+            <PesmadLogo size="lg" className="w-full h-full" />
           </div>
           <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">Tahfidz al-Qur'an</h2>
           <p className="text-sm font-semibold text-emerald-100 mt-0.5">
             Pesantren Madrasah Darul Fikri
           </p>
-          <p className="text-[11px] sm:text-xs text-emerald-200/90 mt-1 max-w-sm mx-auto">
-            Jl. Budi Utomo No. 190 Kepohbaru Bojonegoro • Sistem Mutaba'ah & Database Terintegrasi
+          <span className="inline-block mt-1 px-3 py-0.5 rounded-full bg-emerald-950/80 text-emerald-200 border border-emerald-700/60 text-[11px] font-bold">
+            MTsN 3 Bojonegoro
+          </span>
+          <p className="text-[11px] sm:text-xs text-emerald-200/90 mt-1 max-w-xs mx-auto">
+            Jl. Budi Utomo No. 190 Kepohbaru Bojonegoro • Portal Sistem Mutaba'ah
           </p>
         </div>
 
         {/* Body Content */}
-        <div className="p-6 sm:p-8 space-y-6">
-          {/* Role Access Explanatory Cards */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                Struktur Hak Akses Akun:
-              </span>
-              <span className="text-[11px] text-emerald-800 font-semibold">Siap Digunakan</span>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-              {/* Ustadz Card */}
-              <div
-                onClick={() => {
-                  setSelectedRoleHint('Ustadz');
-                  setUsername('admin');
-                  setPassword('123');
-                }}
-                className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
-                  selectedRoleHint === 'Ustadz'
-                    ? 'bg-emerald-50/90 border-emerald-500 shadow-xs'
-                    : 'bg-slate-50 border-slate-200 hover:border-emerald-300'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 font-extrabold text-xs text-emerald-950">
-                  <Shield className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Ustadz (Admin)</span>
-                </div>
-                <p className="text-[10px] text-slate-500 mt-1 leading-snug">
-                  Login Admin default: <code className="font-mono font-bold text-emerald-800">admin</code> (PIN: 123)
-                </p>
-              </div>
-
-              {/* Wali Card */}
-              <div
-                onClick={() => {
-                  setSelectedRoleHint('Wali');
-                  setUsername('wali_str001');
-                  setPassword('123');
-                }}
-                className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
-                  selectedRoleHint === 'Wali'
-                    ? 'bg-teal-50/90 border-teal-500 shadow-xs'
-                    : 'bg-slate-50 border-slate-200 hover:border-teal-300'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 font-extrabold text-xs text-teal-950">
-                  <Users className="w-3.5 h-3.5 text-teal-700" />
-                  <span>Wali Santri</span>
-                </div>
-                <p className="text-[10px] text-slate-500 mt-1 leading-snug">
-                  Akses di rumah: format <code className="font-mono font-bold text-teal-800">wali_[idsantri]</code> (PIN: 123)
-                </p>
-              </div>
-
-              {/* Santri Card */}
-              <div
-                onClick={() => {
-                  setSelectedRoleHint('Santri');
-                  setUsername('STR001');
-                  setPassword('123');
-                }}
-                className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
-                  selectedRoleHint === 'Santri'
-                    ? 'bg-cyan-50/90 border-cyan-500 shadow-xs'
-                    : 'bg-slate-50 border-slate-200 hover:border-cyan-300'
-                }`}
-              >
-                <div className="flex items-center gap-1.5 font-extrabold text-xs text-cyan-950">
-                  <BookOpen className="w-3.5 h-3.5 text-cyan-700" />
-                  <span>Santri (View-Only)</span>
-                </div>
-                <p className="text-[10px] text-slate-500 mt-1 leading-snug">
-                  Akses mandiri: gunakan <code className="font-mono font-bold text-cyan-800">[ID_Santri]</code> (PIN: 123)
-                </p>
-              </div>
-            </div>
+        <div className="p-6 sm:p-7 space-y-5">
+          {/* Security Notice */}
+          <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center gap-2.5 text-xs text-slate-600">
+            <ShieldCheck className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+            <span>Silakan masuk menggunakan kredensial akun yang telah didaftarkan.</span>
           </div>
 
           {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 Username / ID Santri / NIS
@@ -152,7 +79,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Masukkan username atau ID santri (cth: ustadz1, wali_str001, STR001)"
+                  placeholder="Masukkan Username / ID Santri"
                   className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                 />
               </div>
@@ -172,7 +99,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Masukkan password akun Anda"
+                  placeholder="Masukkan Password / PIN"
                   className="w-full pl-10 pr-11 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"
                 />
                 <button
@@ -186,9 +113,11 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
             </div>
 
             {errorMsg && (
-              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-                <span>{errorMsg}</span>
+              <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+                <div className="leading-snug">
+                  <p className="font-semibold">{errorMsg}</p>
+                </div>
               </div>
             )}
 

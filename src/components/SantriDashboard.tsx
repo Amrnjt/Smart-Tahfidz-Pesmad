@@ -1,6 +1,8 @@
 import React from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, ActiveTab } from '../types';
+import { ZiyadahProgressChart } from './ZiyadahProgressChart';
 import { BookOpen, RotateCw, Award, Target, Sparkles, CheckCircle2, ChevronRight, BookMarked, Heart, Volume2 } from 'lucide-react';
+import { PesmadLogo } from './PesmadLogo';
 
 interface SantriDashboardProps {
   currentUser: User;
@@ -37,23 +39,28 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
     <div className="space-y-6">
       {/* Banner Profil Santri */}
       <div className="bg-gradient-to-r from-emerald-900 via-teal-900 to-cyan-950 rounded-3xl p-6 sm:p-7 text-white shadow-md relative overflow-hidden">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-800/80 border border-cyan-500/50 text-cyan-200">
-                Akses Santri • View-Only
-              </span>
-              <span className="text-xs text-emerald-200 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                Pesantren Madrasah Darul Fikri
-              </span>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
+          <div className="flex items-start gap-4">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-1.5 flex items-center justify-center border-2 border-emerald-400/80 shadow-lg flex-shrink-0">
+              <PesmadLogo size="lg" className="w-full h-full" />
             </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold mt-2 tracking-tight">
-              Ahlan wa Sahlan, {currentSantri.namaSantri}!
-            </h2>
-            <p className="text-xs sm:text-sm text-emerald-200/90 mt-1">
-              Kelas: <span className="font-semibold text-white">{currentSantri.kelas}</span> • NIS/ID: <span className="font-mono text-amber-300 font-semibold">{currentSantri.idSantri}</span>
-            </p>
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-800/80 border border-cyan-500/50 text-cyan-200">
+                  Akses Santri • MTsN 3 Bojonegoro
+                </span>
+                <span className="text-xs text-emerald-200 flex items-center gap-1">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  Pesantren Madrasah Darul Fikri
+                </span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-extrabold mt-1.5 tracking-tight">
+                Ahlan wa Sahlan, {currentSantri.namaSantri}!
+              </h2>
+              <p className="text-xs sm:text-sm text-emerald-200/90 mt-1">
+                Kelas: <span className="font-semibold text-white">{currentSantri.kelas}</span> • NIS/ID: <span className="font-mono text-amber-300 font-semibold">{currentSantri.idSantri}</span>
+              </p>
+            </div>
           </div>
 
           <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/20 text-center self-start sm:self-auto">
@@ -128,6 +135,13 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Visualisasi Grafik Progres Ziyadah Menggunakan Recharts */}
+      <ZiyadahProgressChart
+        ziyadahRecords={santriZiyadah}
+        santriName={currentSantri.namaSantri}
+        isSantriView={true}
+      />
 
       {/* Detail Setoran Terakhir & Evaluasi Ustadz */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
