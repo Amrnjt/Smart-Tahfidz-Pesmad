@@ -1,6 +1,7 @@
 import React from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, ActiveTab } from '../types';
 import { Users, CalendarCheck, BookOpen, RotateCw, PlusCircle, ArrowRight, Award, Sparkles } from 'lucide-react';
+import { HafalanStatsChart } from './HafalanStatsChart';
 
 interface UstadzDashboardProps {
   currentUser: User;
@@ -164,6 +165,13 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Grafik Statistik Perkembangan Hafalan Recharts */}
+      <HafalanStatsChart
+        santriList={santriList}
+        ziyadahRecords={ziyadahRecords}
+        murojaahRecords={murojaahRecords}
+      />
 
       {/* Santri Quick Overview */}
       <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-4">

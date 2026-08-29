@@ -67,12 +67,23 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     e.preventDefault();
     if (!userToEdit || !editNama.trim() || !editUsername.trim() || !editPassword.trim()) return;
 
+    const cleanUsername = editUsername.trim().toLowerCase();
+    const cleanNama = editNama.trim();
+    const cleanPassword = editPassword.trim();
+
+    // Check if new username conflicts with another existing user
+    const usernameConflict = usersList.find(u => u.id !== userToEdit.id && u.username.toLowerCase() === cleanUsername);
+    if (usernameConflict) {
+      showToast('error', `Username "${cleanUsername}" sudah digunakan oleh akun ${usernameConflict.nama}.`);
+      return;
+    }
+
     setIsSaving(true);
     setTimeout(() => {
       storageService.updateUser(userToEdit.id, {
-        nama: editNama.trim(),
-        username: editUsername.trim(),
-        password: editPassword.trim(),
+        nama: cleanNama,
+        username: cleanUsername,
+        password: cleanPassword,
         role: editRole,
         idSantri: editRole === 'Ustadz' ? '' : editIdSantri.trim()
       });
@@ -80,7 +91,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       setIsSaving(false);
       setUserToEdit(null);
       onDataChanged();
-      showToast('success', `Pengaturan akun ${editNama.trim()} dan role ${editRole} berhasil disimpan!`);
+      showToast('success', `Pengaturan akun ${cleanNama} dan role ${editRole} berhasil disimpan ke Cloud!`);
     }, 300);
   };
 
@@ -116,16 +127,27 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
 
   const handleAddUser = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUsername.trim() || !newUserNama.trim() || !newUserPassword.trim()) return;
+    const cleanUsername = newUsername.trim().toLowerCase();
+    const cleanNama = newUserNama.trim();
+    const cleanPassword = newUserPassword.trim();
+
+    if (!cleanUsername || !cleanNama || !cleanPassword) return;
+
+    // Check if username already exists
+    const existingUser = usersList.find(u => u.username.toLowerCase() === cleanUsername);
+    if (existingUser) {
+      showToast('error', `Username "${cleanUsername}" sudah digunakan oleh ${existingUser.nama}. Silakan gunakan username lain.`);
+      return;
+    }
 
     setIsSaving(true);
     setTimeout(() => {
       const newUser: User = {
-        id: `USR-${Date.now().toString().slice(-4)}`,
-        username: newUsername.trim(),
-        password: newUserPassword.trim(),
+        id: `USR-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+        username: cleanUsername,
+        password: cleanPassword,
         role: newUserRole,
-        nama: newUserNama.trim(),
+        nama: cleanNama,
         idSantri: newUserRole === 'Ustadz' ? '' : newUserIdSantri.trim()
       };
 
@@ -137,7 +159,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       setNewUserPassword('123');
       setNewUserIdSantri('');
       onDataChanged();
-      showToast('success', `Akun ${newUserNama.trim()} (Role: ${newUserRole}) berhasil dibuat & disimpan.`);
+      showToast('success', `Akun ${cleanNama} (Role: ${newUserRole}) berhasil dibuat & disimpan ke Cloud Firestore.`);
     }, 300);
   };
 

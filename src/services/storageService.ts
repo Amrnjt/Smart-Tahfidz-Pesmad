@@ -87,42 +87,88 @@ export const storageService = {
 
   // Real-time Firestore Listeners that automatically update localStorage & app state across all devices
   initRealtimeSync(onUpdate?: () => void): () => void {
-    let initializedUsers = false;
-
-    // Check if initial admin user needs to be seeded into Firestore
-    getDocs(collection(db, COLLECTIONS.USERS)).then((snapshot) => {
-      if (snapshot.empty) {
-        // Seed INITIAL_USERS (admin & ustadz1) to Firestore
-        INITIAL_USERS.forEach((u) => {
-          setDoc(doc(db, COLLECTIONS.USERS, u.id), u).catch(console.error);
+    // 1. Initial One-time Migration & Seeding: Ensure all INITIAL_USERS and local users exist in Firestore
+    const seedAndMigrate = async () => {
+      try {
+        const userSnapshot = await getDocs(collection(db, COLLECTIONS.USERS));
+        const remoteUserMap = new Map<string, User>();
+        userSnapshot.forEach((docSnap) => {
+          const u = docSnap.data() as User;
+          remoteUserMap.set(u.id, u);
+          if (u.username) {
+            remoteUserMap.set(u.username.toLowerCase(), u);
+          }
         });
-      }
-    }).catch(console.error);
 
-    // 1. Sync Users
+        const localUsers = this.getUsers();
+        const usersToSync = [...INITIAL_USERS, ...localUsers];
+        const batch = writeBatch(db);
+        let count = 0;
+
+        for (const user of usersToSync) {
+          if (!remoteUserMap.has(user.id) && !remoteUserMap.has(user.username.toLowerCase())) {
+            batch.set(doc(db, COLLECTIONS.USERS, user.id), user);
+            remoteUserMap.set(user.id, user);
+            remoteUserMap.set(user.username.toLowerCase(), user);
+            count++;
+          }
+        }
+
+        if (count > 0) {
+          await batch.commit();
+        }
+      } catch (err) {
+        console.warn('Initial seeding/sync warning:', err);
+      }
+    };
+
+    seedAndMigrate();
+
+    // 1. Sync Users Realtime
     const unsubUsers = onSnapshot(collection(db, COLLECTIONS.USERS), (snapshot) => {
       if (!snapshot.empty) {
         const users: User[] = [];
+        const userMap = new Map<string, User>();
         snapshot.forEach((docSnap) => {
-          users.push(docSnap.data() as User);
+          const u = docSnap.data() as User;
+          if (u && u.id && !userMap.has(u.id)) {
+            userMap.set(u.id, u);
+            users.push(u);
+          }
         });
+
+        // Ensure default admin account is ALWAYS present
+        const hasAdmin = users.some(u => u.username.toLowerCase() === 'admin');
+        if (!hasAdmin) {
+          const adminUser = INITIAL_USERS[0];
+          users.unshift(adminUser);
+          setDoc(doc(db, COLLECTIONS.USERS, adminUser.id), adminUser).catch(console.error);
+        }
+
         localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
         if (onUpdate) onUpdate();
-      } else if (!initializedUsers) {
-        initializedUsers = true;
+      } else {
+        // If collection is completely empty, re-seed INITIAL_USERS
         INITIAL_USERS.forEach((u) => {
           setDoc(doc(db, COLLECTIONS.USERS, u.id), u).catch(console.error);
         });
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
+        if (onUpdate) onUpdate();
       }
     }, (err) => {
       console.warn('Users firestore sync error:', err);
     });
 
-    // 2. Sync Santri
+    // 2. Sync Santri Realtime
     const unsubSantri = onSnapshot(collection(db, COLLECTIONS.SANTRI), (snapshot) => {
       const santri: Santri[] = [];
+      const santriMap = new Map<string, Santri>();
       snapshot.forEach((docSnap) => {
-        santri.push(docSnap.data() as Santri);
+        const s = docSnap.data() as Santri;
+        if (s && s.idSantri && !santriMap.has(s.idSantri)) {
+          santriMap.set(s.idSantri, s);
+          santri.push(s);
+        }
       });
       localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(santri));
       if (onUpdate) onUpdate();
@@ -130,11 +176,16 @@ export const storageService = {
       console.warn('Santri firestore sync error:', err);
     });
 
-    // 3. Sync Ziyadah
+    // 3. Sync Ziyadah Realtime
     const unsubZiyadah = onSnapshot(collection(db, COLLECTIONS.ZIYADAH), (snapshot) => {
       const records: ZiyadahRecord[] = [];
+      const recordMap = new Map<string, ZiyadahRecord>();
       snapshot.forEach((docSnap) => {
-        records.push(docSnap.data() as ZiyadahRecord);
+        const r = docSnap.data() as ZiyadahRecord;
+        if (r && r.id && !recordMap.has(r.id)) {
+          recordMap.set(r.id, r);
+          records.push(r);
+        }
       });
       // Sort newest first
       records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
@@ -144,11 +195,16 @@ export const storageService = {
       console.warn('Ziyadah firestore sync error:', err);
     });
 
-    // 4. Sync Murojaah
+    // 4. Sync Murojaah Realtime
     const unsubMurojaah = onSnapshot(collection(db, COLLECTIONS.MUROJAAH), (snapshot) => {
       const records: MurojaahRecord[] = [];
+      const recordMap = new Map<string, MurojaahRecord>();
       snapshot.forEach((docSnap) => {
-        records.push(docSnap.data() as MurojaahRecord);
+        const r = docSnap.data() as MurojaahRecord;
+        if (r && r.id && !recordMap.has(r.id)) {
+          recordMap.set(r.id, r);
+          records.push(r);
+        }
       });
       // Sort newest first
       records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
@@ -174,10 +230,11 @@ export const storageService = {
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
     const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const uniqueId = `ZYD-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     
     const newRecord: ZiyadahRecord = {
       ...record,
-      id: `ZYD-${Date.now().toString().slice(-6)}`,
+      id: uniqueId,
       timestamp,
       namaSantri: santri?.namaSantri || record.idSantri
     };
@@ -203,10 +260,11 @@ export const storageService = {
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
     const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    const uniqueId = `MRJ-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     
     const newRecord: MurojaahRecord = {
       ...record,
-      id: `MRJ-${Date.now().toString().slice(-6)}`,
+      id: uniqueId,
       timestamp,
       namaSantri: santri?.namaSantri || record.idSantri
     };
@@ -275,7 +333,13 @@ export const storageService = {
 
   async addSantri(santri: Santri, defaultPassword = '123'): Promise<Santri> {
     const list = this.getSantriList();
-    list.push(santri);
+    // Check if santri already exists by idSantri
+    const existingIndex = list.findIndex(s => s.idSantri === santri.idSantri);
+    if (existingIndex >= 0) {
+      list[existingIndex] = santri;
+    } else {
+      list.push(santri);
+    }
     localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(list));
 
     // Automatically create Wali and Santri accounts for home and remote access
@@ -283,30 +347,37 @@ export const storageService = {
     
     // 1. Wali Account
     const waliUsername = `wali_${santri.idSantri.toLowerCase()}`;
-    const existingWali = users.find(u => u.username.toLowerCase() === waliUsername.toLowerCase());
-    const waliUser: User = existingWali || {
-      id: `USR-WLI-${Date.now().toString().slice(-4)}-${santri.idSantri}`,
-      username: waliUsername,
-      password: defaultPassword,
-      role: 'Wali',
-      nama: santri.waliNama ? `Wali ${santri.namaSantri} (${santri.waliNama})` : `Wali ${santri.namaSantri}`,
-      idSantri: santri.idSantri
-    };
-    if (!existingWali) {
+    let waliUser = users.find(u => u.username.toLowerCase() === waliUsername.toLowerCase());
+    if (waliUser) {
+      waliUser.nama = santri.waliNama ? `Wali ${santri.namaSantri} (${santri.waliNama})` : `Wali ${santri.namaSantri}`;
+      waliUser.idSantri = santri.idSantri;
+    } else {
+      waliUser = {
+        id: `USR-WLI-${santri.idSantri}`,
+        username: waliUsername,
+        password: defaultPassword,
+        role: 'Wali',
+        nama: santri.waliNama ? `Wali ${santri.namaSantri} (${santri.waliNama})` : `Wali ${santri.namaSantri}`,
+        idSantri: santri.idSantri
+      };
       users.push(waliUser);
     }
 
     // 2. Santri View-Only Account (login via ID Santri)
-    const existingSantriUser = users.find(u => u.username.toLowerCase() === santri.idSantri.toLowerCase());
-    const santriUser: User = existingSantriUser || {
-      id: `USR-STR-${Date.now().toString().slice(-4)}-${santri.idSantri}`,
-      username: santri.idSantri,
-      password: defaultPassword,
-      role: 'Santri',
-      nama: santri.namaSantri,
-      idSantri: santri.idSantri
-    };
-    if (!existingSantriUser) {
+    const santriUsername = santri.idSantri;
+    let santriUser = users.find(u => u.username.toLowerCase() === santriUsername.toLowerCase());
+    if (santriUser) {
+      santriUser.nama = santri.namaSantri;
+      santriUser.idSantri = santri.idSantri;
+    } else {
+      santriUser = {
+        id: `USR-STR-${santri.idSantri}`,
+        username: santri.idSantri,
+        password: defaultPassword,
+        role: 'Santri',
+        nama: santri.namaSantri,
+        idSantri: santri.idSantri
+      };
       users.push(santriUser);
     }
 
@@ -369,17 +440,30 @@ export const storageService = {
 
   async addUser(user: User): Promise<User> {
     const users = this.getUsers();
-    users.push(user);
+    
+    // Ensure unique ID if not provided or to prevent collisions
+    const ensuredUser: User = {
+      ...user,
+      id: user.id || `USR-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
+    };
+
+    const existingIndex = users.findIndex(u => u.username.toLowerCase() === ensuredUser.username.toLowerCase());
+    if (existingIndex >= 0) {
+      users[existingIndex] = ensuredUser;
+    } else {
+      users.push(ensuredUser);
+    }
+
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
 
     // Cloud Firestore save
     try {
-      await setDoc(doc(db, COLLECTIONS.USERS, user.id), user);
+      await setDoc(doc(db, COLLECTIONS.USERS, ensuredUser.id), ensuredUser);
     } catch (e) {
       console.error('Failed to save User to Firestore:', e);
     }
 
-    return user;
+    return ensuredUser;
   },
 
   async updateUser(id: string, updatedData: Partial<User>): Promise<boolean> {
