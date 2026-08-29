@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { User, Santri, PredikatNilai } from '../types';
+import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
-import { RotateCw, CheckCircle, Save, RotateCcw, Calendar, Clock } from 'lucide-react';
+import { RotateCw, CircleCheck as CheckCircle, Save, RotateCcw, Calendar, Clock, BookOpen } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 
 interface MurojaahFormProps {
@@ -20,23 +21,37 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
   const [idSantri, setIdSantri] = useState(selectedSantriId || (santriList[0]?.idSantri || ''));
   const [tanggalSetor, setTanggalSetor] = useState(getTodayInputFormat());
   const [waktuSetor, setWaktuSetor] = useState(getCurrentTimeInputFormat());
-  const [surahAtauJuz, setSurahAtauJuz] = useState('Juz 30 (An-Naba - An-Nas)');
+  const [surahName, setSurahName] = useState(SURAH_LIST[77].nameLatin); // default An-Naba
+  const [ayatAwal, setAyatAwal] = useState<number>(1);
+  const [ayatAkhir, setAyatAkhir] = useState<number>(20);
   const [nilai, setNilai] = useState<PredikatNilai>('Sangat Lancar');
   const [catatan, setCatatan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
+  const selectedSurah = SURAH_LIST.find(s => s.nameLatin === surahName) || SURAH_LIST[0];
+
+  const handleSurahChange = (name: string) => {
+    setSurahName(name);
+    const surah = SURAH_LIST.find(s => s.nameLatin === name);
+    if (surah) {
+      setAyatAwal(1);
+      setAyatAkhir(Math.min(20, surah.numberOfAyahs));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!idSantri || !surahAtauJuz) return;
+    if (!idSantri || !surahName) return;
 
     setIsSubmitting(true);
     try {
       const customTimestamp = `${tanggalSetor} ${waktuSetor || '00:00'}`;
+      const surahAtauJuz = `${surahName} (Ayat ${ayatAwal} - ${ayatAkhir})`;
       await storageService.saveMurojaah({
         idSantri,
         timestamp: customTimestamp,
-        surahAtauJuz: surahAtauJuz.trim(),
+        surahAtauJuz,
         nilai,
         catatan: catatan.trim() || 'Murojaah tertib dan mutqin.',
         inputBy: currentUser.nama
@@ -54,14 +69,6 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
       alert('Terjadi kendala saat menyimpan data Murojaah ke Cloud. Silakan coba kembali.');
     }
   };
-
-  const quickPills = [
-    'Juz 30 (Penuh)',
-    'Surah Al-Mulk - Al-Qalam',
-    'Juz 29 (Setengah Juz)',
-    'Surah Yasin & Ar-Rahman',
-    'Surah Al-Waqi\'ah & Al-Mulk'
-  ];
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -152,38 +159,69 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
             </div>
           </div>
 
-          {/* Surah / Juz Input & Quick Suggestions */}
+          {/* Surah Selector */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
-              Surah atau Juz yang Di-Muroja'ah <span className="text-rose-500">*</span>
+              Pilih Surah (1 - 114) <span className="text-rose-500">*</span>
             </label>
-            <input
-              type="text"
+            <select
               required
-              value={surahAtauJuz}
-              onChange={(e) => setSurahAtauJuz(e.target.value)}
-              placeholder="Contoh: Juz 30 (Surah Ad-Duha - An-Nas) atau Surah Al-Mulk"
-              className="w-full py-3 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-            />
-            {/* Quick Suggestions */}
-            <div className="flex flex-wrap gap-1.5 mt-2">
-              <span className="text-[11px] text-slate-500 self-center mr-1">Contoh Cepat:</span>
-              {quickPills.map((pill) => (
-                <button
-                  key={pill}
-                  type="button"
-                  onClick={() => setSurahAtauJuz(pill)}
-                  className="px-2.5 py-1 bg-slate-100 hover:bg-teal-100 text-slate-700 hover:text-teal-800 rounded-lg text-xs font-medium border border-slate-200 transition cursor-pointer"
-                >
-                  {pill}
-                </button>
+              value={surahName}
+              onChange={(e) => handleSurahChange(e.target.value)}
+              className="w-full py-3 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+            >
+              {SURAH_LIST.map((s) => (
+                <option key={s.number} value={s.nameLatin}>
+                  {s.number}. {s.nameLatin} ({s.nameArabic}) - {s.numberOfAyahs} Ayat
+                </option>
               ))}
-            </div>
+            </select>
           </div>
 
-          {/* Kualitas Nilai & Catatan */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Surah Info Card */}
+          <div className="p-3.5 bg-teal-50/60 rounded-xl border border-teal-200/60 flex items-center justify-between text-xs text-teal-900">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-teal-700" />
+              <span>
+                Surah <b>{selectedSurah.nameLatin}</b> ({selectedSurah.nameArabic}) • {selectedSurah.revelationType}
+              </span>
+            </div>
+            <span className="font-bold text-teal-800">Maks. {selectedSurah.numberOfAyahs} Ayat</span>
+          </div>
+
+          {/* Ayat Awal, Ayat Akhir, Nilai */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+                Ayat Awal <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="number"
+                min="1"
+                max={selectedSurah.numberOfAyahs}
+                required
+                value={ayatAwal}
+                onChange={(e) => setAyatAwal(Number(e.target.value))}
+                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+                Ayat Akhir <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="number"
+                min={ayatAwal}
+                max={selectedSurah.numberOfAyahs}
+                required
+                value={ayatAkhir}
+                onChange={(e) => setAyatAkhir(Number(e.target.value))}
+                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+              />
+            </div>
+
+            <div className="col-span-2 md:col-span-1">
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
                 Nilai Kelancaran <span className="text-rose-500">*</span>
               </label>
@@ -197,19 +235,20 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
                 <option value="Perlu Ulang">🔴 Perlu Ulang (Rosib)</option>
               </select>
             </div>
+          </div>
 
-            <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
-                Catatan Evaluasi / Rekomendasi
-              </label>
-              <input
-                type="text"
-                value={catatan}
-                onChange={(e) => setCatatan(e.target.value)}
-                placeholder="Contoh: Sangat lancar, mutqin tanpa bantuan. Pertahankan!"
-                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
-              />
-            </div>
+          {/* Catatan / Evaluasi Ustadz */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+              Catatan Evaluasi / Rekomendasi
+            </label>
+            <textarea
+              rows={3}
+              value={catatan}
+              onChange={(e) => setCatatan(e.target.value)}
+              placeholder="Contoh: Sangat lancar, mutqin tanpa bantuan. Pertahankan!"
+              className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
+            />
           </div>
 
           {/* Form Actions */}
@@ -218,7 +257,9 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
               type="reset"
               onClick={() => {
                 setCatatan('');
-                setSurahAtauJuz('');
+                setSurahName(SURAH_LIST[77].nameLatin);
+                setAyatAwal(1);
+                setAyatAkhir(20);
                 setTanggalSetor(getTodayInputFormat());
                 setWaktuSetor(getCurrentTimeInputFormat());
               }}
@@ -249,4 +290,3 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
     </div>
   );
 };
-
