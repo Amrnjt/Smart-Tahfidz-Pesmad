@@ -1,0 +1,8 @@
+{
+  "name": "Pesmad Smart Tahfid",
+  "description": "App Pantauan Hafalan Santri Pesantren Madrasah Darul Fikri - MTsN 3 Bojonegoro",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
