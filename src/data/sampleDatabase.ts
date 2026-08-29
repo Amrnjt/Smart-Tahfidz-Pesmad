@@ -19,26 +19,42 @@ export const INITIAL_USERS: User[] = [
   },
   {
     id: "USR-003",
-    username: "STR001",
+    username: "wali_str001",
     password: "123",
     role: "Wali",
-    nama: "Bpk. Hendra Wijaya (Wali Muhammad Fatih)",
+    nama: "Bpk. Hendra Wijaya (Wali M. Fatih)",
     idSantri: "STR001"
   },
   {
     id: "USR-004",
-    username: "STR002",
+    username: "wali_str002",
     password: "123",
     role: "Wali",
-    nama: "Ibu Siti Aisyah (Wali Maryam Al-Khansa)",
+    nama: "Ibu Siti Aisyah (Wali Maryam)",
     idSantri: "STR002"
   },
   {
     id: "USR-005",
+    username: "STR001",
+    password: "123",
+    role: "Santri",
+    nama: "Muhammad Fatih",
+    idSantri: "STR001"
+  },
+  {
+    id: "USR-006",
+    username: "STR002",
+    password: "123",
+    role: "Santri",
+    nama: "Maryam Al-Khansa",
+    idSantri: "STR002"
+  },
+  {
+    id: "USR-007",
     username: "STR003",
     password: "123",
-    role: "Wali",
-    nama: "Bpk. Ridwan Fauzi (Wali Ahmad Zaidan)",
+    role: "Santri",
+    nama: "Ahmad Zaidan",
     idSantri: "STR003"
   }
 ];

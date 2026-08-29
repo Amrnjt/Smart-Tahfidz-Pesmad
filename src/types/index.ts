@@ -1,4 +1,4 @@
-export type UserRole = 'Ustadz' | 'Wali';
+export type UserRole = 'Ustadz' | 'Wali' | 'Santri';
 
 export type PredikatNilai = 'Sangat Lancar' | 'Lancar' | 'Perlu Ulang';
 
@@ -8,7 +8,7 @@ export interface User {
   password?: string;
   role: UserRole;
   nama: string;
-  idSantri?: string; // Optional for Ustadz, required for Wali
+  idSantri?: string; // For Wali and Santri roles
 }
 
 export interface Santri {
@@ -71,4 +71,4 @@ export interface SurahFullDetail extends SurahMeta {
   audioFull?: string;
 }
 
-export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'riwayat' | 'mushaf' | 'santri' | 'gas_code';
+export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'riwayat' | 'mushaf' | 'santri';

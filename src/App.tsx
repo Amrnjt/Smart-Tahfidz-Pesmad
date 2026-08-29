@@ -6,13 +6,13 @@ import { BottomNav } from './components/BottomNav';
 import { LoginView } from './components/LoginModal';
 import { UstadzDashboard } from './components/UstadzDashboard';
 import { WaliDashboard } from './components/WaliDashboard';
+import { SantriDashboard } from './components/SantriDashboard';
 import { ZiyadahForm } from './components/ZiyadahForm';
 import { MurojaahForm } from './components/MurojaahForm';
 import { HistoryTable } from './components/HistoryTable';
 import { MushafQuran } from './components/MushafQuran';
 import { SantriManagement } from './components/SantriManagement';
-import { GasCodeModal } from './components/GasCodeModal';
-import { LayoutDashboard, PlusCircle, RotateCw, History, BookOpen, Users, Code, RotateCcw } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, RotateCw, History, BookOpen, Users, Shield } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -21,7 +21,6 @@ export default function App() {
   const [ziyadahRecords, setZiyadahRecords] = useState<ZiyadahRecord[]>([]);
   const [murojaahRecords, setMurojaahRecords] = useState<MurojaahRecord[]>([]);
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
-  const [isGasModalOpen, setIsGasModalOpen] = useState<boolean>(false);
 
   // Load initial data
   useEffect(() => {
@@ -54,15 +53,9 @@ export default function App() {
     setSelectedSantriId(idSantri);
   };
 
-  const handleResetData = () => {
-    if (confirm('Apakah Anda ingin mereset seluruh data santri & riwayat setoran kembali ke default?')) {
-      storageService.resetToDefault();
-      refreshData();
-      alert('Data berhasil direset ke kondisi awal.');
-    }
-  };
-
   const isUstadz = currentUser?.role === 'Ustadz';
+  const isWali = currentUser?.role === 'Wali';
+  const isSantri = currentUser?.role === 'Santri';
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans selection:bg-emerald-200 selection:text-emerald-950 pb-20 md:pb-10">
@@ -73,7 +66,6 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onLogout={handleLogout}
-        onOpenGasModal={() => setIsGasModalOpen(true)}
       />
 
       {/* Main Container */}
@@ -83,7 +75,6 @@ export default function App() {
         {!currentUser ? (
           <LoginView
             onLoginSuccess={handleLoginSuccess}
-            onOpenGasModal={() => setIsGasModalOpen(true)}
           />
         ) : (
           <div className="space-y-5">
@@ -99,7 +90,11 @@ export default function App() {
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4" />
-                <span>{isUstadz ? 'Dashboard Ustadz' : 'Dashboard Anak'}</span>
+                <span>
+                  {isUstadz && 'Dashboard Ustadz (Admin)'}
+                  {isWali && 'Pantauan Hafalan Anak'}
+                  {isSantri && 'Hafalan Saya'}
+                </span>
               </button>
 
               {isUstadz && (
@@ -139,7 +134,9 @@ export default function App() {
                 }`}
               >
                 <History className="w-4 h-4" />
-                <span>Riwayat Setoran</span>
+                <span>
+                  {isUstadz ? 'Riwayat Setoran (Admin)' : 'Riwayat Setoran'}
+                </span>
               </button>
 
               <button
@@ -151,7 +148,7 @@ export default function App() {
                 }`}
               >
                 <BookOpen className="w-4 h-4" />
-                <span>Mushaf Al-Qur'an</span>
+                <span>Mushaf Al-Qur'an 30 Juz</span>
               </button>
 
               {isUstadz && (
@@ -164,7 +161,7 @@ export default function App() {
                   }`}
                 >
                   <Users className="w-4 h-4" />
-                  <span>Data Santri</span>
+                  <span>Santri & Kelola Akun</span>
                 </button>
               )}
             </nav>
@@ -180,8 +177,16 @@ export default function App() {
                   setActiveTab={setActiveTab}
                   onSelectSantriForZiyadah={handleSelectSantriForZiyadah}
                 />
-              ) : (
+              ) : isWali ? (
                 <WaliDashboard
+                  currentUser={currentUser}
+                  santriList={santriList}
+                  ziyadahRecords={ziyadahRecords}
+                  murojaahRecords={murojaahRecords}
+                  setActiveTab={setActiveTab}
+                />
+              ) : (
+                <SantriDashboard
                   currentUser={currentUser}
                   santriList={santriList}
                   ziyadahRecords={ziyadahRecords}
@@ -233,31 +238,15 @@ export default function App() {
               />
             )}
 
-            {/* Quick Demo Toolbar (Bottom of Page) */}
-            <div className="pt-6 border-t border-slate-200/80 space-y-3">
+            {/* Production Footer */}
+            <div className="pt-6 border-t border-slate-200/80">
               <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                   <span>Tahfidz al-Qur'an Pesantren Madrasah Darul Fikri • Jl. Budi Utomo No. 190 Kepohbaru Bojonegoro</span>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setIsGasModalOpen(true)}
-                    className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:border-emerald-500 text-slate-700 hover:text-emerald-800 font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                  >
-                    <Code className="w-3.5 h-3.5 text-amber-500" />
-                    <span>Lihat Kode GAS (4 File)</span>
-                  </button>
-
-                  <button
-                    onClick={handleResetData}
-                    className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 font-medium transition cursor-pointer flex items-center gap-1 shadow-2xs"
-                    title="Kembalikan database simulasi ke awal"
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                    <span>Reset Data Demo</span>
-                  </button>
+                <div className="text-slate-400 text-[11px]">
+                  Sistem Mutaba'ah & Manajemen Tahfidz
                 </div>
               </div>
             </div>
@@ -271,15 +260,9 @@ export default function App() {
         currentUser={currentUser}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        onOpenGasModal={() => setIsGasModalOpen(true)}
-      />
-
-      {/* GAS Code & Deploy Modal */}
-      <GasCodeModal
-        isOpen={isGasModalOpen}
-        onClose={() => setIsGasModalOpen(false)}
       />
 
     </div>
   );
 }
+

@@ -124,23 +124,40 @@ export const storageService = {
     return true;
   },
 
-  addSantri(santri: Santri): Santri {
+  addSantri(santri: Santri, defaultPassword = '123'): Santri {
     const list = this.getSantriList();
     list.push(santri);
     localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(list));
 
-    // Create Wali user automatically
+    // Automatically create Wali and Santri accounts
     const users = this.getUsers();
-    users.push({
-      id: `USR-${Date.now().toString().slice(-4)}`,
-      username: santri.idSantri,
-      password: '123',
-      role: 'Wali',
-      nama: `Wali ${santri.namaSantri}`,
-      idSantri: santri.idSantri
-    });
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+    
+    // 1. Wali Account
+    const waliUsername = `wali_${santri.idSantri.toLowerCase()}`;
+    if (!users.some(u => u.username.toLowerCase() === waliUsername.toLowerCase())) {
+      users.push({
+        id: `USR-WLI-${Date.now().toString().slice(-4)}`,
+        username: waliUsername,
+        password: defaultPassword,
+        role: 'Wali',
+        nama: santri.waliNama ? `Wali ${santri.namaSantri} (${santri.waliNama})` : `Wali ${santri.namaSantri}`,
+        idSantri: santri.idSantri
+      });
+    }
 
+    // 2. Santri View-Only Account (login via ID Santri)
+    if (!users.some(u => u.username.toLowerCase() === santri.idSantri.toLowerCase())) {
+      users.push({
+        id: `USR-STR-${Date.now().toString().slice(-4)}`,
+        username: santri.idSantri,
+        password: defaultPassword,
+        role: 'Santri',
+        nama: santri.namaSantri,
+        idSantri: santri.idSantri
+      });
+    }
+
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
     return santri;
   },
 
@@ -149,8 +166,8 @@ export const storageService = {
     const santriList = this.getSantriList().filter(s => s.idSantri !== idSantri);
     localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(santriList));
 
-    // 2. Remove associated Wali user account
-    const users = this.getUsers().filter(u => u.idSantri !== idSantri && u.username !== idSantri);
+    // 2. Remove associated Wali and Santri user accounts
+    const users = this.getUsers().filter(u => u.idSantri !== idSantri && u.username.toLowerCase() !== idSantri.toLowerCase());
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
 
     // 3. Clean up related Ziyadah and Murojaah records if requested
@@ -162,6 +179,25 @@ export const storageService = {
       localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(murojaah));
     }
 
+    return true;
+  },
+
+  addUser(user: User): User {
+    const users = this.getUsers();
+    users.push(user);
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+    return user;
+  },
+
+  updateUser(id: string, updatedData: Partial<User>): boolean {
+    const users = this.getUsers().map(u => u.id === id ? { ...u, ...updatedData } : u);
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+    return true;
+  },
+
+  deleteUser(id: string): boolean {
+    const users = this.getUsers().filter(u => u.id !== id);
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
     return true;
   },
 

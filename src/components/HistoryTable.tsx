@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, ZiyadahRecord, MurojaahRecord } from '../types';
 import { storageService } from '../services/storageService';
-import { Search, Filter, Trash2, BookOpen, RotateCw, CheckCircle, AlertTriangle, FileSpreadsheet, Download } from 'lucide-react';
+import { Search, Filter, Trash2, BookOpen, RotateCw, CheckCircle, AlertTriangle, Download, Shield } from 'lucide-react';
 
 interface HistoryTableProps {
   currentUser: User;
@@ -20,13 +20,15 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'Ziyadah' | 'Murojaah'>('ALL');
   const [nilaiFilter, setNilaiFilter] = useState<string>('ALL');
 
-  // Filter for Wali Santri if logged in as Wali
-  const isWali = currentUser.role === 'Wali';
-  const filteredZiyadah = isWali
-    ? ziyadahRecords.filter(r => r.idSantri === currentUser.idSantri)
+  // Determine if user has view-only access (Wali & Santri) vs Admin access (Ustadz)
+  const isViewOnly = currentUser.role !== 'Ustadz';
+  const targetSantriId = currentUser.idSantri || (currentUser.role === 'Santri' ? currentUser.username : '');
+
+  const filteredZiyadah = isViewOnly
+    ? ziyadahRecords.filter(r => r.idSantri === targetSantriId)
     : ziyadahRecords;
-  const filteredMurojaah = isWali
-    ? murojaahRecords.filter(r => r.idSantri === currentUser.idSantri)
+  const filteredMurojaah = isViewOnly
+    ? murojaahRecords.filter(r => r.idSantri === targetSantriId)
     : murojaahRecords;
 
   // Combine into single timeline
@@ -87,7 +89,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   });
 
   const handleDelete = (item: CombinedItem) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus data setoran ${item.type} untuk ${item.namaSantri}?`)) {
+    if (confirm(`Apakah Anda yakin ingin menghapus rekaman setoran ${item.type} untuk ${item.namaSantri}?`)) {
       storageService.deleteRecord(item.type, item.id);
       onDataChanged();
     }
@@ -111,7 +113,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `riwayat_tahfidz_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `riwayat_tahfidz_${currentUser.role.toLowerCase()}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -122,13 +124,20 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       {/* Header & Filter Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
         <div>
-          <h3 className="font-extrabold text-slate-800 text-base sm:text-lg">
+          <h3 className="font-extrabold text-slate-800 text-base sm:text-lg flex items-center gap-2">
             Riwayat Setoran Hafalan Santri
+            {isViewOnly && (
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                Mode View-Only
+              </span>
+            )}
           </h3>
           <p className="text-xs text-slate-500">
-            {isWali
+            {currentUser.role === 'Wali'
               ? 'Laporan lengkap mutaba\'ah setoran Ziyadah & Muroja\'ah ananda'
-              : 'Database mutaba\'ah setoran Ziyadah & Muroja\'ah seluruh kelas'}
+              : currentUser.role === 'Santri'
+              ? 'Riwayat lengkap mutaba\'ah setoran Ziyadah & Muroja\'ah hafalan saya'
+              : 'Database mutaba\'ah setoran Ziyadah & Muroja\'ah seluruh kelas (Admin Ustadz)'}
           </p>
         </div>
 
@@ -191,13 +200,13 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               <th className="py-3 px-3.5">Materi Hafalan</th>
               <th className="py-3 px-3.5">Nilai</th>
               <th className="py-3 px-3.5">Catatan Ustadz</th>
-              {!isWali && <th className="py-3 px-3.5 text-center">Aksi</th>}
+              {!isViewOnly && <th className="py-3 px-3.5 text-center">Aksi</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 font-medium">
             {displayedItems.length === 0 ? (
               <tr>
-                <td colSpan={isWali ? 6 : 7} className="py-10 text-center text-slate-400">
+                <td colSpan={isViewOnly ? 6 : 7} className="py-10 text-center text-slate-400">
                   <BookOpen className="w-8 h-8 mx-auto mb-2 text-slate-300" />
                   <p>Tidak ada data setoran yang sesuai dengan filter.</p>
                 </td>
@@ -253,12 +262,12 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                       {item.catatan || '-'}
                       <div className="text-[10px] text-slate-400">Oleh: {item.inputBy}</div>
                     </td>
-                    {!isWali && (
+                    {!isViewOnly && (
                       <td className="py-3 px-3.5 text-center whitespace-nowrap">
                         <button
                           onClick={() => handleDelete(item)}
                           className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                          title="Hapus Rekaman"
+                          title="Hapus Rekaman Setoran"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -275,7 +284,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       {/* Summary Footer */}
       <div className="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100">
         <span>Menampilkan <b>{displayedItems.length}</b> dari {combinedItems.length} total setoran</span>
-        <span className="font-mono text-[11px] text-emerald-800 font-semibold">Tersinkron dengan Google Sheets</span>
+        <span className="text-[11px] text-emerald-800 font-semibold">Data Mutaba'ah Terverifikasi</span>
       </div>
     </div>
   );
