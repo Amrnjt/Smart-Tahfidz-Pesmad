@@ -1,7 +1,6 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import { User, ZiyadahRecord, MurojaahRecord, Santri } from '../types';
 import { useGeneratePDF, NAMA_BULAN, ReportOptions, ReportPeriod } from '../hooks/useGeneratePDF';
-import { ReportTemplate } from './ReportTemplate';
 import { parseDateSafe } from '../utils/dateFormatter';
 import { X, Download, FileText, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Loader as Loader2, Calendar } from 'lucide-react';
 
@@ -23,7 +22,6 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   murojaahRecords
 }) => {
   const { isGenerating, error, success, generatePDF } = useGeneratePDF();
-  const hiddenTemplateRef = useRef<HTMLDivElement>(null);
 
   const isViewOnly = currentUser.role !== 'Ustadz';
   const targetSantriId = currentUser.idSantri || (currentUser.role === 'Santri' ? currentUser.username : '');
@@ -100,18 +98,14 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   const reportPeriod: ReportPeriod = { month: selectedMonth, year: selectedYear };
 
   const handleDownload = async () => {
-    if (!hiddenTemplateRef.current) return;
-    await generatePDF(
-      {
-        santri: reportSantri,
-        currentUser,
-        ziyadahRecords: reportZiyadah,
-        murojaahRecords: reportMurojaah,
-        period: reportPeriod,
-        options
-      },
-      hiddenTemplateRef.current
-    );
+    await generatePDF({
+      santri: reportSantri,
+      currentUser,
+      ziyadahRecords: reportZiyadah,
+      murojaahRecords: reportMurojaah,
+      period: reportPeriod,
+      options
+    });
   };
 
   const toggleOption = (key: keyof ReportOptions) => {
@@ -282,28 +276,6 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
         </div>
       </div>
 
-      {/* Hidden Report Template for PDF Capture */}
-      <div
-        style={{
-          position: 'fixed',
-          left: '-9999px',
-          top: 0,
-          zIndex: -1,
-          pointerEvents: 'none'
-        }}
-        aria-hidden="true"
-      >
-        <div ref={hiddenTemplateRef}>
-          <ReportTemplate
-            santri={reportSantri}
-            currentUser={currentUser}
-            ziyadahRecords={reportZiyadah}
-            murojaahRecords={reportMurojaah}
-            period={reportPeriod}
-            options={options}
-          />
-        </div>
-      </div>
     </>
   );
 };
