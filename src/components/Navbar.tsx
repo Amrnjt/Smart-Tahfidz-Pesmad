@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, ActiveTab } from '../types';
-import { LogOut, MapPin } from 'lucide-react';
+import { LogOut, MapPin, RefreshCw } from 'lucide-react';
 import { PesmadLogo } from './PesmadLogo';
 
 interface NavbarProps {
@@ -8,13 +8,17 @@ interface NavbarProps {
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
   onLogout: () => void;
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentUser,
   activeTab,
   setActiveTab,
-  onLogout
+  onLogout,
+  onRefresh,
+  isRefreshing = false
 }) => {
   return (
     <header id="main-header" className="sticky top-0 z-40 bg-emerald-900 text-white shadow-md border-b border-emerald-950/80">
@@ -54,6 +58,23 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center space-x-2 sm:space-x-3">
           {currentUser ? (
             <div className="flex items-center space-x-2 pl-2">
+              {onRefresh && (
+                <button
+                  onClick={onRefresh}
+                  disabled={isRefreshing}
+                  className={`p-2 rounded-xl bg-emerald-950/80 hover:bg-emerald-800/80 text-emerald-200 hover:text-white transition-colors border border-emerald-800/80 cursor-pointer flex items-center gap-1.5 text-xs font-semibold ${
+                    isRefreshing ? 'opacity-70 cursor-not-allowed' : ''
+                  }`}
+                  title="Sinkronkan & Muat Ulang Data Firestore"
+                  aria-label="Sinkronkan Data"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-300' : ''}`} />
+                  <span className="hidden xl:inline text-[11px]">
+                    {isRefreshing ? 'Memuat...' : 'Sync Data'}
+                  </span>
+                </button>
+              )}
+
               <div className="text-right hidden sm:block">
                 <p className="text-xs font-bold text-white leading-tight">{currentUser.nama}</p>
                 <div className="flex items-center justify-end gap-1 mt-0.5">
@@ -64,7 +85,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       ? 'bg-teal-700 text-teal-100 border border-teal-600'
                       : 'bg-cyan-700 text-cyan-100 border border-cyan-600'
                   }`}>
-                    {currentUser.role === 'Ustadz' && '🛡️ Ustadz (Admin)'}
+                    {currentUser.role === 'Ustadz' && '🛡️ Ustadz'}
                     {currentUser.role === 'Wali' && '👨‍👩‍👧 Wali Santri'}
                     {currentUser.role === 'Santri' && '📖 Santri (View-Only)'}
                   </span>

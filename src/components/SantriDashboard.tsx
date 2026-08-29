@@ -1,8 +1,10 @@
 import React from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, ActiveTab } from '../types';
 import { ZiyadahProgressChart } from './ZiyadahProgressChart';
-import { BookOpen, RotateCw, Award, Target, Sparkles, CheckCircle2, ChevronRight, BookMarked, Heart, Volume2 } from 'lucide-react';
+import { BookOpen, RotateCw, Award, Target, Sparkles, CheckCircle2, ChevronRight, BookMarked, Heart, Volume2, Calendar } from 'lucide-react';
 import { PesmadLogo } from './PesmadLogo';
+import { formatTanggalWaktu } from '../utils/dateFormatter';
+import { SantriWaliDashboardSkeleton } from './SkeletonLoading';
 
 interface SantriDashboardProps {
   currentUser: User;
@@ -10,6 +12,7 @@ interface SantriDashboardProps {
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
   setActiveTab: (tab: ActiveTab) => void;
+  isLoading?: boolean;
 }
 
 export const SantriDashboard: React.FC<SantriDashboardProps> = ({
@@ -17,8 +20,13 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   santriList,
   ziyadahRecords,
   murojaahRecords,
-  setActiveTab
+  setActiveTab,
+  isLoading = false
 }) => {
+  if (isLoading) {
+    return <SantriWaliDashboardSkeleton role="Santri" />;
+  }
+
   const currentSantri = santriList.find(s => s.idSantri === currentUser.idSantri) || {
     idSantri: currentUser.idSantri || currentUser.username,
     namaSantri: currentUser.nama,
@@ -152,8 +160,9 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
               <BookOpen className="w-4 h-4 text-emerald-700" />
               <h4 className="font-bold text-slate-800 text-sm">Ziyadah Terakhir Kamu</h4>
             </div>
-            <span className="text-[11px] text-slate-400 font-medium">
-              {lastZiyadah ? lastZiyadah.timestamp : '-'}
+            <span className="text-[11px] text-emerald-800 font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+              <Calendar className="w-3 h-3 text-emerald-600" />
+              {lastZiyadah ? formatTanggalWaktu(lastZiyadah.timestamp) : '-'}
             </span>
           </div>
 
@@ -184,8 +193,9 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
               <RotateCw className="w-4 h-4 text-teal-700" />
               <h4 className="font-bold text-slate-800 text-sm">Muroja'ah Terakhir Kamu</h4>
             </div>
-            <span className="text-[11px] text-slate-400 font-medium">
-              {lastMurojaah ? lastMurojaah.timestamp : '-'}
+            <span className="text-[11px] text-teal-800 font-semibold flex items-center gap-1 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60">
+              <Calendar className="w-3 h-3 text-teal-600" />
+              {lastMurojaah ? formatTanggalWaktu(lastMurojaah.timestamp) : '-'}
             </span>
           </div>
 

@@ -3,6 +3,7 @@ import { User, Santri, ZiyadahRecord, MurojaahRecord, ActiveTab } from '../types
 import { Users, CalendarCheck, BookOpen, RotateCw, PlusCircle, ArrowRight, Award, Sparkles } from 'lucide-react';
 import { HafalanStatsChart } from './HafalanStatsChart';
 import { PesmadLogo } from './PesmadLogo';
+import { DashboardSkeleton } from './SkeletonLoading';
 
 interface UstadzDashboardProps {
   currentUser: User;
@@ -11,6 +12,7 @@ interface UstadzDashboardProps {
   murojaahRecords: MurojaahRecord[];
   setActiveTab: (tab: ActiveTab) => void;
   onSelectSantriForZiyadah?: (idSantri: string) => void;
+  isLoading?: boolean;
 }
 
 export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
@@ -19,8 +21,13 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   ziyadahRecords,
   murojaahRecords,
   setActiveTab,
-  onSelectSantriForZiyadah
+  onSelectSantriForZiyadah,
+  isLoading = false
 }) => {
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
+
   // Hitung setoran hari ini
   const today = new Date().toISOString().split('T')[0];
   const todayZiyadah = ziyadahRecords.filter(r => r.timestamp.startsWith(today));

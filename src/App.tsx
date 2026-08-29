@@ -21,6 +21,7 @@ export default function App() {
   const [ziyadahRecords, setZiyadahRecords] = useState<ZiyadahRecord[]>([]);
   const [murojaahRecords, setMurojaahRecords] = useState<MurojaahRecord[]>([]);
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
 
   const refreshData = () => {
     setSantriList(storageService.getSantriList());
@@ -30,6 +31,7 @@ export default function App() {
 
   // Setup real-time Firebase Firestore synchronization across all devices
   useEffect(() => {
+    setIsLoadingData(true);
     refreshData();
     const session = storageService.getSession();
     if (session) {
@@ -39,23 +41,42 @@ export default function App() {
     // Subscribe to real-time changes from Firestore database
     const unsubscribe = storageService.initRealtimeSync(() => {
       refreshData();
+      setIsLoadingData(false);
     });
+
+    // Provide a short fallback timeout so skeleton gives visual feedback smoothly even with fast local cache
+    const timer = setTimeout(() => {
+      setIsLoadingData(false);
+    }, 450);
 
     return () => {
       unsubscribe();
+      clearTimeout(timer);
     };
   }, []);
 
   const handleLoginSuccess = (user: User) => {
+    setIsLoadingData(true);
     setCurrentUser(user);
     setActiveTab('dashboard');
     refreshData();
+    setTimeout(() => {
+      setIsLoadingData(false);
+    }, 300);
   };
 
   const handleLogout = () => {
     storageService.setSession(null);
     setCurrentUser(null);
     setActiveTab('dashboard');
+  };
+
+  const handleManualRefresh = () => {
+    setIsLoadingData(true);
+    refreshData();
+    setTimeout(() => {
+      setIsLoadingData(false);
+    }, 400);
   };
 
   const handleSelectSantriForZiyadah = (idSantri: string) => {
@@ -75,6 +96,8 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onLogout={handleLogout}
+        onRefresh={handleManualRefresh}
+        isRefreshing={isLoadingData}
       />
 
       {/* Main Container */}
@@ -100,7 +123,7 @@ export default function App() {
               >
                 <LayoutDashboard className="w-4 h-4" />
                 <span>
-                  {isUstadz && 'Dashboard Ustadz (Admin)'}
+                  {isUstadz && 'Dashboard'}
                   {isWali && 'Pantauan Hafalan Anak'}
                   {isSantri && 'Hafalan Saya'}
                 </span>
@@ -144,7 +167,7 @@ export default function App() {
               >
                 <History className="w-4 h-4" />
                 <span>
-                  {isUstadz ? 'Riwayat Setoran (Admin)' : 'Riwayat Setoran'}
+                  Riwayat Setoran
                 </span>
               </button>
 
@@ -185,6 +208,7 @@ export default function App() {
                   murojaahRecords={murojaahRecords}
                   setActiveTab={setActiveTab}
                   onSelectSantriForZiyadah={handleSelectSantriForZiyadah}
+                  isLoading={isLoadingData}
                 />
               ) : isWali ? (
                 <WaliDashboard
@@ -193,6 +217,7 @@ export default function App() {
                   ziyadahRecords={ziyadahRecords}
                   murojaahRecords={murojaahRecords}
                   setActiveTab={setActiveTab}
+                  isLoading={isLoadingData}
                 />
               ) : (
                 <SantriDashboard
@@ -201,6 +226,7 @@ export default function App() {
                   ziyadahRecords={ziyadahRecords}
                   murojaahRecords={murojaahRecords}
                   setActiveTab={setActiveTab}
+                  isLoading={isLoadingData}
                 />
               )
             )}
@@ -235,6 +261,7 @@ export default function App() {
                 ziyadahRecords={ziyadahRecords}
                 murojaahRecords={murojaahRecords}
                 onDataChanged={refreshData}
+                isLoading={isLoadingData}
               />
             )}
 

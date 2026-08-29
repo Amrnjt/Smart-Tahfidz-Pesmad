@@ -1,24 +1,32 @@
 import React, { useState } from 'react';
 import { User, ZiyadahRecord, MurojaahRecord } from '../types';
 import { storageService } from '../services/storageService';
-import { Search, Filter, Trash2, BookOpen, RotateCw, CheckCircle, AlertTriangle, Download, Shield } from 'lucide-react';
+import { Search, Filter, Trash2, BookOpen, RotateCw, CheckCircle, AlertTriangle, Download, Shield, Calendar, Clock } from 'lucide-react';
+import { formatTanggalLengkap, parseDateSafe } from '../utils/dateFormatter';
+import { TableSkeleton } from './SkeletonLoading';
 
 interface HistoryTableProps {
   currentUser: User;
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
   onDataChanged: () => void;
+  isLoading?: boolean;
 }
 
 export const HistoryTable: React.FC<HistoryTableProps> = ({
   currentUser,
   ziyadahRecords,
   murojaahRecords,
-  onDataChanged
+  onDataChanged,
+  isLoading = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'Ziyadah' | 'Murojaah'>('ALL');
   const [nilaiFilter, setNilaiFilter] = useState<string>('ALL');
+
+  if (isLoading) {
+    return <TableSkeleton rows={7} />;
+  }
 
   // Determine if user has view-only access (Wali & Santri) vs Admin access (Ustadz)
   const isViewOnly = currentUser.role !== 'Ustadz';
@@ -70,7 +78,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   ];
 
   // Sort by newest timestamp
-  combinedItems.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+  combinedItems.sort((a, b) => parseDateSafe(b.timestamp).getTime() - parseDateSafe(a.timestamp).getTime());
 
   // Filter based on search query and type
   const displayedItems = combinedItems.filter(item => {
@@ -80,7 +88,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       item.idSantri.toLowerCase().includes(q) ||
       item.materi.toLowerCase().includes(q) ||
       item.catatan.toLowerCase().includes(q) ||
-      item.inputBy.toLowerCase().includes(q);
+      item.inputBy.toLowerCase().includes(q) ||
+      item.timestamp.toLowerCase().includes(q) ||
+      formatTanggalLengkap(item.timestamp).toLowerCase().includes(q);
 
     const matchesType = typeFilter === 'ALL' || item.type === typeFilter;
     const matchesNilai = nilaiFilter === 'ALL' || item.nilai === nilaiFilter;
@@ -96,9 +106,10 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   };
 
   const exportToCSV = () => {
-    const headers = ['ID', 'Waktu', 'Jenis', 'ID Santri', 'Nama Santri', 'Materi Hafalan', 'Nilai', 'Catatan', 'Input By'];
+    const headers = ['ID', 'Keterangan Tanggal & Waktu', 'Timestamp Mentah', 'Jenis', 'ID Santri', 'Nama Santri', 'Materi Hafalan', 'Nilai', 'Catatan', 'Input By'];
     const rows = displayedItems.map(i => [
       i.id,
+      `"${formatTanggalLengkap(i.timestamp)}"`,
       i.timestamp,
       i.type,
       i.idSantri,
@@ -137,7 +148,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               ? 'Laporan lengkap mutaba\'ah setoran Ziyadah & Muroja\'ah ananda'
               : currentUser.role === 'Santri'
               ? 'Riwayat lengkap mutaba\'ah setoran Ziyadah & Muroja\'ah hafalan saya'
-              : 'Database mutaba\'ah setoran Ziyadah & Muroja\'ah seluruh kelas (Admin Ustadz)'}
+              : 'Database mutaba\'ah setoran Ziyadah & Muroja\'ah seluruh kelas (Ustadz)'}
           </p>
         </div>
 
@@ -149,7 +160,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari santri, surah, catatan..."
+              placeholder="Cari tanggal, santri, surah..."
               className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
@@ -194,7 +205,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         <table className="w-full text-left text-xs">
           <thead className="bg-slate-100/90 text-slate-700 uppercase font-bold tracking-wider border-b border-slate-200">
             <tr>
-              <th className="py-3 px-3.5">Waktu</th>
+              <th className="py-3 px-3.5">Keterangan Tanggal</th>
               <th className="py-3 px-3.5">Santri</th>
               <th className="py-3 px-3.5">Jenis</th>
               <th className="py-3 px-3.5">Materi Hafalan</th>
@@ -234,10 +245,24 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   );
                 }
 
+                // Split time part if available
+                const timePart = item.timestamp.includes(' ')
+                  ? item.timestamp.split(' ')[1]
+                  : item.timestamp.includes('T')
+                  ? item.timestamp.split('T')[1]?.slice(0, 5)
+                  : '';
+
                 return (
                   <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="py-3 px-3.5 text-slate-500 whitespace-nowrap">
-                      {item.timestamp}
+                    <td className="py-3 px-3.5 whitespace-nowrap">
+                      <div className="font-bold text-slate-800 flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-emerald-700 flex-shrink-0" />
+                        <span>{formatTanggalLengkap(item.timestamp)}</span>
+                      </div>
+                      <div className="text-[11px] text-slate-500 font-mono flex items-center gap-1 mt-0.5 ml-5">
+                        <Clock className="w-3 h-3 text-slate-400" />
+                        <span>{timePart ? `${timePart} WIB` : item.timestamp}</span>
+                      </div>
                     </td>
                     <td className="py-3 px-3.5 whitespace-nowrap">
                       <div className="font-bold text-slate-800">{item.namaSantri}</div>
@@ -289,3 +314,4 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     </div>
   );
 };
+

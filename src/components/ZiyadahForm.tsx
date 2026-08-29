@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { User, Santri, PredikatNilai } from '../types';
 import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
-import { PlusCircle, BookOpen, CheckCircle, Save, RotateCcw } from 'lucide-react';
+import { PlusCircle, BookOpen, CheckCircle, Save, RotateCcw, Calendar, Clock } from 'lucide-react';
+import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 
 interface ZiyadahFormProps {
   currentUser: User;
@@ -18,6 +19,8 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
   onSuccess
 }) => {
   const [idSantri, setIdSantri] = useState(selectedSantriId || (santriList[0]?.idSantri || ''));
+  const [tanggalSetor, setTanggalSetor] = useState(getTodayInputFormat());
+  const [waktuSetor, setWaktuSetor] = useState(getCurrentTimeInputFormat());
   const [surahName, setSurahName] = useState(SURAH_LIST[77].nameLatin); // default An-Naba
   const [ayatAwal, setAyatAwal] = useState<number>(1);
   const [ayatAkhir, setAyatAkhir] = useState<number>(10);
@@ -43,8 +46,10 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
 
     setIsSubmitting(true);
     try {
+      const customTimestamp = `${tanggalSetor} ${waktuSetor || '00:00'}`;
       await storageService.saveZiyadah({
         idSantri,
+        timestamp: customTimestamp,
         surah: surahName,
         surahNumber: selectedSurah.number,
         ayatAwal: Number(ayatAwal),
@@ -102,9 +107,9 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
           </div>
         ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Santri & Surah Selectors */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+          {/* Santri & Tanggal Setoran */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-1">
               <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
                 Pilih Santri <span className="text-rose-500">*</span>
               </label>
@@ -124,22 +129,55 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
-                Pilih Surah (1 - 114) <span className="text-rose-500">*</span>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+                <span>Tanggal Setoran <span className="text-rose-500">*</span></span>
               </label>
-              <select
+              <input
+                type="date"
                 required
-                value={surahName}
-                onChange={(e) => handleSurahChange(e.target.value)}
-                className="w-full py-3 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                {SURAH_LIST.map((s) => (
-                  <option key={s.number} value={s.nameLatin}>
-                    {s.number}. {s.nameLatin} ({s.nameArabic}) - {s.numberOfAyahs} Ayat
-                  </option>
-                ))}
-              </select>
+                value={tanggalSetor}
+                onChange={(e) => setTanggalSetor(e.target.value)}
+                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              <span className="text-[11px] text-emerald-700 font-semibold mt-1 block truncate">
+                📅 {formatTanggalLengkap(tanggalSetor)}
+              </span>
             </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-emerald-700" />
+                <span>Waktu / Jam <span className="text-rose-500">*</span></span>
+              </label>
+              <input
+                type="time"
+                required
+                value={waktuSetor}
+                onChange={(e) => setWaktuSetor(e.target.value)}
+                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              <span className="text-[11px] text-slate-500 mt-1 block">WIB (Waktu Indonesia Barat)</span>
+            </div>
+          </div>
+
+          {/* Surah Selector */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+              Pilih Surah (1 - 114) <span className="text-rose-500">*</span>
+            </label>
+            <select
+              required
+              value={surahName}
+              onChange={(e) => handleSurahChange(e.target.value)}
+              className="w-full py-3 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              {SURAH_LIST.map((s) => (
+                <option key={s.number} value={s.nameLatin}>
+                  {s.number}. {s.nameLatin} ({s.nameArabic}) - {s.numberOfAyahs} Ayat
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Surah Info Card */}
@@ -223,6 +261,8 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
                 setCatatan('');
                 setAyatAwal(1);
                 setAyatAkhir(10);
+                setTanggalSetor(getTodayInputFormat());
+                setWaktuSetor(getCurrentTimeInputFormat());
               }}
               className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer flex items-center gap-1.5"
             >
@@ -251,3 +291,4 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
     </div>
   );
 };
+

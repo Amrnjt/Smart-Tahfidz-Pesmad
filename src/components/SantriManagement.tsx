@@ -294,10 +294,10 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
         <div>
           <h3 className="font-extrabold text-slate-800 text-base sm:text-lg flex items-center gap-2">
             <Shield className="w-5 h-5 text-emerald-700" />
-            Manajemen Data Santri & Akun Pengguna (Admin)
+            Manajemen Data Santri & Akun Pengguna
           </h3>
           <p className="text-xs text-slate-500">
-            Pengelolaan data santri, target kelulusan, dan hak akses akun (Ustadz Admin, Wali, Santri)
+            Pengelolaan data santri, target kelulusan, dan hak akses akun (Ustadz, Wali, Santri)
           </p>
         </div>
 
@@ -515,7 +515,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                     if (u.role === 'Ustadz') {
                       roleBadge = (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">
-                          <Shield className="w-3 h-3 text-emerald-700" /> Ustadz (Admin)
+                          <Shield className="w-3 h-3 text-emerald-700" /> Ustadz
                         </span>
                       );
                     } else if (u.role === 'Wali') {
@@ -760,7 +760,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                   onChange={(e) => setEditRole(e.target.value as UserRole)}
                   className="w-full p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-950 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
-                  <option value="Ustadz">🛡️ Ustadz (Admin Penuh: Input Setoran, Kelola Santri & Akun)</option>
+                  <option value="Ustadz">🛡️ Ustadz (Input Setoran, Kelola Santri & Akun)</option>
                   <option value="Wali">👥 Wali Santri (Monitoring Mutaba'ah & Progres Ananda)</option>
                   <option value="Santri">📖 Santri (View-Only: Lihat Progres Pribadi & Mushaf)</option>
                 </select>
@@ -1142,7 +1142,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                     onChange={(e) => setNewUserRole(e.target.value as UserRole)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
                   >
-                    <option value="Ustadz">Ustadz (Admin)</option>
+                    <option value="Ustadz">Ustadz</option>
                     <option value="Wali">Wali Santri</option>
                     <option value="Santri">Santri (View-Only)</option>
                   </select>
