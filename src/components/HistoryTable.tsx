@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { User, ZiyadahRecord, MurojaahRecord } from '../types';
+import { User, ZiyadahRecord, MurojaahRecord, Santri } from '../types';
 import { storageService } from '../services/storageService';
-import { Search, Filter, Trash2, BookOpen, RotateCw, CheckCircle, AlertTriangle, Download, Shield, Calendar, Clock } from 'lucide-react';
+import { Search, ListFilter as Filter, Trash2, BookOpen, RotateCw, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle, Download, Shield, Calendar, Clock, FileText } from 'lucide-react';
 import { formatTanggalLengkap, parseDateSafe } from '../utils/dateFormatter';
 import { TableSkeleton } from './SkeletonLoading';
+import { UnduhLaporanModal } from './UnduhLaporanModal';
 
 interface HistoryTableProps {
   currentUser: User;
@@ -11,6 +12,7 @@ interface HistoryTableProps {
   murojaahRecords: MurojaahRecord[];
   onDataChanged: () => void;
   isLoading?: boolean;
+  santriList?: Santri[];
 }
 
 export const HistoryTable: React.FC<HistoryTableProps> = ({
@@ -18,11 +20,13 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   ziyadahRecords,
   murojaahRecords,
   onDataChanged,
-  isLoading = false
+  isLoading = false,
+  santriList = []
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState<'ALL' | 'Ziyadah' | 'Murojaah'>('ALL');
   const [nilaiFilter, setNilaiFilter] = useState<string>('ALL');
+  const [showReportModal, setShowReportModal] = useState(false);
 
   if (isLoading) {
     return <TableSkeleton rows={7} />;
@@ -134,7 +138,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-5">
       {/* Header & Filter Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
-        <div>
+        <div className="space-y-2">
           <h3 className="font-extrabold text-slate-800 text-base sm:text-lg flex items-center gap-2">
             Riwayat Setoran Hafalan Santri
             {isViewOnly && (
@@ -150,6 +154,14 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               ? 'Riwayat lengkap mutaba\'ah setoran Ziyadah & Muroja\'ah hafalan saya'
               : 'Database mutaba\'ah setoran Ziyadah & Muroja\'ah seluruh kelas (Ustadz)'}
           </p>
+          {/* Unduh Laporan Button - Primary */}
+          <button
+            onClick={() => setShowReportModal(true)}
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-bold text-xs shadow-md hover:shadow-lg transition-all cursor-pointer"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Unduh Laporan (PDF)</span>
+          </button>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
@@ -311,6 +323,16 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         <span>Menampilkan <b>{displayedItems.length}</b> dari {combinedItems.length} total setoran</span>
         <span className="text-[11px] text-emerald-800 font-semibold">Data Mutaba'ah Terverifikasi</span>
       </div>
+
+      {/* Unduh Laporan Modal */}
+      <UnduhLaporanModal
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+        currentUser={currentUser}
+        santriList={santriList}
+        ziyadahRecords={ziyadahRecords}
+        murojaahRecords={murojaahRecords}
+      />
     </div>
   );
 };

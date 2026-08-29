@@ -12,7 +12,7 @@ import { MurojaahForm } from './components/MurojaahForm';
 import { HistoryTable } from './components/HistoryTable';
 import { MushafQuran } from './components/MushafQuran';
 import { SantriManagement } from './components/SantriManagement';
-import { LayoutDashboard, PlusCircle, RotateCw, History, BookOpen, Users, Cloud } from 'lucide-react';
+import { LayoutDashboard, CirclePlus as PlusCircle, RotateCw, History, BookOpen, Users, Cloud } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -262,6 +262,7 @@ export default function App() {
                 murojaahRecords={murojaahRecords}
                 onDataChanged={refreshData}
                 isLoading={isLoadingData}
+                santriList={santriList}
               />
             )}
 
