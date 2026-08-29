@@ -46,6 +46,25 @@ export interface MurojaahRecord {
   inputBy: string;
 }
 
+export interface BinnadzorRecord {
+  id: string;
+  timestamp: string;
+  idSantri: string;
+  namaSantri?: string;
+  modeInput?: 'surah' | 'halaman' | 'juz';
+  surah?: string;
+  surahNumber?: number;
+  juz?: number;
+  halamanAwal?: number;
+  halamanAkhir?: number;
+  ayatAwal?: number;
+  ayatAkhir?: number;
+  materi: string;
+  nilai: PredikatNilai;
+  catatan: string;
+  inputBy: string;
+}
+
 export interface SurahMeta {
   number: number;
   nameArabic: string;
@@ -71,4 +90,4 @@ export interface SurahFullDetail extends SurahMeta {
   audioFull?: string;
 }
 
-export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'riwayat' | 'mushaf' | 'santri';
+export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'binnadzor' | 'riwayat' | 'mushaf' | 'santri';

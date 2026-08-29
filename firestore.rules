@@ -20,5 +20,10 @@ service cloud.firestore {
     match /murojaah/{murojaahId} {
       allow read, write: if true;
     }
+
+    // Koleksi binnadzor untuk catatan setoran tilawah / baca mushaf
+    match /binnadzor/{binnadzorId} {
+      allow read, write: if true;
+    }
   }
 }

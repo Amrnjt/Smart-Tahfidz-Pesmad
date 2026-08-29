@@ -47,6 +47,26 @@
         "catatan": { "type": "string" },
         "inputBy": { "type": "string" }
       }
+    },
+    "BinnadzorRecord": {
+      "fields": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "idSantri": { "type": "string" },
+        "namaSantri": { "type": "string" },
+        "modeInput": { "type": "string" },
+        "surah": { "type": "string" },
+        "surahNumber": { "type": "number" },
+        "juz": { "type": "number" },
+        "halamanAwal": { "type": "number" },
+        "halamanAkhir": { "type": "number" },
+        "ayatAwal": { "type": "number" },
+        "ayatAkhir": { "type": "number" },
+        "materi": { "type": "string" },
+        "nilai": { "type": "string" },
+        "catatan": { "type": "string" },
+        "inputBy": { "type": "string" }
+      }
     }
   }
 }

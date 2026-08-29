@@ -1,5 +1,5 @@
-import { User, Santri, ZiyadahRecord, MurojaahRecord } from '../types';
-import { INITIAL_USERS, INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH } from '../data/sampleDatabase';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord } from '../types';
+import { INITIAL_USERS, INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH, INITIAL_BINNADZOR } from '../data/sampleDatabase';
 import { db } from './firebase';
 import {
   collection,
@@ -16,6 +16,7 @@ const STORAGE_KEYS = {
   SANTRI: 'tahfidz_santri_db_v2',
   ZIYADAH: 'tahfidz_ziyadah_db_v2',
   MUROJAAH: 'tahfidz_murojaah_db_v2',
+  BINNADZOR: 'tahfidz_binnadzor_db_v2',
   SESSION: 'tahfidz_active_session_v2'
 };
 
@@ -23,7 +24,8 @@ const COLLECTIONS = {
   USERS: 'users',
   SANTRI: 'santri',
   ZIYADAH: 'ziyadah',
-  MUROJAAH: 'murojaah'
+  MUROJAAH: 'murojaah',
+  BINNADZOR: 'binnadzor'
 };
 
 // Helper to remove any undefined fields before sending to Firestore

@@ -1,4 +1,4 @@
-import { User, Santri, ZiyadahRecord, MurojaahRecord } from '../types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord } from '../types';
 
 export const INITIAL_USERS: User[] = [
   {
@@ -24,4 +24,6 @@ export const INITIAL_SANTRI: Santri[] = [];
 export const INITIAL_ZIYADAH: ZiyadahRecord[] = [];
 
 export const INITIAL_MUROJAAH: MurojaahRecord[] = [];
+
+export const INITIAL_BINNADZOR: BinnadzorRecord[] = [];
 
