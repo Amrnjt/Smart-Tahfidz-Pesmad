@@ -1,0 +1,52 @@
+{
+  "entities": {
+    "User": {
+      "fields": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "password": { "type": "string" },
+        "role": { "type": "string" },
+        "nama": { "type": "string" },
+        "idSantri": { "type": "string" }
+      }
+    },
+    "Santri": {
+      "fields": {
+        "idSantri": { "type": "string" },
+        "namaSantri": { "type": "string" },
+        "kelas": { "type": "string" },
+        "targetHafalan": { "type": "string" },
+        "totalHafalanSelesai": { "type": "number" },
+        "waliNama": { "type": "string" },
+        "waliKontak": { "type": "string" }
+      }
+    },
+    "ZiyadahRecord": {
+      "fields": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "idSantri": { "type": "string" },
+        "namaSantri": { "type": "string" },
+        "surah": { "type": "string" },
+        "surahNumber": { "type": "number" },
+        "ayatAwal": { "type": "number" },
+        "ayatAkhir": { "type": "number" },
+        "nilai": { "type": "string" },
+        "catatan": { "type": "string" },
+        "inputBy": { "type": "string" }
+      }
+    },
+    "MurojaahRecord": {
+      "fields": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "idSantri": { "type": "string" },
+        "namaSantri": { "type": "string" },
+        "surahAtauJuz": { "type": "string" },
+        "nilai": { "type": "string" },
+        "catatan": { "type": "string" },
+        "inputBy": { "type": "string" }
+      }
+    }
+  }
+}

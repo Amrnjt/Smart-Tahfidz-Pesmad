@@ -1,5 +1,15 @@
 import { User, Santri, ZiyadahRecord, MurojaahRecord } from '../types';
 import { INITIAL_USERS, INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH } from '../data/sampleDatabase';
+import { db } from './firebase';
+import {
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot,
+  getDocs,
+  writeBatch
+} from 'firebase/firestore';
 
 const STORAGE_KEYS = {
   USERS: 'tahfidz_users_db_v2',
@@ -9,7 +19,15 @@ const STORAGE_KEYS = {
   SESSION: 'tahfidz_active_session_v2'
 };
 
+const COLLECTIONS = {
+  USERS: 'users',
+  SANTRI: 'santri',
+  ZIYADAH: 'ziyadah',
+  MUROJAAH: 'murojaah'
+};
+
 export const storageService = {
+  // Synchronous fallback getters from LocalStorage for instant UI response
   getUsers(): User[] {
     const data = localStorage.getItem(STORAGE_KEYS.USERS);
     if (!data) {
@@ -67,7 +85,89 @@ export const storageService = {
     }
   },
 
-  saveZiyadah(record: Omit<ZiyadahRecord, 'id' | 'timestamp'>): ZiyadahRecord {
+  // Real-time Firestore Listeners that automatically update localStorage & app state across all devices
+  initRealtimeSync(onUpdate?: () => void): () => void {
+    let initializedUsers = false;
+
+    // Check if initial admin user needs to be seeded into Firestore
+    getDocs(collection(db, COLLECTIONS.USERS)).then((snapshot) => {
+      if (snapshot.empty) {
+        // Seed INITIAL_USERS (admin & ustadz1) to Firestore
+        INITIAL_USERS.forEach((u) => {
+          setDoc(doc(db, COLLECTIONS.USERS, u.id), u).catch(console.error);
+        });
+      }
+    }).catch(console.error);
+
+    // 1. Sync Users
+    const unsubUsers = onSnapshot(collection(db, COLLECTIONS.USERS), (snapshot) => {
+      if (!snapshot.empty) {
+        const users: User[] = [];
+        snapshot.forEach((docSnap) => {
+          users.push(docSnap.data() as User);
+        });
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+        if (onUpdate) onUpdate();
+      } else if (!initializedUsers) {
+        initializedUsers = true;
+        INITIAL_USERS.forEach((u) => {
+          setDoc(doc(db, COLLECTIONS.USERS, u.id), u).catch(console.error);
+        });
+      }
+    }, (err) => {
+      console.warn('Users firestore sync error:', err);
+    });
+
+    // 2. Sync Santri
+    const unsubSantri = onSnapshot(collection(db, COLLECTIONS.SANTRI), (snapshot) => {
+      const santri: Santri[] = [];
+      snapshot.forEach((docSnap) => {
+        santri.push(docSnap.data() as Santri);
+      });
+      localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(santri));
+      if (onUpdate) onUpdate();
+    }, (err) => {
+      console.warn('Santri firestore sync error:', err);
+    });
+
+    // 3. Sync Ziyadah
+    const unsubZiyadah = onSnapshot(collection(db, COLLECTIONS.ZIYADAH), (snapshot) => {
+      const records: ZiyadahRecord[] = [];
+      snapshot.forEach((docSnap) => {
+        records.push(docSnap.data() as ZiyadahRecord);
+      });
+      // Sort newest first
+      records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+      localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
+      if (onUpdate) onUpdate();
+    }, (err) => {
+      console.warn('Ziyadah firestore sync error:', err);
+    });
+
+    // 4. Sync Murojaah
+    const unsubMurojaah = onSnapshot(collection(db, COLLECTIONS.MUROJAAH), (snapshot) => {
+      const records: MurojaahRecord[] = [];
+      snapshot.forEach((docSnap) => {
+        records.push(docSnap.data() as MurojaahRecord);
+      });
+      // Sort newest first
+      records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+      localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(records));
+      if (onUpdate) onUpdate();
+    }, (err) => {
+      console.warn('Murojaah firestore sync error:', err);
+    });
+
+    // Return cleanup function to unsubscribe from all listeners
+    return () => {
+      unsubUsers();
+      unsubSantri();
+      unsubZiyadah();
+      unsubMurojaah();
+    };
+  },
+
+  async saveZiyadah(record: Omit<ZiyadahRecord, 'id' | 'timestamp'>): Promise<ZiyadahRecord> {
     const records = this.getZiyadahRecords();
     const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
     
@@ -82,12 +182,21 @@ export const storageService = {
       namaSantri: santri?.namaSantri || record.idSantri
     };
 
+    // 1. Optimistic Local Save
     records.unshift(newRecord);
     localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
+
+    // 2. Cloud Firestore Save
+    try {
+      await setDoc(doc(db, COLLECTIONS.ZIYADAH, newRecord.id), newRecord);
+    } catch (e) {
+      console.error('Failed to save Ziyadah to Firestore:', e);
+    }
+
     return newRecord;
   },
 
-  saveMurojaah(record: Omit<MurojaahRecord, 'id' | 'timestamp'>): MurojaahRecord {
+  async saveMurojaah(record: Omit<MurojaahRecord, 'id' | 'timestamp'>): Promise<MurojaahRecord> {
     const records = this.getMurojaahRecords();
     const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
     
@@ -102,34 +211,69 @@ export const storageService = {
       namaSantri: santri?.namaSantri || record.idSantri
     };
 
+    // 1. Optimistic Local Save
     records.unshift(newRecord);
     localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(records));
+
+    // 2. Cloud Firestore Save
+    try {
+      await setDoc(doc(db, COLLECTIONS.MUROJAAH, newRecord.id), newRecord);
+    } catch (e) {
+      console.error('Failed to save Murojaah to Firestore:', e);
+    }
+
     return newRecord;
   },
 
-  deleteRecord(type: 'Ziyadah' | 'Murojaah', id: string): boolean {
+  async deleteRecord(type: 'Ziyadah' | 'Murojaah', id: string): Promise<boolean> {
     if (type === 'Ziyadah') {
       const records = this.getZiyadahRecords().filter(r => r.id !== id);
       localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
+      try {
+        await deleteDoc(doc(db, COLLECTIONS.ZIYADAH, id));
+      } catch (e) {
+        console.error('Failed to delete Ziyadah from Firestore:', e);
+      }
     } else {
       const records = this.getMurojaahRecords().filter(r => r.id !== id);
       localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(records));
+      try {
+        await deleteDoc(doc(db, COLLECTIONS.MUROJAAH, id));
+      } catch (e) {
+        console.error('Failed to delete Murojaah from Firestore:', e);
+      }
     }
     return true;
   },
 
-  updateRecord(type: 'Ziyadah' | 'Murojaah', id: string, updatedData: Partial<ZiyadahRecord | MurojaahRecord>): boolean {
+  async updateRecord(type: 'Ziyadah' | 'Murojaah', id: string, updatedData: Partial<ZiyadahRecord | MurojaahRecord>): Promise<boolean> {
     if (type === 'Ziyadah') {
       const records = this.getZiyadahRecords().map(r => r.id === id ? { ...r, ...updatedData } as ZiyadahRecord : r);
       localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
+      const target = records.find(r => r.id === id);
+      if (target) {
+        try {
+          await setDoc(doc(db, COLLECTIONS.ZIYADAH, id), target, { merge: true });
+        } catch (e) {
+          console.error('Failed to update Ziyadah in Firestore:', e);
+        }
+      }
     } else {
       const records = this.getMurojaahRecords().map(r => r.id === id ? { ...r, ...updatedData } as MurojaahRecord : r);
       localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(records));
+      const target = records.find(r => r.id === id);
+      if (target) {
+        try {
+          await setDoc(doc(db, COLLECTIONS.MUROJAAH, id), target, { merge: true });
+        } catch (e) {
+          console.error('Failed to update Murojaah in Firestore:', e);
+        }
+      }
     }
     return true;
   },
 
-  addSantri(santri: Santri, defaultPassword = '123'): Santri {
+  async addSantri(santri: Santri, defaultPassword = '123'): Promise<Santri> {
     const list = this.getSantriList();
     list.push(santri);
     localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(list));
@@ -139,62 +283,106 @@ export const storageService = {
     
     // 1. Wali Account
     const waliUsername = `wali_${santri.idSantri.toLowerCase()}`;
-    if (!users.some(u => u.username.toLowerCase() === waliUsername.toLowerCase())) {
-      users.push({
-        id: `USR-WLI-${Date.now().toString().slice(-4)}`,
-        username: waliUsername,
-        password: defaultPassword,
-        role: 'Wali',
-        nama: santri.waliNama ? `Wali ${santri.namaSantri} (${santri.waliNama})` : `Wali ${santri.namaSantri}`,
-        idSantri: santri.idSantri
-      });
+    const existingWali = users.find(u => u.username.toLowerCase() === waliUsername.toLowerCase());
+    const waliUser: User = existingWali || {
+      id: `USR-WLI-${Date.now().toString().slice(-4)}-${santri.idSantri}`,
+      username: waliUsername,
+      password: defaultPassword,
+      role: 'Wali',
+      nama: santri.waliNama ? `Wali ${santri.namaSantri} (${santri.waliNama})` : `Wali ${santri.namaSantri}`,
+      idSantri: santri.idSantri
+    };
+    if (!existingWali) {
+      users.push(waliUser);
     }
 
     // 2. Santri View-Only Account (login via ID Santri)
-    if (!users.some(u => u.username.toLowerCase() === santri.idSantri.toLowerCase())) {
-      users.push({
-        id: `USR-STR-${Date.now().toString().slice(-4)}`,
-        username: santri.idSantri,
-        password: defaultPassword,
-        role: 'Santri',
-        nama: santri.namaSantri,
-        idSantri: santri.idSantri
-      });
+    const existingSantriUser = users.find(u => u.username.toLowerCase() === santri.idSantri.toLowerCase());
+    const santriUser: User = existingSantriUser || {
+      id: `USR-STR-${Date.now().toString().slice(-4)}-${santri.idSantri}`,
+      username: santri.idSantri,
+      password: defaultPassword,
+      role: 'Santri',
+      nama: santri.namaSantri,
+      idSantri: santri.idSantri
+    };
+    if (!existingSantriUser) {
+      users.push(santriUser);
     }
 
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+    // Sync to Firestore Cloud Database
+    try {
+      const batch = writeBatch(db);
+      batch.set(doc(db, COLLECTIONS.SANTRI, santri.idSantri), santri);
+      batch.set(doc(db, COLLECTIONS.USERS, waliUser.id), waliUser);
+      batch.set(doc(db, COLLECTIONS.USERS, santriUser.id), santriUser);
+      await batch.commit();
+    } catch (e) {
+      console.error('Failed to sync new Santri to Firestore:', e);
+    }
+
     return santri;
   },
 
-  deleteSantri(idSantri: string, deleteRelatedHistory = true): boolean {
+  async deleteSantri(idSantri: string, deleteRelatedHistory = true): Promise<boolean> {
     // 1. Remove from Santri list
     const santriList = this.getSantriList().filter(s => s.idSantri !== idSantri);
     localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(santriList));
 
     // 2. Remove associated Wali and Santri user accounts
+    const usersToDelete = this.getUsers().filter(u => u.idSantri === idSantri || u.username.toLowerCase() === idSantri.toLowerCase());
     const users = this.getUsers().filter(u => u.idSantri !== idSantri && u.username.toLowerCase() !== idSantri.toLowerCase());
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
 
     // 3. Clean up related Ziyadah and Murojaah records if requested
+    let ziyadahToDelete: ZiyadahRecord[] = [];
+    let murojaahToDelete: MurojaahRecord[] = [];
+
     if (deleteRelatedHistory) {
+      ziyadahToDelete = this.getZiyadahRecords().filter(r => r.idSantri === idSantri);
       const ziyadah = this.getZiyadahRecords().filter(r => r.idSantri !== idSantri);
       localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(ziyadah));
 
+      murojaahToDelete = this.getMurojaahRecords().filter(r => r.idSantri === idSantri);
       const murojaah = this.getMurojaahRecords().filter(r => r.idSantri !== idSantri);
       localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(murojaah));
+    }
+
+    // Cloud Firestore batch delete
+    try {
+      const batch = writeBatch(db);
+      batch.delete(doc(db, COLLECTIONS.SANTRI, idSantri));
+      usersToDelete.forEach((u) => batch.delete(doc(db, COLLECTIONS.USERS, u.id)));
+      if (deleteRelatedHistory) {
+        ziyadahToDelete.forEach((z) => batch.delete(doc(db, COLLECTIONS.ZIYADAH, z.id)));
+        murojaahToDelete.forEach((m) => batch.delete(doc(db, COLLECTIONS.MUROJAAH, m.id)));
+      }
+      await batch.commit();
+    } catch (e) {
+      console.error('Failed to delete Santri from Firestore:', e);
     }
 
     return true;
   },
 
-  addUser(user: User): User {
+  async addUser(user: User): Promise<User> {
     const users = this.getUsers();
     users.push(user);
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+    // Cloud Firestore save
+    try {
+      await setDoc(doc(db, COLLECTIONS.USERS, user.id), user);
+    } catch (e) {
+      console.error('Failed to save User to Firestore:', e);
+    }
+
     return user;
   },
 
-  updateUser(id: string, updatedData: Partial<User>): boolean {
+  async updateUser(id: string, updatedData: Partial<User>): Promise<boolean> {
     const users = this.getUsers().map(u => {
       if (u.id === id) {
         return { ...u, ...updatedData };
@@ -209,12 +397,30 @@ export const storageService = {
       this.setSession({ ...currentSession, ...updatedData });
     }
 
+    // Cloud Firestore update
+    const target = users.find(u => u.id === id);
+    if (target) {
+      try {
+        await setDoc(doc(db, COLLECTIONS.USERS, id), target, { merge: true });
+      } catch (e) {
+        console.error('Failed to update User in Firestore:', e);
+      }
+    }
+
     return true;
   },
 
-  deleteUser(id: string): boolean {
+  async deleteUser(id: string): Promise<boolean> {
     const users = this.getUsers().filter(u => u.id !== id);
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+    // Cloud Firestore delete
+    try {
+      await deleteDoc(doc(db, COLLECTIONS.USERS, id));
+    } catch (e) {
+      console.error('Failed to delete User from Firestore:', e);
+    }
+
     return true;
   },
 
@@ -236,11 +442,10 @@ export const storageService = {
     }
   },
 
-  resetToDefault() {
+  async resetToDefault() {
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
     localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(INITIAL_SANTRI));
     localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(INITIAL_ZIYADAH));
     localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(INITIAL_MUROJAAH));
   }
 };
-

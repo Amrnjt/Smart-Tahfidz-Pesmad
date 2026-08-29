@@ -12,7 +12,7 @@ import { MurojaahForm } from './components/MurojaahForm';
 import { HistoryTable } from './components/HistoryTable';
 import { MushafQuran } from './components/MushafQuran';
 import { SantriManagement } from './components/SantriManagement';
-import { LayoutDashboard, PlusCircle, RotateCw, History, BookOpen, Users, Shield } from 'lucide-react';
+import { LayoutDashboard, PlusCircle, RotateCw, History, BookOpen, Users, Cloud } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -22,20 +22,29 @@ export default function App() {
   const [murojaahRecords, setMurojaahRecords] = useState<MurojaahRecord[]>([]);
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
 
-  // Load initial data
+  const refreshData = () => {
+    setSantriList(storageService.getSantriList());
+    setZiyadahRecords(storageService.getZiyadahRecords());
+    setMurojaahRecords(storageService.getMurojaahRecords());
+  };
+
+  // Setup real-time Firebase Firestore synchronization across all devices
   useEffect(() => {
     refreshData();
     const session = storageService.getSession();
     if (session) {
       setCurrentUser(session);
     }
-  }, []);
 
-  const refreshData = () => {
-    setSantriList(storageService.getSantriList());
-    setZiyadahRecords(storageService.getZiyadahRecords());
-    setMurojaahRecords(storageService.getMurojaahRecords());
-  };
+    // Subscribe to real-time changes from Firestore database
+    const unsubscribe = storageService.initRealtimeSync(() => {
+      refreshData();
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
@@ -242,11 +251,12 @@ export default function App() {
             <div className="pt-6 border-t border-slate-200/80">
               <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   <span>Tahfidz al-Qur'an Pesantren Madrasah Darul Fikri • Jl. Budi Utomo No. 190 Kepohbaru Bojonegoro</span>
                 </div>
-                <div className="text-slate-400 text-[11px]">
-                  Sistem Mutaba'ah & Manajemen Tahfidz
+                <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 text-[11px] font-semibold">
+                  <Cloud className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>Cloud Database Firestore Terhubung (Real-Time Multi-Device)</span>
                 </div>
               </div>
             </div>
@@ -265,4 +275,3 @@ export default function App() {
     </div>
   );
 }
-
