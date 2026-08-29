@@ -76,7 +76,7 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
               Form Input Ziyadah (Hafalan Baru)
             </h3>
             <p className="text-xs sm:text-sm text-slate-500">
-              Simpan rekam setoran penambahan hafalan baru langsung ke database Google Sheets
+              Simpan rekam setoran penambahan hafalan baru langsung ke database sistem Tahfidz
             </p>
           </div>
         </div>
@@ -84,10 +84,19 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
         {showSuccessToast && (
           <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl text-emerald-800 text-sm font-semibold flex items-center gap-2.5 animate-bounce">
             <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0" />
-            <span>Setoran Ziyadah berhasil disimpan ke Google Sheets!</span>
+            <span>Setoran Ziyadah berhasil disimpan ke database!</span>
           </div>
         )}
 
+        {santriList.length === 0 ? (
+          <div className="text-center py-10 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 space-y-3">
+            <BookOpen className="w-8 h-8 mx-auto text-slate-400" />
+            <h4 className="text-sm font-bold text-slate-700">Belum Ada Data Santri</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              Silakan daftarkan data santri terlebih dahulu di menu <b>Kelola Santri & Akun</b> sebelum menginput setoran Ziyadah.
+            </p>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Santri & Surah Selectors */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -233,6 +242,7 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

@@ -72,7 +72,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <div
                 onClick={() => {
                   setSelectedRoleHint('Ustadz');
-                  if (!username) setUsername('ustadz1');
+                  setUsername('admin');
+                  setPassword('123');
                 }}
                 className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
                   selectedRoleHint === 'Ustadz'
@@ -85,7 +86,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   <span>Ustadz (Admin)</span>
                 </div>
                 <p className="text-[10px] text-slate-500 mt-1 leading-snug">
-                  Input setoran, evaluasi hafalan, kelola data santri & akun.
+                  Login Admin default: <code className="font-mono font-bold text-emerald-800">admin</code> (PIN: 123)
                 </p>
               </div>
 
@@ -93,7 +94,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <div
                 onClick={() => {
                   setSelectedRoleHint('Wali');
-                  if (!username) setUsername('wali_str001');
+                  setUsername('wali_str001');
+                  setPassword('123');
                 }}
                 className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
                   selectedRoleHint === 'Wali'
@@ -106,7 +108,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   <span>Wali Santri</span>
                 </div>
                 <p className="text-[10px] text-slate-500 mt-1 leading-snug">
-                  Pantau perkembangan mutaba'ah hafalan & target ananda.
+                  Akses di rumah: format <code className="font-mono font-bold text-teal-800">wali_[idsantri]</code> (PIN: 123)
                 </p>
               </div>
 
@@ -114,7 +116,8 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
               <div
                 onClick={() => {
                   setSelectedRoleHint('Santri');
-                  if (!username) setUsername('STR001');
+                  setUsername('STR001');
+                  setPassword('123');
                 }}
                 className={`p-3 rounded-2xl border text-left cursor-pointer transition-all ${
                   selectedRoleHint === 'Santri'
@@ -127,7 +130,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
                   <span>Santri (View-Only)</span>
                 </div>
                 <p className="text-[10px] text-slate-500 mt-1 leading-snug">
-                  Cek progres hafalan pribadi & baca Mushaf Al-Qur'an 30 Juz.
+                  Akses mandiri: gunakan <code className="font-mono font-bold text-cyan-800">[ID_Santri]</code> (PIN: 123)
                 </p>
               </div>
             </div>

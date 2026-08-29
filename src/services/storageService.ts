@@ -2,11 +2,11 @@ import { User, Santri, ZiyadahRecord, MurojaahRecord } from '../types';
 import { INITIAL_USERS, INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH } from '../data/sampleDatabase';
 
 const STORAGE_KEYS = {
-  USERS: 'tahfidz_users_db',
-  SANTRI: 'tahfidz_santri_db',
-  ZIYADAH: 'tahfidz_ziyadah_db',
-  MUROJAAH: 'tahfidz_murojaah_db',
-  SESSION: 'tahfidz_active_session'
+  USERS: 'tahfidz_users_db_v2',
+  SANTRI: 'tahfidz_santri_db_v2',
+  ZIYADAH: 'tahfidz_ziyadah_db_v2',
+  MUROJAAH: 'tahfidz_murojaah_db_v2',
+  SESSION: 'tahfidz_active_session_v2'
 };
 
 export const storageService = {
@@ -17,7 +17,12 @@ export const storageService = {
       return INITIAL_USERS;
     }
     try {
-      return JSON.parse(data);
+      const parsed = JSON.parse(data);
+      if (!Array.isArray(parsed) || parsed.length === 0) {
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
+        return INITIAL_USERS;
+      }
+      return parsed;
     } catch {
       return INITIAL_USERS;
     }
@@ -129,7 +134,7 @@ export const storageService = {
     list.push(santri);
     localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(list));
 
-    // Automatically create Wali and Santri accounts
+    // Automatically create Wali and Santri accounts for home and remote access
     const users = this.getUsers();
     
     // 1. Wali Account
@@ -190,8 +195,20 @@ export const storageService = {
   },
 
   updateUser(id: string, updatedData: Partial<User>): boolean {
-    const users = this.getUsers().map(u => u.id === id ? { ...u, ...updatedData } : u);
+    const users = this.getUsers().map(u => {
+      if (u.id === id) {
+        return { ...u, ...updatedData };
+      }
+      return u;
+    });
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+
+    // Update active session if the edited user is currently logged in
+    const currentSession = this.getSession();
+    if (currentSession && currentSession.id === id) {
+      this.setSession({ ...currentSession, ...updatedData });
+    }
+
     return true;
   },
 
@@ -226,3 +243,4 @@ export const storageService = {
     localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(INITIAL_MUROJAAH));
   }
 };
+

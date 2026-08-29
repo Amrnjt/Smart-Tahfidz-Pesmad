@@ -181,60 +181,77 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {santriList.map((santri) => {
-            const santriZiyadahCount = ziyadahRecords.filter(r => r.idSantri === santri.idSantri).length;
-            const santriMurojaahCount = murojaahRecords.filter(r => r.idSantri === santri.idSantri).length;
+        {santriList.length === 0 ? (
+          <div className="text-center py-10 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 space-y-3">
+            <Users className="w-8 h-8 mx-auto text-slate-400" />
+            <h4 className="text-sm font-bold text-slate-700">Belum Ada Data Santri Terdaftar</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              Tambahkan data santri baru untuk mulai mencatat setoran hafalan Ziyadah & Muroja'ah.
+            </p>
+            <button
+              onClick={() => setActiveTab('santri')}
+              className="px-4 py-2 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <PlusCircle className="w-4 h-4" />
+              <span>Tambah Santri Baru</span>
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {santriList.map((santri) => {
+              const santriZiyadahCount = ziyadahRecords.filter(r => r.idSantri === santri.idSantri).length;
+              const santriMurojaahCount = murojaahRecords.filter(r => r.idSantri === santri.idSantri).length;
 
-            return (
-              <div
-                key={santri.idSantri}
-                className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 hover:border-emerald-500 hover:bg-emerald-50/40 transition-all flex flex-col justify-between"
-              >
-                <div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
-                      {santri.idSantri}
-                    </span>
-                    <span className="text-xs text-slate-500 font-medium">{santri.kelas}</span>
+              return (
+                <div
+                  key={santri.idSantri}
+                  className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 hover:border-emerald-500 hover:bg-emerald-50/40 transition-all flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
+                        {santri.idSantri}
+                      </span>
+                      <span className="text-xs text-slate-500 font-medium">{santri.kelas}</span>
+                    </div>
+                    <h4 className="font-bold text-slate-800 text-sm mt-1.5">{santri.namaSantri}</h4>
+                    <p className="text-xs text-slate-500 mt-0.5">Target: {santri.targetHafalan}</p>
+                    
+                    <div className="flex items-center gap-3 mt-2 text-[11px] text-slate-600">
+                      <span className="bg-white px-2 py-0.5 rounded border border-slate-200">
+                        📖 {santriZiyadahCount} Ziyadah
+                      </span>
+                      <span className="bg-white px-2 py-0.5 rounded border border-slate-200">
+                        🔄 {santriMurojaahCount} Muroja'ah
+                      </span>
+                    </div>
                   </div>
-                  <h4 className="font-bold text-slate-800 text-sm mt-1.5">{santri.namaSantri}</h4>
-                  <p className="text-xs text-slate-500 mt-0.5">Target: {santri.targetHafalan}</p>
-                  
-                  <div className="flex items-center gap-3 mt-2 text-[11px] text-slate-600">
-                    <span className="bg-white px-2 py-0.5 rounded border border-slate-200">
-                      📖 {santriZiyadahCount} Ziyadah
-                    </span>
-                    <span className="bg-white px-2 py-0.5 rounded border border-slate-200">
-                      🔄 {santriMurojaahCount} Muroja'ah
-                    </span>
+
+                  <div className="pt-3 mt-3 border-t border-slate-200/60 flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        if (onSelectSantriForZiyadah) onSelectSantriForZiyadah(santri.idSantri);
+                        setActiveTab('ziyadah');
+                      }}
+                      className="flex-1 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-semibold text-center transition cursor-pointer"
+                    >
+                      + Ziyadah
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (onSelectSantriForZiyadah) onSelectSantriForZiyadah(santri.idSantri);
+                        setActiveTab('murojaah');
+                      }}
+                      className="flex-1 py-1.5 rounded-lg bg-teal-800 hover:bg-teal-700 text-white text-xs font-semibold text-center transition cursor-pointer"
+                    >
+                      + Muroja'ah
+                    </button>
                   </div>
                 </div>
-
-                <div className="pt-3 mt-3 border-t border-slate-200/60 flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      if (onSelectSantriForZiyadah) onSelectSantriForZiyadah(santri.idSantri);
-                      setActiveTab('ziyadah');
-                    }}
-                    className="flex-1 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-semibold text-center transition cursor-pointer"
-                  >
-                    + Ziyadah
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (onSelectSantriForZiyadah) onSelectSantriForZiyadah(santri.idSantri);
-                      setActiveTab('murojaah');
-                    }}
-                    className="flex-1 py-1.5 rounded-lg bg-teal-800 hover:bg-teal-700 text-white text-xs font-semibold text-center transition cursor-pointer"
-                  >
-                    + Muroja'ah
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

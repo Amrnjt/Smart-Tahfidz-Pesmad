@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Santri, User, UserRole } from '../types';
 import { storageService } from '../services/storageService';
-import { Users, UserPlus, Target, Trash2, Search, AlertTriangle, CheckCircle2, Shield, Key, Edit3, UserCheck } from 'lucide-react';
+import { Users, UserPlus, Target, Trash2, Search, AlertTriangle, CheckCircle2, Shield, Key, Edit3, UserCheck, Save, Sparkles } from 'lucide-react';
 
 interface SantriManagementProps {
   santriList: Santri[];
@@ -17,6 +17,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [santriToDelete, setSantriToDelete] = useState<Santri | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [deleteWithHistory, setDeleteWithHistory] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -32,17 +33,55 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // New Ustadz / User Form State
+  // New User Form State
   const [newUsername, setNewUsername] = useState('');
   const [newUserNama, setNewUserNama] = useState('');
   const [newUserPassword, setNewUserPassword] = useState('123');
   const [newUserRole, setNewUserRole] = useState<UserRole>('Ustadz');
+  const [newUserIdSantri, setNewUserIdSantri] = useState('');
+
+  // Edit User Form State (Save-able role and profile)
+  const [editNama, setEditNama] = useState('');
+  const [editUsername, setEditUsername] = useState('');
+  const [editPassword, setEditPassword] = useState('');
+  const [editRole, setEditRole] = useState<UserRole>('Ustadz');
+  const [editIdSantri, setEditIdSantri] = useState('');
 
   const showToast = (type: 'success' | 'error', message: string) => {
     setNotification({ type, message });
     setTimeout(() => {
       setNotification(null);
     }, 3500);
+  };
+
+  const handleOpenEditUser = (u: User) => {
+    setUserToEdit(u);
+    setEditNama(u.nama);
+    setEditUsername(u.username);
+    setEditPassword(u.password);
+    setEditRole(u.role);
+    setEditIdSantri(u.idSantri || '');
+  };
+
+  const handleSaveEditUser = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userToEdit || !editNama.trim() || !editUsername.trim() || !editPassword.trim()) return;
+
+    setIsSaving(true);
+    setTimeout(() => {
+      storageService.updateUser(userToEdit.id, {
+        nama: editNama.trim(),
+        username: editUsername.trim(),
+        password: editPassword.trim(),
+        role: editRole,
+        idSantri: editRole === 'Ustadz' ? '' : editIdSantri.trim()
+      });
+
+      setIsSaving(false);
+      setUserToEdit(null);
+      onDataChanged();
+      showToast('success', `Pengaturan akun ${editNama.trim()} dan role ${editRole} berhasil disimpan!`);
+    }, 300);
   };
 
   const handleAddSantri = (e: React.FormEvent) => {
@@ -71,7 +110,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       setNewWaliNama('');
       setNewWaliKontak('');
       onDataChanged();
-      showToast('success', `Santri ${newNama.trim()} (${generatedId}) berhasil ditambahkan beserta akun Wali & Santri.`);
+      showToast('success', `Santri ${newNama.trim()} (${generatedId}) berhasil ditambahkan. Akun Wali (wali_${generatedId.toLowerCase()}) & Santri (${generatedId}) siap diakses dari rumah.`);
     }, 300);
   };
 
@@ -87,7 +126,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
         password: newUserPassword.trim(),
         role: newUserRole,
         nama: newUserNama.trim(),
-        idSantri: ''
+        idSantri: newUserRole === 'Ustadz' ? '' : newUserIdSantri.trim()
       };
 
       storageService.addUser(newUser);
@@ -96,8 +135,9 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       setNewUsername('');
       setNewUserNama('');
       setNewUserPassword('123');
+      setNewUserIdSantri('');
       onDataChanged();
-      showToast('success', `Akun ${newUserNama.trim()} (${newUserRole}) berhasil dibuat.`);
+      showToast('success', `Akun ${newUserNama.trim()} (Role: ${newUserRole}) berhasil dibuat & disimpan.`);
     }, 300);
   };
 
@@ -150,7 +190,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const filteredUsers = usersList.filter(u =>
     u.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
     u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.role.toLowerCase().includes(searchQuery.toLowerCase())
+    u.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (u.idSantri && u.idSantri.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -218,7 +259,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={activeSubTab === 'santri' ? 'Cari nama, ID, kelas...' : 'Cari user, nama, role...'}
+            placeholder={activeSubTab === 'santri' ? 'Cari nama, ID, kelas...' : 'Cari user, nama, role, NIS...'}
             className="w-full pl-9 pr-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
           />
         </div>
@@ -239,7 +280,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
             className="w-full sm:w-auto px-4 py-2 bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap"
           >
             <UserPlus className="w-4 h-4" />
-            <span>Tambah Akun Ustadz / User</span>
+            <span>Tambah Akun Baru</span>
           </button>
         )}
       </div>
@@ -247,7 +288,32 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       {/* Tab 1: Santri Cards Grid */}
       {activeSubTab === 'santri' && (
         <>
-          {filteredSantri.length === 0 ? (
+          {santriList.length === 0 ? (
+            <div className="text-center py-14 px-6 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 text-slate-600 space-y-4 max-w-xl mx-auto">
+              <div className="w-16 h-16 rounded-3xl bg-emerald-100 text-emerald-800 flex items-center justify-center mx-auto shadow-inner">
+                <Users className="w-8 h-8 text-emerald-700" />
+              </div>
+              <div>
+                <h4 className="font-extrabold text-slate-800 text-base">Belum Ada Data Santri</h4>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Database santri bersih & siap digunakan. Tambahkan santri baru untuk mulai mencatat setoran Ziyadah & Muroja'ah.
+                </p>
+              </div>
+              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-[11px] text-emerald-900 text-left flex items-start gap-2">
+                <Sparkles className="w-4 h-4 text-emerald-700 flex-shrink-0 mt-0.5" />
+                <span>
+                  <b>Akses Otomatis Wali & Santri:</b> Ketika Anda mendaftarkan santri, akun login <b>Wali</b> (<code className="font-mono bg-white px-1 rounded border">wali_id</code>) dan <b>Santri</b> (<code className="font-mono bg-white px-1 rounded border">id_santri</code>) akan otomatis dibuat dan siap diakses langsung dari rumah!
+                </span>
+              </div>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md transition inline-flex items-center gap-2 cursor-pointer"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Tambah Santri Pertama</span>
+              </button>
+            </div>
+          ) : filteredSantri.length === 0 ? (
             <div className="text-center py-12 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 space-y-2">
               <Users className="w-8 h-8 mx-auto text-slate-400" />
               <p className="text-sm font-semibold">Tidak ada santri yang cocok dengan pencarian.</p>
@@ -318,78 +384,237 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
         </>
       )}
 
-      {/* Tab 2: User Accounts Table */}
+      {/* Tab 2: User Accounts Table with Save-able Role Editing */}
       {activeSubTab === 'users' && (
-        <div className="overflow-x-auto border border-slate-200 rounded-2xl">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-100/90 text-slate-700 uppercase font-bold tracking-wider border-b border-slate-200">
-              <tr>
-                <th className="py-3 px-3.5">Nama Pengguna</th>
-                <th className="py-3 px-3.5">Username Login</th>
-                <th className="py-3 px-3.5">Role Hak Akses</th>
-                <th className="py-3 px-3.5">Kaitan ID Santri</th>
-                <th className="py-3 px-3.5 text-center">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 font-medium">
-              {filteredUsers.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-400">
-                    Tidak ada akun yang sesuai pencarian.
-                  </td>
-                </tr>
-              ) : (
-                filteredUsers.map((u) => {
-                  let roleBadge = null;
-                  if (u.role === 'Ustadz') {
-                    roleBadge = (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">
-                        <Shield className="w-3 h-3 text-emerald-700" /> Ustadz (Admin)
-                      </span>
-                    );
-                  } else if (u.role === 'Wali') {
-                    roleBadge = (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 font-bold text-[10px] border border-teal-300">
-                        <Users className="w-3 h-3 text-teal-700" /> Wali Santri
-                      </span>
-                    );
-                  } else {
-                    roleBadge = (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-100 text-cyan-800 font-bold text-[10px] border border-cyan-300">
-                        <UserCheck className="w-3 h-3 text-cyan-700" /> Santri (View-Only)
-                      </span>
-                    );
-                  }
+        <div className="space-y-3">
+          <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs text-emerald-900 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Shield className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+              <span>
+                Klik tombol <b>Edit (✏️)</b> pada setiap baris akun untuk <b>mengubah Role (Ustadz/Wali/Santri), Username, Password, dan Kaitan ID Santri</b> secara save-able.
+              </span>
+            </div>
+          </div>
 
-                  return (
-                    <tr key={u.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-3 px-3.5 font-bold text-slate-800">
-                        {u.nama}
-                      </td>
-                      <td className="py-3 px-3.5 font-mono text-slate-700">
-                        <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                          {u.username}
+          <div className="overflow-x-auto border border-slate-200 rounded-2xl">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-100/90 text-slate-700 uppercase font-bold tracking-wider border-b border-slate-200">
+                <tr>
+                  <th className="py-3 px-3.5">Nama Pengguna</th>
+                  <th className="py-3 px-3.5">Username Login</th>
+                  <th className="py-3 px-3.5">Password</th>
+                  <th className="py-3 px-3.5">Role Hak Akses</th>
+                  <th className="py-3 px-3.5">Kaitan ID Santri</th>
+                  <th className="py-3 px-3.5 text-center">Aksi / Setting Role</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-medium">
+                {filteredUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-slate-400">
+                      Tidak ada akun yang sesuai pencarian.
+                    </td>
+                  </tr>
+                ) : (
+                  filteredUsers.map((u) => {
+                    let roleBadge = null;
+                    if (u.role === 'Ustadz') {
+                      roleBadge = (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">
+                          <Shield className="w-3 h-3 text-emerald-700" /> Ustadz (Admin)
                         </span>
-                      </td>
-                      <td className="py-3 px-3.5">{roleBadge}</td>
-                      <td className="py-3 px-3.5 font-mono text-slate-500">
-                        {u.idSantri || '-'}
-                      </td>
-                      <td className="py-3 px-3.5 text-center">
-                        <button
-                          onClick={() => setUserToDelete(u)}
-                          className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                          title="Hapus Akun"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
+                      );
+                    } else if (u.role === 'Wali') {
+                      roleBadge = (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-teal-100 text-teal-800 font-bold text-[10px] border border-teal-300">
+                          <Users className="w-3 h-3 text-teal-700" /> Wali Santri
+                        </span>
+                      );
+                    } else {
+                      roleBadge = (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-100 text-cyan-800 font-bold text-[10px] border border-cyan-300">
+                          <UserCheck className="w-3 h-3 text-cyan-700" /> Santri (View-Only)
+                        </span>
+                      );
+                    }
+
+                    return (
+                      <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="py-3 px-3.5 font-bold text-slate-800">
+                          {u.nama}
+                        </td>
+                        <td className="py-3 px-3.5 font-mono text-slate-700">
+                          <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                            {u.username}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3.5 font-mono text-slate-500">
+                          <span className="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                            {u.password}
+                          </span>
+                        </td>
+                        <td className="py-3 px-3.5">{roleBadge}</td>
+                        <td className="py-3 px-3.5 font-mono text-slate-500">
+                          {u.idSantri || '-'}
+                        </td>
+                        <td className="py-3 px-3.5 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              onClick={() => handleOpenEditUser(u)}
+                              className="p-1.5 px-2.5 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-semibold border border-emerald-200"
+                              title="Setting Role & Edit Akun"
+                            >
+                              <Edit3 className="w-3.5 h-3.5 text-emerald-700" />
+                              <span>Edit Role</span>
+                            </button>
+                            <button
+                              onClick={() => setUserToDelete(u)}
+                              className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                              title="Hapus Akun"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Setting Role & Edit User (Save-able) */}
+      {userToEdit && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-7 border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <h4 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-emerald-700" />
+                Setting Role & Edit Akun Pengguna
+              </h4>
+              <button
+                onClick={() => setUserToEdit(null)}
+                className="text-slate-400 hover:text-slate-600 text-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditUser} className="space-y-3.5">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Nama Lengkap Pengguna <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editNama}
+                  onChange={(e) => setEditNama(e.target.value)}
+                  placeholder="Contoh: Ustadz Ahmad Fauzi"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Username Login <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editUsername}
+                    onChange={(e) => setEditUsername(e.target.value)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Password / PIN <span className="text-rose-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              {/* Save-able Role Selection */}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  Role Hak Akses (Save-able) <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value as UserRole)}
+                  className="w-full p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-950 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="Ustadz">🛡️ Ustadz (Admin Penuh: Input Setoran, Kelola Santri & Akun)</option>
+                  <option value="Wali">👥 Wali Santri (Monitoring Mutaba'ah & Progres Ananda)</option>
+                  <option value="Santri">📖 Santri (View-Only: Lihat Progres Pribadi & Mushaf)</option>
+                </select>
+              </div>
+
+              {/* Kaitan ID Santri jika Wali atau Santri */}
+              {editRole !== 'Ustadz' && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Kaitan ID Santri / NIS <span className="text-rose-500">*</span>
+                  </label>
+                  {santriList.length > 0 ? (
+                    <select
+                      value={editIdSantri}
+                      onChange={(e) => setEditIdSantri(e.target.value)}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
+                    >
+                      <option value="">-- Pilih ID Santri Terkait --</option>
+                      {santriList.map((s) => (
+                        <option key={s.idSantri} value={s.idSantri}>
+                          {s.idSantri} - {s.namaSantri} ({s.kelas})
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={editIdSantri}
+                      onChange={(e) => setEditIdSantri(e.target.value)}
+                      placeholder="Masukkan ID Santri (cth: STR001)"
+                      className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  )}
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Akun ini akan menampilkan data mutaba'ah santri dengan ID yang dipilih saat login dari rumah.
+                  </p>
+                </div>
               )}
-            </tbody>
-          </table>
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setUserToEdit(null)}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  <span>{isSaving ? 'Menyimpan...' : 'Simpan Perubahan Role & Akun'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
@@ -542,7 +767,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                   type="text"
                   value={newId}
                   onChange={(e) => setNewId(e.target.value)}
-                  placeholder="Otomatis jika kosong (cth: STR006)"
+                  placeholder="Otomatis jika kosong (cth: STR001)"
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -556,7 +781,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                   required
                   value={newNama}
                   onChange={(e) => setNewNama(e.target.value)}
-                  placeholder="Contoh: Farhan Al-Ghazi"
+                  placeholder="Contoh: Muhammad Fatih"
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -600,7 +825,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                     type="text"
                     value={newWaliNama}
                     onChange={(e) => setNewWaliNama(e.target.value)}
-                    placeholder="Contoh: Bpk. Ahmad"
+                    placeholder="Contoh: Bpk. Hendra Wijaya"
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
@@ -620,7 +845,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
               </div>
 
               <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200 text-[11px] text-emerald-900 leading-snug">
-                Sistem akan otomatis membuatkan akun login <b>Wali</b> (<code className="font-mono">wali_id</code>) dan akun login <b>Santri</b> (<code className="font-mono">id_santri</code>).
+                Sistem otomatis membuatkan akun login <b>Wali</b> (<code className="font-mono bg-white px-1 rounded">wali_idsantri</code>) dan akun login <b>Santri</b> (<code className="font-mono bg-white px-1 rounded">idsantri</code>) untuk diakses di rumah.
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
@@ -644,7 +869,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
         </div>
       )}
 
-      {/* Modal Tambah User Akun */}
+      {/* Modal Tambah User Akun Baru */}
       {showAddUserModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-7 border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
@@ -685,7 +910,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                   required
                   value={newUsername}
                   onChange={(e) => setNewUsername(e.target.value)}
-                  placeholder="Contoh: ustadz3"
+                  placeholder="Contoh: ustadz2"
                   className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
@@ -721,6 +946,36 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                 </div>
               </div>
 
+              {newUserRole !== 'Ustadz' && (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Kaitan ID Santri / NIS
+                  </label>
+                  {santriList.length > 0 ? (
+                    <select
+                      value={newUserIdSantri}
+                      onChange={(e) => setNewUserIdSantri(e.target.value)}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
+                    >
+                      <option value="">-- Pilih ID Santri --</option>
+                      {santriList.map((s) => (
+                        <option key={s.idSantri} value={s.idSantri}>
+                          {s.idSantri} - {s.namaSantri}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      value={newUserIdSantri}
+                      onChange={(e) => setNewUserIdSantri(e.target.value)}
+                      placeholder="Masukkan ID Santri (cth: STR001)"
+                      className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  )}
+                </div>
+              )}
+
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
                 <button
                   type="button"
@@ -744,3 +999,4 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     </div>
   );
 };
+

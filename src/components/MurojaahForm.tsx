@@ -75,10 +75,19 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
         {showSuccessToast && (
           <div className="p-4 bg-teal-50 border border-teal-300 rounded-2xl text-teal-800 text-sm font-semibold flex items-center gap-2.5 animate-bounce">
             <CheckCircle className="w-5 h-5 text-teal-600 flex-shrink-0" />
-            <span>Setoran Muroja'ah berhasil disimpan ke Google Sheets!</span>
+            <span>Setoran Muroja'ah berhasil disimpan ke database!</span>
           </div>
         )}
 
+        {santriList.length === 0 ? (
+          <div className="text-center py-10 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 space-y-3">
+            <RotateCw className="w-8 h-8 mx-auto text-slate-400" />
+            <h4 className="text-sm font-bold text-slate-700">Belum Ada Data Santri</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              Silakan daftarkan data santri terlebih dahulu di menu <b>Kelola Santri & Akun</b> sebelum menginput setoran Muroja'ah.
+            </p>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Santri Selector */}
           <div>
@@ -190,6 +199,7 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );
