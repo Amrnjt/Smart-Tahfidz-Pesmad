@@ -1,27 +1,18 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Koleksi users untuk autentikasi dan manajemen hak akses akun
     match /users/{userId} {
       allow read, write: if true;
     }
-
-    // Koleksi santri untuk biodata dan target hafalan
     match /santri/{santriId} {
       allow read, write: if true;
     }
-
-    // Koleksi ziyadah untuk catatan setoran hafalan baru
     match /ziyadah/{ziyadahId} {
       allow read, write: if true;
     }
-
-    // Koleksi murojaah untuk catatan evaluasi kelancaran hafalan
     match /murojaah/{murojaahId} {
       allow read, write: if true;
     }
-
-    // Koleksi binnadzor untuk catatan setoran tilawah / baca mushaf
     match /binnadzor/{binnadzorId} {
       allow read, write: if true;
     }

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, ZiyadahRecord, MurojaahRecord, Santri } from '../types';
 import { storageService } from '../services/storageService';
-import { Search, ListFilter as Filter, Trash2, BookOpen, RotateCw, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle, Download, Shield, Calendar, Clock, FileText } from 'lucide-react';
+import { Search, Filter, Trash2, BookOpen, RotateCw, CheckCircle, AlertTriangle, Download, Shield, Calendar, Clock, FileText, MessageCircle } from 'lucide-react';
 import { formatTanggalLengkap, parseDateSafe } from '../utils/dateFormatter';
 import { TableSkeleton } from './SkeletonLoading';
 import { UnduhLaporanModal } from './UnduhLaporanModal';
@@ -13,6 +13,42 @@ interface HistoryTableProps {
   onDataChanged: () => void;
   isLoading?: boolean;
   santriList?: Santri[];
+}
+
+// Format phone number: convert leading "0" to "62", strip non-digits
+function formatPhoneForWA(phone: string): string {
+  let cleaned = phone.replace(/[^0-9]/g, '');
+  if (cleaned.startsWith('0')) {
+    cleaned = '62' + cleaned.slice(1);
+  } else if (cleaned.startsWith('62')) {
+    // already correct
+  } else if (cleaned.startsWith('8')) {
+    cleaned = '62' + cleaned;
+  }
+  return cleaned;
+}
+
+// Build the WhatsApp message text
+function buildWhatsAppMessage(
+  namaSantri: string,
+  timestamp: string,
+  jenis: string,
+  materi: string,
+  nilai: string,
+  catatan: string
+): string {
+  const tanggal = formatTanggalLengkap(timestamp);
+  const pesan =
+    `Assalamu'alaikum Warahmatullahi Wabarakatuh.\n` +
+    `Yth. Bapak/Ibu Wali dari *${namaSantri}*\n` +
+    `Berikut laporan perkembangan hafalan dan murojaah santri:\n` +
+    `- *Tanggal:* ${tanggal}\n` +
+    `- *Jenis:* ${jenis === 'Ziyadah' ? 'Hafalan Baru' : 'Murojaah'}\n` +
+    `- *Surah & Ayat:* ${materi}\n` +
+    `- *Nilai / Status:* ${nilai}\n` +
+    `- *Catatan Ustadz:* ${catatan || '-'}\n` +
+    `Jazakumullah khairan.`;
+  return pesan;
 }
 
 export const HistoryTable: React.FC<HistoryTableProps> = ({
@@ -107,6 +143,29 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       await storageService.deleteRecord(item.type, item.id);
       onDataChanged();
     }
+  };
+
+  // Get wali contact for a santri
+  const getWaliContact = (idSantri: string): string => {
+    const santri = santriList.find(s => s.idSantri === idSantri);
+    return santri?.waliKontak || '';
+  };
+
+  // Build WhatsApp link
+  const buildWhatsAppLink = (item: CombinedItem): string | null => {
+    const waliKontak = getWaliContact(item.idSantri);
+    if (!waliKontak) return null;
+
+    const phone = formatPhoneForWA(waliKontak);
+    const pesan = buildWhatsAppMessage(
+      item.namaSantri,
+      item.timestamp,
+      item.type,
+      item.materi,
+      item.nilai,
+      item.catatan
+    );
+    return `https://wa.me/${phone}?text=${encodeURIComponent(pesan)}`;
   };
 
   const exportToCSV = () => {
@@ -264,6 +323,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   ? item.timestamp.split('T')[1]?.slice(0, 5)
                   : '';
 
+                // WhatsApp link for this row
+                const waLink = !isViewOnly ? buildWhatsAppLink(item) : null;
+
                 return (
                   <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3 px-3.5 whitespace-nowrap">
@@ -301,13 +363,35 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     </td>
                     {!isViewOnly && (
                       <td className="py-3 px-3.5 text-center whitespace-nowrap">
-                        <button
-                          onClick={() => handleDelete(item)}
-                          className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition cursor-pointer"
-                          title="Hapus Rekaman Setoran"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center justify-center gap-1.5">
+                          {/* Kirim WA Button */}
+                          {waLink ? (
+                            <a
+                              href={waLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1.5 rounded-lg text-green-600 hover:bg-green-50 transition cursor-pointer border border-green-200"
+                              title={`Kirim laporan ke wali via WhatsApp`}
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                            </a>
+                          ) : (
+                            <span
+                              className="p-1.5 rounded-lg text-slate-300 cursor-not-allowed border border-slate-100"
+                              title="Nomor HP wali santri belum terdaftar"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                            </span>
+                          )}
+                          {/* Delete Button */}
+                          <button
+                            onClick={() => handleDelete(item)}
+                            className="p-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                            title="Hapus Rekaman Setoran"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     )}
                   </tr>
@@ -336,4 +420,3 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     </div>
   );
 };
-

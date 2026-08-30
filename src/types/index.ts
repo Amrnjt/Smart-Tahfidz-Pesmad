@@ -8,15 +8,15 @@ export interface User {
   password?: string;
   role: UserRole;
   nama: string;
-  idSantri?: string; // For Wali and Santri roles
+  idSantri?: string;
 }
 
 export interface Santri {
   idSantri: string;
   namaSantri: string;
   kelas: string;
-  targetHafalan: string; // e.g. "Juz 30 (37 Surah)", "3 Juz"
-  totalHafalanSelesai?: number; // Juz / Surah
+  targetHafalan: string;
+  totalHafalanSelesai?: number;
   waliNama?: string;
   waliKontak?: string;
 }
