@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { User, ZiyadahRecord, MurojaahRecord, Santri } from '../types';
 import { storageService } from '../services/storageService';
-import { Search, Filter, Trash2, BookOpen, RotateCw, CheckCircle, AlertTriangle, Download, Shield, Calendar, Clock, FileText, MessageCircle } from 'lucide-react';
+import { Search, ListFilter as Filter, Trash2, BookOpen, RotateCw, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle, Download, Shield, Calendar, Clock, FileText, MessageCircle } from 'lucide-react';
 import { formatTanggalLengkap, parseDateSafe } from '../utils/dateFormatter';
 import { TableSkeleton } from './SkeletonLoading';
 import { UnduhLaporanModal } from './UnduhLaporanModal';
