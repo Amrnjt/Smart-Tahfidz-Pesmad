@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { User, ZiyadahRecord, MurojaahRecord, Santri } from '../types';
 import { useGeneratePDF, NAMA_BULAN, ReportOptions, ReportPeriod } from '../hooks/useGeneratePDF';
 import { parseDateSafe } from '../utils/dateFormatter';
+import { TahfidzReportPDF } from './TahfidzReportPDF';
 import { X, Download, FileText, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Loader as Loader2, Calendar } from 'lucide-react';
 
 interface UnduhLaporanModalProps {
@@ -21,7 +22,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   ziyadahRecords,
   murojaahRecords
 }) => {
-  const { isGenerating, error, success, generatePDF } = useGeneratePDF();
+  const { isGenerating, error, success, generatePDF, reportRef } = useGeneratePDF();
 
   const isViewOnly = currentUser.role !== 'Ustadz';
   const targetSantriId = currentUser.idSantri || (currentUser.role === 'Santri' ? currentUser.username : '');
@@ -276,6 +277,18 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
         </div>
       </div>
 
+      {/* Hidden printable report component - rendered off-screen for html2canvas capture */}
+      <div style={{ position: 'absolute', left: '-9999px', top: 0, zIndex: -1 }}>
+        <TahfidzReportPDF
+          ref={reportRef}
+          santri={reportSantri}
+          currentUser={currentUser}
+          ziyadahRecords={reportZiyadah}
+          murojaahRecords={reportMurojaah}
+          period={reportPeriod}
+          options={options}
+        />
+      </div>
     </>
   );
 };
