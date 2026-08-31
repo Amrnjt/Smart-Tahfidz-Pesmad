@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, ActiveTab } from '../types';
-import { LayoutDashboard, PlusCircle, RotateCw, History, BookOpen, Users } from 'lucide-react';
+import { LayoutDashboard, CirclePlus as PlusCircle, RotateCw, History, BookOpen, Users, GraduationCap } from 'lucide-react';
 
 interface BottomNavProps {
   currentUser: User | null;
@@ -23,7 +23,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     { id: 'murojaah' as ActiveTab, label: "Muroja'ah", icon: RotateCw },
     { id: 'riwayat' as ActiveTab, label: 'Riwayat', icon: History },
     { id: 'mushaf' as ActiveTab, label: 'Mushaf', icon: BookOpen },
-    { id: 'santri' as ActiveTab, label: 'Santri & Akun', icon: Users }
+    { id: 'santri' as ActiveTab, label: 'Santri & Akun', icon: Users },
+    { id: 'kelas' as ActiveTab, label: 'Kelas', icon: GraduationCap }
   ];
 
   const waliItems = [

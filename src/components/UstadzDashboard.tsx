@@ -1,6 +1,6 @@
 import React from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, ActiveTab } from '../types';
-import { Users, CalendarCheck, BookOpen, RotateCw, PlusCircle, ArrowRight, Award, Sparkles } from 'lucide-react';
+import { Users, CalendarCheck, BookOpen, RotateCw, CirclePlus as PlusCircle, ArrowRight, Award, Sparkles } from 'lucide-react';
 import { HafalanStatsChart } from './HafalanStatsChart';
 import { PesmadLogo } from './PesmadLogo';
 import { DashboardSkeleton } from './SkeletonLoading';
@@ -34,10 +34,10 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   const todayMurojaah = murojaahRecords.filter(r => r.timestamp.startsWith(today));
   const totalSetoranToday = todayZiyadah.length + todayMurojaah.length;
 
-  // Hitung nilai Sangat Lancar %
+  // Hitung nilai Sangat Baik %
   const allRecords = [...ziyadahRecords, ...murojaahRecords];
-  const sangatLancarCount = allRecords.filter(r => r.nilai === 'Sangat Lancar').length;
-  const lancarPercent = allRecords.length > 0 ? Math.round((sangatLancarCount / allRecords.length) * 100) : 100;
+  const sangatBaikCount = allRecords.filter(r => r.nilai === 'Sangat Baik').length;
+  const lancarPercent = allRecords.length > 0 ? Math.round((sangatBaikCount / allRecords.length) * 100) : 100;
 
   return (
     <div className="space-y-6">
@@ -127,7 +127,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           <div>
             <p className="text-xs font-semibold text-slate-500">Predikat Mumtaz</p>
             <h3 className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">{lancarPercent}%</h3>
-            <span className="text-[10px] text-sky-700 font-medium">Sangat Lancar</span>
+            <span className="text-[10px] text-sky-700 font-medium">Sangat Baik</span>
           </div>
         </div>
       </div>

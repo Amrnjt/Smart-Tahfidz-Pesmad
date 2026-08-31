@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, ActiveTab } from './types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, Kelas, ActiveTab } from './types';
 import { storageService } from './services/storageService';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
@@ -12,7 +12,8 @@ import { MurojaahForm } from './components/MurojaahForm';
 import { HistoryTable } from './components/HistoryTable';
 import { MushafQuran } from './components/MushafQuran';
 import { SantriManagement } from './components/SantriManagement';
-import { LayoutDashboard, CirclePlus as PlusCircle, RotateCw, History, BookOpen, Users, Cloud } from 'lucide-react';
+import { KelasManagement } from './components/KelasManagement';
+import { LayoutDashboard, CirclePlus as PlusCircle, RotateCw, History, BookOpen, Users, Cloud, GraduationCap } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -20,6 +21,7 @@ export default function App() {
   const [santriList, setSantriList] = useState<Santri[]>([]);
   const [ziyadahRecords, setZiyadahRecords] = useState<ZiyadahRecord[]>([]);
   const [murojaahRecords, setMurojaahRecords] = useState<MurojaahRecord[]>([]);
+  const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
 
@@ -27,6 +29,7 @@ export default function App() {
     setSantriList(storageService.getSantriList());
     setZiyadahRecords(storageService.getZiyadahRecords());
     setMurojaahRecords(storageService.getMurojaahRecords());
+    setKelasList(storageService.getKelasList());
   };
 
   // Setup real-time Firebase Firestore synchronization across all devices
@@ -157,6 +160,20 @@ export default function App() {
                 </>
               )}
 
+              {isUstadz && (
+                <button
+                  onClick={() => setActiveTab('kelas')}
+                  className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                    activeTab === 'kelas'
+                      ? 'bg-emerald-800 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <GraduationCap className="w-4 h-4" />
+                  <span>Kelas</span>
+                </button>
+              )}
+
               <button
                 onClick={() => setActiveTab('riwayat')}
                 className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
@@ -270,6 +287,14 @@ export default function App() {
 
             {activeTab === 'santri' && isUstadz && (
               <SantriManagement
+                santriList={santriList}
+                onDataChanged={refreshData}
+              />
+            )}
+
+            {activeTab === 'kelas' && isUstadz && (
+              <KelasManagement
+                kelasList={kelasList}
                 santriList={santriList}
                 onDataChanged={refreshData}
               />

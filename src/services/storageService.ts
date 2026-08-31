@@ -1,4 +1,4 @@
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord } from '../types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Kelas } from '../types';
 import { INITIAL_USERS, INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH, INITIAL_BINNADZOR } from '../data/sampleDatabase';
 import { db } from './firebase';
 import {
@@ -17,6 +17,7 @@ const STORAGE_KEYS = {
   ZIYADAH: 'tahfidz_ziyadah_db_v2',
   MUROJAAH: 'tahfidz_murojaah_db_v2',
   BINNADZOR: 'tahfidz_binnadzor_db_v2',
+  KELAS: 'tahfidz_kelas_db_v2',
   SESSION: 'tahfidz_active_session_v2'
 };
 
@@ -25,7 +26,8 @@ const COLLECTIONS = {
   SANTRI: 'santri',
   ZIYADAH: 'ziyadah',
   MUROJAAH: 'murojaah',
-  BINNADZOR: 'binnadzor'
+  BINNADZOR: 'binnadzor',
+  KELAS: 'kelas'
 };
 
 // Helper to remove any undefined fields before sending to Firestore
@@ -139,6 +141,20 @@ export const storageService = {
       return Array.isArray(parsed) ? parsed : INITIAL_MUROJAAH;
     } catch {
       return INITIAL_MUROJAAH;
+    }
+  },
+
+  getKelasList(): Kelas[] {
+    const data = localStorage.getItem(STORAGE_KEYS.KELAS);
+    if (!data) {
+      localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify([]));
+      return [];
+    }
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
     }
   },
 
@@ -321,11 +337,29 @@ export const storageService = {
       console.warn('Murojaah firestore sync error:', err);
     });
 
+    // 5. Sync Kelas Realtime
+    const unsubKelas = onSnapshot(collection(db, COLLECTIONS.KELAS), (snapshot) => {
+      const kelasList: Kelas[] = [];
+      const kelasMap = new Map<string, Kelas>();
+      snapshot.forEach((docSnap) => {
+        const k = docSnap.data() as Kelas;
+        if (k && k.id && !kelasMap.has(k.id)) {
+          kelasMap.set(k.id, k);
+          kelasList.push(k);
+        }
+      });
+      localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify(kelasList));
+      if (onUpdate) onUpdate();
+    }, (err) => {
+      console.warn('Kelas firestore sync error:', err);
+    });
+
     return () => {
       unsubUsers();
       unsubSantri();
       unsubZiyadah();
       unsubMurojaah();
+      unsubKelas();
     };
   },
 
@@ -675,10 +709,53 @@ export const storageService = {
     }
   },
 
+  async addKelas(kelas: Kelas): Promise<Kelas> {
+    const list = this.getKelasList();
+    const existingIndex = list.findIndex(k => k.id === kelas.id);
+    if (existingIndex >= 0) {
+      list[existingIndex] = kelas;
+    } else {
+      list.push(kelas);
+    }
+    localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify(list));
+    try {
+      await setDoc(doc(db, COLLECTIONS.KELAS, kelas.id), cleanForFirestore(kelas));
+    } catch (e) {
+      console.error('Failed to save Kelas to Firestore:', e);
+    }
+    return kelas;
+  },
+
+  async updateKelas(id: string, updatedData: Partial<Kelas>): Promise<boolean> {
+    const list = this.getKelasList().map(k => k.id === id ? { ...k, ...updatedData } : k);
+    localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify(list));
+    const target = list.find(k => k.id === id);
+    if (target) {
+      try {
+        await setDoc(doc(db, COLLECTIONS.KELAS, id), cleanForFirestore(target), { merge: true });
+      } catch (e) {
+        console.error('Failed to update Kelas in Firestore:', e);
+      }
+    }
+    return true;
+  },
+
+  async deleteKelas(id: string): Promise<boolean> {
+    const list = this.getKelasList().filter(k => k.id !== id);
+    localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify(list));
+    try {
+      await deleteDoc(doc(db, COLLECTIONS.KELAS, id));
+    } catch (e) {
+      console.error('Failed to delete Kelas from Firestore:', e);
+    }
+    return true;
+  },
+
   async resetToDefault() {
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
     localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(INITIAL_SANTRI));
     localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(INITIAL_ZIYADAH));
     localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(INITIAL_MUROJAAH));
+    localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify([]));
   }
 };
