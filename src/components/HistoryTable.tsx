@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, ZiyadahRecord, MurojaahRecord, Santri } from '../types';
+import { User, ZiyadahRecord, MurojaahRecord, Santri, PREDIKAT_NILAI_OPTIONS } from '../types';
 import { storageService } from '../services/storageService';
 import { Search, ListFilter as Filter, Trash2, BookOpen, RotateCw, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle, Download, Shield, Calendar, Clock, FileText, MessageCircle } from 'lucide-react';
 import { formatTanggalLengkap, parseDateSafe } from '../utils/dateFormatter';
@@ -254,9 +254,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
             className="py-2 px-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
           >
             <option value="ALL">Semua Nilai</option>
-            <option value="Sangat Lancar">🟢 Sangat Lancar</option>
-            <option value="Lancar">🟡 Lancar</option>
-            <option value="Perlu Ulang">🔴 Perlu Ulang</option>
+            {PREDIKAT_NILAI_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.emoji} {opt.label}</option>
+            ))}
           </select>
 
           {/* Export CSV */}
@@ -296,22 +296,28 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
             ) : (
               displayedItems.map((item) => {
                 let badgeNilai = null;
-                if (item.nilai === 'Sangat Lancar') {
+                if (item.nilai === 'Sangat Baik') {
                   badgeNilai = (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[11px] border border-emerald-300">
-                      🟢 Sangat Lancar
+                      🟢 Sangat Baik (Jayyid Jiddan)
                     </span>
                   );
-                } else if (item.nilai === 'Lancar') {
+                } else if (item.nilai === 'Baik') {
                   badgeNilai = (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 font-bold text-[11px] border border-amber-300">
-                      🟡 Lancar
+                      🟡 Baik (Jayyid)
+                    </span>
+                  );
+                } else if (item.nilai === 'Kurang') {
+                  badgeNilai = (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-800 font-bold text-[11px] border border-orange-300">
+                      🟠 Kurang (Naqish)
                     </span>
                   );
                 } else {
                   badgeNilai = (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 font-bold text-[11px] border border-rose-300">
-                      🔴 Perlu Ulang
+                      🔴 Mengulang (I'adah)
                     </span>
                   );
                 }

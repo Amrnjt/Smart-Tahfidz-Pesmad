@@ -15,7 +15,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { TrendingUp, BarChart3, PieChart as PieIcon, Filter, Calendar } from 'lucide-react';
+import { TrendingUp, ChartBar as BarChart3, ChartPie as PieIcon, ListFilter as Filter, Calendar } from 'lucide-react';
 
 interface HafalanStatsChartProps {
   santriList: Santri[];
@@ -91,25 +91,25 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
     if (all.length === 0) return [];
 
     const counts: { [key: string]: number } = {
-      'Sangat Lancar': 0,
-      'Lancar': 0,
-      'Cukup Lancar': 0,
-      'Perlu Bimbingan / Mengulang': 0
+      'Sangat Baik': 0,
+      'Baik': 0,
+      'Kurang': 0,
+      'Mengulang': 0
     };
 
     all.forEach(r => {
       if (counts[r.nilai] !== undefined) {
         counts[r.nilai]++;
       } else {
-        counts['Perlu Bimbingan / Mengulang']++;
+        counts['Mengulang']++;
       }
     });
 
     const colors: { [key: string]: string } = {
-      'Sangat Lancar': '#047857', // Emerald 700
-      'Lancar': '#0d9488',       // Teal 600
-      'Cukup Lancar': '#d97706',  // Amber 600
-      'Perlu Bimbingan / Mengulang': '#e11d48' // Rose 600
+      'Sangat Baik': '#047857', // Emerald 700
+      'Baik': '#0d9488',       // Teal 600
+      'Kurang': '#d97706',  // Amber 600
+      'Mengulang': '#e11d48' // Rose 600
     };
 
     return Object.keys(counts)

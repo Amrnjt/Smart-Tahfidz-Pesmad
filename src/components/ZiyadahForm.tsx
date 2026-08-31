@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { User, Santri, PredikatNilai } from '../types';
+import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS } from '../types';
 import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
-import { PlusCircle, BookOpen, CheckCircle, Save, RotateCcw, Calendar, Clock } from 'lucide-react';
+import { CirclePlus as PlusCircle, BookOpen, CircleCheck as CheckCircle, Save, RotateCcw, Calendar, Clock } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 
 interface ZiyadahFormProps {
@@ -24,7 +24,7 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
   const [surahName, setSurahName] = useState(SURAH_LIST[77].nameLatin); // default An-Naba
   const [ayatAwal, setAyatAwal] = useState<number>(1);
   const [ayatAkhir, setAyatAkhir] = useState<number>(10);
-  const [nilai, setNilai] = useState<PredikatNilai>('Sangat Lancar');
+  const [nilai, setNilai] = useState<PredikatNilai>('Sangat Baik');
   const [catatan, setCatatan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -232,9 +232,9 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
                 onChange={(e) => setNilai(e.target.value as PredikatNilai)}
                 className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
-                <option value="Sangat Lancar">🟢 Sangat Lancar (Mumtaz)</option>
-                <option value="Lancar">🟡 Lancar (Jayyid Jiddan)</option>
-                <option value="Perlu Ulang">🔴 Perlu Ulang (Rosib)</option>
+                {PREDIKAT_NILAI_OPTIONS.map(opt => (
+                  <option key={opt.value} value={opt.value}>{opt.emoji} {opt.label}</option>
+                ))}
               </select>
             </div>
           </div>

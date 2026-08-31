@@ -12,18 +12,7 @@ import {
   Tooltip,
   Legend
 } from 'recharts';
-import {
-  TrendingUp,
-  BarChart3,
-  Calendar,
-  Layers,
-  Sparkles,
-  BookOpen,
-  Award,
-  CheckCircle2,
-  HelpCircle,
-  Clock
-} from 'lucide-react';
+import { TrendingUp, ChartBar as BarChart3, Calendar, Layers, Sparkles, BookOpen, Award, CircleCheck as CheckCircle2, Circle as HelpCircle, Clock } from 'lucide-react';
 
 interface ZiyadahProgressChartProps {
   ziyadahRecords: ZiyadahRecord[];
@@ -43,9 +32,10 @@ interface WeeklyDataPoint {
   totalSetoran: number;
   cumulativeAyat: number;
   surahList: string[];
-  sangatLancarCount: number;
-  lancarCount: number;
-  perluUlangCount: number;
+  sangatBaikCount: number;
+  baikCount: number;
+  kurangCount: number;
+  mengulangCount: number;
   dateRange: string;
 }
 
@@ -120,9 +110,10 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
         totalSetoran: 0,
         cumulativeAyat: 0,
         surahList: [],
-        sangatLancarCount: 0,
-        lancarCount: 0,
-        perluUlangCount: 0,
+        sangatBaikCount: 0,
+        baikCount: 0,
+        kurangCount: 0,
+        mengulangCount: 0,
         dateRange
       });
 
@@ -150,9 +141,10 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
           bucket.surahList.push(record.surah);
         }
 
-        if (record.nilai === 'Sangat Lancar') bucket.sangatLancarCount += 1;
-        else if (record.nilai === 'Lancar') bucket.lancarCount += 1;
-        else bucket.perluUlangCount += 1;
+        if (record.nilai === 'Sangat Baik') bucket.sangatBaikCount += 1;
+        else if (record.nilai === 'Baik') bucket.baikCount += 1;
+        else if (record.nilai === 'Kurang') bucket.kurangCount += 1;
+        else bucket.mengulangCount += 1;
       }
     });
 
@@ -246,9 +238,10 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
 
           {data.totalSetoran > 0 && (
             <div className="text-[10px] text-slate-300 pt-1 border-t border-slate-800 flex items-center justify-between">
-              <span>Sangat Lancar: <b className="text-emerald-400">{data.sangatLancarCount}</b></span>
-              <span>Lancar: <b className="text-teal-400">{data.lancarCount}</b></span>
-              {data.perluUlangCount > 0 && <span>Perlu Ulang: <b className="text-amber-400">{data.perluUlangCount}</b></span>}
+              <span>Sangat Baik: <b className="text-emerald-400">{data.sangatBaikCount}</b></span>
+              <span>Baik: <b className="text-teal-400">{data.baikCount}</b></span>
+              {data.kurangCount > 0 && <span>Kurang: <b className="text-amber-400">{data.kurangCount}</b></span>}
+              {data.mengulangCount > 0 && <span>Mengulang: <b className="text-rose-400">{data.mengulangCount}</b></span>}
             </div>
           )}
         </div>

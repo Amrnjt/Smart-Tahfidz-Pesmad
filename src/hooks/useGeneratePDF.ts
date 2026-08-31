@@ -111,9 +111,10 @@ function drawStatCard(pdf: jsPDF, value: number, label: string, x: number, y: nu
 }
 
 function drawNilaiBadge(pdf: jsPDF, nilai: string, x: number, y: number): number {
-  let bg = C.roseLight, fg = C.rose, label = 'Perlu Ulang';
-  if (nilai === 'Sangat Lancar') { bg = C.emeraldLight; fg = C.emerald; label = 'Sangat Lancar'; }
-  else if (nilai === 'Lancar') { bg = C.amberLight; fg = C.amber; label = 'Lancar'; }
+  let bg = C.roseLight, fg = C.rose, label = 'Mengulang';
+  if (nilai === 'Sangat Baik') { bg = C.emeraldLight; fg = C.emerald; label = 'Sangat Baik'; }
+  else if (nilai === 'Baik') { bg = C.tealLight; fg = C.teal; label = 'Baik'; }
+  else if (nilai === 'Kurang') { bg = C.amberLight; fg = C.amber; label = 'Kurang'; }
 
   pdf.setFont('helvetica', 'bold');
   pdf.setFontSize(7);
@@ -157,9 +158,10 @@ export function useGeneratePDF() {
       const totalAyatZiyadah = periodZiyadah.reduce((s, r) => s + Math.max(1, r.ayatAkhir - r.ayatAwal + 1), 0);
       const totalSurahZiyadah = new Set(periodZiyadah.map(r => r.surah)).size;
       const allPeriod = [...periodZiyadah, ...periodMurojaah];
-      const sangatLancarCount = allPeriod.filter(r => r.nilai === 'Sangat Lancar').length;
-      const lancarCount = allPeriod.filter(r => r.nilai === 'Lancar').length;
-      const perluUlangCount = allPeriod.filter(r => r.nilai === 'Perlu Ulang').length;
+      const sangatBaikCount = allPeriod.filter(r => r.nilai === 'Sangat Baik').length;
+      const baikCount = allPeriod.filter(r => r.nilai === 'Baik').length;
+      const kurangCount = allPeriod.filter(r => r.nilai === 'Kurang').length;
+      const mengulangCount = allPeriod.filter(r => r.nilai === 'Mengulang').length;
       const totalSetoran = allPeriod.length;
 
       const santriName = data.santri?.namaSantri || data.currentUser.nama || 'Santri';
@@ -268,9 +270,10 @@ export function useGeneratePDF() {
         pdf.text('DISTRIBUSI NILAI:', margin, y);
 
         const distItems: [string, number, [number, number, number], [number, number, number]][] = [
-          ['Sangat Lancar', sangatLancarCount, C.emeraldLight, C.emerald],
-          ['Lancar', lancarCount, C.amberLight, C.amber],
-          ['Perlu Ulang', perluUlangCount, C.roseLight, C.rose],
+          ['Sangat Baik', sangatBaikCount, C.emeraldLight, C.emerald],
+          ['Baik', baikCount, C.tealLight, C.teal],
+          ['Kurang', kurangCount, C.amberLight, C.amber],
+          ['Mengulang', mengulangCount, C.roseLight, C.rose],
           ['Total', totalSetoran, C.slateBg, C.slateMid],
         ];
         let dx = margin + 28;
@@ -300,9 +303,10 @@ export function useGeneratePDF() {
         const bars: [string, number, [number, number, number]][] = [
           ['Ziyadah', periodZiyadah.length, C.emerald],
           ["Muroja'ah", periodMurojaah.length, C.teal],
-          ['S. Lancar', sangatLancarCount, C.emeraldDark],
-          ['Lancar', lancarCount, C.amber],
-          ['Perlu Ulang', perluUlangCount, C.rose],
+          ['S. Baik', sangatBaikCount, C.emeraldDark],
+          ['Baik', baikCount, C.teal],
+          ['Kurang', kurangCount, C.amber],
+          ['Mengulang', mengulangCount, C.rose],
         ];
         const maxVal = Math.max(...bars.map(b => b[1]), 1);
         const barSlotW = contentW / bars.length;
@@ -459,8 +463,8 @@ export function useGeneratePDF() {
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(8.5);
       let conclusion = `Pada periode ${NAMA_BULAN[data.period.month]} ${data.period.year}, santri ${santriName} telah menyelesaikan ${periodZiyadah.length} setoran Ziyadah (${totalAyatZiyadah} ayat dari ${totalSurahZiyadah} surah berbeda) dan ${periodMurojaah.length} setoran Muroja'ah.`;
-      if (sangatLancarCount > 0) conclusion += ` Sebanyak ${sangatLancarCount} setoran bernilai "Sangat Lancar".`;
-      if (perluUlangCount > 0) conclusion += ` Terdapat ${perluUlangCount} setoran yang perlu diulang.`;
+      if (sangatBaikCount > 0) conclusion += ` Sebanyak ${sangatBaikCount} setoran bernilai "Sangat Baik".`;
+      if (mengulangCount > 0) conclusion += ` Terdapat ${mengulangCount} setoran yang perlu diulang.`;
       conclusion += " Semoga Allah Tabaraka wa Ta'ala memudahkan hafalan dan istiqamah santri. Aamiin.";
 
       const wrappedConclusion = pdf.splitTextToSize(conclusion, contentW - 8);

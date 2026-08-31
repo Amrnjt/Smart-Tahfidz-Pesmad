@@ -1,6 +1,43 @@
 export type UserRole = 'Ustadz' | 'Wali' | 'Santri';
 
-export type PredikatNilai = 'Sangat Lancar' | 'Lancar' | 'Perlu Ulang';
+export type PredikatNilai = 'Mengulang' | 'Kurang' | 'Baik' | 'Sangat Baik';
+
+export const PREDIKAT_NILAI_OPTIONS: { value: PredikatNilai; label: string; arab: string; emoji: string }[] = [
+  { value: 'Mengulang', label: 'Mengulang (I\'adah)', arab: 'I\'adah', emoji: '🔴' },
+  { value: 'Kurang', label: 'Kurang (Naqish)', arab: 'Naqish', emoji: '🟠' },
+  { value: 'Baik', label: 'Baik (Jayyid)', arab: 'Jayyid', emoji: '🟡' },
+  { value: 'Sangat Baik', label: 'Sangat Baik (Jayyid Jiddan)', arab: 'Jayyid Jiddan', emoji: '🟢' },
+];
+
+export type TipeKelas =
+  | 'Tahfidz A (Ikhwan)'
+  | 'Tahfidz B (Akhwat)'
+  | 'Binnadzor A'
+  | 'Binnadzor B'
+  | 'Jilid 1'
+  | 'Jilid 2'
+  | 'Jilid 3'
+  | 'Kelas Istimewa';
+
+export const TIPE_KELAS_OPTIONS: TipeKelas[] = [
+  'Tahfidz A (Ikhwan)',
+  'Tahfidz B (Akhwat)',
+  'Binnadzor A',
+  'Binnadzor B',
+  'Jilid 1',
+  'Jilid 2',
+  'Jilid 3',
+  'Kelas Istimewa',
+];
+
+export interface Kelas {
+  id: string;
+  namaKelas: string;
+  tipeKelas: TipeKelas;
+  musyrif?: string;
+  santriIds: string[];
+  createdAt: string;
+}
 
 export interface User {
   id: string;
@@ -90,4 +127,4 @@ export interface SurahFullDetail extends SurahMeta {
   audioFull?: string;
 }
 
-export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'binnadzor' | 'riwayat' | 'mushaf' | 'santri';
+export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'binnadzor' | 'riwayat' | 'mushaf' | 'santri' | 'kelas';
