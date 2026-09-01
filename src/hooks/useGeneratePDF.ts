@@ -16,12 +16,20 @@ export interface ReportPeriod {
   year: number;
 }
 
+export interface ReportPeriodRange {
+  startMonth: number;
+  startYear: number;
+  endMonth: number;
+  endYear: number;
+}
+
 export interface ReportData {
   santri: Santri | null;
   currentUser: User;
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
   period: ReportPeriod;
+  periodRange?: ReportPeriodRange;
   options: ReportOptions;
 }
 
@@ -144,16 +152,32 @@ export function useGeneratePDF() {
       const contentW = pageW - margin * 2;
       let y = margin;
 
-      const periodPrefix = `${data.period.year}-${(data.period.month + 1).toString().padStart(2, '0')}`;
+      // Build list of YYYY-MM prefixes (supports single month or multi-month range)
+      const periodPrefixes: string[] = [];
+      if (data.periodRange) {
+        let m = data.periodRange.startMonth;
+        let yr = data.periodRange.startYear;
+        while (true) {
+          periodPrefixes.push(`${yr}-${(m + 1).toString().padStart(2, '0')}`);
+          if (yr === data.periodRange.endYear && m === data.periodRange.endMonth) break;
+          m++;
+          if (m > 11) { m = 0; yr++; }
+        }
+      } else {
+        periodPrefixes.push(`${data.period.year}-${(data.period.month + 1).toString().padStart(2, '0')}`);
+      }
 
-      const periodZiyadah = data.ziyadahRecords.filter(r => {
-        const dp = r.timestamp.split(' ')[0] || r.timestamp;
-        return dp.startsWith(periodPrefix);
-      });
-      const periodMurojaah = data.murojaahRecords.filter(r => {
-        const dp = r.timestamp.split(' ')[0] || r.timestamp;
-        return dp.startsWith(periodPrefix);
-      });
+      const matchesPeriod = (ts: string) => {
+        const dp = ts.split(' ')[0] || ts;
+        return periodPrefixes.some(p => dp.startsWith(p));
+      };
+
+      const periodZiyadah = data.ziyadahRecords.filter(r => matchesPeriod(r.timestamp));
+      const periodMurojaah = data.murojaahRecords.filter(r => matchesPeriod(r.timestamp));
+
+      const periodLabel = data.periodRange
+        ? `${NAMA_BULAN[data.periodRange.startMonth]} ${data.periodRange.startYear} — ${NAMA_BULAN[data.periodRange.endMonth]} ${data.periodRange.endYear}`
+        : `${NAMA_BULAN[data.period.month]} ${data.period.year}`;
 
       const totalAyatZiyadah = periodZiyadah.reduce((s, r) => s + Math.max(1, r.ayatAkhir - r.ayatAwal + 1), 0);
       const totalSurahZiyadah = new Set(periodZiyadah.map(r => r.surah)).size;
@@ -217,12 +241,19 @@ export function useGeneratePDF() {
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(7);
       pdf.text('PERIODE', margin + contentW - 18, y + 8, { align: 'center' });
-      setText(pdf, C.white);
-      pdf.setFontSize(12);
-      pdf.text(NAMA_BULAN[data.period.month], margin + contentW - 18, y + 13, { align: 'center' });
-      setText(pdf, C.goldLight);
-      pdf.setFontSize(9);
-      pdf.text(String(data.period.year), margin + contentW - 18, y + 18, { align: 'center' });
+      if (data.periodRange) {
+        setText(pdf, C.white);
+        pdf.setFontSize(8);
+        const rangeLines = pdf.splitTextToSize(periodLabel, 26);
+        pdf.text(rangeLines, margin + contentW - 18, y + 13, { align: 'center' });
+      } else {
+        setText(pdf, C.white);
+        pdf.setFontSize(12);
+        pdf.text(NAMA_BULAN[data.period.month], margin + contentW - 18, y + 13, { align: 'center' });
+        setText(pdf, C.goldLight);
+        pdf.setFontSize(9);
+        pdf.text(String(data.period.year), margin + contentW - 18, y + 18, { align: 'center' });
+      }
 
       y += 33;
 
@@ -462,7 +493,7 @@ export function useGeneratePDF() {
       setText(pdf, C.slate);
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(8.5);
-      let conclusion = `Pada periode ${NAMA_BULAN[data.period.month]} ${data.period.year}, santri ${santriName} telah menyelesaikan ${periodZiyadah.length} setoran Ziyadah (${totalAyatZiyadah} ayat dari ${totalSurahZiyadah} surah berbeda) dan ${periodMurojaah.length} setoran Muroja'ah.`;
+      let conclusion = `Pada periode ${periodLabel}, santri ${santriName} telah menyelesaikan ${periodZiyadah.length} setoran Ziyadah (${totalAyatZiyadah} ayat dari ${totalSurahZiyadah} surah berbeda) dan ${periodMurojaah.length} setoran Muroja'ah.`;
       if (sangatBaikCount > 0) conclusion += ` Sebanyak ${sangatBaikCount} setoran bernilai "Sangat Baik".`;
       if (mengulangCount > 0) conclusion += ` Terdapat ${mengulangCount} setoran yang perlu diulang.`;
       conclusion += " Semoga Allah Tabaraka wa Ta'ala memudahkan hafalan dan istiqamah santri. Aamiin.";
@@ -503,7 +534,9 @@ export function useGeneratePDF() {
 
       // Save
       const cleanName = santriName.replace(/[^a-zA-Z0-9]/g, '_');
-      const fileName = `Laporan_Hafalan_${cleanName}_${NAMA_BULAN[data.period.month]}_${data.period.year}.pdf`;
+      const fileName = data.periodRange
+        ? `Laporan_Hafalan_${cleanName}_${NAMA_BULAN[data.periodRange.startMonth]}_${data.periodRange.startYear}_sampai_${NAMA_BULAN[data.periodRange.endMonth]}_${data.periodRange.endYear}.pdf`
+        : `Laporan_Hafalan_${cleanName}_${NAMA_BULAN[data.period.month]}_${data.period.year}.pdf`;
       pdf.save(fileName);
 
       setSuccess(true);

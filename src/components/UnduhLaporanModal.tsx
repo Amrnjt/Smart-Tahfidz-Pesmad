@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { User, ZiyadahRecord, MurojaahRecord, Santri } from '../types';
-import { useGeneratePDF, NAMA_BULAN, ReportOptions, ReportPeriod } from '../hooks/useGeneratePDF';
+import { useGeneratePDF, NAMA_BULAN, ReportOptions, ReportPeriod, ReportPeriodRange } from '../hooks/useGeneratePDF';
 import { parseDateSafe } from '../utils/dateFormatter';
-import { X, Download, FileText, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Loader as Loader2, Calendar } from 'lucide-react';
+import { X, Download, FileText, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Loader as Loader2, Calendar, CalendarRange } from 'lucide-react';
 
 interface UnduhLaporanModalProps {
   isOpen: boolean;
@@ -84,6 +84,16 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
     return `${now.getFullYear()}-${now.getMonth()}`;
   });
 
+  const [useRange, setUseRange] = useState(false);
+  const [rangeStart, setRangeStart] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${now.getMonth()}`;
+  });
+  const [rangeEnd, setRangeEnd] = useState<string>(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${now.getMonth()}`;
+  });
+
   const [options, setOptions] = useState<ReportOptions>({
     includeIdentity: true,
     includeSummary: true,
@@ -97,6 +107,21 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   const [selectedYear, selectedMonth] = period.split('-').map(Number);
   const reportPeriod: ReportPeriod = { month: selectedMonth, year: selectedYear };
 
+  const [rangeStartYear, rangeStartMonth] = rangeStart.split('-').map(Number);
+  const [rangeEndYear, rangeEndMonth] = rangeEnd.split('-').map(Number);
+  const reportPeriodRange: ReportPeriodRange = {
+    startMonth: rangeStartMonth,
+    startYear: rangeStartYear,
+    endMonth: rangeEndMonth,
+    endYear: rangeEndYear
+  };
+
+  const rangeValid = (() => {
+    const start = new Date(rangeStartYear, rangeStartMonth, 1);
+    const end = new Date(rangeEndYear, rangeEndMonth, 1);
+    return start.getTime() <= end.getTime();
+  })();
+
   const handleDownload = async () => {
     await generatePDF({
       santri: reportSantri,
@@ -104,6 +129,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
       ziyadahRecords: reportZiyadah,
       murojaahRecords: reportMurojaah,
       period: reportPeriod,
+      periodRange: useRange && rangeValid ? reportPeriodRange : undefined,
       options
     });
   };
@@ -184,21 +210,88 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
 
             {/* Period Selector */}
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-emerald-700" />
-                Periode Laporan
-              </label>
-              <select
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                {availablePeriods.map(p => (
-                  <option key={`${p.year}-${p.month}`} value={`${p.year}-${p.month}`}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
+              <div className="flex items-center gap-2 mb-2">
+                <button
+                  type="button"
+                  onClick={() => setUseRange(false)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                    !useRange ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  Satu Bulan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUseRange(true)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 ${
+                    useRange ? 'bg-emerald-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
+                >
+                  <CalendarRange className="w-3.5 h-3.5" />
+                  Beberapa Bulan
+                </button>
+              </div>
+
+              {!useRange ? (
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+                    Periode Laporan
+                  </label>
+                  <select
+                    value={period}
+                    onChange={(e) => setPeriod(e.target.value)}
+                    className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    {availablePeriods.map(p => (
+                      <option key={`${p.year}-${p.month}`} value={`${p.year}-${p.month}`}>
+                        {p.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+                      Dari Bulan
+                    </label>
+                    <select
+                      value={rangeStart}
+                      onChange={(e) => setRangeStart(e.target.value)}
+                      className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      {availablePeriods.map(p => (
+                        <option key={`${p.year}-${p.month}`} value={`${p.year}-${p.month}`}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+                      Sampai Bulan
+                    </label>
+                    <select
+                      value={rangeEnd}
+                      onChange={(e) => setRangeEnd(e.target.value)}
+                      className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      {availablePeriods.map(p => (
+                        <option key={`${p.year}-${p.month}`} value={`${p.year}-${p.month}`}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+              {useRange && !rangeValid && (
+                <p className="text-[11px] text-rose-600 font-semibold mt-1.5">Bulan awal harus sebelum atau sama dengan bulan akhir.</p>
+              )}
             </div>
 
             {/* Content Options */}
@@ -242,8 +335,27 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
                 <FileText className="w-3.5 h-3.5 text-slate-400" />
                 <span className="font-semibold text-slate-600">Pratinjau Data</span>
               </div>
-              <p>Ziyadah pada periode ini: <b>{reportZiyadah.filter(r => { const dp = r.timestamp.split(' ')[0] || r.timestamp; return dp.startsWith(`${selectedYear}-${(selectedMonth + 1).toString().padStart(2, '0')}`); }).length}</b> setoran</p>
-              <p>Muroja'ah pada periode ini: <b>{reportMurojaah.filter(r => { const dp = r.timestamp.split(' ')[0] || r.timestamp; return dp.startsWith(`${selectedYear}-${(selectedMonth + 1).toString().padStart(2, '0')}`); }).length}</b> setoran</p>
+              {(() => {
+                const prefixes = useRange && rangeValid
+                  ? (() => {
+                      const list: string[] = [];
+                      let m = rangeStartMonth, yr = rangeStartYear;
+                      while (true) {
+                        list.push(`${yr}-${(m + 1).toString().padStart(2, '0')}`);
+                        if (yr === rangeEndYear && m === rangeEndMonth) break;
+                        m++; if (m > 11) { m = 0; yr++; }
+                      }
+                      return list;
+                    })()
+                  : [`${selectedYear}-${(selectedMonth + 1).toString().padStart(2, '0')}`];
+                const matchFn = (ts: string) => { const dp = ts.split(' ')[0] || ts; return prefixes.some(p => dp.startsWith(p)); };
+                return (
+                  <>
+                    <p>Ziyadah pada periode ini: <b>{reportZiyadah.filter(r => matchFn(r.timestamp)).length}</b> setoran</p>
+                    <p>Muroja'ah pada periode ini: <b>{reportMurojaah.filter(r => matchFn(r.timestamp)).length}</b> setoran</p>
+                  </>
+                );
+              })()}
             </div>
           </div>
 
@@ -257,7 +369,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
             </button>
             <button
               onClick={handleDownload}
-              disabled={isGenerating}
+              disabled={isGenerating || (useRange && !rangeValid)}
               className="px-6 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isGenerating ? (
