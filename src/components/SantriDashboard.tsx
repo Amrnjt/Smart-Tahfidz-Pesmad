@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, ActiveTab } from '../types';
 import { ZiyadahProgressChart } from './ZiyadahProgressChart';
-import { BookOpen, RotateCw, Award, Target, Sparkles, CheckCircle2, ChevronRight, BookMarked, Heart, Volume2, Calendar } from 'lucide-react';
+import { BookOpen, RotateCw, Award, Target, Sparkles, CircleCheck as CheckCircle2, ChevronRight, BookMarked, Heart, Volume2, Calendar } from 'lucide-react';
 import { PesmadLogo } from './PesmadLogo';
 import { formatTanggalWaktu } from '../utils/dateFormatter';
 import { SantriWaliDashboardSkeleton } from './SkeletonLoading';
