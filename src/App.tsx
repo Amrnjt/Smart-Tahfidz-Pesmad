@@ -13,6 +13,8 @@ import { HistoryTable } from './components/HistoryTable';
 import { MushafQuran } from './components/MushafQuran';
 import { SantriManagement } from './components/SantriManagement';
 import { KelasManagement } from './components/KelasManagement';
+import { NotificationToastContainer } from './components/NotificationToastContainer';
+import { useSetoranNotifications } from './hooks/useSetoranNotifications';
 import { LayoutDashboard, CirclePlus as PlusCircle, RotateCw, History, BookOpen, Users, Cloud, GraduationCap } from 'lucide-react';
 
 export default function App() {
@@ -89,6 +91,14 @@ export default function App() {
   const isUstadz = currentUser?.role === 'Ustadz';
   const isWali = currentUser?.role === 'Wali';
   const isSantri = currentUser?.role === 'Santri';
+
+  // Delayed notification system for Wali Santri role
+  const { toasts, dismissToast } = useSetoranNotifications(
+    currentUser,
+    ziyadahRecords,
+    murojaahRecords,
+    santriList
+  );
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans selection:bg-emerald-200 selection:text-emerald-950 pb-20 md:pb-10">
@@ -324,6 +334,11 @@ export default function App() {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
       />
+
+      {/* In-app notification toasts for Wali Santri */}
+      {isWali && (
+        <NotificationToastContainer toasts={toasts} onDismiss={dismissToast} />
+      )}
 
     </div>
   );

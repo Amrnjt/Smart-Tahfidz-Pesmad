@@ -40,6 +40,7 @@ export interface User {
   role: UserRole;
   nama: string;
   idSantri?: string;
+  notificationPermission?: 'default' | 'granted' | 'denied';
 }
 
 export interface Santri {

@@ -96,6 +96,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const [showReportModal, setShowReportModal] = useState(false);
   const [activeMonthKey, setActiveMonthKey] = useState<string>('');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [hasSetDefaultMonth, setHasSetDefaultMonth] = useState(false);
 
   // Inline/modal editing state
   const [editingItem, setEditingItem] = useState<EditableItem | null>(null);
@@ -111,8 +112,14 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const isViewOnly = currentUser.role !== 'Ustadz';
   const targetSantriId = currentUser.idSantri || (currentUser.role === 'Santri' ? currentUser.username : '');
 
-  const filteredZiyadah = isViewOnly ? ziyadahRecords.filter(r => r.idSantri === targetSantriId) : ziyadahRecords;
-  const filteredMurojaah = isViewOnly ? murojaahRecords.filter(r => r.idSantri === targetSantriId) : murojaahRecords;
+  const filteredZiyadah = useMemo(
+    () => isViewOnly ? ziyadahRecords.filter(r => r.idSantri === targetSantriId) : ziyadahRecords,
+    [isViewOnly, ziyadahRecords, targetSantriId]
+  );
+  const filteredMurojaah = useMemo(
+    () => isViewOnly ? murojaahRecords.filter(r => r.idSantri === targetSantriId) : murojaahRecords,
+    [isViewOnly, murojaahRecords, targetSantriId]
+  );
 
   const combinedItems: CombinedItem[] = useMemo(() => {
     const items: CombinedItem[] = [
@@ -142,9 +149,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     return Array.from(keys).sort((a, b) => b.localeCompare(a));
   }, [combinedItems]);
 
-  // Default to current month on initial load
+  // Default to current month on initial load only (not on every monthKeys change)
   useEffect(() => {
-    if (monthKeys.length === 0) return;
+    if (hasSetDefaultMonth || monthKeys.length === 0) return;
     const now = new Date();
     const currentKey = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
     if (monthKeys.includes(currentKey)) {
@@ -152,7 +159,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     } else {
       setActiveMonthKey(monthKeys[0]);
     }
-  }, [monthKeys]);
+    setHasSetDefaultMonth(true);
+  }, [monthKeys, hasSetDefaultMonth]);
 
   // Filter items by active month + search/filters
   const displayedItems = useMemo(() => {
