@@ -1,6 +1,7 @@
 import React from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, ActiveTab } from '../types';
 import { Users, CalendarCheck, BookOpen, RotateCw, CirclePlus as PlusCircle, ArrowRight, Award, Sparkles } from 'lucide-react';
+import { getClassGroup } from '../utils/classUtils';
 import { HafalanStatsChart } from './HafalanStatsChart';
 import { PesmadLogo } from './PesmadLogo';
 import { DashboardSkeleton } from './SkeletonLoading';
@@ -233,7 +234,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
                         {santri.idSantri}
                       </span>
-                      <span className="text-xs text-slate-500 font-medium">{santri.kelas}</span>
+                      <span className="text-xs text-slate-500 font-medium">{getClassGroup(santri.kelas)}</span>
                     </div>
                     <h4 className="font-bold text-slate-800 text-sm mt-1.5">{santri.namaSantri}</h4>
                     <p className="text-xs text-slate-500 mt-0.5">Target: {santri.targetHafalan}</p>

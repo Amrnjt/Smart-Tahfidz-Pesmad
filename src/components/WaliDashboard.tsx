@@ -30,7 +30,7 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   const targetSantri = santriList.find(s => s.idSantri === currentUser.idSantri) || {
     idSantri: currentUser.idSantri || 'STR001',
     namaSantri: currentUser.nama.replace('Wali ', ''),
-    kelas: 'Tahfidz A (Ikhwan)',
+    kelas: 'Tahfidz',
     targetHafalan: 'Juz 30 (37 Surah)'
   };
 

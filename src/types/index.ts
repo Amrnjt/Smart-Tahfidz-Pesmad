@@ -10,23 +10,17 @@ export const PREDIKAT_NILAI_OPTIONS: { value: PredikatNilai; label: string; arab
 ];
 
 export type TipeKelas =
-  | 'Tahfidz A (Ikhwan)'
-  | 'Tahfidz B (Akhwat)'
+  | 'Tahfidz'
   | 'Binnadzor A'
   | 'Binnadzor B'
-  | 'Jilid 1'
-  | 'Jilid 2'
-  | 'Jilid 3'
+  | 'Jilid'
   | 'Kelas Istimewa';
 
 export const TIPE_KELAS_OPTIONS: TipeKelas[] = [
-  'Tahfidz A (Ikhwan)',
-  'Tahfidz B (Akhwat)',
+  'Tahfidz',
   'Binnadzor A',
   'Binnadzor B',
-  'Jilid 1',
-  'Jilid 2',
-  'Jilid 3',
+  'Jilid',
   'Kelas Istimewa',
 ];
 

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import jsPDF from 'jspdf';
 import { ZiyadahRecord, MurojaahRecord, Santri, User } from '../types';
 import { formatTanggalLengkap, parseDateSafe } from '../utils/dateFormatter';
+import { getClassGroup } from '../utils/classUtils';
 
 export interface ReportOptions {
   includeIdentity: boolean;
@@ -190,7 +191,7 @@ export function useGeneratePDF() {
 
       const santriName = data.santri?.namaSantri || data.currentUser.nama || 'Santri';
       const santriId = data.santri?.idSantri || data.currentUser.idSantri || data.currentUser.username || '-';
-      const santriKelas = data.santri?.kelas || '-';
+      const santriKelas = getClassGroup(data.santri?.kelas) || '-';
       const santriTarget = data.santri?.targetHafalan || '-';
 
       // ════════ HEADER ════════

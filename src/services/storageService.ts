@@ -1,5 +1,17 @@
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Kelas } from '../types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Kelas, TipeKelas } from '../types';
 import { INITIAL_USERS, INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH, INITIAL_BINNADZOR } from '../data/sampleDatabase';
+import { getClassGroup } from '../utils/classUtils';
+
+function normalizeKelas(kelas: string): string {
+  const g = getClassGroup(kelas);
+  return g;
+}
+
+function normalizeTipeKelas(tipe: string): TipeKelas {
+  const g = getClassGroup(tipe);
+  if (g === 'Tahfidz' || g === 'Jilid' || g === 'Binnadzor A' || g === 'Binnadzor B' || g === 'Kelas Istimewa') return g as TipeKelas;
+  return 'Kelas Istimewa';
+}
 import { db } from './firebase';
 import {
   collection,
@@ -110,7 +122,9 @@ export const storageService = {
     }
     try {
       const parsed = JSON.parse(data);
-      return Array.isArray(parsed) ? parsed : INITIAL_SANTRI;
+      if (!Array.isArray(parsed)) return INITIAL_SANTRI;
+      const normalized = parsed.map((s: Santri) => ({ ...s, kelas: normalizeKelas(s.kelas) }));
+      return normalized;
     } catch {
       return INITIAL_SANTRI;
     }
@@ -152,7 +166,9 @@ export const storageService = {
     }
     try {
       const parsed = JSON.parse(data);
-      return Array.isArray(parsed) ? parsed : [];
+      if (!Array.isArray(parsed)) return [];
+      const normalized = parsed.map((k: Kelas) => ({ ...k, tipeKelas: normalizeTipeKelas(k.tipeKelas) }));
+      return normalized;
     } catch {
       return [];
     }
@@ -278,8 +294,9 @@ export const storageService = {
         snapshot.forEach((docSnap) => {
           const s = docSnap.data() as Santri;
           if (s && s.idSantri && !santriMap.has(s.idSantri)) {
-            santriMap.set(s.idSantri, s);
-            santri.push(s);
+            const normalizedS = { ...s, kelas: normalizeKelas(s.kelas) };
+            santriMap.set(s.idSantri, normalizedS);
+            santri.push(normalizedS);
           }
         });
         localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(santri));
@@ -344,8 +361,9 @@ export const storageService = {
       snapshot.forEach((docSnap) => {
         const k = docSnap.data() as Kelas;
         if (k && k.id && !kelasMap.has(k.id)) {
-          kelasMap.set(k.id, k);
-          kelasList.push(k);
+          const normalizedK = { ...k, tipeKelas: normalizeTipeKelas(k.tipeKelas) };
+          kelasMap.set(k.id, normalizedK);
+          kelasList.push(normalizedK);
         }
       });
       localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify(kelasList));

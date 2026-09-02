@@ -30,7 +30,7 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   const currentSantri = santriList.find(s => s.idSantri === currentUser.idSantri) || {
     idSantri: currentUser.idSantri || currentUser.username,
     namaSantri: currentUser.nama,
-    kelas: 'Tahfidz Al-Qur\'an',
+    kelas: 'Tahfidz',
     targetHafalan: 'Juz 30 (37 Surah)'
   };
 

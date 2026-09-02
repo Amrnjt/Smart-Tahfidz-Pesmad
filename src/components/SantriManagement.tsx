@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Santri, User, UserRole } from '../types';
 import { storageService } from '../services/storageService';
-import { Users, UserPlus, Target, Trash2, Search, AlertTriangle, CheckCircle2, Shield, Key, Edit3, UserCheck, Save, Sparkles, Phone } from 'lucide-react';
+import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, CreditCard as Edit3, UserCheck, Save, Sparkles, Phone } from 'lucide-react';
+import { getClassGroup } from '../utils/classUtils';
 
 interface SantriManagementProps {
   santriList: Santri[];
@@ -26,7 +27,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   // New Santri Form State
   const [newId, setNewId] = useState('');
   const [newNama, setNewNama] = useState('');
-  const [newKelas, setNewKelas] = useState('Tahfidz A (Ikhwan)');
+  const [newKelas, setNewKelas] = useState('Tahfidz');
   const [newTarget, setNewTarget] = useState('Juz 30 (37 Surah)');
   const [newWaliNama, setNewWaliNama] = useState('');
   const [newWaliKontak, setNewWaliKontak] = useState('');
@@ -412,7 +413,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-mono">
                           {santri.idSantri}
                         </span>
-                        <span className="text-xs font-semibold text-slate-500 truncate max-w-[150px]">{santri.kelas}</span>
+                        <span className="text-xs font-semibold text-slate-500 truncate max-w-[150px]">{getClassGroup(santri.kelas)}</span>
                       </div>
 
                       <div>
@@ -621,9 +622,11 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                     onChange={(e) => setEditSantriKelas(e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
                   >
-                    <option value="Tahfidz A (Ikhwan)">Tahfidz A (Ikhwan)</option>
-                    <option value="Tahfidz B (Akhwat)">Tahfidz B (Akhwat)</option>
-                    <option value="Tahfidz Reguler">Tahfidz Reguler</option>
+                    <option value="Tahfidz">Tahfidz</option>
+                    <option value="Binnadzor A">Binnadzor A</option>
+                    <option value="Binnadzor B">Binnadzor B</option>
+                    <option value="Jilid">Jilid</option>
+                    <option value="Kelas Istimewa">Kelas Istimewa</option>
                   </select>
                 </div>
 
@@ -781,7 +784,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                       <option value="">-- Pilih ID Santri Terkait --</option>
                       {santriList.map((s) => (
                         <option key={s.idSantri} value={s.idSantri}>
-                          {s.idSantri} - {s.namaSantri} ({s.kelas})
+                          {s.idSantri} - {s.namaSantri} ({getClassGroup(s.kelas)})
                         </option>
                       ))}
                     </select>
@@ -847,7 +850,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Kelas:</span>
-                <span className="font-medium text-slate-700">{santriToDelete.kelas}</span>
+                <span className="font-medium text-slate-700">{getClassGroup(santriToDelete.kelas)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Target Hafalan:</span>
@@ -1000,9 +1003,11 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                     onChange={(e) => setNewKelas(e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
                   >
-                    <option value="Tahfidz A (Ikhwan)">Tahfidz A (Ikhwan)</option>
-                    <option value="Tahfidz B (Akhwat)">Tahfidz B (Akhwat)</option>
-                    <option value="Tahfidz Reguler">Tahfidz Reguler</option>
+                    <option value="Tahfidz">Tahfidz</option>
+                    <option value="Binnadzor A">Binnadzor A</option>
+                    <option value="Binnadzor B">Binnadzor B</option>
+                    <option value="Jilid">Jilid</option>
+                    <option value="Kelas Istimewa">Kelas Istimewa</option>
                   </select>
                 </div>
 

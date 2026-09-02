@@ -234,7 +234,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                   type="text"
                   value={newNamaKelas}
                   onChange={(e) => setNewNamaKelas(e.target.value)}
-                  placeholder="contoh: Kelas Tahfidz A - Angkatan 2024"
+                  placeholder="contoh: Kelas Tahfidz - Angkatan 2024"
                   className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   required
                 />
