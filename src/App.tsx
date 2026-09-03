@@ -14,6 +14,7 @@ import { MushafQuran } from './components/MushafQuran';
 import { SantriManagement } from './components/SantriManagement';
 import { KelasManagement } from './components/KelasManagement';
 import { NotificationToastContainer } from './components/NotificationToastContainer';
+import { Snackbar, SnackbarState } from './components/Snackbar';
 import { useSetoranNotifications } from './hooks/useSetoranNotifications';
 import { LayoutDashboard, CirclePlus as PlusCircle, RotateCw, History, BookOpen, Users, Cloud, GraduationCap } from 'lucide-react';
 
@@ -26,6 +27,7 @@ export default function App() {
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
+  const [snack, setSnack] = useState<SnackbarState | null>(null);
 
   const refreshData = () => {
     setSantriList(storageService.getSantriList());
@@ -78,10 +80,26 @@ export default function App() {
 
   const handleManualRefresh = () => {
     setIsLoadingData(true);
-    refreshData();
-    setTimeout(() => {
+    try {
+      refreshData();
+      setTimeout(() => {
+        setIsLoadingData(false);
+        setSnack({
+          id: `sync-${Date.now()}`,
+          message: '✓ Data berhasil diperbarui',
+          type: 'success',
+        });
+      }, 400);
+    } catch {
       setIsLoadingData(false);
-    }, 400);
+      setSnack({
+        id: `sync-err-${Date.now()}`,
+        message: 'Data belum dapat diperbarui.',
+        type: 'error',
+        actionLabel: 'Coba Lagi',
+        onAction: handleManualRefresh,
+      });
+    }
   };
 
   const handleSelectSantriForZiyadah = (idSantri: string) => {
@@ -339,6 +357,9 @@ export default function App() {
       {isWali && (
         <NotificationToastContainer toasts={toasts} onDismiss={dismissToast} />
       )}
+
+      {/* Snackbar for sync feedback */}
+      <Snackbar snack={snack} onDismiss={() => setSnack(null)} />
 
     </div>
   );

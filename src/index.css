@@ -1,1 +1,107 @@
 @import "tailwindcss";
+
+/* === Design Tokens === */
+:root {
+  --duration-fast: 150ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  --duration-chart: 800ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* === Staggered Fade-In-Up === */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up {
+  opacity: 0;
+  animation: fadeInUp var(--duration-slow) var(--ease-out) forwards;
+}
+
+/* === Scroll Reveal === */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--duration-slow) var(--ease-out), transform var(--duration-slow) var(--ease-out);
+}
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* === Ripple === */
+.ripple-container {
+  position: relative;
+  overflow: hidden;
+}
+.ripple-wave {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: scale(0);
+  animation: ripple-expand var(--duration-normal) var(--ease-out) forwards;
+  background: currentColor;
+  opacity: 0.25;
+}
+@keyframes ripple-expand {
+  to { transform: scale(4); opacity: 0; }
+}
+
+/* === Press Feedback === */
+.press-feedback {
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+.press-feedback:active {
+  transform: scale(0.98);
+}
+
+/* === Snackbar === */
+@keyframes snackbar-in {
+  from { opacity: 0; transform: translateY(100%); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes snackbar-out {
+  from { opacity: 1; transform: translateY(0); }
+  to { opacity: 0; transform: translateY(100%); }
+}
+.snackbar-enter { animation: snackbar-in var(--duration-normal) var(--ease-out) forwards; }
+.snackbar-exit { animation: snackbar-out var(--duration-fast) var(--ease-in-out) forwards; }
+
+/* === Hero subtle gradient animation === */
+@keyframes hero-gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+.hero-animated-bg {
+  background-size: 200% 200%;
+  animation: hero-gradient-shift 12s ease-in-out infinite;
+}
+
+/* === Decorative float === */
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.float-slow { animation: float-slow 6s ease-in-out infinite; }
+
+/* === Safe area === */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+/* === Reduced motion === */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .fade-in-up, .scroll-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .hero-animated-bg { animation: none !important; }
+  .float-slow { animation: none !important; }
+}

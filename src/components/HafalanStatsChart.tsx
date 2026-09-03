@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { AnimatedCounter } from './AnimatedCounter';
 import { ZiyadahRecord, MurojaahRecord, Santri } from '../types';
 import {
   ResponsiveContainer,
@@ -267,8 +268,8 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                       </span>
                     )}
                   />
-                  <Bar dataKey="Ziyadah" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={36} />
-                  <Bar dataKey="Murojaah" fill="#0d9488" radius={[4, 4, 0, 0]} maxBarSize={36} />
+                  <Bar dataKey="Ziyadah" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={36} animationDuration={800} animationEasing="ease-out" />
+                  <Bar dataKey="Murojaah" fill="#0d9488" radius={[4, 4, 0, 0]} maxBarSize={36} animationDuration={800} animationEasing="ease-out" />
                 </BarChart>
               ) : (
                 <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -326,6 +327,8 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorZiyadah)"
+                    animationDuration={800}
+                    animationEasing="ease-out"
                   />
                   <Area
                     type="monotone"
@@ -334,6 +337,8 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorMurojaah)"
+                    animationDuration={800}
+                    animationEasing="ease-out"
                   />
                 </AreaChart>
               )}
@@ -371,6 +376,8 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                       outerRadius={65}
                       paddingAngle={3}
                       dataKey="value"
+                      animationDuration={800}
+                      animationEasing="ease-out"
                     >
                       {predikatData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
@@ -388,9 +395,11 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                   </PieChart>
                 </ResponsiveContainer>
                 
-                {/* Center Label */}
+                {/* Center Label with Animated Counter */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-lg font-extrabold text-slate-800">{totalFilteredSetoran}</span>
+                  <span className="text-lg font-extrabold text-slate-800">
+                    <AnimatedCounter value={totalFilteredSetoran} />
+                  </span>
                   <span className="text-[10px] text-slate-500 font-medium">Setoran</span>
                 </div>
               </div>

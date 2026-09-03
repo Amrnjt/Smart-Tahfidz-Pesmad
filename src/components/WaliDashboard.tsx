@@ -5,6 +5,9 @@ import { BookOpen, RotateCw, Award, Target, Calendar, CircleCheck as CheckCircle
 import { PesmadLogo } from './PesmadLogo';
 import { formatTanggalWaktu } from '../utils/dateFormatter';
 import { SantriWaliDashboardSkeleton } from './SkeletonLoading';
+import { AnimatedCounter } from './AnimatedCounter';
+import { ScrollReveal } from './ScrollReveal';
+import { useRipple } from '../hooks/useRipple';
 
 interface WaliDashboardProps {
   currentUser: User;
@@ -23,6 +26,8 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   setActiveTab,
   isLoading = false
 }) => {
+  const mushafRipple = useRipple<HTMLButtonElement>();
+
   if (isLoading) {
     return <SantriWaliDashboardSkeleton role="Wali" />;
   }
@@ -40,13 +45,24 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   const lastZiyadah = santriZiyadah[0];
   const lastMurojaah = santriMurojaah[0];
 
-  // Hitung persentase progres (perkiraan berdasarkan capaian surah)
   const estimatedProgressPercent = Math.min(100, Math.max(35, santriZiyadah.length * 8));
+
+  const fadeDelay = (index: number) => ({ animationDelay: `${100 + index * 80}ms` });
 
   return (
     <div className="space-y-6">
-      {/* Banner Profil Anak */}
-      <div className="bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 rounded-3xl p-6 sm:p-7 text-white shadow-md relative overflow-hidden">
+      {/* Banner Profil Anak - Hero Card */}
+      <div className="hero-animated-bg bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 rounded-3xl p-6 sm:p-7 text-white shadow-md relative overflow-hidden fade-in-up" style={fadeDelay(0)}>
+        {/* Decorative Islamic pattern */}
+        <div className="absolute top-0 right-0 w-48 h-48 opacity-[0.04] pointer-events-none float-slow">
+          <svg viewBox="0 0 100 100" fill="none" className="w-full h-full">
+            <circle cx="50" cy="50" r="40" stroke="white" strokeWidth="0.5" />
+            <circle cx="50" cy="50" r="30" stroke="white" strokeWidth="0.5" />
+            <circle cx="50" cy="50" r="20" stroke="white" strokeWidth="0.5" />
+            <path d="M50 10 L60 40 L90 50 L60 60 L50 90 L40 60 L10 50 L40 40 Z" stroke="white" strokeWidth="0.5" fill="none" />
+          </svg>
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
           <div className="flex items-start gap-4">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-1.5 flex items-center justify-center border-2 border-emerald-400/80 shadow-lg flex-shrink-0">
@@ -88,11 +104,13 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
               <Target className="w-4 h-4 text-amber-300" />
               Progres Capaian Hafalan Al-Qur'an
             </span>
-            <span className="text-amber-300 font-bold">{estimatedProgressPercent}% Selesai</span>
+            <span className="text-amber-300 font-bold">
+              <AnimatedCounter value={estimatedProgressPercent} suffix="%" /> Selesai
+            </span>
           </div>
           <div className="w-full h-3.5 bg-emerald-950/70 rounded-full overflow-hidden p-0.5 border border-emerald-600/40">
             <div
-              className="h-full bg-gradient-to-r from-amber-400 via-emerald-400 to-teal-300 rounded-full transition-all duration-500 shadow-sm"
+              className="h-full bg-gradient-to-r from-amber-400 via-emerald-400 to-teal-300 rounded-full transition-all duration-700 shadow-sm"
               style={{ width: `${estimatedProgressPercent}%` }}
             ></div>
           </div>
@@ -101,36 +119,33 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
 
       {/* Ringkasan 3 Card */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Total Ziyadah */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-4 fade-in-up" style={fadeDelay(1)}>
           <div className="w-12 h-12 rounded-2xl bg-emerald-100/90 text-emerald-800 flex items-center justify-center flex-shrink-0">
             <BookOpen className="w-6 h-6" />
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500">Total Setoran Ziyadah</p>
             <h3 className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">
-              {santriZiyadah.length} Kali
+              <AnimatedCounter value={santriZiyadah.length} /> Kali
             </h3>
             <span className="text-[10px] text-emerald-700 font-medium">Hafalan baru dicatat</span>
           </div>
         </div>
 
-        {/* Total Muroja'ah */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-4 fade-in-up" style={fadeDelay(2)}>
           <div className="w-12 h-12 rounded-2xl bg-teal-100/90 text-teal-800 flex items-center justify-center flex-shrink-0">
             <RotateCw className="w-6 h-6" />
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-500">Total Muroja'ah</p>
             <h3 className="text-xl sm:text-2xl font-extrabold text-slate-800 mt-0.5">
-              {santriMurojaah.length} Kali
+              <AnimatedCounter value={santriMurojaah.length} /> Kali
             </h3>
             <span className="text-[10px] text-teal-700 font-medium">Pengulangan hafalan</span>
           </div>
         </div>
 
-        {/* Predikat Kelancaran */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-4">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-4 fade-in-up" style={fadeDelay(3)}>
           <div className="w-12 h-12 rounded-2xl bg-sky-100/90 text-sky-800 flex items-center justify-center flex-shrink-0">
             <Award className="w-6 h-6" />
           </div>
@@ -144,98 +159,105 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
         </div>
       </div>
 
-      {/* Visualisasi Grafik Progres Ziyadah Menggunakan Recharts */}
-      <ZiyadahProgressChart
-        ziyadahRecords={santriZiyadah}
-        santriName={targetSantri.namaSantri}
-        isSantriView={false}
-      />
+      {/* Visualisasi Grafik */}
+      <ScrollReveal>
+        <ZiyadahProgressChart
+          ziyadahRecords={santriZiyadah}
+          santriName={targetSantri.namaSantri}
+          isSantriView={false}
+        />
+      </ScrollReveal>
 
       {/* Detail Setoran Terakhir */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Setoran Ziyadah Terakhir */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-emerald-700" />
-              <h4 className="font-bold text-slate-800 text-sm">Setoran Ziyadah Terakhir</h4>
+      <ScrollReveal delay={100}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Setoran Ziyadah Terakhir */}
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-emerald-700" />
+                <h4 className="font-bold text-slate-800 text-sm">Setoran Ziyadah Terakhir</h4>
+              </div>
+              <span className="text-[11px] text-emerald-800 font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                <Calendar className="w-3 h-3 text-emerald-600" />
+                {lastZiyadah ? formatTanggalWaktu(lastZiyadah.timestamp) : '-'}
+              </span>
             </div>
-            <span className="text-[11px] text-emerald-800 font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
-              <Calendar className="w-3 h-3 text-emerald-600" />
-              {lastZiyadah ? formatTanggalWaktu(lastZiyadah.timestamp) : '-'}
-            </span>
+
+            {lastZiyadah ? (
+              <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/60 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-extrabold text-emerald-950">
+                    {lastZiyadah.surah} (Ayat {lastZiyadah.ayatAwal} - {lastZiyadah.ayatAkhir})
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900 font-bold text-[10px]">
+                    {lastZiyadah.nilai}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 italic">"{lastZiyadah.catatan}"</p>
+                <div className="text-[10px] text-emerald-800 font-medium pt-1">
+                  Dicatat oleh: {lastZiyadah.inputBy}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 py-3 text-center">Belum ada catatan Ziyadah.</p>
+            )}
           </div>
 
-          {lastZiyadah ? (
-            <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/60 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-extrabold text-emerald-950">
-                  {lastZiyadah.surah} (Ayat {lastZiyadah.ayatAwal} - {lastZiyadah.ayatAkhir})
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900 font-bold text-[10px]">
-                  {lastZiyadah.nilai}
-                </span>
+          {/* Setoran Muroja'ah Terakhir */}
+          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <RotateCw className="w-4 h-4 text-teal-700" />
+                <h4 className="font-bold text-slate-800 text-sm">Setoran Muroja'ah Terakhir</h4>
               </div>
-              <p className="text-xs text-slate-600 italic">"{lastZiyadah.catatan}"</p>
-              <div className="text-[10px] text-emerald-800 font-medium pt-1">
-                Dicatat oleh: {lastZiyadah.inputBy}
-              </div>
+              <span className="text-[11px] text-teal-800 font-semibold flex items-center gap-1 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60">
+                <Calendar className="w-3 h-3 text-teal-600" />
+                {lastMurojaah ? formatTanggalWaktu(lastMurojaah.timestamp) : '-'}
+              </span>
             </div>
-          ) : (
-            <p className="text-xs text-slate-400 py-3 text-center">Belum ada catatan Ziyadah.</p>
-          )}
-        </div>
 
-        {/* Setoran Muroja'ah Terakhir */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div className="flex items-center gap-2">
-              <RotateCw className="w-4 h-4 text-teal-700" />
-              <h4 className="font-bold text-slate-800 text-sm">Setoran Muroja'ah Terakhir</h4>
-            </div>
-            <span className="text-[11px] text-teal-800 font-semibold flex items-center gap-1 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60">
-              <Calendar className="w-3 h-3 text-teal-600" />
-              {lastMurojaah ? formatTanggalWaktu(lastMurojaah.timestamp) : '-'}
-            </span>
+            {lastMurojaah ? (
+              <div className="p-4 rounded-xl bg-teal-50/60 border border-teal-200/60 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-extrabold text-teal-950">
+                    {lastMurojaah.surahAtauJuz}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-teal-200 text-teal-900 font-bold text-[10px]">
+                    {lastMurojaah.nilai}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 italic">"{lastMurojaah.catatan}"</p>
+                <div className="text-[10px] text-teal-800 font-medium pt-1">
+                  Dicatat oleh: {lastMurojaah.inputBy}
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-slate-400 py-3 text-center">Belum ada catatan Muroja'ah.</p>
+            )}
           </div>
-
-          {lastMurojaah ? (
-            <div className="p-4 rounded-xl bg-teal-50/60 border border-teal-200/60 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-extrabold text-teal-950">
-                  {lastMurojaah.surahAtauJuz}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-teal-200 text-teal-900 font-bold text-[10px]">
-                  {lastMurojaah.nilai}
-                </span>
-              </div>
-              <p className="text-xs text-slate-600 italic">"{lastMurojaah.catatan}"</p>
-              <div className="text-[10px] text-teal-800 font-medium pt-1">
-                Dicatat oleh: {lastMurojaah.inputBy}
-              </div>
-            </div>
-          ) : (
-            <p className="text-xs text-slate-400 py-3 text-center">Belum ada catatan Muroja'ah.</p>
-          )}
         </div>
-      </div>
+      </ScrollReveal>
 
       {/* Quick Action to Mushaf */}
-      <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-800 to-teal-800 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h4 className="font-bold text-base">Ingin menyimak bacaan ananda di rumah?</h4>
-          <p className="text-xs text-emerald-200">
-            Buka Mushaf Al-Qur'an Digital 30 Juz lengkap dengan teks Arab, Latin, Terjemahan, dan Audio Murattal.
-          </p>
+      <ScrollReveal delay={100}>
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-800 to-teal-800 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h4 className="font-bold text-base">Ingin menyimak bacaan ananda di rumah?</h4>
+            <p className="text-xs text-emerald-200">
+              Buka Mushaf Al-Qur'an Digital 30 Juz lengkap dengan teks Arab, Latin, Terjemahan, dan Audio Murattal.
+            </p>
+          </div>
+          <button
+            ref={mushafRipple.elementRef}
+            onClick={(e) => { mushafRipple.createRipple(e); setActiveTab('mushaf'); }}
+            className="ripple-container press-feedback px-5 py-2.5 rounded-xl bg-white text-emerald-900 font-bold text-xs shadow hover:bg-emerald-50 transition flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+          >
+            <BookOpen className="w-4 h-4 text-emerald-700" />
+            <span>Buka Mushaf Digital</span>
+          </button>
         </div>
-        <button
-          onClick={() => setActiveTab('mushaf')}
-          className="px-5 py-2.5 rounded-xl bg-white text-emerald-900 font-bold text-xs shadow hover:bg-emerald-50 transition flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
-        >
-          <BookOpen className="w-4 h-4 text-emerald-700" />
-          <span>Buka Mushaf Digital</span>
-        </button>
-      </div>
+      </ScrollReveal>
     </div>
   );
 };
