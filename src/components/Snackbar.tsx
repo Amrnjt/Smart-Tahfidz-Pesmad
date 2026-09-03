@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { CheckCircle2, AlertCircle, X } from 'lucide-react';
 
 export interface SnackbarState {
