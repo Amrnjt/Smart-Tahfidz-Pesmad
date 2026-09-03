@@ -415,9 +415,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     </div>
 
                     {/* Date */}
-                    <div className="flex-shrink-0 w-[90px] sm:w-[120px]">
+                    <div className="flex-shrink-0 w-[120px] sm:w-[160px]">
                       <div className="text-[11px] font-bold text-slate-700 leading-tight">
-                        {formatTanggalLengkap(item.timestamp).split(',')[0]}
+                        {formatTanggalLengkap(item.timestamp)}
                       </div>
                       <div className="text-[10px] text-slate-400 font-mono flex items-center gap-0.5">
                         <Clock className="w-2.5 h-2.5" />
