@@ -79,6 +79,12 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
     return santriList.filter(s => santriClassMap.has(s.idSantri));
   }, [santriList, santriClassMap]);
 
+  // Derived metrics for summary section
+  const totalSantri = santriList.length;
+  const sudahBerkelas = assignedSantriList.length;
+  const belumBerkelas = unassignedSantriList.length;
+  const placementPercent = totalSantri > 0 ? Math.round((sudahBerkelas / totalSantri) * 100) : 0;
+
   // Filtered santri for Add Modal: By default only show unassigned santri!
   const santriOptionsForAdd = useMemo(() => {
     let list = showAlreadyAssignedInAdd
@@ -270,57 +276,275 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
         </button>
       </div>
 
-      {/* Summary KPI Cards: Penempatan Santri */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Santri</p>
-            <h4 className="text-xl font-black text-slate-800 mt-0.5">{santriList.length}</h4>
-            <p className="text-[10px] text-slate-500 mt-0.5">Terdaftar dalam sistem</p>
+      {/* ================= SECTION RINGKASAN PENEMPATAN SANTRI ================= */}
+      <section className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs overflow-hidden">
+        {/* Section Header */}
+        <div className="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-slate-100 flex items-center justify-between gap-3 bg-gradient-to-r from-slate-50/90 via-white to-slate-50/60">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-emerald-100/90 text-emerald-800 flex items-center justify-center flex-shrink-0 shadow-2xs">
+              <GraduationCap className="w-4 h-4" />
+            </div>
+            <div>
+              <h4 className="text-xs sm:text-sm font-extrabold text-slate-800 tracking-tight flex items-center gap-1.5">
+                <span>Ringkasan Penempatan Santri</span>
+                {totalSantri > 0 && belumBerkelas === 0 && (
+                  <span className="inline-flex items-center gap-1 text-[9.5px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-md">
+                    <CheckCircle2 className="w-2.5 h-2.5" />
+                    100% Lengkap
+                  </span>
+                )}
+              </h4>
+              <p className="text-[10px] sm:text-xs text-slate-500 font-medium">
+                Informasi penempatan santri ke dalam kelas
+              </p>
+            </div>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-slate-200/80 text-slate-700 flex items-center justify-center">
-            <Users className="w-5 h-5" />
-          </div>
+          <span className="text-[11px] font-bold text-slate-600 bg-slate-100/90 border border-slate-200/60 px-2.5 py-1 rounded-lg font-mono">
+            {sudahBerkelas}/{totalSantri} Santri
+          </span>
         </div>
 
-        <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200 flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider">Sudah Ada Kelas</p>
-            <h4 className="text-xl font-black text-emerald-900 mt-0.5">{assignedSantriList.length}</h4>
-            <p className="text-[10px] text-emerald-700 mt-0.5">
-              {santriList.length > 0 ? `${Math.round((assignedSantriList.length / santriList.length) * 100)}% santri ditempatkan` : '0%'}
-            </p>
-          </div>
-          <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
-            <UserCheck className="w-5 h-5" />
-          </div>
-        </div>
+        <div className="p-3 sm:p-4 lg:p-5 space-y-3.5">
+          {/* DESKTOP STATISTIC SUMMARY (3 Cards in 1 Row) */}
+          <div className="hidden sm:grid sm:grid-cols-3 gap-3.5">
+            {/* 1. Total Santri (Aksen Biru) */}
+            <div className="bg-white hover:bg-sky-50/30 rounded-2xl p-4 border border-slate-200/90 shadow-2xs transition-all flex items-start justify-between">
+              <div className="space-y-1">
+                <p className="text-[11px] font-bold text-sky-700 uppercase tracking-wider">Total Santri</p>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-2xl lg:text-3xl font-black text-slate-900 tracking-tight">{totalSantri}</span>
+                  <span className="text-xs font-semibold text-slate-400">anak</span>
+                </div>
+                <p className="text-[11px] font-medium text-slate-500">Terdaftar dalam sistem</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-sky-50 border border-sky-100 text-sky-700 flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5" />
+              </div>
+            </div>
 
-        <div className={`p-4 rounded-2xl border flex items-center justify-between transition-all ${
-          unassignedSantriList.length > 0
-            ? 'bg-amber-50/90 border-amber-300 text-amber-950'
-            : 'bg-slate-50 border-slate-200 text-slate-700'
-        }`}>
-          <div>
-            <p className={`text-[11px] font-semibold uppercase tracking-wider ${unassignedSantriList.length > 0 ? 'text-amber-800' : 'text-slate-500'}`}>
-              Belum Ada Kelas
-            </p>
-            <h4 className={`text-xl font-black mt-0.5 ${unassignedSantriList.length > 0 ? 'text-amber-900' : 'text-slate-800'}`}>
-              {unassignedSantriList.length}
-            </h4>
-            <p className={`text-[10px] mt-0.5 ${unassignedSantriList.length > 0 ? 'text-amber-700 font-semibold' : 'text-slate-500'}`}>
-              {unassignedSantriList.length > 0 ? 'Tinggal diinput ke kelas' : 'Semua sudah punya kelas'}
-            </p>
-          </div>
-          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-            unassignedSantriList.length > 0 ? 'bg-amber-200/80 text-amber-900' : 'bg-slate-200/80 text-slate-600'
-          }`}>
-            <UserX className="w-5 h-5" />
-          </div>
-        </div>
-      </div>
+            {/* 2. Sudah Berkelas (Aksen Hijau Deep Emerald) */}
+            <div className="bg-white hover:bg-emerald-50/30 rounded-2xl p-4 border border-emerald-200/90 shadow-2xs transition-all flex items-start justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[11px] font-bold text-emerald-800 uppercase tracking-wider">Sudah Berkelas</p>
+                  <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800">
+                    {placementPercent}%
+                  </span>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-2xl lg:text-3xl font-black text-emerald-800 tracking-tight">{sudahBerkelas}</span>
+                  <span className="text-xs font-semibold text-emerald-600/80">anak</span>
+                </div>
+                <p className="text-[11px] font-medium text-emerald-700/80">Ditempatkan ke kelas</p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center flex-shrink-0">
+                <UserCheck className="w-5 h-5" />
+              </div>
+            </div>
 
-      {/* Unassigned Santri Alert & Quick Placement Banner */}
+            {/* 3. Belum Berkelas (Aksen Oranye / Amber) */}
+            <div className={`rounded-2xl p-4 border shadow-2xs transition-all flex items-start justify-between ${
+              belumBerkelas > 0
+                ? 'bg-amber-50/60 hover:bg-amber-50/90 border-amber-300/90'
+                : 'bg-white hover:bg-slate-50/50 border-slate-200/90'
+            }`}>
+              <div className="space-y-1">
+                <div className="flex items-center gap-1.5">
+                  <p className={`text-[11px] font-bold uppercase tracking-wider ${belumBerkelas > 0 ? 'text-amber-800' : 'text-slate-600'}`}>
+                    Belum Berkelas
+                  </p>
+                  {belumBerkelas > 0 ? (
+                    <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-amber-200 text-amber-950">
+                      Perlu Input
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                      Lengkap
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className={`text-2xl lg:text-3xl font-black tracking-tight ${belumBerkelas > 0 ? 'text-amber-900' : 'text-slate-700'}`}>
+                    {belumBerkelas}
+                  </span>
+                  <span className="text-xs font-semibold text-slate-400">anak</span>
+                </div>
+                <p className={`text-[11px] font-medium ${belumBerkelas > 0 ? 'text-amber-700' : 'text-slate-400'}`}>
+                  {belumBerkelas > 0 ? 'Tersisa belum punya kelas' : 'Semua sudah punya kelas'}
+                </p>
+              </div>
+              <div className={`w-10 h-10 rounded-xl border flex items-center justify-center flex-shrink-0 ${
+                belumBerkelas > 0
+                  ? 'bg-amber-100 border-amber-300 text-amber-800'
+                  : 'bg-slate-50 border-slate-200 text-slate-400'
+              }`}>
+                <UserX className="w-5 h-5" />
+              </div>
+            </div>
+          </div>
+
+          {/* MOBILE STATISTIC SUMMARY (Compact 3 Cards in 1 Row - matching user reference) */}
+          <div className="sm:hidden bg-slate-50/90 rounded-2xl p-2.5 border border-slate-200/90 shadow-2xs">
+            <div className="grid grid-cols-3 divide-x divide-slate-200/80 text-center">
+              {/* Total Santri */}
+              <div className="px-1.5 py-1">
+                <div className="flex items-center justify-center gap-1 text-slate-500 mb-0.5">
+                  <Users className="w-3 h-3 text-sky-600" />
+                  <p className="text-[9.5px] font-bold uppercase tracking-wider">Total</p>
+                </div>
+                <span className="text-xl font-black text-slate-800 tracking-tight block">{totalSantri}</span>
+                <p className="text-[9.5px] text-slate-400 font-medium mt-0.5">Terdaftar</p>
+              </div>
+
+              {/* Sudah Berkelas */}
+              <div className="px-1.5 py-1">
+                <div className="flex items-center justify-center gap-1 text-emerald-800 mb-0.5">
+                  <UserCheck className="w-3 h-3 text-emerald-700" />
+                  <p className="text-[9.5px] font-bold uppercase tracking-wider truncate">Berkelas</p>
+                </div>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className="text-xl font-black text-emerald-800 tracking-tight">{sudahBerkelas}</span>
+                  <span className="text-[9px] font-extrabold text-emerald-800 bg-emerald-100/90 px-1 py-0.2 rounded">
+                    {placementPercent}%
+                  </span>
+                </div>
+                <p className="text-[9.5px] text-emerald-700 font-medium mt-0.5">Ditempatkan</p>
+              </div>
+
+              {/* Belum Berkelas */}
+              <div className="px-1.5 py-1">
+                <div className="flex items-center justify-center gap-1 text-slate-600 mb-0.5">
+                  <UserX className={`w-3 h-3 ${belumBerkelas > 0 ? 'text-amber-600' : 'text-slate-400'}`} />
+                  <p className={`text-[9.5px] font-bold uppercase tracking-wider ${belumBerkelas > 0 ? 'text-amber-800' : 'text-slate-500'}`}>
+                    Belum
+                  </p>
+                </div>
+                <div className="flex items-baseline justify-center gap-1">
+                  <span className={`text-xl font-black tracking-tight ${belumBerkelas > 0 ? 'text-amber-800' : 'text-slate-700'}`}>
+                    {belumBerkelas}
+                  </span>
+                  {belumBerkelas > 0 ? (
+                    <span className="text-[9px] font-extrabold text-amber-950 bg-amber-200 px-1 py-0.2 rounded">
+                      Sisa
+                    </span>
+                  ) : (
+                    <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1 py-0.2 rounded border border-emerald-200/60">
+                      Lengkap
+                    </span>
+                  )}
+                </div>
+                <p className={`text-[9.5px] font-medium mt-0.5 ${belumBerkelas > 0 ? 'text-amber-700' : 'text-slate-400'}`}>
+                  {belumBerkelas > 0 ? 'Perlu Input' : 'Semua Berkelas'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* PROGRESS PENEMPATAN SANTRI */}
+          {/* Desktop Layout: Circular progress gauge + horizontal progress track */}
+          <div className="hidden sm:flex items-center justify-between gap-5 p-4 rounded-2xl bg-gradient-to-r from-emerald-50/50 via-slate-50/60 to-white border border-slate-200/80">
+            {/* Left: Circular gauge */}
+            <div className="flex items-center gap-3.5">
+              <div className="relative w-13 h-13 flex items-center justify-center flex-shrink-0">
+                <svg className="w-13 h-13 -rotate-90" viewBox="0 0 36 36">
+                  <path
+                    className="text-slate-200"
+                    strokeWidth="3.2"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    className="text-emerald-700 transition-all duration-700 ease-out"
+                    strokeDasharray={`${placementPercent}, 100`}
+                    strokeWidth="3.2"
+                    strokeLinecap="round"
+                    stroke="currentColor"
+                    fill="none"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span className="text-[11px] font-black text-emerald-900 tracking-tight">{placementPercent}%</span>
+                </div>
+              </div>
+
+              <div>
+                <h5 className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <span>Progress Penempatan Santri</span>
+                  {placementPercent === 100 && (
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100/80 px-2 py-0.5 rounded-full">
+                      Selesai
+                    </span>
+                  )}
+                </h5>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  <span className="font-bold text-slate-800">{sudahBerkelas}</span> dari <span className="font-bold text-slate-800">{totalSantri}</span> santri telah ditempatkan
+                </p>
+              </div>
+            </div>
+
+            {/* Right: Progress bar */}
+            <div className="flex-1 max-w-sm space-y-1.5">
+              <div className="flex justify-between text-[11px] font-semibold text-slate-600">
+                <span>Kelengkapan Penempatan</span>
+                <span className="font-bold text-emerald-800">{placementPercent}%</span>
+              </div>
+              <div className="h-2.5 bg-slate-200/80 rounded-full overflow-hidden flex shadow-inner">
+                <div
+                  className="bg-gradient-to-r from-emerald-600 to-emerald-700 h-full rounded-full transition-all duration-700 ease-out"
+                  style={{ width: `${placementPercent}%` }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Progress Layout (Super Compact & Direct) */}
+          <div className="sm:hidden space-y-1.5 pt-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-[11px] font-bold text-slate-700">Progress Penempatan Santri</span>
+              <span className="text-[11px] font-black text-emerald-800 font-mono">{placementPercent}%</span>
+            </div>
+            <div className="h-2 bg-slate-200/80 rounded-full overflow-hidden flex">
+              <div
+                className="bg-emerald-700 h-full rounded-full transition-all duration-500"
+                style={{ width: `${placementPercent}%` }}
+              />
+            </div>
+            <div className="flex justify-between items-center text-[10px] text-slate-500">
+              <span>{sudahBerkelas} dari {totalSantri} santri telah ditempatkan</span>
+              {placementPercent === 100 && (
+                <span className="font-bold text-emerald-800">100% Lengkap</span>
+              )}
+            </div>
+          </div>
+
+          {/* STATUS SUCCESS CARD (Jika Seluruh Santri Sudah Memiliki Kelas) */}
+          {belumBerkelas === 0 && totalSantri > 0 && (
+            <div className="p-3 sm:p-3.5 rounded-xl bg-emerald-50/80 border border-emerald-200/90 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-200/80 text-emerald-800 flex items-center justify-center flex-shrink-0 shadow-2xs">
+                  <CheckCircle2 className="w-4 h-4" />
+                </div>
+                <div>
+                  <h6 className="text-xs font-bold text-emerald-950">
+                    {sudahBerkelas} dari {totalSantri} santri telah ditempatkan ke kelas
+                  </h6>
+                  <p className="text-[11px] text-emerald-700 font-medium">
+                    Seluruh santri telah memiliki kelas.
+                  </p>
+                </div>
+              </div>
+              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-emerald-800 bg-white px-2.5 py-1 rounded-lg border border-emerald-200 shadow-2xs">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                Semua Terdistribusi
+              </span>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Unassigned Santri Alert & Quick Placement Banner (Saat Ada Santri Belum Berkelas) */}
       {unassignedSantriList.length > 0 && (
         <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
