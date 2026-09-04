@@ -29,6 +29,7 @@ export interface Kelas {
   namaKelas: string;
   tipeKelas: TipeKelas;
   musyrif?: string;
+  musyrifId?: string;
   santriIds: string[];
   createdAt: string;
 }
@@ -40,6 +41,7 @@ export interface User {
   role: UserRole;
   nama: string;
   idSantri?: string;
+  kelasId?: string;
   notificationPermission?: 'default' | 'granted' | 'denied';
 }
 

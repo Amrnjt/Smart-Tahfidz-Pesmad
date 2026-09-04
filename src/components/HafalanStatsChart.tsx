@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { AnimatedCounter } from './AnimatedCounter';
-import { ZiyadahRecord, MurojaahRecord, Santri } from '../types';
+import { ZiyadahRecord, MurojaahRecord, Santri, Kelas } from '../types';
 import {
   ResponsiveContainer,
   BarChart,
@@ -16,20 +16,23 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { TrendingUp, ChartBar as BarChart3, ChartPie as PieIcon, ListFilter as Filter, Calendar } from 'lucide-react';
+import { TrendingUp, ChartBar as BarChart3, ChartPie as PieIcon, ListFilter as Filter, Calendar, GraduationCap } from 'lucide-react';
 
 interface HafalanStatsChartProps {
   santriList: Santri[];
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
+  kelasList?: Kelas[];
 }
 
 export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
   santriList,
   ziyadahRecords,
-  murojaahRecords
+  murojaahRecords,
+  kelasList = []
 }) => {
   const [selectedSantriFilter, setSelectedSantriFilter] = useState<string>('ALL');
+  const [selectedKelasFilter, setSelectedKelasFilter] = useState<string>('ALL');
   const [chartType, setChartType] = useState<'bar' | 'area'>('bar');
   const [timeRangeMonths, setTimeRangeMonths] = useState<number>(6);
 
@@ -39,16 +42,32 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
     'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
   ];
 
-  // 1. Filter records by selected santri
+  // 0. Filter santri by selected kelas first
+  const kelasFilteredSantri = useMemo(() => {
+    if (selectedKelasFilter === 'ALL') return santriList;
+    const kls = kelasList.find(k => k.id === selectedKelasFilter);
+    if (!kls || !kls.santriIds) return santriList;
+    return santriList.filter(s => kls.santriIds.includes(s.idSantri));
+  }, [santriList, kelasList, selectedKelasFilter]);
+
+  // 1. Filter records by selected santri and kelas
   const filteredZiyadah = useMemo(() => {
-    if (selectedSantriFilter === 'ALL') return ziyadahRecords;
-    return ziyadahRecords.filter(r => r.idSantri === selectedSantriFilter);
-  }, [ziyadahRecords, selectedSantriFilter]);
+    if (selectedSantriFilter !== 'ALL') return ziyadahRecords.filter(r => r.idSantri === selectedSantriFilter);
+    if (selectedKelasFilter !== 'ALL') {
+      const allowedIds = new Set(kelasFilteredSantri.map(s => s.idSantri));
+      return ziyadahRecords.filter(r => allowedIds.has(r.idSantri));
+    }
+    return ziyadahRecords;
+  }, [ziyadahRecords, selectedSantriFilter, selectedKelasFilter, kelasFilteredSantri]);
 
   const filteredMurojaah = useMemo(() => {
-    if (selectedSantriFilter === 'ALL') return murojaahRecords;
-    return murojaahRecords.filter(r => r.idSantri === selectedSantriFilter);
-  }, [murojaahRecords, selectedSantriFilter]);
+    if (selectedSantriFilter !== 'ALL') return murojaahRecords.filter(r => r.idSantri === selectedSantriFilter);
+    if (selectedKelasFilter !== 'ALL') {
+      const allowedIds = new Set(kelasFilteredSantri.map(s => s.idSantri));
+      return murojaahRecords.filter(r => allowedIds.has(r.idSantri));
+    }
+    return murojaahRecords;
+  }, [murojaahRecords, selectedSantriFilter, selectedKelasFilter, kelasFilteredSantri]);
 
   // 2. Prepare monthly trend data (e.g. past 6 or 12 months)
   const monthlyData = useMemo(() => {
@@ -144,6 +163,23 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
 
         {/* Filter Controls */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Kelas Filter */}
+          {kelasList.length > 0 && (
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700">
+              <GraduationCap className="w-3.5 h-3.5 text-slate-400" />
+              <select
+                value={selectedKelasFilter}
+                onChange={(e) => { setSelectedKelasFilter(e.target.value); setSelectedSantriFilter('ALL'); }}
+                className="bg-transparent font-medium focus:outline-hidden cursor-pointer"
+              >
+                <option value="ALL">Semua Kelas</option>
+                {kelasList.map((k) => (
+                  <option key={k.id} value={k.id}>{k.namaKelas}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Santri Filter */}
           <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700">
             <Filter className="w-3.5 h-3.5 text-slate-400" />
@@ -152,8 +188,8 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
               onChange={(e) => setSelectedSantriFilter(e.target.value)}
               className="bg-transparent font-medium focus:outline-hidden cursor-pointer"
             >
-              <option value="ALL">Semua Santri ({santriList.length})</option>
-              {santriList.map((s) => (
+              <option value="ALL">Semua Santri ({kelasFilteredSantri.length})</option>
+              {kelasFilteredSantri.map((s) => (
                 <option key={s.idSantri} value={s.idSantri}>
                   {s.namaSantri} ({s.idSantri})
                 </option>

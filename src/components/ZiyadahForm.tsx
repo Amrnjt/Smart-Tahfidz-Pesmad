@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS } from '../types';
+import React, { useState, useMemo } from 'react';
+import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, Kelas } from '../types';
 import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
 import { CirclePlus as PlusCircle, BookOpen, CircleCheck as CheckCircle, Save, RotateCcw, Calendar, Clock } from 'lucide-react';
@@ -8,6 +8,7 @@ import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } 
 interface ZiyadahFormProps {
   currentUser: User;
   santriList: Santri[];
+  kelasList: Kelas[];
   selectedSantriId?: string;
   onSuccess: () => void;
 }
@@ -15,10 +16,17 @@ interface ZiyadahFormProps {
 export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
   currentUser,
   santriList,
+  kelasList,
   selectedSantriId,
   onSuccess
 }) => {
-  const [idSantri, setIdSantri] = useState(selectedSantriId || (santriList[0]?.idSantri || ''));
+  const myKelas = useMemo(() => kelasList.find(k => k.musyrifId === currentUser.id), [kelasList, currentUser.id]);
+  const mySantriList = useMemo(() => {
+    if (!myKelas || !myKelas.santriIds || myKelas.santriIds.length === 0) return santriList;
+    return santriList.filter(s => myKelas.santriIds.includes(s.idSantri));
+  }, [santriList, myKelas]);
+
+  const [idSantri, setIdSantri] = useState(selectedSantriId || (mySantriList[0]?.idSantri || ''));
   const [tanggalSetor, setTanggalSetor] = useState(getTodayInputFormat());
   const [waktuSetor, setWaktuSetor] = useState(getCurrentTimeInputFormat());
   const [surahName, setSurahName] = useState(SURAH_LIST[77].nameLatin); // default An-Naba
@@ -97,7 +105,7 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
           </div>
         )}
 
-        {santriList.length === 0 ? (
+        {mySantriList.length === 0 ? (
           <div className="text-center py-10 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 space-y-3">
             <BookOpen className="w-8 h-8 mx-auto text-slate-400" />
             <h4 className="text-sm font-bold text-slate-700">Belum Ada Data Santri</h4>
@@ -120,12 +128,17 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
                 className="w-full py-3 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="">-- Pilih Nama Santri --</option>
-                {santriList.map((s) => (
+                {mySantriList.map((s) => (
                   <option key={s.idSantri} value={s.idSantri}>
                     {s.namaSantri} ({s.kelas})
                   </option>
                 ))}
               </select>
+              {myKelas && (
+                <p className="text-[11px] text-emerald-700 font-semibold mt-1">
+                  Kelas: {myKelas.namaKelas} • {mySantriList.length} santri
+                </p>
+              )}
             </div>
 
             <div>

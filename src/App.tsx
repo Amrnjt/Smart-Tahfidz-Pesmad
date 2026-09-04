@@ -25,6 +25,7 @@ export default function App() {
   const [ziyadahRecords, setZiyadahRecords] = useState<ZiyadahRecord[]>([]);
   const [murojaahRecords, setMurojaahRecords] = useState<MurojaahRecord[]>([]);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
+  const [userList, setUserList] = useState<User[]>([]);
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   const [snack, setSnack] = useState<SnackbarState | null>(null);
@@ -34,6 +35,7 @@ export default function App() {
     setZiyadahRecords(storageService.getZiyadahRecords());
     setMurojaahRecords(storageService.getMurojaahRecords());
     setKelasList(storageService.getKelasList());
+    setUserList(storageService.getUsers());
   };
 
   // Setup real-time Firebase Firestore synchronization across all devices
@@ -251,6 +253,7 @@ export default function App() {
                   santriList={santriList}
                   ziyadahRecords={ziyadahRecords}
                   murojaahRecords={murojaahRecords}
+                  kelasList={kelasList}
                   setActiveTab={setActiveTab}
                   onSelectSantriForZiyadah={handleSelectSantriForZiyadah}
                   isLoading={isLoadingData}
@@ -280,6 +283,7 @@ export default function App() {
               <ZiyadahForm
                 currentUser={currentUser}
                 santriList={santriList}
+                kelasList={kelasList}
                 selectedSantriId={selectedSantriId}
                 onSuccess={() => {
                   refreshData();
@@ -292,6 +296,7 @@ export default function App() {
               <MurojaahForm
                 currentUser={currentUser}
                 santriList={santriList}
+                kelasList={kelasList}
                 selectedSantriId={selectedSantriId}
                 onSuccess={() => {
                   refreshData();
@@ -324,6 +329,7 @@ export default function App() {
               <KelasManagement
                 kelasList={kelasList}
                 santriList={santriList}
+                userList={userList}
                 onDataChanged={refreshData}
               />
             )}

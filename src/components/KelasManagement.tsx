@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
-import { Kelas, TipeKelas, TIPE_KELAS_OPTIONS, Santri } from '../types';
+import { Kelas, TipeKelas, TIPE_KELAS_OPTIONS, Santri, User } from '../types';
 import { storageService } from '../services/storageService';
 import { GraduationCap, Plus, Trash2, CreditCard as Edit3, Save, X, CircleCheck as CheckCircle2, Users, TriangleAlert as AlertTriangle } from 'lucide-react';
 
 interface KelasManagementProps {
   kelasList: Kelas[];
   santriList: Santri[];
+  userList: User[];
   onDataChanged: () => void;
 }
 
 export const KelasManagement: React.FC<KelasManagementProps> = ({
   kelasList,
   santriList,
+  userList,
   onDataChanged
 }) => {
+  const ustadzList = userList.filter(u => u.role === 'Ustadz');
   const [showAddModal, setShowAddModal] = useState(false);
   const [kelasToEdit, setKelasToEdit] = useState<Kelas | null>(null);
   const [kelasToDelete, setKelasToDelete] = useState<Kelas | null>(null);
@@ -23,12 +26,12 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
 
   const [newNamaKelas, setNewNamaKelas] = useState('');
   const [newTipeKelas, setNewTipeKelas] = useState<TipeKelas>(TIPE_KELAS_OPTIONS[0]);
-  const [newMusyrif, setNewMusyrif] = useState('');
+  const [newMusyrifId, setNewMusyrifId] = useState('');
   const [newSantriIds, setNewSantriIds] = useState<string[]>([]);
 
   const [editNamaKelas, setEditNamaKelas] = useState('');
   const [editTipeKelas, setEditTipeKelas] = useState<TipeKelas>(TIPE_KELAS_OPTIONS[0]);
-  const [editMusyrif, setEditMusyrif] = useState('');
+  const [editMusyrifId, setEditMusyrifId] = useState('');
   const [editSantriIds, setEditSantriIds] = useState<string[]>([]);
 
   const showToast = (type: 'success' | 'error', message: string) => {
@@ -42,11 +45,13 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
 
     setIsSaving(true);
     try {
+      const musyrifUser = ustadzList.find(u => u.id === newMusyrifId);
       const newKelas: Kelas = {
         id: `KLS-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
         namaKelas: newNamaKelas.trim(),
         tipeKelas: newTipeKelas,
-        musyrif: newMusyrif.trim(),
+        musyrif: musyrifUser?.nama || '',
+        musyrifId: newMusyrifId || undefined,
         santriIds: newSantriIds,
         createdAt: new Date().toISOString()
       };
@@ -54,7 +59,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
       setIsSaving(false);
       setShowAddModal(false);
       setNewNamaKelas('');
-      setNewMusyrif('');
+      setNewMusyrifId('');
       setNewSantriIds([]);
       onDataChanged();
       showToast('success', `Kelas "${newKelas.namaKelas}" berhasil dibuat.`);
@@ -68,7 +73,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
     setKelasToEdit(k);
     setEditNamaKelas(k.namaKelas);
     setEditTipeKelas(k.tipeKelas);
-    setEditMusyrif(k.musyrif || '');
+    setEditMusyrifId(k.musyrifId || '');
     setEditSantriIds(k.santriIds || []);
   };
 
@@ -78,10 +83,12 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
 
     setIsSaving(true);
     try {
+      const musyrifUser = ustadzList.find(u => u.id === editMusyrifId);
       await storageService.updateKelas(kelasToEdit.id, {
         namaKelas: editNamaKelas.trim(),
         tipeKelas: editTipeKelas,
-        musyrif: editMusyrif.trim(),
+        musyrif: musyrifUser?.nama || '',
+        musyrifId: editMusyrifId || undefined,
         santriIds: editSantriIds
       });
       setIsSaving(false);
@@ -253,13 +260,16 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Musyrif / Pembimbing</label>
-                <input
-                  type="text"
-                  value={newMusyrif}
-                  onChange={(e) => setNewMusyrif(e.target.value)}
-                  placeholder="Nama musyrif kelas"
-                  className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
+                <select
+                  value={newMusyrifId}
+                  onChange={(e) => setNewMusyrifId(e.target.value)}
+                  className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="">-- Pilih Ustadz Musyrif --</option>
+                  {ustadzList.map(u => (
+                    <option key={u.id} value={u.id}>{u.nama} ({u.username})</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Anggota Santri ({newSantriIds.length} dipilih)</label>
@@ -331,12 +341,16 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Musyrif / Pembimbing</label>
-                <input
-                  type="text"
-                  value={editMusyrif}
-                  onChange={(e) => setEditMusyrif(e.target.value)}
-                  className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                />
+                <select
+                  value={editMusyrifId}
+                  onChange={(e) => setEditMusyrifId(e.target.value)}
+                  className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  <option value="">-- Pilih Ustadz Musyrif --</option>
+                  {ustadzList.map(u => (
+                    <option key={u.id} value={u.id}>{u.nama} ({u.username})</option>
+                  ))}
+                </select>
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Anggota Santri ({editSantriIds.length} dipilih)</label>

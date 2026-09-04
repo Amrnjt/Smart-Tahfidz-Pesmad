@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, ActiveTab } from '../types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, ActiveTab, Kelas } from '../types';
 import { Users, CalendarCheck, BookOpen, RotateCw, CirclePlus as PlusCircle, ArrowRight, Award, Sparkles } from 'lucide-react';
 import { getClassGroup } from '../utils/classUtils';
 import { HafalanStatsChart } from './HafalanStatsChart';
@@ -14,6 +14,7 @@ interface UstadzDashboardProps {
   santriList: Santri[];
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
+  kelasList: Kelas[];
   setActiveTab: (tab: ActiveTab) => void;
   onSelectSantriForZiyadah?: (idSantri: string) => void;
   isLoading?: boolean;
@@ -24,6 +25,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   santriList,
   ziyadahRecords,
   murojaahRecords,
+  kelasList,
   setActiveTab,
   onSelectSantriForZiyadah,
   isLoading = false
@@ -216,6 +218,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           santriList={santriList}
           ziyadahRecords={ziyadahRecords}
           murojaahRecords={murojaahRecords}
+          kelasList={kelasList}
         />
       </ScrollReveal>
 
