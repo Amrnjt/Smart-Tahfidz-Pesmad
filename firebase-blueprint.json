@@ -67,6 +67,17 @@
         "catatan": { "type": "string" },
         "inputBy": { "type": "string" }
       }
+    },
+    "Kelas": {
+      "fields": {
+        "id": { "type": "string" },
+        "namaKelas": { "type": "string" },
+        "tipeKelas": { "type": "string" },
+        "musyrif": { "type": "string" },
+        "musyrifId": { "type": "string" },
+        "santriIds": { "type": "array" },
+        "createdAt": { "type": "string" }
+      }
     }
   }
 }

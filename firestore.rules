@@ -16,5 +16,8 @@ service cloud.firestore {
     match /binnadzor/{binnadzorId} {
       allow read, write: if true;
     }
+    match /kelas/{kelasId} {
+      allow read, write: if true;
+    }
   }
 }

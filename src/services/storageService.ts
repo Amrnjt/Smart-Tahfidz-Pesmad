@@ -729,6 +729,23 @@ export const storageService = {
 
   async addKelas(kelas: Kelas): Promise<Kelas> {
     const list = this.getKelasList();
+    const assignedIds = new Set(kelas.santriIds || []);
+
+    // 1. Remove assigned santri from other classes if any (avoid multi-class duplication)
+    for (const k of list) {
+      if (k.id !== kelas.id && k.santriIds && k.santriIds.length > 0) {
+        const prevCount = k.santriIds.length;
+        k.santriIds = k.santriIds.filter(id => !assignedIds.has(id));
+        if (k.santriIds.length !== prevCount) {
+          try {
+            await setDoc(doc(db, COLLECTIONS.KELAS, k.id), cleanForFirestore(k), { merge: true });
+          } catch (e) {
+            console.error('Failed to update other class:', e);
+          }
+        }
+      }
+    }
+
     const existingIndex = list.findIndex(k => k.id === kelas.id);
     if (existingIndex >= 0) {
       list[existingIndex] = kelas;
@@ -741,13 +758,56 @@ export const storageService = {
     } catch (e) {
       console.error('Failed to save Kelas to Firestore:', e);
     }
+
+    // 2. Synchronize santri.kelas property
+    const allSantri = this.getSantriList();
+    let santriChanged = false;
+    for (const s of allSantri) {
+      if (assignedIds.has(s.idSantri)) {
+        if (s.kelas !== kelas.namaKelas) {
+          s.kelas = kelas.namaKelas;
+          santriChanged = true;
+          try {
+            await setDoc(doc(db, COLLECTIONS.SANTRI, s.idSantri), cleanForFirestore(s), { merge: true });
+          } catch (e) {
+            console.error('Failed to sync santri.kelas:', e);
+          }
+        }
+      }
+    }
+    if (santriChanged) {
+      localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(allSantri));
+    }
+
     return kelas;
   },
 
   async updateKelas(id: string, updatedData: Partial<Kelas>): Promise<boolean> {
-    const list = this.getKelasList().map(k => k.id === id ? { ...k, ...updatedData } : k);
-    localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify(list));
-    const target = list.find(k => k.id === id);
+    const list = this.getKelasList();
+    const currentKelas = list.find(k => k.id === id);
+    const oldSantriIds = new Set(currentKelas?.santriIds || []);
+    const newSantriIds = updatedData.santriIds !== undefined ? new Set(updatedData.santriIds) : oldSantriIds;
+
+    // 1. Remove newly assigned santri from other classes if any
+    if (updatedData.santriIds !== undefined) {
+      for (const k of list) {
+        if (k.id !== id && k.santriIds && k.santriIds.length > 0) {
+          const prevCount = k.santriIds.length;
+          k.santriIds = k.santriIds.filter(sid => !newSantriIds.has(sid));
+          if (k.santriIds.length !== prevCount) {
+            try {
+              await setDoc(doc(db, COLLECTIONS.KELAS, k.id), cleanForFirestore(k), { merge: true });
+            } catch (e) {
+              console.error('Failed to update other class:', e);
+            }
+          }
+        }
+      }
+    }
+
+    const updatedList = list.map(k => k.id === id ? { ...k, ...updatedData } : k);
+    localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify(updatedList));
+    const target = updatedList.find(k => k.id === id);
     if (target) {
       try {
         await setDoc(doc(db, COLLECTIONS.KELAS, id), cleanForFirestore(target), { merge: true });
@@ -755,17 +815,72 @@ export const storageService = {
         console.error('Failed to update Kelas in Firestore:', e);
       }
     }
+
+    // 2. Synchronize santri.kelas
+    const allSantri = this.getSantriList();
+    let santriChanged = false;
+    const kelasName = target?.namaKelas || '';
+
+    for (const s of allSantri) {
+      if (newSantriIds.has(s.idSantri)) {
+        if (s.kelas !== kelasName) {
+          s.kelas = kelasName;
+          santriChanged = true;
+          try {
+            await setDoc(doc(db, COLLECTIONS.SANTRI, s.idSantri), cleanForFirestore(s), { merge: true });
+          } catch (e) {
+            console.error('Failed to sync santri.kelas:', e);
+          }
+        }
+      } else if (oldSantriIds.has(s.idSantri)) {
+        // Removed from this class
+        s.kelas = '';
+        santriChanged = true;
+        try {
+          await setDoc(doc(db, COLLECTIONS.SANTRI, s.idSantri), cleanForFirestore(s), { merge: true });
+        } catch (e) {
+          console.error('Failed to reset santri.kelas:', e);
+        }
+      }
+    }
+    if (santriChanged) {
+      localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(allSantri));
+    }
+
     return true;
   },
 
   async deleteKelas(id: string): Promise<boolean> {
-    const list = this.getKelasList().filter(k => k.id !== id);
-    localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify(list));
+    const list = this.getKelasList();
+    const deletedKelas = list.find(k => k.id === id);
+    const affectedSantriIds = new Set(deletedKelas?.santriIds || []);
+
+    const updatedList = list.filter(k => k.id !== id);
+    localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify(updatedList));
     try {
       await deleteDoc(doc(db, COLLECTIONS.KELAS, id));
     } catch (e) {
       console.error('Failed to delete Kelas from Firestore:', e);
     }
+
+    // Reset santri.kelas for santri in deleted class
+    const allSantri = this.getSantriList();
+    let santriChanged = false;
+    for (const s of allSantri) {
+      if (affectedSantriIds.has(s.idSantri)) {
+        s.kelas = '';
+        santriChanged = true;
+        try {
+          await setDoc(doc(db, COLLECTIONS.SANTRI, s.idSantri), cleanForFirestore(s), { merge: true });
+        } catch (e) {
+          console.error('Failed to reset santri.kelas on delete:', e);
+        }
+      }
+    }
+    if (santriChanged) {
+      localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(allSantri));
+    }
+
     return true;
   },
 
