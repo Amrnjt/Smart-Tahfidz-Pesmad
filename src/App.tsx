@@ -19,6 +19,7 @@ import { NotificationToastContainer } from './components/NotificationToastContai
 import { Snackbar, SnackbarState } from './components/Snackbar';
 import { useSetoranNotifications } from './hooks/useSetoranNotifications';
 import { LayoutDashboard, CirclePlus as PlusCircle, RotateCw, BookOpenCheck, History, BookOpen, Users, Cloud, GraduationCap, Award } from 'lucide-react';
+import { Analytics } from '@vercel/analytics/react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -439,6 +440,9 @@ export default function App() {
 
       {/* Snackbar for sync feedback */}
       <Snackbar snack={snack} onDismiss={() => setSnack(null)} />
+
+      {/* Vercel Web Analytics */}
+      <Analytics />
 
     </div>
   );
