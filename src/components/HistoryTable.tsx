@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { User, ZiyadahRecord, MurojaahRecord, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS } from '../types';
+import { User, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS } from '../types';
 import { storageService } from '../services/storageService';
 import { SURAH_LIST } from '../data/quranSurahs';
-import { Search, Trash2, BookOpen, RotateCw, Download, Calendar, Clock, FileText, MessageCircle, SquarePen as Pencil, X, Save, ChevronDown, ChevronUp, Inbox } from 'lucide-react';
+import { Search, Trash2, BookOpen, RotateCw, BookOpenCheck, Download, Calendar, Clock, FileText, MessageCircle, SquarePen as Pencil, X, Save, ChevronDown, ChevronUp, Inbox } from 'lucide-react';
 import { formatTanggalLengkap, parseDateSafe } from '../utils/dateFormatter';
 import { TableSkeleton } from './SkeletonLoading';
 import { UnduhLaporanModal } from './UnduhLaporanModal';
@@ -10,7 +10,7 @@ import { getClassGroup } from '../utils/classUtils';
 
 interface EditableItem {
   id: string;
-  type: 'Ziyadah' | 'Murojaah';
+  type: 'Ziyadah' | 'Murojaah' | 'Binnadzor';
   namaSantri: string;
   materi: string;
   nilai: string;
@@ -24,6 +24,7 @@ interface HistoryTableProps {
   currentUser: User;
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
+  binnadzorRecords?: BinnadzorRecord[];
   onDataChanged: () => void;
   isLoading?: boolean;
   santriList?: Santri[];
@@ -31,7 +32,7 @@ interface HistoryTableProps {
 
 interface CombinedItem {
   id: string;
-  type: 'Ziyadah' | 'Murojaah';
+  type: 'Ziyadah' | 'Murojaah' | 'Binnadzor';
   timestamp: string;
   idSantri: string;
   namaSantri: string;
@@ -61,13 +62,18 @@ function buildWhatsAppMessage(
   namaSantri: string, timestamp: string, jenis: string, materi: string, nilai: string, catatan: string
 ): string {
   const tanggal = formatTanggalLengkap(timestamp);
+  const jenisLabel = jenis === 'Ziyadah'
+    ? 'Hafalan Baru (Bil-Ghoib)'
+    : jenis === 'Murojaah'
+    ? 'Muroja\'ah (Pengulangan)'
+    : 'Binnadzor (Membaca Al-Qur\'an)';
   return (
     `Assalamu'alaikum Warahmatullahi Wabarakatuh.\n` +
     `Yth. Bapak/Ibu Wali dari *${namaSantri}*\n` +
-    `Berikut laporan perkembangan hafalan dan murojaah santri:\n` +
+    `Berikut laporan perkembangan hafalan dan bacaan al-Qur'an santri:\n` +
     `- *Tanggal:* ${tanggal}\n` +
-    `- *Jenis:* ${jenis === 'Ziyadah' ? 'Hafalan Baru' : 'Murojaah'}\n` +
-    `- *Surah & Ayat:* ${materi}\n` +
+    `- *Jenis:* ${jenisLabel}\n` +
+    `- *Materi:* ${materi}\n` +
     `- *Nilai / Status:* ${nilai}\n` +
     `- *Catatan Ustadz:* ${catatan || '-'}\n` +
     `Jazakumullah khairan.`
@@ -88,10 +94,10 @@ function getMonthLabel(key: string): string {
 }
 
 export const HistoryTable: React.FC<HistoryTableProps> = ({
-  currentUser, ziyadahRecords, murojaahRecords, onDataChanged, isLoading = false, santriList = []
+  currentUser, ziyadahRecords, murojaahRecords, binnadzorRecords, onDataChanged, isLoading = false, santriList = []
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [typeFilter, setTypeFilter] = useState<'ALL' | 'Ziyadah' | 'Murojaah'>('ALL');
+  const [typeFilter, setTypeFilter] = useState<'ALL' | 'Ziyadah' | 'Murojaah' | 'Binnadzor'>('ALL');
   const [nilaiFilter, setNilaiFilter] = useState<string>('ALL');
   const [showReportModal, setShowReportModal] = useState(false);
   const [activeMonthKey, setActiveMonthKey] = useState<string>('');
@@ -112,6 +118,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const isViewOnly = currentUser.role !== 'Ustadz';
   const targetSantriId = currentUser.idSantri || (currentUser.role === 'Santri' ? currentUser.username : '');
 
+  const actualBinnadzor = binnadzorRecords || storageService.getBinnadzorRecords();
+
   const filteredZiyadah = useMemo(
     () => isViewOnly ? ziyadahRecords.filter(r => r.idSantri === targetSantriId) : ziyadahRecords,
     [isViewOnly, ziyadahRecords, targetSantriId]
@@ -119,6 +127,10 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const filteredMurojaah = useMemo(
     () => isViewOnly ? murojaahRecords.filter(r => r.idSantri === targetSantriId) : murojaahRecords,
     [isViewOnly, murojaahRecords, targetSantriId]
+  );
+  const filteredBinnadzor = useMemo(
+    () => isViewOnly ? actualBinnadzor.filter(r => r.idSantri === targetSantriId) : actualBinnadzor,
+    [isViewOnly, actualBinnadzor, targetSantriId]
   );
 
   const combinedItems: CombinedItem[] = useMemo(() => {
@@ -133,11 +145,17 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         id: m.id, type: 'Murojaah' as const, timestamp: m.timestamp, idSantri: m.idSantri,
         namaSantri: m.namaSantri || m.idSantri, materi: m.surahAtauJuz,
         nilai: m.nilai, catatan: m.catatan, inputBy: m.inputBy, surahAtauJuz: m.surahAtauJuz
+      })),
+      ...filteredBinnadzor.map(b => ({
+        id: b.id, type: 'Binnadzor' as const, timestamp: b.timestamp, idSantri: b.idSantri,
+        namaSantri: b.namaSantri || b.idSantri, materi: b.materi,
+        nilai: b.nilai, catatan: b.catatan, inputBy: b.inputBy,
+        surah: b.surah, ayatAwal: b.ayatAwal, ayatAkhir: b.ayatAkhir
       }))
     ];
     items.sort((a, b) => parseDateSafe(b.timestamp).getTime() - parseDateSafe(a.timestamp).getTime());
     return items;
-  }, [filteredZiyadah, filteredMurojaah]);
+  }, [filteredZiyadah, filteredMurojaah, filteredBinnadzor]);
 
   // Build month list from data
   const monthKeys = useMemo(() => {
@@ -338,6 +356,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
             <option value="ALL">Semua Jenis</option>
             <option value="Ziyadah">Ziyadah</option>
             <option value="Murojaah">Muroja'ah</option>
+            <option value="Binnadzor">Binnadzor</option>
           </select>
           <select
             value={nilaiFilter}
@@ -431,9 +450,13 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
                           <BookOpen className="w-2.5 h-2.5" /> Zyd
                         </span>
-                      ) : (
+                      ) : item.type === 'Murojaah' ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 font-bold text-[10px] border border-teal-200">
                           <RotateCw className="w-2.5 h-2.5" /> Mrj
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold text-[10px] border border-indigo-200">
+                          <BookOpenCheck className="w-2.5 h-2.5" /> Bnd
                         </span>
                       )}
                     </div>

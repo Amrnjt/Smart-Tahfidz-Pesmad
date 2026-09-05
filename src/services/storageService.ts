@@ -158,6 +158,20 @@ export const storageService = {
     }
   },
 
+  getBinnadzorRecords(): BinnadzorRecord[] {
+    const data = localStorage.getItem(STORAGE_KEYS.BINNADZOR);
+    if (!data) {
+      localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(INITIAL_BINNADZOR));
+      return INITIAL_BINNADZOR;
+    }
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : INITIAL_BINNADZOR;
+    } catch {
+      return INITIAL_BINNADZOR;
+    }
+  },
+
   getKelasList(): Kelas[] {
     const data = localStorage.getItem(STORAGE_KEYS.KELAS);
     if (!data) {
@@ -243,6 +257,20 @@ export const storageService = {
           if (!remoteMurojaahMap.has(m.id)) {
             await setDoc(doc(db, COLLECTIONS.MUROJAAH, m.id), cleanForFirestore(m)).catch(console.error);
             remoteMurojaahMap.set(m.id, m);
+          }
+        }
+
+        const binnadzorSnapshot = await getDocs(collection(db, COLLECTIONS.BINNADZOR));
+        const remoteBinnadzorMap = new Map<string, BinnadzorRecord>();
+        binnadzorSnapshot.forEach((docSnap) => {
+          const b = docSnap.data() as BinnadzorRecord;
+          if (b.id) remoteBinnadzorMap.set(b.id, b);
+        });
+        const localBinnadzor = this.getBinnadzorRecords();
+        for (const b of localBinnadzor) {
+          if (!remoteBinnadzorMap.has(b.id)) {
+            await setDoc(doc(db, COLLECTIONS.BINNADZOR, b.id), cleanForFirestore(b)).catch(console.error);
+            remoteBinnadzorMap.set(b.id, b);
           }
         }
       } catch (err) {
@@ -372,12 +400,33 @@ export const storageService = {
       console.warn('Kelas firestore sync error:', err);
     });
 
+    // 6. Sync Binnadzor Realtime
+    const unsubBinnadzor = onSnapshot(collection(db, COLLECTIONS.BINNADZOR), (snapshot) => {
+      if (!snapshot.empty) {
+        const records: BinnadzorRecord[] = [];
+        const recordMap = new Map<string, BinnadzorRecord>();
+        snapshot.forEach((docSnap) => {
+          const r = docSnap.data() as BinnadzorRecord;
+          if (r && r.id && !recordMap.has(r.id)) {
+            recordMap.set(r.id, r);
+            records.push(r);
+          }
+        });
+        records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+        localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(records));
+        if (onUpdate) onUpdate();
+      }
+    }, (err) => {
+      console.warn('Binnadzor firestore sync error:', err);
+    });
+
     return () => {
       unsubUsers();
       unsubSantri();
       unsubZiyadah();
       unsubMurojaah();
       unsubKelas();
+      unsubBinnadzor();
     };
   },
 
@@ -449,7 +498,41 @@ export const storageService = {
     return newRecord;
   },
 
-  async deleteRecord(type: 'Ziyadah' | 'Murojaah', id: string): Promise<boolean> {
+  async saveBinnadzor(record: Omit<BinnadzorRecord, 'id'> & { timestamp?: string }): Promise<BinnadzorRecord> {
+    const records = this.getBinnadzorRecords();
+    const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
+    
+    let timestamp = record.timestamp;
+    if (!timestamp) {
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    }
+    const uniqueId = `BND-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    
+    const newRecord: BinnadzorRecord = {
+      ...record,
+      id: uniqueId,
+      timestamp,
+      namaSantri: santri?.namaSantri || record.idSantri
+    };
+
+    // 1. Optimistic Local Save
+    records.unshift(newRecord);
+    localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(records));
+
+    // 2. Cloud Firestore Save
+    try {
+      const cleanRecord = cleanForFirestore(newRecord);
+      await setDoc(doc(db, COLLECTIONS.BINNADZOR, newRecord.id), cleanRecord);
+    } catch (e) {
+      console.error('Failed to save Binnadzor to Firestore:', e);
+    }
+
+    return newRecord;
+  },
+
+  async deleteRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor', id: string): Promise<boolean> {
     if (type === 'Ziyadah') {
       const records = this.getZiyadahRecords().filter(r => r.id !== id);
       localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
@@ -458,7 +541,7 @@ export const storageService = {
       } catch (e) {
         console.error('Failed to delete Ziyadah from Firestore:', e);
       }
-    } else {
+    } else if (type === 'Murojaah') {
       const records = this.getMurojaahRecords().filter(r => r.id !== id);
       localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(records));
       try {
@@ -466,11 +549,19 @@ export const storageService = {
       } catch (e) {
         console.error('Failed to delete Murojaah from Firestore:', e);
       }
+    } else {
+      const records = this.getBinnadzorRecords().filter(r => r.id !== id);
+      localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(records));
+      try {
+        await deleteDoc(doc(db, COLLECTIONS.BINNADZOR, id));
+      } catch (e) {
+        console.error('Failed to delete Binnadzor from Firestore:', e);
+      }
     }
     return true;
   },
 
-  async updateRecord(type: 'Ziyadah' | 'Murojaah', id: string, updatedData: Partial<ZiyadahRecord | MurojaahRecord>): Promise<boolean> {
+  async updateRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor', id: string, updatedData: Partial<ZiyadahRecord | MurojaahRecord | BinnadzorRecord>): Promise<boolean> {
     if (type === 'Ziyadah') {
       const records = this.getZiyadahRecords().map(r => r.id === id ? { ...r, ...updatedData } as ZiyadahRecord : r);
       localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
@@ -482,7 +573,7 @@ export const storageService = {
           console.error('Failed to update Ziyadah in Firestore:', e);
         }
       }
-    } else {
+    } else if (type === 'Murojaah') {
       const records = this.getMurojaahRecords().map(r => r.id === id ? { ...r, ...updatedData } as MurojaahRecord : r);
       localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(records));
       const target = records.find(r => r.id === id);
@@ -491,6 +582,17 @@ export const storageService = {
           await setDoc(doc(db, COLLECTIONS.MUROJAAH, id), cleanForFirestore(target), { merge: true });
         } catch (e) {
           console.error('Failed to update Murojaah in Firestore:', e);
+        }
+      }
+    } else {
+      const records = this.getBinnadzorRecords().map(r => r.id === id ? { ...r, ...updatedData } as BinnadzorRecord : r);
+      localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(records));
+      const target = records.find(r => r.id === id);
+      if (target) {
+        try {
+          await setDoc(doc(db, COLLECTIONS.BINNADZOR, id), cleanForFirestore(target), { merge: true });
+        } catch (e) {
+          console.error('Failed to update Binnadzor in Firestore:', e);
         }
       }
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, Kelas, ActiveTab } from './types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Kelas, ActiveTab } from './types';
 import { storageService } from './services/storageService';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
@@ -9,6 +9,7 @@ import { WaliDashboard } from './components/WaliDashboard';
 import { SantriDashboard } from './components/SantriDashboard';
 import { ZiyadahForm } from './components/ZiyadahForm';
 import { MurojaahForm } from './components/MurojaahForm';
+import { BinnadzorForm } from './components/BinnadzorForm';
 import { HistoryTable } from './components/HistoryTable';
 import { MushafQuran } from './components/MushafQuran';
 import { SantriManagement } from './components/SantriManagement';
@@ -16,7 +17,7 @@ import { KelasManagement } from './components/KelasManagement';
 import { NotificationToastContainer } from './components/NotificationToastContainer';
 import { Snackbar, SnackbarState } from './components/Snackbar';
 import { useSetoranNotifications } from './hooks/useSetoranNotifications';
-import { LayoutDashboard, CirclePlus as PlusCircle, RotateCw, History, BookOpen, Users, Cloud, GraduationCap } from 'lucide-react';
+import { LayoutDashboard, CirclePlus as PlusCircle, RotateCw, BookOpenCheck, History, BookOpen, Users, Cloud, GraduationCap } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -24,6 +25,7 @@ export default function App() {
   const [santriList, setSantriList] = useState<Santri[]>([]);
   const [ziyadahRecords, setZiyadahRecords] = useState<ZiyadahRecord[]>([]);
   const [murojaahRecords, setMurojaahRecords] = useState<MurojaahRecord[]>([]);
+  const [binnadzorRecords, setBinnadzorRecords] = useState<BinnadzorRecord[]>([]);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [userList, setUserList] = useState<User[]>([]);
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
@@ -34,6 +36,7 @@ export default function App() {
     setSantriList(storageService.getSantriList());
     setZiyadahRecords(storageService.getZiyadahRecords());
     setMurojaahRecords(storageService.getMurojaahRecords());
+    setBinnadzorRecords(storageService.getBinnadzorRecords());
     setKelasList(storageService.getKelasList());
     setUserList(storageService.getUsers());
   };
@@ -187,6 +190,18 @@ export default function App() {
                     <RotateCw className="w-4 h-4" />
                     <span>Input Muroja'ah</span>
                   </button>
+
+                  <button
+                    onClick={() => setActiveTab('binnadzor')}
+                    className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                      activeTab === 'binnadzor'
+                        ? 'bg-indigo-800 text-white shadow-xs'
+                        : 'text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <BookOpenCheck className="w-4 h-4" />
+                    <span>Input Binnadzor</span>
+                  </button>
                 </>
               )}
 
@@ -253,6 +268,7 @@ export default function App() {
                   santriList={santriList}
                   ziyadahRecords={ziyadahRecords}
                   murojaahRecords={murojaahRecords}
+                  binnadzorRecords={binnadzorRecords}
                   kelasList={kelasList}
                   setActiveTab={setActiveTab}
                   onSelectSantriForZiyadah={handleSelectSantriForZiyadah}
@@ -305,11 +321,25 @@ export default function App() {
               />
             )}
 
+            {activeTab === 'binnadzor' && isUstadz && (
+              <BinnadzorForm
+                currentUser={currentUser}
+                santriList={santriList}
+                kelasList={kelasList}
+                selectedSantriId={selectedSantriId}
+                onSuccess={() => {
+                  refreshData();
+                  setActiveTab('riwayat');
+                }}
+              />
+            )}
+
             {activeTab === 'riwayat' && (
               <HistoryTable
                 currentUser={currentUser}
                 ziyadahRecords={ziyadahRecords}
                 murojaahRecords={murojaahRecords}
+                binnadzorRecords={binnadzorRecords}
                 onDataChanged={refreshData}
                 isLoading={isLoadingData}
                 santriList={santriList}

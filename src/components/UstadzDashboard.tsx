@@ -1,6 +1,6 @@
 import React from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, ActiveTab, Kelas } from '../types';
-import { Users, CalendarCheck, BookOpen, RotateCw, CirclePlus as PlusCircle, ArrowRight, Award, Sparkles } from 'lucide-react';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, ActiveTab, Kelas } from '../types';
+import { Users, CalendarCheck, BookOpen, RotateCw, CirclePlus as PlusCircle, BookOpenCheck, ArrowRight, Award, Sparkles } from 'lucide-react';
 import { getClassGroup } from '../utils/classUtils';
 import { HafalanStatsChart } from './HafalanStatsChart';
 import { PesmadLogo } from './PesmadLogo';
@@ -14,6 +14,7 @@ interface UstadzDashboardProps {
   santriList: Santri[];
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
+  binnadzorRecords?: BinnadzorRecord[];
   kelasList: Kelas[];
   setActiveTab: (tab: ActiveTab) => void;
   onSelectSantriForZiyadah?: (idSantri: string) => void;
@@ -25,6 +26,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   santriList,
   ziyadahRecords,
   murojaahRecords,
+  binnadzorRecords = [],
   kelasList,
   setActiveTab,
   onSelectSantriForZiyadah,
@@ -33,6 +35,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   const mushafRipple = useRipple<HTMLButtonElement>();
   const ziyadahBtnRipple = useRipple<HTMLButtonElement>();
   const murojaahBtnRipple = useRipple<HTMLButtonElement>();
+  const binnadzorBtnRipple = useRipple<HTMLButtonElement>();
 
   if (isLoading) {
     return <DashboardSkeleton />;
@@ -41,9 +44,10 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   const today = new Date().toISOString().split('T')[0];
   const todayZiyadah = ziyadahRecords.filter(r => r.timestamp.startsWith(today));
   const todayMurojaah = murojaahRecords.filter(r => r.timestamp.startsWith(today));
-  const totalSetoranToday = todayZiyadah.length + todayMurojaah.length;
+  const todayBinnadzor = binnadzorRecords.filter(r => r.timestamp.startsWith(today));
+  const totalSetoranToday = todayZiyadah.length + todayMurojaah.length + todayBinnadzor.length;
 
-  const allRecords = [...ziyadahRecords, ...murojaahRecords];
+  const allRecords = [...ziyadahRecords, ...murojaahRecords, ...binnadzorRecords];
   const sangatBaikCount = allRecords.filter(r => r.nilai === 'Sangat Baik').length;
   const lancarPercent = allRecords.length > 0 ? Math.round((sangatBaikCount / allRecords.length) * 100) : 100;
 
@@ -164,50 +168,73 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
       </div>
 
       {/* Action Shortcut Banners */}
-      <ScrollReveal className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <ScrollReveal className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4">
         {/* Form Ziyadah Shortcut */}
-        <div className="bg-gradient-to-br from-emerald-800 to-teal-800 text-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
+        <div className="bg-gradient-to-br from-emerald-800 to-teal-800 text-white rounded-2xl p-4 sm:p-5 shadow-xs flex items-center justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-200">
-              <PlusCircle className="w-4 h-4 text-emerald-300" />
+              <PlusCircle className="w-3.5 h-3.5 text-emerald-300" />
               <span>Hafalan Baru</span>
             </div>
-            <h4 className="text-lg font-bold">Input Setoran Ziyadah</h4>
-            <p className="text-xs text-emerald-200/90">Catat surah 1-114, ayat awal & akhir santri</p>
+            <h4 className="text-base sm:text-lg font-bold">Input Ziyadah</h4>
+            <p className="text-xs text-emerald-200/90">Catat surah & ayat hafalan baru</p>
             <button
               ref={ziyadahBtnRipple.elementRef}
               onClick={(e) => { ziyadahBtnRipple.createRipple(e); setActiveTab('ziyadah'); }}
-              className="ripple-container press-feedback mt-3 px-4 py-2 bg-white text-emerald-900 rounded-xl text-xs font-bold shadow hover:bg-emerald-50 transition flex items-center gap-2 cursor-pointer"
+              className="ripple-container press-feedback mt-2.5 px-3.5 py-1.5 bg-white text-emerald-900 rounded-xl text-xs font-bold shadow-xs hover:bg-emerald-50 transition flex items-center gap-1.5 cursor-pointer"
             >
-              <span>Buka Form Ziyadah</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>Form Ziyadah</span>
+              <ArrowRight className="w-3 h-3" />
             </button>
           </div>
-          <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20">
-            <BookOpen className="w-8 h-8 text-emerald-200" />
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 flex-shrink-0">
+            <BookOpen className="w-6 h-6 text-emerald-200" />
           </div>
         </div>
 
         {/* Form Muroja'ah Shortcut */}
-        <div className="bg-gradient-to-br from-teal-800 to-cyan-900 text-white rounded-2xl p-5 shadow-sm flex items-center justify-between">
+        <div className="bg-gradient-to-br from-teal-800 to-cyan-900 text-white rounded-2xl p-4 sm:p-5 shadow-xs flex items-center justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-teal-200">
-              <RotateCw className="w-4 h-4 text-teal-300" />
-              <span>Pengulangan Hafalan</span>
+              <RotateCw className="w-3.5 h-3.5 text-teal-300" />
+              <span>Pengulangan</span>
             </div>
-            <h4 className="text-lg font-bold">Input Setoran Muroja'ah</h4>
-            <p className="text-xs text-teal-200/90">Evaluasi kelancaran surah / juz yang telah dihafal</p>
+            <h4 className="text-base sm:text-lg font-bold">Input Muroja'ah</h4>
+            <p className="text-xs text-teal-200/90">Evaluasi kelancaran hafalan lama</p>
             <button
               ref={murojaahBtnRipple.elementRef}
               onClick={(e) => { murojaahBtnRipple.createRipple(e); setActiveTab('murojaah'); }}
-              className="ripple-container press-feedback mt-3 px-4 py-2 bg-white text-teal-900 rounded-xl text-xs font-bold shadow hover:bg-teal-50 transition flex items-center gap-2 cursor-pointer"
+              className="ripple-container press-feedback mt-2.5 px-3.5 py-1.5 bg-white text-teal-900 rounded-xl text-xs font-bold shadow-xs hover:bg-teal-50 transition flex items-center gap-1.5 cursor-pointer"
             >
-              <span>Buka Form Muroja'ah</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>Form Muroja'ah</span>
+              <ArrowRight className="w-3 h-3" />
             </button>
           </div>
-          <div className="w-16 h-16 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20">
-            <RotateCw className="w-8 h-8 text-teal-200" />
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 flex-shrink-0">
+            <RotateCw className="w-6 h-6 text-teal-200" />
+          </div>
+        </div>
+
+        {/* Form Binnadzor Shortcut */}
+        <div className="bg-gradient-to-br from-indigo-900 via-indigo-800 to-slate-900 text-white rounded-2xl p-4 sm:p-5 shadow-xs flex items-center justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-200">
+              <BookOpenCheck className="w-3.5 h-3.5 text-indigo-300" />
+              <span>Melihat Mushaf</span>
+            </div>
+            <h4 className="text-base sm:text-lg font-bold">Input Binnadzor</h4>
+            <p className="text-xs text-indigo-200/90">Setoran tartil & fashohah bacaan</p>
+            <button
+              ref={binnadzorBtnRipple.elementRef}
+              onClick={(e) => { binnadzorBtnRipple.createRipple(e); setActiveTab('binnadzor'); }}
+              className="ripple-container press-feedback mt-2.5 px-3.5 py-1.5 bg-white text-indigo-900 rounded-xl text-xs font-bold shadow-xs hover:bg-indigo-50 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <span>Form Binnadzor</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 flex-shrink-0">
+            <BookOpenCheck className="w-6 h-6 text-indigo-200" />
           </div>
         </div>
       </ScrollReveal>
