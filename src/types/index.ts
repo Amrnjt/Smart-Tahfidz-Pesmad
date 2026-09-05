@@ -94,6 +94,7 @@ export interface BinnadzorRecord {
   ayatAwal?: number;
   ayatAkhir?: number;
   materi: string;
+  surahAtauHalaman?: string;
   nilai: PredikatNilai;
   catatan: string;
   inputBy: string;

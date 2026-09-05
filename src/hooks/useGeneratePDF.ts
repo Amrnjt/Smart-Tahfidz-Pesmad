@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import jsPDF from 'jspdf';
-import { ZiyadahRecord, MurojaahRecord, Santri, User } from '../types';
+import { ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Santri, User } from '../types';
 import { formatTanggalLengkap, parseDateSafe } from '../utils/dateFormatter';
 import { getClassGroup } from '../utils/classUtils';
 
@@ -29,6 +29,7 @@ export interface ReportData {
   currentUser: User;
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
+  binnadzorRecords?: BinnadzorRecord[];
   period: ReportPeriod;
   periodRange?: ReportPeriodRange;
   options: ReportOptions;
@@ -48,6 +49,8 @@ const C = {
   emeraldMid: [5, 102, 75] as [number, number, number],
   teal: [13, 148, 136] as [number, number, number],
   tealLight: [240, 253, 250] as [number, number, number],
+  indigo: [79, 70, 229] as [number, number, number],
+  indigoLight: [238, 242, 255] as [number, number, number],
   amber: [217, 119, 6] as [number, number, number],
   amberLight: [254, 252, 232] as [number, number, number],
   gold: [212, 175, 55] as [number, number, number],
@@ -175,6 +178,7 @@ export function useGeneratePDF() {
 
       const periodZiyadah = data.ziyadahRecords.filter(r => matchesPeriod(r.timestamp));
       const periodMurojaah = data.murojaahRecords.filter(r => matchesPeriod(r.timestamp));
+      const periodBinnadzor = (data.binnadzorRecords || []).filter(r => matchesPeriod(r.timestamp));
 
       const periodLabel = data.periodRange
         ? `${NAMA_BULAN[data.periodRange.startMonth]} ${data.periodRange.startYear} — ${NAMA_BULAN[data.periodRange.endMonth]} ${data.periodRange.endYear}`
@@ -182,7 +186,7 @@ export function useGeneratePDF() {
 
       const totalAyatZiyadah = periodZiyadah.reduce((s, r) => s + Math.max(1, r.ayatAkhir - r.ayatAwal + 1), 0);
       const totalSurahZiyadah = new Set(periodZiyadah.map(r => r.surah)).size;
-      const allPeriod = [...periodZiyadah, ...periodMurojaah];
+      const allPeriod = [...periodZiyadah, ...periodMurojaah, ...periodBinnadzor];
       const sangatBaikCount = allPeriod.filter(r => r.nilai === 'Sangat Baik').length;
       const baikCount = allPeriod.filter(r => r.nilai === 'Baik').length;
       const kurangCount = allPeriod.filter(r => r.nilai === 'Kurang').length;
@@ -285,14 +289,15 @@ export function useGeneratePDF() {
       // ════════ RINGKASAN PROGRES HAFALAN ════════
       if (data.options.includeSummary) {
         if (y > pageH - 60) { pdf.addPage(); y = margin; }
-        y = drawSectionHeader(pdf, 'Ringkasan Progres Hafalan', margin, contentW, y);
+        y = drawSectionHeader(pdf, 'Ringkasan Progres Hafalan & Bacaan', margin, contentW, y);
 
-        const statCardW = (contentW - 9) / 4;
+        const statCardW = (contentW - 12) / 5;
         const statCardH = 18;
         drawStatCard(pdf, periodZiyadah.length, 'Setoran Ziyadah', margin, y, statCardW, statCardH, C.emeraldLight, C.emerald);
         drawStatCard(pdf, periodMurojaah.length, "Setoran Muroja'ah", margin + statCardW + 3, y, statCardW, statCardH, C.tealLight, C.teal);
-        drawStatCard(pdf, totalAyatZiyadah, 'Total Ayat Ziyadah', margin + (statCardW + 3) * 2, y, statCardW, statCardH, C.amberLight, C.amber);
-        drawStatCard(pdf, totalSurahZiyadah, 'Surah Berbeda', margin + (statCardW + 3) * 3, y, statCardW, statCardH, C.skyLight, C.sky);
+        drawStatCard(pdf, periodBinnadzor.length, 'Setoran Binnadzor', margin + (statCardW + 3) * 2, y, statCardW, statCardH, C.indigoLight, C.indigo);
+        drawStatCard(pdf, totalAyatZiyadah, 'Total Ayat Ziyadah', margin + (statCardW + 3) * 3, y, statCardW, statCardH, C.amberLight, C.amber);
+        drawStatCard(pdf, totalSurahZiyadah, 'Surah Berbeda', margin + (statCardW + 3) * 4, y, statCardW, statCardH, C.skyLight, C.sky);
         y += statCardH + 4;
 
         // Distribusi nilai badges
@@ -324,9 +329,9 @@ export function useGeneratePDF() {
       }
 
       // ════════ GRAFIK PROGRES ════════
-      if (data.options.includeChart && (periodZiyadah.length > 0 || periodMurojaah.length > 0)) {
+      if (data.options.includeChart && (periodZiyadah.length > 0 || periodMurojaah.length > 0 || periodBinnadzor.length > 0)) {
         if (y > pageH - 55) { pdf.addPage(); y = margin; }
-        y = drawSectionHeader(pdf, 'Grafik Progres Hafalan', margin, contentW, y);
+        y = drawSectionHeader(pdf, 'Grafik Progres Hafalan & Setoran', margin, contentW, y);
 
         const chartH = 38;
         setFill(pdf, C.slateBg);
@@ -335,6 +340,7 @@ export function useGeneratePDF() {
         const bars: [string, number, [number, number, number]][] = [
           ['Ziyadah', periodZiyadah.length, C.emerald],
           ["Muroja'ah", periodMurojaah.length, C.teal],
+          ['Binnadzor', periodBinnadzor.length, C.indigo],
           ['S. Baik', sangatBaikCount, C.emeraldDark],
           ['Baik', baikCount, C.teal],
           ['Kurang', kurangCount, C.amber],
@@ -373,6 +379,7 @@ export function useGeneratePDF() {
         const items = [
           ...periodZiyadah.map(z => ({ id: z.id, type: 'Ziyadah', ts: z.timestamp, materi: `${z.surah} (Ayat ${z.ayatAwal}-${z.ayatAkhir})`, nilai: z.nilai })),
           ...periodMurojaah.map(m => ({ id: m.id, type: "Muroja'ah", ts: m.timestamp, materi: m.surahAtauJuz, nilai: m.nilai })),
+          ...periodBinnadzor.map(b => ({ id: b.id, type: 'Binnadzor', ts: b.timestamp, materi: b.materi || b.surahAtauHalaman || 'Binnadzor', nilai: b.nilai })),
         ].sort((a, b) => parseDateSafe(b.ts).getTime() - parseDateSafe(a.ts).getTime());
 
         // Table header
@@ -383,7 +390,7 @@ export function useGeneratePDF() {
         pdf.setFontSize(7.5);
         pdf.text('TANGGAL', margin + 2, y);
         pdf.text('JENIS', margin + 62, y);
-        pdf.text('MATERI HAFALAN', margin + 88, y);
+        pdf.text('MATERI SETORAN', margin + 88, y);
         pdf.text('NILAI', pageW - margin - 22, y);
         y += 5;
 
@@ -410,7 +417,8 @@ export function useGeneratePDF() {
             const shortDate = dateStr.length > 26 ? dateStr.slice(0, 25) + '…' : dateStr;
             pdf.text(shortDate, margin + 2, y);
 
-            setText(pdf, item.type === 'Ziyadah' ? C.emerald : C.teal);
+            const typeColor = item.type === 'Ziyadah' ? C.emerald : item.type === "Muroja'ah" ? C.teal : C.indigo;
+            setText(pdf, typeColor);
             pdf.setFont('helvetica', 'bold');
             pdf.text(item.type, margin + 62, y);
 
@@ -450,7 +458,7 @@ export function useGeneratePDF() {
             const r = allNotes[idx];
             const materiStr = (r as any).surah
               ? `${(r as any).surah} (Ayat ${(r as any).ayatAwal}-${(r as any).ayatAkhir})`
-              : (r as any).surahAtauJuz;
+              : ((r as any).surahAtauHalaman || (r as any).surahAtauJuz || '-');
             const headerLine = `${formatTanggalLengkap(r.timestamp)} — ${materiStr}`;
             const noteLine = `"${r.catatan}"`;
             const byLine = `— ${r.inputBy}`;
@@ -494,7 +502,7 @@ export function useGeneratePDF() {
       setText(pdf, C.slate);
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(8.5);
-      let conclusion = `Pada periode ${periodLabel}, santri ${santriName} telah menyelesaikan ${periodZiyadah.length} setoran Ziyadah (${totalAyatZiyadah} ayat dari ${totalSurahZiyadah} surah berbeda) dan ${periodMurojaah.length} setoran Muroja'ah.`;
+      let conclusion = `Pada periode ${periodLabel}, santri ${santriName} telah menyelesaikan ${periodZiyadah.length} setoran Ziyadah (${totalAyatZiyadah} ayat dari ${totalSurahZiyadah} surah), ${periodMurojaah.length} setoran Muroja'ah, dan ${periodBinnadzor.length} setoran Binnadzor (bacaan mushaf).`;
       if (sangatBaikCount > 0) conclusion += ` Sebanyak ${sangatBaikCount} setoran bernilai "Sangat Baik".`;
       if (mengulangCount > 0) conclusion += ` Terdapat ${mengulangCount} setoran yang perlu diulang.`;
       conclusion += " Semoga Allah Tabaraka wa Ta'ala memudahkan hafalan dan istiqamah santri. Aamiin.";

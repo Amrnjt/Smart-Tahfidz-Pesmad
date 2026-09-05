@@ -252,6 +252,12 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           surah: editSurah, surahNumber: surahMeta?.number,
           ayatAwal: Number(editAyatAwal), ayatAkhir: Number(editAyatAkhir), nilai: editNilai
         });
+      } else if (editingItem.type === 'Binnadzor') {
+        await storageService.updateRecord('Binnadzor', editingItem.id, {
+          surahAtauHalaman: editSurahAtauJuz.trim(),
+          materi: editSurahAtauJuz.trim(),
+          nilai: editNilai
+        });
       } else {
         await storageService.updateRecord('Murojaah', editingItem.id, {
           surahAtauJuz: editSurahAtauJuz.trim(), nilai: editNilai
@@ -642,15 +648,17 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                 </>
               ) : (
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Materi Hafalan (Surah / Juz)</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    {editingItem.type === 'Binnadzor' ? 'Materi Bacaan (Surah / Halaman Mushaf)' : 'Materi Hafalan (Surah / Juz)'}
+                  </label>
                   <input type="text" required value={editSurahAtauJuz} onChange={(e) => setEditSurahAtauJuz(e.target.value)}
-                    placeholder="Contoh: Juz 30 atau Surah Al-Mulk"
+                    placeholder={editingItem.type === 'Binnadzor' ? 'Contoh: Surah Al-Baqarah hal. 2-5' : 'Contoh: Juz 30 atau Surah Al-Mulk'}
                     className="w-full py-3 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
               )}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nilai / Kualitas Hafalan</label>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Nilai / Kualitas Setoran</label>
                 <select value={editNilai} onChange={(e) => setEditNilai(e.target.value as PredikatNilai)}
                   className="w-full py-3 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
@@ -688,6 +696,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         santriList={santriList}
         ziyadahRecords={ziyadahRecords}
         murojaahRecords={murojaahRecords}
+        binnadzorRecords={binnadzorRecords || actualBinnadzor}
       />
     </div>
   );

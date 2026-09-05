@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { User, ZiyadahRecord, MurojaahRecord, Santri } from '../types';
+import { User, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Santri } from '../types';
 import { useGeneratePDF, NAMA_BULAN, ReportOptions, ReportPeriod, ReportPeriodRange } from '../hooks/useGeneratePDF';
 import { parseDateSafe } from '../utils/dateFormatter';
 import { X, Download, FileText, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Loader as Loader2, Calendar, CalendarRange } from 'lucide-react';
@@ -11,6 +11,7 @@ interface UnduhLaporanModalProps {
   santriList: Santri[];
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
+  binnadzorRecords?: BinnadzorRecord[];
 }
 
 export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
@@ -19,7 +20,8 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   currentUser,
   santriList,
   ziyadahRecords,
-  murojaahRecords
+  murojaahRecords,
+  binnadzorRecords = []
 }) => {
   const { isGenerating, error, success, generatePDF } = useGeneratePDF();
 
@@ -32,6 +34,9 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   const scopedMurojaah = isViewOnly
     ? murojaahRecords.filter(r => r.idSantri === targetSantriId)
     : murojaahRecords;
+  const scopedBinnadzor = isViewOnly
+    ? binnadzorRecords.filter(r => r.idSantri === targetSantriId)
+    : binnadzorRecords;
 
   const targetSantri = isViewOnly
     ? santriList.find(s => s.idSantri === targetSantriId) || null
@@ -50,10 +55,13 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   const reportMurojaah = isViewOnly
     ? scopedMurojaah
     : murojaahRecords.filter(r => !selectedSantriId || r.idSantri === selectedSantriId);
+  const reportBinnadzor = isViewOnly
+    ? scopedBinnadzor
+    : binnadzorRecords.filter(r => !selectedSantriId || r.idSantri === selectedSantriId);
 
   // Available periods from data
   const availablePeriods = useMemo(() => {
-    const allRecords = [...reportZiyadah, ...reportMurojaah];
+    const allRecords = [...reportZiyadah, ...reportMurojaah, ...reportBinnadzor];
     const periodSet = new Set<string>();
 
     allRecords.forEach(r => {
@@ -77,7 +85,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
 
     periods.sort((a, b) => (b.year - a.year) || (b.month - a.month));
     return periods;
-  }, [reportZiyadah, reportMurojaah]);
+  }, [reportZiyadah, reportMurojaah, reportBinnadzor]);
 
   const [period, setPeriod] = useState<string>(() => {
     const now = new Date();
@@ -128,6 +136,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
       currentUser,
       ziyadahRecords: reportZiyadah,
       murojaahRecords: reportMurojaah,
+      binnadzorRecords: reportBinnadzor,
       period: reportPeriod,
       periodRange: useRange && rangeValid ? reportPeriodRange : undefined,
       options
@@ -353,6 +362,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
                   <>
                     <p>Ziyadah pada periode ini: <b>{reportZiyadah.filter(r => matchFn(r.timestamp)).length}</b> setoran</p>
                     <p>Muroja'ah pada periode ini: <b>{reportMurojaah.filter(r => matchFn(r.timestamp)).length}</b> setoran</p>
+                    <p>Binnadzor pada periode ini: <b>{reportBinnadzor.filter(r => matchFn(r.timestamp)).length}</b> setoran</p>
                   </>
                 );
               })()}

@@ -280,6 +280,7 @@ export default function App() {
                   santriList={santriList}
                   ziyadahRecords={ziyadahRecords}
                   murojaahRecords={murojaahRecords}
+                  binnadzorRecords={binnadzorRecords}
                   setActiveTab={setActiveTab}
                   isLoading={isLoadingData}
                 />
@@ -289,6 +290,7 @@ export default function App() {
                   santriList={santriList}
                   ziyadahRecords={ziyadahRecords}
                   murojaahRecords={murojaahRecords}
+                  binnadzorRecords={binnadzorRecords}
                   setActiveTab={setActiveTab}
                   isLoading={isLoadingData}
                 />
