@@ -124,8 +124,17 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-800 flex flex-col font-sans selection:bg-emerald-200 selection:text-emerald-950 pb-20 md:pb-10">
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-emerald-200 selection:text-emerald-950 pb-28 sm:pb-32 md:pb-12 relative w-full max-w-full">
       
+      {/* Soft Ambient mint and teal atmospheric gradient behind glass panels */}
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 pointer-events-none z-0 opacity-60"
+        style={{
+          background: 'radial-gradient(1100px circle at 50% -120px, rgba(16, 185, 129, 0.07), rgba(20, 184, 166, 0.035) 45%, transparent 75%), radial-gradient(800px circle at 95% 450px, rgba(20, 184, 166, 0.025), transparent 60%)'
+        }}
+      />
+
       {/* Top Navbar */}
       <Navbar
         currentUser={currentUser}
@@ -137,7 +146,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="max-w-7xl w-full mx-auto px-3 sm:px-6 py-5 flex-1 space-y-5">
+      <main className="max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-5 flex-1 space-y-5 relative z-10 min-w-0">
         
         {/* If Not Logged In, Show Login View */}
         {!currentUser ? (
@@ -145,13 +154,13 @@ export default function App() {
             onLoginSuccess={handleLoginSuccess}
           />
         ) : (
-          <div className="space-y-5">
+          <div className="space-y-5 min-w-0">
             
-            {/* Desktop Navigation Tab Bar */}
-            <nav className="hidden md:flex bg-white rounded-2xl p-1.5 shadow-xs border border-slate-200/90 gap-1.5">
+            {/* Desktop Navigation Tab Bar with Soft Glassmorphism */}
+            <nav className="hidden md:flex bg-white/85 backdrop-blur-md rounded-2xl p-1.5 shadow-xs border border-slate-200/80 gap-1.5">
               <button
                 onClick={() => setActiveTab('dashboard')}
-                className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                   activeTab === 'dashboard'
                     ? 'bg-emerald-800 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -169,7 +178,7 @@ export default function App() {
                 <>
                   <button
                     onClick={() => setActiveTab('ziyadah')}
-                    className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                    className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                       activeTab === 'ziyadah'
                         ? 'bg-emerald-800 text-white shadow-xs'
                         : 'text-slate-600 hover:bg-slate-100'
@@ -181,9 +190,9 @@ export default function App() {
 
                   <button
                     onClick={() => setActiveTab('murojaah')}
-                    className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                    className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                       activeTab === 'murojaah'
-                        ? 'bg-teal-800 text-white shadow-xs'
+                        ? 'bg-amber-800 text-white shadow-xs'
                         : 'text-slate-600 hover:bg-slate-100'
                     }`}
                   >
@@ -193,7 +202,7 @@ export default function App() {
 
                   <button
                     onClick={() => setActiveTab('binnadzor')}
-                    className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                    className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                       activeTab === 'binnadzor'
                         ? 'bg-indigo-800 text-white shadow-xs'
                         : 'text-slate-600 hover:bg-slate-100'
@@ -208,7 +217,7 @@ export default function App() {
               {isUstadz && (
                 <button
                   onClick={() => setActiveTab('kelas')}
-                  className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                  className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                     activeTab === 'kelas'
                       ? 'bg-emerald-800 text-white shadow-xs'
                       : 'text-slate-600 hover:bg-slate-100'
@@ -221,7 +230,7 @@ export default function App() {
 
               <button
                 onClick={() => setActiveTab('riwayat')}
-                className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                   activeTab === 'riwayat'
                     ? 'bg-emerald-800 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -235,7 +244,7 @@ export default function App() {
 
               <button
                 onClick={() => setActiveTab('mushaf')}
-                className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                   activeTab === 'mushaf'
                     ? 'bg-emerald-800 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -248,7 +257,7 @@ export default function App() {
               {isUstadz && (
                 <button
                   onClick={() => setActiveTab('santri')}
-                  className={`flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                  className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                     activeTab === 'santri'
                       ? 'bg-emerald-800 text-white shadow-xs'
                       : 'text-slate-600 hover:bg-slate-100'

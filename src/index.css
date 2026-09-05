@@ -42,8 +42,8 @@
   pointer-events: none;
   transform: scale(0);
   animation: ripple-expand var(--duration-normal) var(--ease-out) forwards;
-  background: currentColor;
-  opacity: 0.25;
+  background: rgba(16, 185, 129, 0.22);
+  opacity: 1;
 }
 @keyframes ripple-expand {
   to { transform: scale(4); opacity: 0; }
@@ -54,7 +54,7 @@
   transition: transform var(--duration-fast) var(--ease-out);
 }
 .press-feedback:active {
-  transform: scale(0.98);
+  transform: scale(0.985);
 }
 
 /* === Snackbar === */
