@@ -222,7 +222,12 @@ export const storageService = {
         });
 
         const localUsers = this.getUsers();
-        const usersToSync = [...INITIAL_USERS, ...localUsers];
+        // Akun demo (INITIAL_USERS) hanya di-seed ketika database benar-benar
+        // kosong (belum ada satu pun akun di cloud maupun lokal). Ini mencegah
+        // akun demo muncul kembali setelah diedit atau dihapus, sekaligus tetap
+        // menyediakan akun awal agar tidak terjadi lockout pada database baru.
+        const isFreshDatabase = remoteUserMap.size === 0 && localUsers.length === 0;
+        const usersToSync = isFreshDatabase ? [...INITIAL_USERS] : [...localUsers];
         for (const user of usersToSync) {
           if (!remoteUserMap.has(user.id) && !remoteUserMap.has(user.username.toLowerCase())) {
             const cleanUser = cleanForFirestore(user);
@@ -326,14 +331,10 @@ export const storageService = {
           }
         });
 
-        // Ensure default admin account is ALWAYS present
-        const hasAdmin = users.some(u => u.username.toLowerCase() === 'admin');
-        if (!hasAdmin) {
-          const adminUser = INITIAL_USERS[0];
-          users.unshift(adminUser);
-          setDoc(doc(db, COLLECTIONS.USERS, adminUser.id), cleanForFirestore(adminUser)).catch(console.error);
-        }
-
+        // Demo/seed accounts (admin, Ustadz Abdullah Robbani, dll.) diperlakukan
+        // sama seperti akun biasa: boleh diedit, di-rename, atau dihapus secara
+        // permanen. Kita TIDAK lagi memaksa akun 'admin' selalu ada di sini,
+        // sehingga perubahan pada akun demo tidak akan ter-reset otomatis.
         localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
         if (onUpdate) onUpdate();
       } else {
