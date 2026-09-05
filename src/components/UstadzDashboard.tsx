@@ -1,8 +1,9 @@
-import React from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, ActiveTab, Kelas } from '../types';
-import { Users, CalendarCheck, BookOpen, RotateCw, CirclePlus as PlusCircle, BookOpenCheck, ArrowRight, Award, Sparkles } from 'lucide-react';
-import { getClassGroup } from '../utils/classUtils';
+import React, { useState } from 'react';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, ActiveTab, Kelas } from '../types';
+import { Users, CalendarCheck, BookOpen, RotateCw, CirclePlus as PlusCircle, BookOpenCheck, ArrowRight, Award, Sparkles, GraduationCap, TrendingUp, ChartBar as BarChart3 } from 'lucide-react';
+import { getClassGroup, isNonTahfidzClass } from '../utils/classUtils';
 import { HafalanStatsChart } from './HafalanStatsChart';
+import { TrenHafalanBulananChart } from './TrenHafalanBulananChart';
 import { PesmadLogo } from './PesmadLogo';
 import { DashboardSkeleton } from './SkeletonLoading';
 import { AnimatedCounter } from './AnimatedCounter';
@@ -15,6 +16,7 @@ interface UstadzDashboardProps {
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
   binnadzorRecords?: BinnadzorRecord[];
+  pembelajaranRecords?: PembelajaranRecord[];
   kelasList: Kelas[];
   setActiveTab: (tab: ActiveTab) => void;
   onSelectSantriForZiyadah?: (idSantri: string) => void;
@@ -27,6 +29,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   ziyadahRecords,
   murojaahRecords,
   binnadzorRecords = [],
+  pembelajaranRecords = [],
   kelasList,
   setActiveTab,
   onSelectSantriForZiyadah,
@@ -36,6 +39,8 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   const ziyadahBtnRipple = useRipple<HTMLButtonElement>();
   const murojaahBtnRipple = useRipple<HTMLButtonElement>();
   const binnadzorBtnRipple = useRipple<HTMLButtonElement>();
+  const pembelajaranBtnRipple = useRipple<HTMLButtonElement>();
+  const [chartView, setChartView] = useState<'tren_hafalan' | 'aktivitas'>('tren_hafalan');
 
   if (isLoading) {
     return <DashboardSkeleton />;
@@ -45,9 +50,10 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   const todayZiyadah = ziyadahRecords.filter(r => r.timestamp.startsWith(today));
   const todayMurojaah = murojaahRecords.filter(r => r.timestamp.startsWith(today));
   const todayBinnadzor = binnadzorRecords.filter(r => r.timestamp.startsWith(today));
-  const totalSetoranToday = todayZiyadah.length + todayMurojaah.length + todayBinnadzor.length;
+  const todayPembelajaran = pembelajaranRecords.filter(r => r.timestamp.startsWith(today));
+  const totalSetoranToday = todayZiyadah.length + todayMurojaah.length + todayBinnadzor.length + todayPembelajaran.length;
 
-  const allRecords = [...ziyadahRecords, ...murojaahRecords, ...binnadzorRecords];
+  const allRecords = [...ziyadahRecords, ...murojaahRecords, ...binnadzorRecords, ...pembelajaranRecords];
   const sangatBaikCount = allRecords.filter(r => r.nilai === 'Sangat Baik').length;
   const lancarPercent = allRecords.length > 0 ? Math.round((sangatBaikCount / allRecords.length) * 100) : 100;
 
@@ -106,8 +112,8 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
         </div>
       </div>
 
-      {/* 6 Statistik Cards with Responsive Grid: 6 cols (≥1280px), 3 cols (900–1279px), 2 cols (<900px) */}
-      <div className="grid grid-cols-2 min-[900px]:grid-cols-3 xl:grid-cols-6 gap-2.5 sm:gap-3.5 lg:gap-4 w-full min-w-0">
+      {/* Statistik Cards with Responsive Grid: 7 cols (≥1280px), 4 cols (900–1279px), 2 cols (<900px) */}
+      <div className="grid grid-cols-2 min-[768px]:grid-cols-3 min-[1100px]:grid-cols-4 xl:grid-cols-7 gap-2.5 sm:gap-3.5 lg:gap-4 w-full min-w-0">
         {/* 1. Total Santri - Neutral Slate */}
         <div className="bg-white/85 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-2.5 sm:gap-3 hover:border-slate-300 transition-all fade-in-up h-full min-w-0 w-full" style={fadeDelay(1)}>
           <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-slate-100 text-slate-700 flex items-center justify-center flex-shrink-0">
@@ -168,12 +174,28 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
             <h3 className="text-lg sm:text-xl font-extrabold text-indigo-950 tracking-tight mt-0.5">
               <AnimatedCounter value={binnadzorRecords.length} />
             </h3>
-            <span className="text-[10px] text-indigo-700 font-medium block truncate">Baca mushaf</span>
+            <span className="text-[10px] text-indigo-700 font-medium block truncate">Fokus tajwid</span>
           </div>
         </div>
 
-        {/* 5. Setoran Hari Ini - Vibrant Coral Rose / Crimson */}
-        <div className="bg-white/85 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-2.5 sm:gap-3 hover:border-rose-300 transition-all fade-in-up h-full min-w-0 w-full" style={fadeDelay(5)}>
+        {/* 5. Total Pembelajaran Non-Tahfidz - Vibrant Orange */}
+        <div className="bg-white/85 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-2.5 sm:gap-3 hover:border-orange-300 transition-all fade-in-up h-full min-w-0 w-full" style={fadeDelay(5)}>
+          <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-orange-100 text-orange-800 flex items-center justify-center flex-shrink-0">
+            <GraduationCap className="w-5 h-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] sm:text-xs font-semibold text-slate-500 leading-snug line-clamp-2">
+              Pembelajaran
+            </p>
+            <h3 className="text-lg sm:text-xl font-extrabold text-orange-950 tracking-tight mt-0.5">
+              <AnimatedCounter value={pembelajaranRecords.length} />
+            </h3>
+            <span className="text-[10px] text-orange-700 font-medium block truncate">Jilid &amp; Istimewa</span>
+          </div>
+        </div>
+
+        {/* 6. Setoran Hari Ini - Vibrant Coral Rose / Crimson */}
+        <div className="bg-white/85 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-2.5 sm:gap-3 hover:border-rose-300 transition-all fade-in-up h-full min-w-0 w-full" style={fadeDelay(6)}>
           <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-rose-100 text-rose-800 flex items-center justify-center flex-shrink-0">
             <CalendarCheck className="w-5 h-5" />
           </div>
@@ -184,14 +206,14 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
             <h3 className="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight mt-0.5">
               <AnimatedCounter value={totalSetoranToday} />
             </h3>
-            <span className="text-[10px] text-rose-700 font-medium truncate block" title={`${todayZiyadah.length} Zyd • ${todayMurojaah.length} Mrj • ${todayBinnadzor.length} Bnz`}>
-              {todayZiyadah.length}Z • {todayMurojaah.length}M • {todayBinnadzor.length}B
+            <span className="text-[10px] text-rose-700 font-medium truncate block" title={`${todayZiyadah.length} Zyd • ${todayMurojaah.length} Mrj • ${todayBinnadzor.length} Bnz • ${todayPembelajaran.length} Pbl`}>
+              {todayZiyadah.length}Z • {todayMurojaah.length}M • {todayBinnadzor.length}B • {todayPembelajaran.length}P
             </span>
           </div>
         </div>
 
-        {/* 6. Predikat Mumtaz - Bright Sky / Azure Blue */}
-        <div className="bg-white/85 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-2.5 sm:gap-3 hover:border-sky-300 transition-all fade-in-up h-full min-w-0 w-full" style={fadeDelay(6)}>
+        {/* 7. Predikat Mumtaz - Bright Sky / Azure Blue */}
+        <div className="bg-white/85 backdrop-blur-md p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center gap-2.5 sm:gap-3 hover:border-sky-300 transition-all fade-in-up h-full min-w-0 w-full" style={fadeDelay(7)}>
           <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-sky-100 text-sky-800 flex items-center justify-center flex-shrink-0">
             <Award className="w-5 h-5" />
           </div>
@@ -207,8 +229,8 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
         </div>
       </div>
 
-      {/* Action Shortcut Banners - Preserved Solid / Rich Gradients (Never Transparent) */}
-      <ScrollReveal className="grid grid-cols-1 md:grid-cols-3 gap-3.5 sm:gap-4 w-full min-w-0">
+      {/* Action Shortcut Banners - 4 Form Cards */}
+      <ScrollReveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 w-full min-w-0">
         {/* Form Ziyadah Shortcut - Emerald */}
         <div className="bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 text-white rounded-2xl p-4 sm:p-5 shadow-xs flex items-center justify-between border border-emerald-700/30">
           <div className="space-y-1 min-w-0 flex-1 pr-2">
@@ -227,7 +249,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
               <ArrowRight className="w-3 h-3" />
             </button>
           </div>
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 flex-shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 flex-shrink-0">
             <BookOpen className="w-6 h-6 text-emerald-200" />
           </div>
         </div>
@@ -250,7 +272,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
               <ArrowRight className="w-3 h-3" />
             </button>
           </div>
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/15 flex items-center justify-center border border-white/25 flex-shrink-0 text-amber-100">
+          <div className="w-12 h-12 rounded-2xl bg-white/15 flex items-center justify-center border border-white/25 flex-shrink-0 text-amber-100">
             <RotateCw className="w-6 h-6" />
           </div>
         </div>
@@ -260,10 +282,10 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           <div className="space-y-1 min-w-0 flex-1 pr-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold text-indigo-200">
               <BookOpenCheck className="w-3.5 h-3.5 text-indigo-300 flex-shrink-0" />
-              <span>Melihat Mushaf</span>
+              <span>Fokus Tajwid</span>
             </div>
             <h4 className="text-base sm:text-lg font-bold">Input Binnadzor</h4>
-            <p className="text-xs text-indigo-200/90 leading-relaxed">Setoran tartil &amp; fashohah bacaan</p>
+            <p className="text-xs text-indigo-200/90 leading-relaxed">Tartil, makhroj &amp; fashohah</p>
             <button
               ref={binnadzorBtnRipple.elementRef}
               onClick={(e) => { binnadzorBtnRipple.createRipple(e); setActiveTab('binnadzor'); }}
@@ -273,21 +295,89 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
               <ArrowRight className="w-3 h-3" />
             </button>
           </div>
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 flex-shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 flex-shrink-0">
             <BookOpenCheck className="w-6 h-6 text-indigo-200" />
+          </div>
+        </div>
+
+        {/* Form Pembelajaran Shortcut - Non-Tahfidz: Jilid Ummi Dewasa & Kelas Istimewa */}
+        <div className="bg-gradient-to-br from-orange-950 via-amber-900 to-amber-950 text-white rounded-2xl p-4 sm:p-5 shadow-xs flex items-center justify-between border border-orange-700/30">
+          <div className="space-y-1 min-w-0 flex-1 pr-2">
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-orange-200">
+              <GraduationCap className="w-3.5 h-3.5 text-orange-300 flex-shrink-0" />
+              <span>Non-Tahfidz</span>
+            </div>
+            <h4 className="text-base sm:text-lg font-bold">Pembelajaran</h4>
+            <p className="text-xs text-orange-200/90 leading-relaxed">Jilid Ummi &amp; Istimewa</p>
+            <button
+              ref={pembelajaranBtnRipple.elementRef}
+              onClick={(e) => { pembelajaranBtnRipple.createRipple(e); setActiveTab('pembelajaran'); }}
+              className="ripple-container press-feedback mt-2.5 px-3.5 py-1.5 bg-white text-amber-950 rounded-xl text-xs font-bold shadow-xs hover:bg-amber-50 transition flex items-center gap-1.5 cursor-pointer active:scale-[0.985]"
+            >
+              <span>Form Belajar</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+          <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center border border-white/20 flex-shrink-0">
+            <GraduationCap className="w-6 h-6 text-orange-200" />
           </div>
         </div>
       </ScrollReveal>
 
-      {/* Grafik Statistik */}
-      <ScrollReveal delay={100} className="w-full min-w-0 max-w-full">
-        <HafalanStatsChart
-          santriList={santriList}
-          ziyadahRecords={ziyadahRecords}
-          murojaahRecords={murojaahRecords}
-          binnadzorRecords={binnadzorRecords}
-          kelasList={kelasList}
-        />
+      {/* Visualisasi Data Hafalan & Statistik */}
+      <ScrollReveal delay={100} className="w-full min-w-0 max-w-full space-y-3">
+        {/* Toggle Pilihan Grafik Visualisasi */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-1">
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse"></span>
+            <h3 className="font-extrabold text-slate-800 text-sm sm:text-base tracking-tight">
+              Visualisasi &amp; Analitik Progres Hafalan
+            </h3>
+          </div>
+
+          <div className="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200/90 self-start sm:self-auto shadow-2xs">
+            <button
+              onClick={() => setChartView('tren_hafalan')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                chartView === 'tren_hafalan'
+                  ? 'bg-emerald-800 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              <span>Tren Hafalan Santri (Bulanan)</span>
+            </button>
+            <button
+              onClick={() => setChartView('aktivitas')}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer ${
+                chartView === 'aktivitas'
+                  ? 'bg-emerald-800 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Aktivitas Sesi &amp; Kualitas</span>
+            </button>
+          </div>
+        </div>
+
+        {chartView === 'tren_hafalan' ? (
+          <TrenHafalanBulananChart
+            santriList={santriList}
+            ziyadahRecords={ziyadahRecords}
+            murojaahRecords={murojaahRecords}
+            kelasList={kelasList}
+          />
+        ) : (
+          <HafalanStatsChart
+            santriList={santriList}
+            ziyadahRecords={ziyadahRecords}
+            murojaahRecords={murojaahRecords}
+            binnadzorRecords={binnadzorRecords}
+            pembelajaranRecords={pembelajaranRecords}
+            kelasList={kelasList}
+          />
+        )}
       </ScrollReveal>
 
       {/* Santri Quick Overview */}
@@ -328,6 +418,8 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                 const santriZiyadahCount = ziyadahRecords.filter(r => r.idSantri === santri.idSantri).length;
                 const santriMurojaahCount = murojaahRecords.filter(r => r.idSantri === santri.idSantri).length;
                 const santriBinnadzorCount = binnadzorRecords.filter(r => r.idSantri === santri.idSantri).length;
+                const santriPembelajaranCount = pembelajaranRecords.filter(r => r.idSantri === santri.idSantri).length;
+                const isNonTahfidz = isNonTahfidzClass(santri.kelas);
 
                 return (
                   <div
@@ -345,46 +437,84 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                       <p className="text-xs text-slate-500 mt-0.5 truncate">Target: {santri.targetHafalan}</p>
 
                       <div className="flex flex-wrap items-center gap-1.5 mt-2.5 text-[11px]">
-                        <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md font-semibold">
-                          📖 {santriZiyadahCount} Zyd
-                        </span>
-                        <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md font-semibold">
-                          🔄 {santriMurojaahCount} Mrj
-                        </span>
-                        <span className="bg-indigo-50 text-indigo-800 border border-indigo-200 px-2 py-0.5 rounded-md font-semibold">
-                          📑 {santriBinnadzorCount} Bnz
-                        </span>
+                        {isNonTahfidz ? (
+                          <>
+                            <span className="bg-orange-50 text-orange-800 border border-orange-200 px-2 py-0.5 rounded-md font-semibold">
+                              📘 {santriPembelajaranCount} Sesi Belajar
+                            </span>
+                            <span className="bg-indigo-50 text-indigo-800 border border-indigo-200 px-2 py-0.5 rounded-md font-semibold">
+                              📑 {santriBinnadzorCount} Bnz
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 rounded-md font-semibold">
+                              📖 {santriZiyadahCount} Zyd
+                            </span>
+                            <span className="bg-amber-50 text-amber-800 border border-amber-200 px-2 py-0.5 rounded-md font-semibold">
+                              🔄 {santriMurojaahCount} Mrj
+                            </span>
+                            <span className="bg-indigo-50 text-indigo-800 border border-indigo-200 px-2 py-0.5 rounded-md font-semibold">
+                              📑 {santriBinnadzorCount} Bnz
+                            </span>
+                          </>
+                        )}
                       </div>
                     </div>
 
                     <div className="pt-3 mt-3 border-t border-slate-200/60 flex items-center gap-1.5">
-                      <button
-                        onClick={() => {
-                          if (onSelectSantriForZiyadah) onSelectSantriForZiyadah(santri.idSantri);
-                          setActiveTab('ziyadah');
-                        }}
-                        className="press-feedback flex-1 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-[11px] font-semibold text-center transition cursor-pointer"
-                      >
-                        + Ziyadah
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (onSelectSantriForZiyadah) onSelectSantriForZiyadah(santri.idSantri);
-                          setActiveTab('murojaah');
-                        }}
-                        className="press-feedback flex-1 py-1.5 rounded-lg bg-amber-800 hover:bg-amber-700 text-white text-[11px] font-semibold text-center transition cursor-pointer"
-                      >
-                        + Muroja'ah
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (onSelectSantriForZiyadah) onSelectSantriForZiyadah(santri.idSantri);
-                          setActiveTab('binnadzor');
-                        }}
-                        className="press-feedback flex-1 py-1.5 rounded-lg bg-indigo-800 hover:bg-indigo-700 text-white text-[11px] font-semibold text-center transition cursor-pointer"
-                      >
-                        + Binnadzor
-                      </button>
+                      {isNonTahfidz ? (
+                        <>
+                          <button
+                            onClick={() => {
+                              if (onSelectSantriForZiyadah) onSelectSantriForZiyadah(santri.idSantri);
+                              setActiveTab('pembelajaran');
+                            }}
+                            className="press-feedback flex-1 py-1.5 rounded-lg bg-orange-800 hover:bg-orange-700 text-white text-[11px] font-semibold text-center transition cursor-pointer"
+                          >
+                            + Pembelajaran
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (onSelectSantriForZiyadah) onSelectSantriForZiyadah(santri.idSantri);
+                              setActiveTab('binnadzor');
+                            }}
+                            className="press-feedback flex-1 py-1.5 rounded-lg bg-indigo-800 hover:bg-indigo-700 text-white text-[11px] font-semibold text-center transition cursor-pointer"
+                          >
+                            + Binnadzor
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => {
+                              if (onSelectSantriForZiyadah) onSelectSantriForZiyadah(santri.idSantri);
+                              setActiveTab('ziyadah');
+                            }}
+                            className="press-feedback flex-1 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-[11px] font-semibold text-center transition cursor-pointer"
+                          >
+                            + Ziyadah
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (onSelectSantriForZiyadah) onSelectSantriForZiyadah(santri.idSantri);
+                              setActiveTab('murojaah');
+                            }}
+                            className="press-feedback flex-1 py-1.5 rounded-lg bg-amber-800 hover:bg-amber-700 text-white text-[11px] font-semibold text-center transition cursor-pointer"
+                          >
+                            + Muroja'ah
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (onSelectSantriForZiyadah) onSelectSantriForZiyadah(santri.idSantri);
+                              setActiveTab('binnadzor');
+                            }}
+                            className="press-feedback flex-1 py-1.5 rounded-lg bg-indigo-800 hover:bg-indigo-700 text-white text-[11px] font-semibold text-center transition cursor-pointer"
+                          >
+                            + Binnadzor
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 );

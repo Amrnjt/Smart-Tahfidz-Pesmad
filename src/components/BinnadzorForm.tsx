@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, Kelas } from '../types';
+import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, Kelas, AspekKualitas, ASPEK_KUALITAS_OPTIONS } from '../types';
 import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
-import { BookOpenCheck, CircleCheck as CheckCircle, Save, RotateCcw, Calendar, Clock, BookOpen, Layers, Bookmark } from 'lucide-react';
+import { BookOpenCheck, CircleCheck as CheckCircle, Save, RotateCcw, Calendar, Clock, BookOpen, Layers, Bookmark, Sparkles, Check } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 
 interface BinnadzorFormProps {
@@ -54,6 +54,13 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
   const [juzNumber, setJuzNumber] = useState<number>(1);
 
   const [nilai, setNilai] = useState<PredikatNilai>('Sangat Baik');
+  
+  // 4 Aspek Kualitas Fokus Binnadzor
+  const [hukumTajwid, setHukumTajwid] = useState<AspekKualitas>('Baik');
+  const [makhrojHuruf, setMakhrojHuruf] = useState<AspekKualitas>('Baik');
+  const [kefasihan, setKefasihan] = useState<AspekKualitas>('Baik');
+  const [kelancaran, setKelancaran] = useState<AspekKualitas>('Sangat Baik');
+
   const [catatan, setCatatan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -103,6 +110,10 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
         juz: modeInput === 'juz' ? Number(juzNumber) : undefined,
         materi,
         nilai,
+        hukumTajwid,
+        makhrojHuruf,
+        kefasihan,
+        kelancaran,
         catatan: catatan.trim() || 'Lancar, tartil, dan fashohah baik.',
         inputBy: currentUser.nama
       });
@@ -412,6 +423,173 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                   <span className="text-center">{opt.label}</span>
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* 4.5. Fokus Penilaian 4 Aspek Kualitas Binnadzor */}
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50/70 via-slate-50 to-teal-50/50 border border-indigo-100/90 shadow-2xs space-y-3.5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-indigo-100/80 pb-2.5">
+              <div>
+                <h4 className="text-xs font-black text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>Fokus Kualitas Bacaan Binnadzor</span>
+                </h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Evaluasi mendalam 4 pilar kualitas tilawah Al-Qur'an santri
+                </p>
+              </div>
+
+              {/* Quick Preset Buttons */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] text-slate-400 font-semibold">Preset Cepat:</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHukumTajwid('Baik');
+                    setMakhrojHuruf('Baik');
+                    setKefasihan('Baik');
+                    setKelancaran('Baik');
+                  }}
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 transition cursor-pointer"
+                >
+                  Semua Baik
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHukumTajwid('Sangat Baik');
+                    setMakhrojHuruf('Sangat Baik');
+                    setKefasihan('Sangat Baik');
+                    setKelancaran('Sangat Baik');
+                  }}
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-200 hover:bg-teal-200 transition cursor-pointer"
+                >
+                  Sangat Baik
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setHukumTajwid('Mutqin');
+                    setMakhrojHuruf('Mutqin');
+                    setKefasihan('Mutqin');
+                    setKelancaran('Mutqin');
+                  }}
+                  className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200 hover:bg-indigo-200 transition cursor-pointer"
+                >
+                  Mutqin
+                </button>
+              </div>
+            </div>
+
+            {/* The 4 Aspect Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* 1. Hukum Tajwid */}
+              <div className="bg-white/90 p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">1. Hukum Tajwid</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                    {hukumTajwid}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-500">Ikhfa, idgham, ghunnah, mad far'i & tanda waqaf</p>
+                <div className="grid grid-cols-3 gap-1 pt-1">
+                  {(['Perlu Bimbingan', 'Baik', 'Mutqin'] as AspekKualitas[]).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setHukumTajwid(level)}
+                      className={`py-1 px-1.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                        hukumTajwid === level
+                          ? 'bg-indigo-700 text-white shadow-2xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {level === 'Perlu Bimbingan' ? 'Bimbingan' : level}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. Makhroj Huruf */}
+              <div className="bg-white/90 p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">2. Makharijul Huruf</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                    {makhrojHuruf}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-500">Ketepatan artikulasi bunyi huruf hijaiyah</p>
+                <div className="grid grid-cols-3 gap-1 pt-1">
+                  {(['Perlu Bimbingan', 'Baik', 'Mutqin'] as AspekKualitas[]).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setMakhrojHuruf(level)}
+                      className={`py-1 px-1.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                        makhrojHuruf === level
+                          ? 'bg-indigo-700 text-white shadow-2xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {level === 'Perlu Bimbingan' ? 'Bimbingan' : level}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. Kefasihan (Fashohah) */}
+              <div className="bg-white/90 p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">3. Kefasihan (Fashohah)</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                    {kefasihan}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-500">Kefasihan dialek Arab & kesempurnaan sifat huruf</p>
+                <div className="grid grid-cols-3 gap-1 pt-1">
+                  {(['Perlu Bimbingan', 'Baik', 'Mutqin'] as AspekKualitas[]).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setKefasihan(level)}
+                      className={`py-1 px-1.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                        kefasihan === level
+                          ? 'bg-indigo-700 text-white shadow-2xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {level === 'Perlu Bimbingan' ? 'Bimbingan' : level}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* 4. Kelancaran & Tartil */}
+              <div className="bg-white/90 p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">4. Kelancaran & Tartil</span>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                    {kelancaran}
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-500">Irama tilawah, aliran tanpa terbata & nafas</p>
+                <div className="grid grid-cols-3 gap-1 pt-1">
+                  {(['Perlu Bimbingan', 'Baik', 'Mutqin'] as AspekKualitas[]).map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => setKelancaran(level)}
+                      className={`py-1 px-1.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                        kelancaran === level
+                          ? 'bg-indigo-700 text-white shadow-2xs'
+                          : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      }`}
+                    >
+                      {level === 'Perlu Bimbingan' ? 'Bimbingan' : level}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 

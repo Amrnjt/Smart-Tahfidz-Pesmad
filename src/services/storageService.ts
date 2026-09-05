@@ -1,5 +1,5 @@
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Kelas, TipeKelas } from '../types';
-import { INITIAL_USERS, INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH, INITIAL_BINNADZOR } from '../data/sampleDatabase';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas } from '../types';
+import { INITIAL_USERS, INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH, INITIAL_BINNADZOR, INITIAL_PEMBELAJARAN } from '../data/sampleDatabase';
 import { getClassGroup } from '../utils/classUtils';
 
 function normalizeKelas(kelas: string): string {
@@ -8,9 +8,12 @@ function normalizeKelas(kelas: string): string {
 }
 
 function normalizeTipeKelas(tipe: string): TipeKelas {
-  const g = getClassGroup(tipe);
-  if (g === 'Tahfidz' || g === 'Jilid' || g === 'Binnadzor A' || g === 'Binnadzor B' || g === 'Kelas Istimewa') return g as TipeKelas;
-  return 'Kelas Istimewa';
+  const normalized = (tipe || '').trim();
+  if (normalized.toLowerCase().includes('tahfidz') || normalized.toLowerCase().includes('tahfiz')) return 'Tahfidz';
+  if (normalized.toLowerCase().includes('binnadzor')) return 'Binnadzor';
+  if (normalized.toLowerCase().includes('jilid') || normalized.toLowerCase().includes('ummi')) return 'Jilid';
+  if (normalized.toLowerCase().includes('istimewa')) return 'Kelas Istimewa';
+  return 'Binnadzor';
 }
 import { db } from './firebase';
 import {
@@ -29,6 +32,7 @@ const STORAGE_KEYS = {
   ZIYADAH: 'tahfidz_ziyadah_db_v2',
   MUROJAAH: 'tahfidz_murojaah_db_v2',
   BINNADZOR: 'tahfidz_binnadzor_db_v2',
+  PEMBELAJARAN: 'tahfidz_pembelajaran_db_v2',
   KELAS: 'tahfidz_kelas_db_v2',
   SESSION: 'tahfidz_active_session_v2'
 };
@@ -39,6 +43,7 @@ const COLLECTIONS = {
   ZIYADAH: 'ziyadah',
   MUROJAAH: 'murojaah',
   BINNADZOR: 'binnadzor',
+  PEMBELAJARAN: 'pembelajaran',
   KELAS: 'kelas'
 };
 
@@ -172,6 +177,20 @@ export const storageService = {
     }
   },
 
+  getPembelajaranRecords(): PembelajaranRecord[] {
+    const data = localStorage.getItem(STORAGE_KEYS.PEMBELAJARAN);
+    if (!data) {
+      localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(INITIAL_PEMBELAJARAN));
+      return INITIAL_PEMBELAJARAN;
+    }
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : INITIAL_PEMBELAJARAN;
+    } catch {
+      return INITIAL_PEMBELAJARAN;
+    }
+  },
+
   getKelasList(): Kelas[] {
     const data = localStorage.getItem(STORAGE_KEYS.KELAS);
     if (!data) {
@@ -271,6 +290,20 @@ export const storageService = {
           if (!remoteBinnadzorMap.has(b.id)) {
             await setDoc(doc(db, COLLECTIONS.BINNADZOR, b.id), cleanForFirestore(b)).catch(console.error);
             remoteBinnadzorMap.set(b.id, b);
+          }
+        }
+
+        const pembelajaranSnapshot = await getDocs(collection(db, COLLECTIONS.PEMBELAJARAN));
+        const remotePembelajaranMap = new Map<string, PembelajaranRecord>();
+        pembelajaranSnapshot.forEach((docSnap) => {
+          const p = docSnap.data() as PembelajaranRecord;
+          if (p.id) remotePembelajaranMap.set(p.id, p);
+        });
+        const localPembelajaran = this.getPembelajaranRecords();
+        for (const p of localPembelajaran) {
+          if (!remotePembelajaranMap.has(p.id)) {
+            await setDoc(doc(db, COLLECTIONS.PEMBELAJARAN, p.id), cleanForFirestore(p)).catch(console.error);
+            remotePembelajaranMap.set(p.id, p);
           }
         }
       } catch (err) {
@@ -420,6 +453,26 @@ export const storageService = {
       console.warn('Binnadzor firestore sync error:', err);
     });
 
+    // 7. Sync Pembelajaran Realtime
+    const unsubPembelajaran = onSnapshot(collection(db, COLLECTIONS.PEMBELAJARAN), (snapshot) => {
+      if (!snapshot.empty) {
+        const records: PembelajaranRecord[] = [];
+        const recordMap = new Map<string, PembelajaranRecord>();
+        snapshot.forEach((docSnap) => {
+          const r = docSnap.data() as PembelajaranRecord;
+          if (r && r.id && !recordMap.has(r.id)) {
+            recordMap.set(r.id, r);
+            records.push(r);
+          }
+        });
+        records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+        localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(records));
+        if (onUpdate) onUpdate();
+      }
+    }, (err) => {
+      console.warn('Pembelajaran firestore sync error:', err);
+    });
+
     return () => {
       unsubUsers();
       unsubSantri();
@@ -427,6 +480,7 @@ export const storageService = {
       unsubMurojaah();
       unsubKelas();
       unsubBinnadzor();
+      unsubPembelajaran();
     };
   },
 
@@ -532,7 +586,41 @@ export const storageService = {
     return newRecord;
   },
 
-  async deleteRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor', id: string): Promise<boolean> {
+  async savePembelajaran(record: Omit<PembelajaranRecord, 'id'> & { timestamp?: string }): Promise<PembelajaranRecord> {
+    const records = this.getPembelajaranRecords();
+    const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
+    
+    let timestamp = record.timestamp;
+    if (!timestamp) {
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    }
+    const uniqueId = `PBL-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    
+    const newRecord: PembelajaranRecord = {
+      ...record,
+      id: uniqueId,
+      timestamp,
+      namaSantri: santri?.namaSantri || record.idSantri
+    };
+
+    // 1. Optimistic Local Save
+    records.unshift(newRecord);
+    localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(records));
+
+    // 2. Cloud Firestore Save
+    try {
+      const cleanRecord = cleanForFirestore(newRecord);
+      await setDoc(doc(db, COLLECTIONS.PEMBELAJARAN, newRecord.id), cleanRecord);
+    } catch (e) {
+      console.error('Failed to save Pembelajaran to Firestore:', e);
+    }
+
+    return newRecord;
+  },
+
+  async deleteRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran', id: string): Promise<boolean> {
     if (type === 'Ziyadah') {
       const records = this.getZiyadahRecords().filter(r => r.id !== id);
       localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
@@ -549,6 +637,14 @@ export const storageService = {
       } catch (e) {
         console.error('Failed to delete Murojaah from Firestore:', e);
       }
+    } else if (type === 'Pembelajaran') {
+      const records = this.getPembelajaranRecords().filter(r => r.id !== id);
+      localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(records));
+      try {
+        await deleteDoc(doc(db, COLLECTIONS.PEMBELAJARAN, id));
+      } catch (e) {
+        console.error('Failed to delete Pembelajaran from Firestore:', e);
+      }
     } else {
       const records = this.getBinnadzorRecords().filter(r => r.id !== id);
       localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(records));
@@ -561,7 +657,7 @@ export const storageService = {
     return true;
   },
 
-  async updateRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor', id: string, updatedData: Partial<ZiyadahRecord | MurojaahRecord | BinnadzorRecord>): Promise<boolean> {
+  async updateRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran', id: string, updatedData: Partial<ZiyadahRecord | MurojaahRecord | BinnadzorRecord | PembelajaranRecord>): Promise<boolean> {
     if (type === 'Ziyadah') {
       const records = this.getZiyadahRecords().map(r => r.id === id ? { ...r, ...updatedData } as ZiyadahRecord : r);
       localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
@@ -582,6 +678,17 @@ export const storageService = {
           await setDoc(doc(db, COLLECTIONS.MUROJAAH, id), cleanForFirestore(target), { merge: true });
         } catch (e) {
           console.error('Failed to update Murojaah in Firestore:', e);
+        }
+      }
+    } else if (type === 'Pembelajaran') {
+      const records = this.getPembelajaranRecords().map(r => r.id === id ? { ...r, ...updatedData } as PembelajaranRecord : r);
+      localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(records));
+      const target = records.find(r => r.id === id);
+      if (target) {
+        try {
+          await setDoc(doc(db, COLLECTIONS.PEMBELAJARAN, id), cleanForFirestore(target), { merge: true });
+        } catch (e) {
+          console.error('Failed to update Pembelajaran in Firestore:', e);
         }
       }
     } else {
@@ -991,6 +1098,8 @@ export const storageService = {
     localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(INITIAL_SANTRI));
     localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(INITIAL_ZIYADAH));
     localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(INITIAL_MUROJAAH));
+    localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(INITIAL_BINNADZOR));
+    localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(INITIAL_PEMBELAJARAN));
     localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify([]));
   }
 };

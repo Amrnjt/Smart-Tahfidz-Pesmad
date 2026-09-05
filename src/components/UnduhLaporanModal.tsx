@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { User, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Santri } from '../types';
+import { User, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri } from '../types';
 import { useGeneratePDF, NAMA_BULAN, ReportOptions, ReportPeriod, ReportPeriodRange } from '../hooks/useGeneratePDF';
 import { parseDateSafe } from '../utils/dateFormatter';
 import { X, Download, FileText, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Loader as Loader2, Calendar, CalendarRange } from 'lucide-react';
@@ -12,6 +12,7 @@ interface UnduhLaporanModalProps {
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
   binnadzorRecords?: BinnadzorRecord[];
+  pembelajaranRecords?: PembelajaranRecord[];
 }
 
 export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
@@ -21,7 +22,8 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   santriList,
   ziyadahRecords,
   murojaahRecords,
-  binnadzorRecords = []
+  binnadzorRecords = [],
+  pembelajaranRecords = []
 }) => {
   const { isGenerating, error, success, generatePDF } = useGeneratePDF();
 
@@ -37,6 +39,9 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   const scopedBinnadzor = isViewOnly
     ? binnadzorRecords.filter(r => r.idSantri === targetSantriId)
     : binnadzorRecords;
+  const scopedPembelajaran = isViewOnly
+    ? pembelajaranRecords.filter(r => r.idSantri === targetSantriId)
+    : pembelajaranRecords;
 
   const targetSantri = isViewOnly
     ? santriList.find(s => s.idSantri === targetSantriId) || null
@@ -58,10 +63,13 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   const reportBinnadzor = isViewOnly
     ? scopedBinnadzor
     : binnadzorRecords.filter(r => !selectedSantriId || r.idSantri === selectedSantriId);
+  const reportPembelajaran = isViewOnly
+    ? scopedPembelajaran
+    : pembelajaranRecords.filter(r => !selectedSantriId || r.idSantri === selectedSantriId);
 
   // Available periods from data
   const availablePeriods = useMemo(() => {
-    const allRecords = [...reportZiyadah, ...reportMurojaah, ...reportBinnadzor];
+    const allRecords = [...reportZiyadah, ...reportMurojaah, ...reportBinnadzor, ...reportPembelajaran];
     const periodSet = new Set<string>();
 
     allRecords.forEach(r => {
@@ -71,21 +79,25 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
       periodSet.add(key);
     });
 
-    // Always include current month
     const now = new Date();
-    periodSet.add(`${now.getFullYear()}-${now.getMonth()}`);
+    const currentKey = `${now.getFullYear()}-${now.getMonth()}`;
+    periodSet.add(currentKey);
 
-    const periods: { month: number; year: number; label: string }[] = [];
-    periodSet.forEach(key => {
-      const [yearStr, monthStr] = key.split('-');
-      const year = parseInt(yearStr);
-      const month = parseInt(monthStr);
-      periods.push({ month, year, label: `${NAMA_BULAN[month]} ${year}` });
-    });
-
-    periods.sort((a, b) => (b.year - a.year) || (b.month - a.month));
-    return periods;
-  }, [reportZiyadah, reportMurojaah, reportBinnadzor]);
+    return Array.from(periodSet)
+      .map(key => {
+        const [yearStr, monthStr] = key.split('-');
+        const year = parseInt(yearStr, 10);
+        const month = parseInt(monthStr, 10);
+        return {
+          key,
+          year,
+          month,
+          label: `${NAMA_BULAN[month]} ${year}`,
+          sortKey: year * 100 + month
+        };
+      })
+      .sort((a, b) => b.sortKey - a.sortKey);
+  }, [reportZiyadah, reportMurojaah, reportBinnadzor, reportPembelajaran]);
 
   const [period, setPeriod] = useState<string>(() => {
     const now = new Date();
@@ -137,6 +149,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
       ziyadahRecords: reportZiyadah,
       murojaahRecords: reportMurojaah,
       binnadzorRecords: reportBinnadzor,
+      pembelajaranRecords: reportPembelajaran,
       period: reportPeriod,
       periodRange: useRange && rangeValid ? reportPeriodRange : undefined,
       options

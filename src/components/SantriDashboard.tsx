@@ -1,7 +1,7 @@
 import React from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, ActiveTab } from '../types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, ActiveTab } from '../types';
 import { ZiyadahProgressChart } from './ZiyadahProgressChart';
-import { BookOpen, RotateCw, BookOpenCheck, Award, Target, Sparkles, BookMarked, Calendar } from 'lucide-react';
+import { BookOpen, RotateCw, BookOpenCheck, Award, Target, Sparkles, BookMarked, Calendar, GraduationCap } from 'lucide-react';
 import { PesmadLogo } from './PesmadLogo';
 import { formatTanggalWaktu } from '../utils/dateFormatter';
 import { SantriWaliDashboardSkeleton } from './SkeletonLoading';
@@ -15,6 +15,7 @@ interface SantriDashboardProps {
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
   binnadzorRecords?: BinnadzorRecord[];
+  pembelajaranRecords?: PembelajaranRecord[];
   setActiveTab: (tab: ActiveTab) => void;
   isLoading?: boolean;
 }
@@ -25,6 +26,7 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   ziyadahRecords,
   murojaahRecords,
   binnadzorRecords = [],
+  pembelajaranRecords = [],
   setActiveTab,
   isLoading = false
 }) => {
@@ -44,10 +46,12 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   const santriZiyadah = ziyadahRecords.filter(r => r.idSantri === currentSantri.idSantri);
   const santriMurojaah = murojaahRecords.filter(r => r.idSantri === currentSantri.idSantri);
   const santriBinnadzor = binnadzorRecords.filter(r => r.idSantri === currentSantri.idSantri);
+  const santriPembelajaran = pembelajaranRecords.filter(r => r.idSantri === currentSantri.idSantri);
 
   const lastZiyadah = santriZiyadah[0];
   const lastMurojaah = santriMurojaah[0];
   const lastBinnadzor = santriBinnadzor[0];
+  const lastPembelajaran = santriPembelajaran[0];
 
   const estimatedProgressPercent = Math.min(100, Math.max(30, santriZiyadah.length * 9));
 
@@ -161,6 +165,21 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
             <span className="text-[10px] text-indigo-700 font-medium">Membaca mushaf</span>
           </div>
         </div>
+
+        {santriPembelajaran.length > 0 && (
+          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3 sm:gap-4 fade-in-up" style={fadeDelay(3.5)}>
+            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0">
+              <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-500">Pembelajaran Saya</p>
+              <h3 className="text-lg sm:text-2xl font-extrabold text-amber-900 mt-0.5">
+                <AnimatedCounter value={santriPembelajaran.length} /> Kali
+              </h3>
+              <span className="text-[10px] text-amber-700 font-medium">Ummi / Istimewa</span>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3 sm:gap-4 fade-in-up" style={fadeDelay(4)}>
           <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-cyan-100 text-cyan-800 flex items-center justify-center flex-shrink-0">
@@ -286,6 +305,42 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
               <p className="text-xs text-slate-400 py-3 text-center">Belum ada catatan Binnadzor.</p>
             )}
           </div>
+
+          {/* Pembelajaran Terakhir */}
+          {lastPembelajaran && (
+            <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <GraduationCap className="w-4 h-4 text-amber-700" />
+                  <h4 className="font-bold text-slate-800 text-sm">Pembelajaran Terakhir</h4>
+                </div>
+                <span className="text-[11px] text-amber-800 font-semibold flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
+                  <Calendar className="w-3 h-3 text-amber-600" />
+                  {formatTanggalWaktu(lastPembelajaran.timestamp)}
+                </span>
+              </div>
+
+              <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200/70 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-extrabold text-amber-950">
+                    {lastPembelajaran.materi} (Hal. {lastPembelajaran.halaman})
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 font-bold text-[10px]">
+                    {lastPembelajaran.nilai}
+                  </span>
+                </div>
+                {lastPembelajaran.statusKenaikan && (
+                  <div className="text-[11px] font-bold text-emerald-700">
+                    Status: {lastPembelajaran.statusKenaikan}
+                  </div>
+                )}
+                <p className="text-xs text-slate-700 italic">"{lastPembelajaran.catatan}"</p>
+                <div className="text-[10px] text-amber-800 font-medium pt-1">
+                  Disimak oleh: {lastPembelajaran.inputBy}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </ScrollReveal>
 

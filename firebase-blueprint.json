@@ -63,6 +63,10 @@
         "ayatAwal": { "type": "number" },
         "ayatAkhir": { "type": "number" },
         "materi": { "type": "string" },
+        "hukumTajwid": { "type": "string" },
+        "makhrojHuruf": { "type": "string" },
+        "kefasihan": { "type": "string" },
+        "kelancaran": { "type": "string" },
         "nilai": { "type": "string" },
         "catatan": { "type": "string" },
         "inputBy": { "type": "string" }
@@ -76,7 +80,30 @@
         "musyrif": { "type": "string" },
         "musyrifId": { "type": "string" },
         "santriIds": { "type": "array" },
+        "silabusMateri": { "type": "array" },
         "createdAt": { "type": "string" }
+      }
+    },
+    "PembelajaranRecord": {
+      "fields": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "idSantri": { "type": "string" },
+        "namaSantri": { "type": "string" },
+        "kelasId": { "type": "string" },
+        "namaKelas": { "type": "string" },
+        "tipeKelas": { "type": "string" },
+        "jilidAtauKategori": { "type": "string" },
+        "materiPokok": { "type": "string" },
+        "halamanAwal": { "type": "number" },
+        "halamanAkhir": { "type": "number" },
+        "barisAwal": { "type": "number" },
+        "barisAkhir": { "type": "number" },
+        "nilai": { "type": "string" },
+        "evaluasi": { "type": "map" },
+        "catatanBimbingan": { "type": "string" },
+        "statusKenaikan": { "type": "string" },
+        "inputBy": { "type": "string" }
       }
     }
   }

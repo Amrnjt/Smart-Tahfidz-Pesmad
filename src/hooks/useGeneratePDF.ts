@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react';
 import jsPDF from 'jspdf';
-import { ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Santri, User } from '../types';
+import { ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri, User } from '../types';
 import { formatTanggalLengkap, parseDateSafe } from '../utils/dateFormatter';
-import { getClassGroup } from '../utils/classUtils';
+import { getClassGroup, isNonTahfidzClass } from '../utils/classUtils';
 
 export interface ReportOptions {
   includeIdentity: boolean;
@@ -30,6 +30,7 @@ export interface ReportData {
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
   binnadzorRecords?: BinnadzorRecord[];
+  pembelajaranRecords?: PembelajaranRecord[];
   period: ReportPeriod;
   periodRange?: ReportPeriodRange;
   options: ReportOptions;
@@ -179,6 +180,7 @@ export function useGeneratePDF() {
       const periodZiyadah = data.ziyadahRecords.filter(r => matchesPeriod(r.timestamp));
       const periodMurojaah = data.murojaahRecords.filter(r => matchesPeriod(r.timestamp));
       const periodBinnadzor = (data.binnadzorRecords || []).filter(r => matchesPeriod(r.timestamp));
+      const periodPembelajaran = (data.pembelajaranRecords || []).filter(r => matchesPeriod(r.timestamp));
 
       const periodLabel = data.periodRange
         ? `${NAMA_BULAN[data.periodRange.startMonth]} ${data.periodRange.startYear} — ${NAMA_BULAN[data.periodRange.endMonth]} ${data.periodRange.endYear}`
@@ -186,7 +188,7 @@ export function useGeneratePDF() {
 
       const totalAyatZiyadah = periodZiyadah.reduce((s, r) => s + Math.max(1, r.ayatAkhir - r.ayatAwal + 1), 0);
       const totalSurahZiyadah = new Set(periodZiyadah.map(r => r.surah)).size;
-      const allPeriod = [...periodZiyadah, ...periodMurojaah, ...periodBinnadzor];
+      const allPeriod = [...periodZiyadah, ...periodMurojaah, ...periodBinnadzor, ...periodPembelajaran];
       const sangatBaikCount = allPeriod.filter(r => r.nilai === 'Sangat Baik').length;
       const baikCount = allPeriod.filter(r => r.nilai === 'Baik').length;
       const kurangCount = allPeriod.filter(r => r.nilai === 'Kurang').length;
@@ -197,6 +199,7 @@ export function useGeneratePDF() {
       const santriId = data.santri?.idSantri || data.currentUser.idSantri || data.currentUser.username || '-';
       const santriKelas = getClassGroup(data.santri?.kelas) || '-';
       const santriTarget = data.santri?.targetHafalan || '-';
+      const isNonTahfidz = isNonTahfidzClass(data.santri?.kelas) || periodPembelajaran.length > 0 || (periodBinnadzor.length > 0 && periodZiyadah.length === 0);
 
       // ════════ HEADER ════════
       // Gradient-like header with deep emerald background
@@ -286,34 +289,49 @@ export function useGeneratePDF() {
         y += Math.ceil(cards.length / cardsPerRow) * (cardH + 2.5) + 3;
       }
 
-      // ════════ RINGKASAN PROGRES HAFALAN ════════
+      // ════════ RINGKASAN PROGRES HAFALAN & PEMBELAJARAN ════════
       if (data.options.includeSummary) {
         if (y > pageH - 60) { pdf.addPage(); y = margin; }
-        y = drawSectionHeader(pdf, 'Ringkasan Progres Hafalan & Bacaan', margin, contentW, y);
+        const summaryTitle = isNonTahfidz
+          ? 'Ringkasan Capaian Pembelajaran & Bacaan'
+          : 'Ringkasan Progres Hafalan & Bacaan';
+        y = drawSectionHeader(pdf, summaryTitle, margin, contentW, y);
 
-        const statCardW = (contentW - 12) / 5;
-        const statCardH = 18;
-        drawStatCard(pdf, periodZiyadah.length, 'Setoran Ziyadah', margin, y, statCardW, statCardH, C.emeraldLight, C.emerald);
-        drawStatCard(pdf, periodMurojaah.length, "Setoran Muroja'ah", margin + statCardW + 3, y, statCardW, statCardH, C.tealLight, C.teal);
-        drawStatCard(pdf, periodBinnadzor.length, 'Setoran Binnadzor', margin + (statCardW + 3) * 2, y, statCardW, statCardH, C.indigoLight, C.indigo);
-        drawStatCard(pdf, totalAyatZiyadah, 'Total Ayat Ziyadah', margin + (statCardW + 3) * 3, y, statCardW, statCardH, C.amberLight, C.amber);
-        drawStatCard(pdf, totalSurahZiyadah, 'Surah Berbeda', margin + (statCardW + 3) * 4, y, statCardW, statCardH, C.skyLight, C.sky);
-        y += statCardH + 4;
+        if (isNonTahfidz || periodPembelajaran.length > 0) {
+          // Dynamic 5 cards focused on Non-Tahfidz / comprehensive curriculum
+          const statCardW = (contentW - 12) / 5;
+          const statCardH = 18;
+          drawStatCard(pdf, periodPembelajaran.length, 'Pembelajaran', margin, y, statCardW, statCardH, C.amberLight, C.amber);
+          drawStatCard(pdf, periodBinnadzor.length, 'Binnadzor', margin + statCardW + 3, y, statCardW, statCardH, C.indigoLight, C.indigo);
+          drawStatCard(pdf, periodZiyadah.length, 'Ziyadah (Hafalan)', margin + (statCardW + 3) * 2, y, statCardW, statCardH, C.emeraldLight, C.emerald);
+          drawStatCard(pdf, periodMurojaah.length, "Muroja'ah", margin + (statCardW + 3) * 3, y, statCardW, statCardH, C.tealLight, C.teal);
+          drawStatCard(pdf, totalSetoran, 'Total Sesi', margin + (statCardW + 3) * 4, y, statCardW, statCardH, C.skyLight, C.sky);
+          y += statCardH + 4;
+        } else {
+          const statCardW = (contentW - 12) / 5;
+          const statCardH = 18;
+          drawStatCard(pdf, periodZiyadah.length, 'Setoran Ziyadah', margin, y, statCardW, statCardH, C.emeraldLight, C.emerald);
+          drawStatCard(pdf, periodMurojaah.length, "Setoran Muroja'ah", margin + statCardW + 3, y, statCardW, statCardH, C.tealLight, C.teal);
+          drawStatCard(pdf, periodBinnadzor.length, 'Setoran Binnadzor', margin + (statCardW + 3) * 2, y, statCardW, statCardH, C.indigoLight, C.indigo);
+          drawStatCard(pdf, totalAyatZiyadah, 'Total Ayat Ziyadah', margin + (statCardW + 3) * 3, y, statCardW, statCardH, C.amberLight, C.amber);
+          drawStatCard(pdf, totalSurahZiyadah, 'Surah Berbeda', margin + (statCardW + 3) * 4, y, statCardW, statCardH, C.skyLight, C.sky);
+          y += statCardH + 4;
+        }
 
         // Distribusi nilai badges
         setText(pdf, C.slateLight);
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(8);
-        pdf.text('DISTRIBUSI NILAI:', margin, y);
+        pdf.text('DISTRIBUSI NILAI & EVALUASI:', margin, y);
 
         const distItems: [string, number, [number, number, number], [number, number, number]][] = [
           ['Sangat Baik', sangatBaikCount, C.emeraldLight, C.emerald],
           ['Baik', baikCount, C.tealLight, C.teal],
           ['Kurang', kurangCount, C.amberLight, C.amber],
           ['Mengulang', mengulangCount, C.roseLight, C.rose],
-          ['Total', totalSetoran, C.slateBg, C.slateMid],
+          ['Total Sesi', totalSetoran, C.slateBg, C.slateMid],
         ];
-        let dx = margin + 28;
+        let dx = margin + 46;
         distItems.forEach(d => {
           const txt = `${d[0]}: ${d[1]}`;
           pdf.setFont('helvetica', 'bold');
@@ -326,12 +344,29 @@ export function useGeneratePDF() {
           dx += tw + 2.5;
         });
         y += 8;
+
+        // Evaluasi 4 Aspek Kualitas (Hukum Tajwid, Makhroj, Fashohah, Kelancaran) bila ada
+        const qualityRecords = [...periodBinnadzor, ...periodPembelajaran].filter(r => (r as any).aspekKualitas);
+        if (qualityRecords.length > 0) {
+          setFill(pdf, C.slateBg);
+          pdf.roundedRect(margin, y - 3, contentW, 11, 1, 1, 'F');
+          setText(pdf, C.emeraldDeep);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(7.5);
+          pdf.text('FOKUS KUALITAS BACAAN & TILAWAH (Hukum Tajwid, Makhroj, Kefasihan, Kelancaran):', margin + 3, y + 1);
+
+          setText(pdf, C.slateMid);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(7);
+          pdf.text(`Terekam pada ${qualityRecords.length} sesi pembelajaran & tilawah dengan pendampingan intensif pengajar.`, margin + 3, y + 5.5);
+          y += 13;
+        }
       }
 
       // ════════ GRAFIK PROGRES ════════
-      if (data.options.includeChart && (periodZiyadah.length > 0 || periodMurojaah.length > 0 || periodBinnadzor.length > 0)) {
+      if (data.options.includeChart && allPeriod.length > 0) {
         if (y > pageH - 55) { pdf.addPage(); y = margin; }
-        y = drawSectionHeader(pdf, 'Grafik Progres Hafalan & Setoran', margin, contentW, y);
+        y = drawSectionHeader(pdf, 'Grafik Aktivitas & Evaluasi', margin, contentW, y);
 
         const chartH = 38;
         setFill(pdf, C.slateBg);
@@ -341,6 +376,7 @@ export function useGeneratePDF() {
           ['Ziyadah', periodZiyadah.length, C.emerald],
           ["Muroja'ah", periodMurojaah.length, C.teal],
           ['Binnadzor', periodBinnadzor.length, C.indigo],
+          ['Pembelajaran', periodPembelajaran.length, C.amber],
           ['S. Baik', sangatBaikCount, C.emeraldDark],
           ['Baik', baikCount, C.teal],
           ['Kurang', kurangCount, C.amber],
@@ -365,21 +401,28 @@ export function useGeneratePDF() {
 
           setText(pdf, C.slateLight);
           pdf.setFont('helvetica', 'normal');
-          pdf.setFontSize(6.5);
+          pdf.setFontSize(6);
           pdf.text(b[0], bx + barSlotW / 2, y + chartH - 2.5, { align: 'center' });
         });
         y += chartH + 5;
       }
 
-      // ════════ DAFTAR RIWAYAT SETORAN ════════
+      // ════════ DAFTAR RIWAYAT SETORAN & PEMBELAJARAN ════════
       if (data.options.includeHistory) {
         if (y > pageH - 40) { pdf.addPage(); y = margin; }
-        y = drawSectionHeader(pdf, 'Daftar Riwayat Setoran', margin, contentW, y);
+        y = drawSectionHeader(pdf, 'Daftar Riwayat Setoran & Pembelajaran', margin, contentW, y);
 
         const items = [
           ...periodZiyadah.map(z => ({ id: z.id, type: 'Ziyadah', ts: z.timestamp, materi: `${z.surah} (Ayat ${z.ayatAwal}-${z.ayatAkhir})`, nilai: z.nilai })),
           ...periodMurojaah.map(m => ({ id: m.id, type: "Muroja'ah", ts: m.timestamp, materi: m.surahAtauJuz, nilai: m.nilai })),
           ...periodBinnadzor.map(b => ({ id: b.id, type: 'Binnadzor', ts: b.timestamp, materi: b.materi || b.surahAtauHalaman || 'Binnadzor', nilai: b.nilai })),
+          ...periodPembelajaran.map(p => ({
+            id: p.id,
+            type: p.tipeKelas === 'Jilid' ? 'Jilid Ummi' : p.tipeKelas === 'Kelas Istimewa' ? 'K. Istimewa' : 'Binnadzor',
+            ts: p.timestamp,
+            materi: `${p.materi || p.materiPokok || 'Pembelajaran'}${p.halaman || p.halamanAwal ? ` (Hal. ${p.halaman || p.halamanAwal})` : ''}${p.statusKenaikan ? ` [${p.statusKenaikan}]` : ''}`,
+            nilai: p.nilai
+          })),
         ].sort((a, b) => parseDateSafe(b.ts).getTime() - parseDateSafe(a.ts).getTime());
 
         // Table header
@@ -389,8 +432,8 @@ export function useGeneratePDF() {
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(7.5);
         pdf.text('TANGGAL', margin + 2, y);
-        pdf.text('JENIS', margin + 62, y);
-        pdf.text('MATERI SETORAN', margin + 88, y);
+        pdf.text('JENIS / PROGRAM', margin + 55, y);
+        pdf.text('MATERI PEMBELAJARAN / SETORAN', margin + 92, y);
         pdf.text('NILAI', pageW - margin - 22, y);
         y += 5;
 
@@ -399,7 +442,7 @@ export function useGeneratePDF() {
         if (items.length === 0) {
           setText(pdf, C.slateLight);
           pdf.setFont('helvetica', 'normal');
-          pdf.text('Tidak ada setoran pada periode ini.', pageW / 2, y + 3, { align: 'center' });
+          pdf.text('Tidak ada setoran atau pembelajaran pada periode ini.', pageW / 2, y + 3, { align: 'center' });
           y += 8;
         } else {
           for (let idx = 0; idx < maxRows; idx++) {
@@ -414,18 +457,23 @@ export function useGeneratePDF() {
             setText(pdf, C.slate);
             pdf.setFont('helvetica', 'normal');
             const dateStr = formatTanggalLengkap(item.ts);
-            const shortDate = dateStr.length > 26 ? dateStr.slice(0, 25) + '…' : dateStr;
+            const shortDate = dateStr.length > 24 ? dateStr.slice(0, 23) + '…' : dateStr;
             pdf.text(shortDate, margin + 2, y);
 
-            const typeColor = item.type === 'Ziyadah' ? C.emerald : item.type === "Muroja'ah" ? C.teal : C.indigo;
+            let typeColor = C.emerald;
+            if (item.type === "Muroja'ah") typeColor = C.teal;
+            else if (item.type === 'Binnadzor') typeColor = C.indigo;
+            else if (item.type === 'Jilid Ummi') typeColor = C.amber;
+            else if (item.type === 'K. Istimewa') typeColor = [147, 51, 234]; // purple
+
             setText(pdf, typeColor);
             pdf.setFont('helvetica', 'bold');
-            pdf.text(item.type, margin + 62, y);
+            pdf.text(item.type, margin + 55, y);
 
             setText(pdf, C.slate);
             pdf.setFont('helvetica', 'normal');
-            const materi = item.materi.length > 42 ? item.materi.slice(0, 41) + '…' : item.materi;
-            pdf.text(materi, margin + 88, y);
+            const materi = item.materi.length > 40 ? item.materi.slice(0, 39) + '…' : item.materi;
+            pdf.text(materi, margin + 92, y);
 
             drawNilaiBadge(pdf, item.nilai, pageW - margin - 22, y);
             y += 5.5;
@@ -434,7 +482,7 @@ export function useGeneratePDF() {
             setText(pdf, C.slateLight);
             pdf.setFont('helvetica', 'italic');
             pdf.setFontSize(7);
-            pdf.text(`Menampilkan ${maxRows} dari ${items.length} setoran pada periode ini.`, pageW / 2, y + 1, { align: 'center' });
+            pdf.text(`Menampilkan ${maxRows} dari ${items.length} sesi pada periode ini.`, pageW / 2, y + 1, { align: 'center' });
             y += 5;
           }
         }
@@ -444,26 +492,36 @@ export function useGeneratePDF() {
       // ════════ CATATAN & EVALUASI ════════
       if (data.options.includeNotes) {
         const allNotes = allPeriod
-          .filter(r => r.catatan && r.catatan.trim())
+          .filter(r => {
+            const item = r as any;
+            return (item.catatan && item.catatan.trim()) ||
+                   (item.catatanBimbingan && item.catatanBimbingan.trim()) ||
+                   (item.kendalaSantri && item.kendalaSantri.trim()) ||
+                   (item.rekomendasiTindakLanjut && item.rekomendasiTindakLanjut.trim());
+          })
           .sort((a, b) => parseDateSafe(b.timestamp).getTime() - parseDateSafe(a.timestamp).getTime());
 
         if (allNotes.length > 0) {
           if (y > pageH - 35) { pdf.addPage(); y = margin; }
-          y = drawSectionHeader(pdf, 'Catatan & Evaluasi dari Pengajar', margin, contentW, y);
+          y = drawSectionHeader(pdf, 'Catatan, Evaluasi & Rekomendasi Pengajar', margin, contentW, y);
 
           pdf.setFont('helvetica', 'normal');
           pdf.setFontSize(8);
           const maxNotes = Math.min(allNotes.length, 6);
           for (let idx = 0; idx < maxNotes; idx++) {
-            const r = allNotes[idx];
-            const materiStr = (r as any).surah
-              ? `${(r as any).surah} (Ayat ${(r as any).ayatAwal}-${(r as any).ayatAkhir})`
-              : ((r as any).surahAtauHalaman || (r as any).surahAtauJuz || '-');
+            const r = allNotes[idx] as any;
+            const materiStr = r.surah
+              ? `${r.surah} (Ayat ${r.ayatAwal}-${r.ayatAkhir})`
+              : (r.materi || r.surahAtauHalaman || r.surahAtauJuz || 'Materi Belajar');
             const headerLine = `${formatTanggalLengkap(r.timestamp)} — ${materiStr}`;
-            const noteLine = `"${r.catatan}"`;
-            const byLine = `— ${r.inputBy}`;
+            
+            let fullNote = r.catatan ? `"${r.catatan}"` : '';
+            if (r.kendalaSantri) fullNote += (fullNote ? '\n' : '') + `Observasi Kendala: ${r.kendalaSantri}`;
+            if (r.rekomendasiUstadz) fullNote += (fullNote ? '\n' : '') + `Rekomendasi: ${r.rekomendasiUstadz}`;
 
-            const wrappedNote = pdf.splitTextToSize(noteLine, contentW - 8);
+            const byLine = `— ${r.inputBy || 'Ustadz Pengajar'}`;
+
+            const wrappedNote = pdf.splitTextToSize(fullNote, contentW - 8);
             const blockH = 5 + wrappedNote.length * 3.5 + 4;
 
             if (y + blockH > pageH - 15) { pdf.addPage(); y = margin; }
@@ -497,19 +555,28 @@ export function useGeneratePDF() {
       y = drawSectionHeader(pdf, 'Kesimpulan & Rekomendasi', margin, contentW, y);
 
       setFill(pdf, C.emeraldLight);
-      pdf.roundedRect(margin, y - 3.5, contentW, 14, 1.5, 1.5, 'F');
+      pdf.roundedRect(margin, y - 3.5, contentW, 15, 1.5, 1.5, 'F');
 
       setText(pdf, C.slate);
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(8.5);
-      let conclusion = `Pada periode ${periodLabel}, santri ${santriName} telah menyelesaikan ${periodZiyadah.length} setoran Ziyadah (${totalAyatZiyadah} ayat dari ${totalSurahZiyadah} surah), ${periodMurojaah.length} setoran Muroja'ah, dan ${periodBinnadzor.length} setoran Binnadzor (bacaan mushaf).`;
-      if (sangatBaikCount > 0) conclusion += ` Sebanyak ${sangatBaikCount} setoran bernilai "Sangat Baik".`;
-      if (mengulangCount > 0) conclusion += ` Terdapat ${mengulangCount} setoran yang perlu diulang.`;
-      conclusion += " Semoga Allah Tabaraka wa Ta'ala memudahkan hafalan dan istiqamah santri. Aamiin.";
+      let conclusion = `Pada periode ${periodLabel}, santri ${santriName} telah aktif mengikuti proses pembelajaran.`;
+      if (periodZiyadah.length > 0) {
+        conclusion += ` Menyelesaikan ${periodZiyadah.length} setoran Ziyadah (${totalAyatZiyadah} ayat dari ${totalSurahZiyadah} surah) dan ${periodMurojaah.length} Muroja'ah.`;
+      }
+      if (periodBinnadzor.length > 0) {
+        conclusion += ` Menyelesaikan ${periodBinnadzor.length} setoran Binnadzor dengan penekanan tajwid dan kelancaran.`;
+      }
+      if (periodPembelajaran.length > 0) {
+        conclusion += ` Melaksanakan ${periodPembelajaran.length} sesi pembelajaran materi ${data.santri?.kelas || 'Non-Tahfidz'} (Jilid Ummi Dewasa / Kelas Istimewa).`;
+      }
+      if (sangatBaikCount > 0) conclusion += ` Sebanyak ${sangatBaikCount} sesi dinilai "Sangat Baik".`;
+      if (mengulangCount > 0) conclusion += ` Terdapat ${mengulangCount} sesi yang perlu pendampingan/pengulangan.`;
+      conclusion += " Semoga Allah memudahkan dan memberkahi setiap proses belajar santri. Aamiin.";
 
       const wrappedConclusion = pdf.splitTextToSize(conclusion, contentW - 8);
       pdf.text(wrappedConclusion, margin + 4, y + 1.5);
-      y += 16;
+      y += 18;
 
       // ════════ FOOTER ════════
       if (y > pageH - 25) { pdf.addPage(); y = margin; }

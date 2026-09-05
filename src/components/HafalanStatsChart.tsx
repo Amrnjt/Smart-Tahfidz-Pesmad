@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { AnimatedCounter } from './AnimatedCounter';
-import { ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Santri, Kelas } from '../types';
+import { ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri, Kelas } from '../types';
 import {
   ResponsiveContainer,
   BarChart,
@@ -16,13 +16,14 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { TrendingUp, ChartBar as BarChart3, ChartPie as PieIcon, ListFilter as Filter, Calendar, GraduationCap } from 'lucide-react';
+import { TrendingUp, ChartBar as BarChart3, ChartPie as PieIcon, ListFilter as Filter, Calendar, GraduationCap, Sparkles, BookOpenCheck } from 'lucide-react';
 
 interface HafalanStatsChartProps {
   santriList: Santri[];
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
   binnadzorRecords?: BinnadzorRecord[];
+  pembelajaranRecords?: PembelajaranRecord[];
   kelasList?: Kelas[];
 }
 
@@ -31,12 +32,14 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
   ziyadahRecords,
   murojaahRecords,
   binnadzorRecords = [],
+  pembelajaranRecords = [],
   kelasList = []
 }) => {
   const [selectedSantriFilter, setSelectedSantriFilter] = useState<string>('ALL');
   const [selectedKelasFilter, setSelectedKelasFilter] = useState<string>('ALL');
   const [chartType, setChartType] = useState<'bar' | 'area'>('bar');
   const [timeRangeMonths, setTimeRangeMonths] = useState<number>(6);
+  const [activeSubTab, setActiveSubTab] = useState<'tren' | 'kualitas'>('tren');
 
   // Month names in Indonesian
   const monthNames = [
@@ -80,6 +83,15 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
     return binnadzorRecords;
   }, [binnadzorRecords, selectedSantriFilter, selectedKelasFilter, kelasFilteredSantri]);
 
+  const filteredPembelajaran = useMemo(() => {
+    if (selectedSantriFilter !== 'ALL') return pembelajaranRecords.filter(r => r.idSantri === selectedSantriFilter);
+    if (selectedKelasFilter !== 'ALL') {
+      const allowedIds = new Set(kelasFilteredSantri.map(s => s.idSantri));
+      return pembelajaranRecords.filter(r => allowedIds.has(r.idSantri));
+    }
+    return pembelajaranRecords;
+  }, [pembelajaranRecords, selectedSantriFilter, selectedKelasFilter, kelasFilteredSantri]);
+
   // 2. Prepare monthly trend data (e.g. past 6 or 12 months)
   const monthlyData = useMemo(() => {
     const now = new Date();
@@ -110,22 +122,29 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
         return datePart.startsWith(yearMonthKey);
       }).length;
 
+      // Count Pembelajaran in this month
+      const pembelajaranCount = filteredPembelajaran.filter(r => {
+        const datePart = r.timestamp.split(' ')[0] || r.timestamp;
+        return datePart.startsWith(yearMonthKey);
+      }).length;
+
       result.push({
         monthKey: yearMonthKey,
         bulan: label,
         Ziyadah: ziyadahCount,
         Murojaah: murojaahCount,
         Binnadzor: binnadzorCount,
-        Total: ziyadahCount + murojaahCount + binnadzorCount
+        Pembelajaran: pembelajaranCount,
+        Total: ziyadahCount + murojaahCount + binnadzorCount + pembelajaranCount
       });
     }
 
     return result;
-  }, [filteredZiyadah, filteredMurojaah, filteredBinnadzor, timeRangeMonths]);
+  }, [filteredZiyadah, filteredMurojaah, filteredBinnadzor, filteredPembelajaran, timeRangeMonths]);
 
   // 3. Prepare Nilai / Predikat Distribution Data
   const predikatData = useMemo(() => {
-    const all = [...filteredZiyadah, ...filteredMurojaah, ...filteredBinnadzor];
+    const all = [...filteredZiyadah, ...filteredMurojaah, ...filteredBinnadzor, ...filteredPembelajaran];
     if (all.length === 0) return [];
 
     const counts: { [key: string]: number } = {
@@ -157,9 +176,41 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
         value: counts[key],
         color: colors[key] || '#64748b'
       }));
-  }, [filteredZiyadah, filteredMurojaah, filteredBinnadzor]);
+  }, [filteredZiyadah, filteredMurojaah, filteredBinnadzor, filteredPembelajaran]);
 
-  const totalFilteredSetoran = filteredZiyadah.length + filteredMurojaah.length + filteredBinnadzor.length;
+  // 4. Hitung 4 Aspek Kualitas (Hukum Tajwid, Makhroj Huruf, Kefasihan, Kelancaran)
+  const qualityStats = useMemo(() => {
+    const qualityRecords = [...filteredBinnadzor, ...filteredPembelajaran].filter(r => (r as any).aspekKualitas);
+    if (qualityRecords.length === 0) {
+      return null;
+    }
+
+    let tajwidTotal = 0, makhrojTotal = 0, fashohahTotal = 0, kelancaranTotal = 0;
+    const scoreMap: { [key: string]: number } = {
+      'Sangat Baik': 100,
+      'Baik': 80,
+      'Cukup': 65,
+      'Kurang': 50
+    };
+
+    qualityRecords.forEach(r => {
+      const ak = (r as any).aspekKualitas;
+      tajwidTotal += scoreMap[ak?.hukumTajwid] || 75;
+      makhrojTotal += scoreMap[ak?.makhrojHuruf] || 75;
+      fashohahTotal += scoreMap[ak?.kefasihan] || 75;
+      kelancaranTotal += scoreMap[ak?.kelancaran] || 75;
+    });
+
+    const count = qualityRecords.length;
+    return [
+      { name: 'Hukum Tajwid', score: Math.round(tajwidTotal / count), color: '#059669', ket: 'Hukum mad, ghunnah & waqaf' },
+      { name: 'Makhroj Huruf', score: Math.round(makhrojTotal / count), color: '#0284c7', ket: 'Titik artikulasi huruf hijaiyah' },
+      { name: 'Kefasihan (Fashohah)', score: Math.round(fashohahTotal / count), color: '#d97706', ket: 'Kejelasan lahjah & harakat' },
+      { name: 'Kelancaran Bacaan', score: Math.round(kelancaranTotal / count), color: '#8b5cf6', ket: 'Irama ritmik tartil & tempo' },
+    ];
+  }, [filteredBinnadzor, filteredPembelajaran]);
+
+  const totalFilteredSetoran = filteredZiyadah.length + filteredMurojaah.length + filteredBinnadzor.length + filteredPembelajaran.length;
 
   return (
     <div className="bg-white/90 backdrop-blur-md rounded-2xl p-3.5 sm:p-5 border border-slate-200/80 shadow-xs space-y-4 sm:space-y-5 w-full min-w-0 max-w-full">
@@ -282,6 +333,10 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                 <span className="w-2.5 h-2.5 rounded-sm bg-indigo-600 flex-shrink-0"></span>
                 Binnadzor ({filteredBinnadzor.length})
               </span>
+              <span className="flex items-center gap-1 text-orange-700 font-semibold">
+                <span className="w-2.5 h-2.5 rounded-sm bg-orange-500 flex-shrink-0"></span>
+                Pembelajaran ({filteredPembelajaran.length})
+              </span>
             </div>
           </div>
 
@@ -312,8 +367,8 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                       color: '#1e293b'
                     }}
                     formatter={(value: any, name: any) => [
-                      `${value} kali setoran`,
-                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : '📑 Binnadzor (Baca Mushaf)'
+                      `${value} kali sesi`,
+                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : name === 'Binnadzor' ? '📑 Binnadzor (Baca Mushaf)' : '📘 Pembelajaran Non-Tahfidz'
                     ]}
                   />
                   <Legend
@@ -322,13 +377,14 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     iconType="circle"
                     formatter={(value) => (
                       <span className="text-[11px] text-slate-600 font-medium">
-                        {value === 'Ziyadah' ? 'Ziyadah' : value === 'Murojaah' ? 'Muroja\'ah' : 'Binnadzor'}
+                        {value === 'Ziyadah' ? 'Ziyadah' : value === 'Murojaah' ? 'Muroja\'ah' : value === 'Binnadzor' ? 'Binnadzor' : 'Pembelajaran'}
                       </span>
                     )}
                   />
-                  <Bar dataKey="Ziyadah" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={28} animationDuration={800} animationEasing="ease-out" />
-                  <Bar dataKey="Murojaah" fill="#d97706" radius={[4, 4, 0, 0]} maxBarSize={28} animationDuration={800} animationEasing="ease-out" />
-                  <Bar dataKey="Binnadzor" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={28} animationDuration={800} animationEasing="ease-out" />
+                  <Bar dataKey="Ziyadah" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={22} animationDuration={800} animationEasing="ease-out" />
+                  <Bar dataKey="Murojaah" fill="#d97706" radius={[4, 4, 0, 0]} maxBarSize={22} animationDuration={800} animationEasing="ease-out" />
+                  <Bar dataKey="Binnadzor" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={22} animationDuration={800} animationEasing="ease-out" />
+                  <Bar dataKey="Pembelajaran" fill="#ea580c" radius={[4, 4, 0, 0]} maxBarSize={22} animationDuration={800} animationEasing="ease-out" />
                 </BarChart>
               ) : (
                 <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -344,6 +400,10 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     <linearGradient id="colorBinnadzor" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.35}/>
                       <stop offset="95%" stopColor="#4f46e5" stopOpacity={0.0}/>
+                    </linearGradient>
+                    <linearGradient id="colorPembelajaran" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#ea580c" stopOpacity={0.35}/>
+                      <stop offset="95%" stopColor="#ea580c" stopOpacity={0.0}/>
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -369,8 +429,8 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                       color: '#1e293b'
                     }}
                     formatter={(value: any, name: any) => [
-                      `${value} kali setoran`,
-                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : '📑 Binnadzor (Baca Mushaf)'
+                      `${value} kali sesi`,
+                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : name === 'Binnadzor' ? '📑 Binnadzor (Baca Mushaf)' : '📘 Pembelajaran Non-Tahfidz'
                     ]}
                   />
                   <Legend
@@ -379,7 +439,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     iconType="circle"
                     formatter={(value) => (
                       <span className="text-[11px] text-slate-600 font-medium">
-                        {value === 'Ziyadah' ? 'Ziyadah' : value === 'Murojaah' ? 'Muroja\'ah' : 'Binnadzor'}
+                        {value === 'Ziyadah' ? 'Ziyadah' : value === 'Murojaah' ? 'Muroja\'ah' : value === 'Binnadzor' ? 'Binnadzor' : 'Pembelajaran'}
                       </span>
                     )}
                   />
@@ -410,6 +470,16 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorBinnadzor)"
+                    animationDuration={800}
+                    animationEasing="ease-out"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="Pembelajaran"
+                    stroke="#ea580c"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorPembelajaran)"
                     animationDuration={800}
                     animationEasing="ease-out"
                   />
@@ -500,6 +570,57 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
 
         </div>
 
+      </div>
+
+      {/* Panel Analisis 4 Pilar Kualitas Bacaan Non-Tahfidz & Binnadzor */}
+      <div className="bg-gradient-to-br from-slate-50 to-emerald-50/40 rounded-2xl p-4 sm:p-5 border border-emerald-100/90 shadow-xs space-y-3.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-100 pb-3">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-xl bg-emerald-600 text-white flex-shrink-0 shadow-xs">
+              <BookOpenCheck className="w-4 h-4" />
+            </span>
+            <div>
+              <h4 className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
+                Evaluasi 4 Aspek Kualitas Tilawah &amp; Pembelajaran
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">
+                  Binnadzor &amp; Jilid Ummi
+                </span>
+              </h4>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Standar penilaian capaian santri: Tajwid, Makhroj, Kefasihan (Fashohah), dan Kelancaran
+              </p>
+            </div>
+          </div>
+          <div className="text-[11px] text-slate-600 font-medium self-start sm:self-auto bg-white px-3 py-1 rounded-xl border border-emerald-200/80">
+            Teranalisis dari <span className="font-bold text-emerald-800">{filteredBinnadzor.length + filteredPembelajaran.length}</span> sesi
+          </div>
+        </div>
+
+        {qualityStats ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {qualityStats.map((item) => (
+              <div key={item.name} className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-700 truncate">{item.name}</span>
+                  <span className="text-xs font-extrabold px-2 py-0.5 rounded-md" style={{ color: item.color, backgroundColor: `${item.color}15` }}>
+                    {item.score}%
+                  </span>
+                </div>
+                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all duration-700"
+                    style={{ width: `${item.score}%`, backgroundColor: item.color }}
+                  ></div>
+                </div>
+                <p className="text-[10px] text-slate-400 truncate">{item.ket}</p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white/80 rounded-xl p-4 text-center text-slate-500 text-xs border border-dashed border-slate-200">
+            Belum ada penilaian 4 aspek kualitas pada filter ini. Input setoran Binnadzor atau Pembelajaran (Jilid Ummi/Istimewa) untuk melihat indikator.
+          </div>
+        )}
       </div>
     </div>
   );

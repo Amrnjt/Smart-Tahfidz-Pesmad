@@ -11,18 +11,37 @@ export const PREDIKAT_NILAI_OPTIONS: { value: PredikatNilai; label: string; arab
 
 export type TipeKelas =
   | 'Tahfidz'
-  | 'Binnadzor A'
-  | 'Binnadzor B'
+  | 'Binnadzor'
   | 'Jilid'
-  | 'Kelas Istimewa';
+  | 'Kelas Istimewa'
+  | 'Binnadzor A'
+  | 'Binnadzor B';
 
 export const TIPE_KELAS_OPTIONS: TipeKelas[] = [
   'Tahfidz',
-  'Binnadzor A',
-  'Binnadzor B',
+  'Binnadzor',
   'Jilid',
   'Kelas Istimewa',
 ];
+
+export type AspekKualitas = 'Perlu Bimbingan' | 'Cukup' | 'Baik' | 'Sangat Baik' | 'Mutqin';
+
+export const ASPEK_KUALITAS_OPTIONS: { value: AspekKualitas; label: string; color: string }[] = [
+  { value: 'Perlu Bimbingan', label: 'Perlu Bimbingan', color: 'bg-rose-100 text-rose-800 border-rose-200' },
+  { value: 'Cukup', label: 'Cukup (Maqbul)', color: 'bg-amber-100 text-amber-800 border-amber-200' },
+  { value: 'Baik', label: 'Baik (Jayyid)', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+  { value: 'Sangat Baik', label: 'Sangat Baik (Jayyid Jiddan)', color: 'bg-teal-100 text-teal-800 border-teal-200' },
+  { value: 'Mutqin', label: 'Mutqin / Mumtaz', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+];
+
+export interface MateriPembelajaran {
+  id: string;
+  judul: string;
+  targetHalaman?: string;
+  kategori?: 'Ummi Dewasa' | 'Kelas Istimewa' | 'Binnadzor' | 'Tajwid & Makhroj' | 'Lainnya';
+  deskripsi?: string;
+  urutan?: number;
+}
 
 export interface Kelas {
   id: string;
@@ -31,6 +50,7 @@ export interface Kelas {
   musyrif?: string;
   musyrifId?: string;
   santriIds: string[];
+  silabusMateri?: MateriPembelajaran[];
   createdAt: string;
 }
 
@@ -96,8 +116,64 @@ export interface BinnadzorRecord {
   materi: string;
   surahAtauHalaman?: string;
   nilai: PredikatNilai;
+  // 4 Aspek Kualitas Fokus Binnadzor (Tajwid, Makhroj, Kefasihan/Fashohah, Kelancaran)
+  hukumTajwid?: AspekKualitas;
+  makhrojHuruf?: AspekKualitas;
+  kefasihan?: AspekKualitas;
+  kelancaran?: AspekKualitas;
   catatan: string;
   inputBy: string;
+}
+
+export type StatusKenaikan = 'Lanjut Halaman' | 'Ulang Halaman' | 'Naik Jilid' | 'Perlu Pendampingan Khusus';
+
+export interface StatusKenaikanOption {
+  value: StatusKenaikan;
+  label: string;
+  emoji: string;
+}
+
+export const STATUS_KENAIKAN_OPTIONS: StatusKenaikanOption[] = [
+  { value: 'Lanjut Halaman', label: 'Lanjut Halaman', emoji: '➡️' },
+  { value: 'Ulang Halaman', label: 'Ulang Halaman', emoji: '🔁' },
+  { value: 'Naik Jilid', label: 'Naik Jilid', emoji: '🎉' },
+  { value: 'Perlu Pendampingan Khusus', label: 'Perlu Pendampingan', emoji: '🤝' },
+];
+
+export interface PembelajaranRecord {
+  id: string;
+  timestamp: string;
+  idSantri: string;
+  namaSantri?: string;
+  kelasId?: string;
+  namaKelas?: string;
+  tipeKelas: TipeKelas;
+  jilidAtauKategori?: string; // e.g. "Ummi Dewasa Jilid 1", "Ummi Dewasa Jilid 2", "Kelas Istimewa (Remedial)"
+  materiPokok?: string;      // e.g. "Hal. 12 - Mad Thabi'i" atau "Terapi Makhroj 'Ain & Ha"
+  halamanAwal?: number;
+  halamanAkhir?: number;
+  barisAwal?: number;
+  barisAkhir?: number;
+  nilai: PredikatNilai;
+  makhroj?: AspekKualitas;
+  tajwid?: AspekKualitas;
+  kelancaran?: AspekKualitas;
+  fashohah?: AspekKualitas;
+  catatanBimbingan?: string;
+  statusKenaikan?: StatusKenaikan;
+  inputBy: string;
+  // Field fleksibel kompatibilitas lintas komponen
+  materi?: string;
+  catatan?: string;
+  jilid?: string;
+  halaman?: number;
+  pokokBahasan?: string;
+  tahapIstimewa?: string;
+  kendalaSantri?: string;
+  rekomendasiTindakLanjut?: string;
+  hukumTajwid?: AspekKualitas;
+  makhrojHuruf?: AspekKualitas;
+  kefasihan?: AspekKualitas;
 }
 
 export interface SurahMeta {
@@ -125,4 +201,4 @@ export interface SurahFullDetail extends SurahMeta {
   audioFull?: string;
 }
 
-export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'binnadzor' | 'riwayat' | 'mushaf' | 'santri' | 'kelas';
+export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'binnadzor' | 'pembelajaran' | 'riwayat' | 'mushaf' | 'santri' | 'kelas';

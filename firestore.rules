@@ -19,5 +19,8 @@ service cloud.firestore {
     match /kelas/{kelasId} {
       allow read, write: if true;
     }
+    match /pembelajaran/{pembelajaranId} {
+      allow read, write: if true;
+    }
   }
 }

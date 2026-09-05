@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { ActiveTab } from '../types';
-import { CirclePlus as PlusCircle, RotateCw, BookOpenCheck, BookOpen, X, ChevronRight } from 'lucide-react';
+import { CirclePlus as PlusCircle, RotateCw, BookOpenCheck, BookOpen, X, ChevronRight, GraduationCap } from 'lucide-react';
 
 interface SetorActionSheetProps {
   isOpen: boolean;
@@ -49,12 +49,22 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
     {
       tab: 'binnadzor' as ActiveTab,
       title: 'Binnadzor',
-      subtitle: 'Setoran membaca al-Qur\'an dengan melihat mushaf',
+      subtitle: 'Setoran tilawah Al-Qur\'an (Fokus Tajwid & Makhroj)',
       badge: 'Bin-Nadzor (Melihat Mushaf)',
       badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-200',
       icon: BookOpenCheck,
       iconBg: 'bg-indigo-600 text-white',
       borderHover: 'hover:border-indigo-500 hover:bg-indigo-50/50'
+    },
+    {
+      tab: 'pembelajaran' as ActiveTab,
+      title: 'Pembelajaran Non-Tahfidz',
+      subtitle: 'Materi Jilid Ummi Dewasa & Pendampingan Kelas Istimewa',
+      badge: 'Jilid Ummi & Kelas Istimewa',
+      badgeColor: 'bg-amber-100 text-amber-900 border-amber-200',
+      icon: GraduationCap,
+      iconBg: 'bg-amber-600 text-white',
+      borderHover: 'hover:border-amber-500 hover:bg-amber-50/50'
     }
   ];
 

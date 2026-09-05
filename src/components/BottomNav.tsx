@@ -21,7 +21,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   if (!currentUser) return null;
 
   const role = currentUser.role;
-  const isSetorActive = activeTab === 'ziyadah' || activeTab === 'murojaah' || activeTab === 'binnadzor';
+  const isSetorActive = activeTab === 'ziyadah' || activeTab === 'murojaah' || activeTab === 'binnadzor' || activeTab === 'pembelajaran';
 
   // Wali & Santri view-only bottom nav
   if (role !== 'Ustadz') {
