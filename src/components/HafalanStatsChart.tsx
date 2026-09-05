@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { AnimatedCounter } from './AnimatedCounter';
-import { ZiyadahRecord, MurojaahRecord, Santri, Kelas } from '../types';
+import { ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Santri, Kelas } from '../types';
 import {
   ResponsiveContainer,
   BarChart,
@@ -22,6 +22,7 @@ interface HafalanStatsChartProps {
   santriList: Santri[];
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
+  binnadzorRecords?: BinnadzorRecord[];
   kelasList?: Kelas[];
 }
 
@@ -29,6 +30,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
   santriList,
   ziyadahRecords,
   murojaahRecords,
+  binnadzorRecords = [],
   kelasList = []
 }) => {
   const [selectedSantriFilter, setSelectedSantriFilter] = useState<string>('ALL');
@@ -69,6 +71,15 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
     return murojaahRecords;
   }, [murojaahRecords, selectedSantriFilter, selectedKelasFilter, kelasFilteredSantri]);
 
+  const filteredBinnadzor = useMemo(() => {
+    if (selectedSantriFilter !== 'ALL') return binnadzorRecords.filter(r => r.idSantri === selectedSantriFilter);
+    if (selectedKelasFilter !== 'ALL') {
+      const allowedIds = new Set(kelasFilteredSantri.map(s => s.idSantri));
+      return binnadzorRecords.filter(r => allowedIds.has(r.idSantri));
+    }
+    return binnadzorRecords;
+  }, [binnadzorRecords, selectedSantriFilter, selectedKelasFilter, kelasFilteredSantri]);
+
   // 2. Prepare monthly trend data (e.g. past 6 or 12 months)
   const monthlyData = useMemo(() => {
     const now = new Date();
@@ -93,21 +104,28 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
         return datePart.startsWith(yearMonthKey);
       }).length;
 
+      // Count Binnadzor in this month
+      const binnadzorCount = filteredBinnadzor.filter(r => {
+        const datePart = r.timestamp.split(' ')[0] || r.timestamp;
+        return datePart.startsWith(yearMonthKey);
+      }).length;
+
       result.push({
         monthKey: yearMonthKey,
         bulan: label,
         Ziyadah: ziyadahCount,
         Murojaah: murojaahCount,
-        Total: ziyadahCount + murojaahCount
+        Binnadzor: binnadzorCount,
+        Total: ziyadahCount + murojaahCount + binnadzorCount
       });
     }
 
     return result;
-  }, [filteredZiyadah, filteredMurojaah, timeRangeMonths]);
+  }, [filteredZiyadah, filteredMurojaah, filteredBinnadzor, timeRangeMonths]);
 
   // 3. Prepare Nilai / Predikat Distribution Data
   const predikatData = useMemo(() => {
-    const all = [...filteredZiyadah, ...filteredMurojaah];
+    const all = [...filteredZiyadah, ...filteredMurojaah, ...filteredBinnadzor];
     if (all.length === 0) return [];
 
     const counts: { [key: string]: number } = {
@@ -127,9 +145,9 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
 
     const colors: { [key: string]: string } = {
       'Sangat Baik': '#047857', // Emerald 700
-      'Baik': '#0d9488',       // Teal 600
-      'Kurang': '#d97706',  // Amber 600
-      'Mengulang': '#e11d48' // Rose 600
+      'Baik': '#0284c7',       // Sky 600
+      'Kurang': '#d97706',     // Amber 600
+      'Mengulang': '#e11d48'   // Rose 600
     };
 
     return Object.keys(counts)
@@ -139,9 +157,9 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
         value: counts[key],
         color: colors[key] || '#64748b'
       }));
-  }, [filteredZiyadah, filteredMurojaah]);
+  }, [filteredZiyadah, filteredMurojaah, filteredBinnadzor]);
 
-  const totalFilteredSetoran = filteredZiyadah.length + filteredMurojaah.length;
+  const totalFilteredSetoran = filteredZiyadah.length + filteredMurojaah.length + filteredBinnadzor.length;
 
   return (
     <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-5">
@@ -251,14 +269,18 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                 ({selectedSantriFilter === 'ALL' ? 'Seluruh Santri' : santriList.find(s => s.idSantri === selectedSantriFilter)?.namaSantri || selectedSantriFilter})
               </span>
             </h4>
-            <div className="flex items-center gap-3 text-[11px]">
+            <div className="flex flex-wrap items-center gap-3 text-[11px]">
               <span className="flex items-center gap-1 text-emerald-700 font-semibold">
                 <span className="w-2.5 h-2.5 rounded-sm bg-emerald-600"></span>
                 Ziyadah ({filteredZiyadah.length})
               </span>
-              <span className="flex items-center gap-1 text-teal-700 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-sm bg-teal-500"></span>
+              <span className="flex items-center gap-1 text-amber-700 font-semibold">
+                <span className="w-2.5 h-2.5 rounded-sm bg-amber-500"></span>
                 Muroja'ah ({filteredMurojaah.length})
+              </span>
+              <span className="flex items-center gap-1 text-indigo-700 font-semibold">
+                <span className="w-2.5 h-2.5 rounded-sm bg-indigo-600"></span>
+                Binnadzor ({filteredBinnadzor.length})
               </span>
             </div>
           </div>
@@ -291,7 +313,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     }}
                     formatter={(value: any, name: any) => [
                       `${value} kali setoran`,
-                      name === 'Ziyadah' ? '📖 Ziyadah (Baru)' : '🔄 Muroja\'ah (Ulang)'
+                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : '📑 Binnadzor (Baca Mushaf)'
                     ]}
                   />
                   <Legend
@@ -300,12 +322,13 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     iconType="circle"
                     formatter={(value) => (
                       <span className="text-xs text-slate-600 font-medium">
-                        {value === 'Ziyadah' ? 'Hafalan Baru (Ziyadah)' : 'Pengulangan (Muroja\'ah)'}
+                        {value === 'Ziyadah' ? 'Hafalan Baru (Ziyadah)' : value === 'Murojaah' ? 'Pengulangan (Muroja\'ah)' : 'Bacaan Mushaf (Binnadzor)'}
                       </span>
                     )}
                   />
-                  <Bar dataKey="Ziyadah" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={36} animationDuration={800} animationEasing="ease-out" />
-                  <Bar dataKey="Murojaah" fill="#0d9488" radius={[4, 4, 0, 0]} maxBarSize={36} animationDuration={800} animationEasing="ease-out" />
+                  <Bar dataKey="Ziyadah" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={28} animationDuration={800} animationEasing="ease-out" />
+                  <Bar dataKey="Murojaah" fill="#d97706" radius={[4, 4, 0, 0]} maxBarSize={28} animationDuration={800} animationEasing="ease-out" />
+                  <Bar dataKey="Binnadzor" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={28} animationDuration={800} animationEasing="ease-out" />
                 </BarChart>
               ) : (
                 <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -315,8 +338,12 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                       <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
                     </linearGradient>
                     <linearGradient id="colorMurojaah" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0d9488" stopOpacity={0.4} />
-                      <stop offset="95%" stopColor="#0d9488" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor="#d97706" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#d97706" stopOpacity={0.0} />
+                    </linearGradient>
+                    <linearGradient id="colorBinnadzor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.4} />
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -343,7 +370,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     }}
                     formatter={(value: any, name: any) => [
                       `${value} kali setoran`,
-                      name === 'Ziyadah' ? '📖 Ziyadah (Baru)' : '🔄 Muroja\'ah (Ulang)'
+                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : '📑 Binnadzor (Baca Mushaf)'
                     ]}
                   />
                   <Legend
@@ -352,7 +379,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     iconType="circle"
                     formatter={(value) => (
                       <span className="text-xs text-slate-600 font-medium">
-                        {value === 'Ziyadah' ? 'Hafalan Baru (Ziyadah)' : 'Pengulangan (Muroja\'ah)'}
+                        {value === 'Ziyadah' ? 'Hafalan Baru (Ziyadah)' : value === 'Murojaah' ? 'Pengulangan (Muroja\'ah)' : 'Bacaan Mushaf (Binnadzor)'}
                       </span>
                     )}
                   />
@@ -369,10 +396,20 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                   <Area
                     type="monotone"
                     dataKey="Murojaah"
-                    stroke="#0d9488"
+                    stroke="#d97706"
                     strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorMurojaah)"
+                    animationDuration={800}
+                    animationEasing="ease-out"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="Binnadzor"
+                    stroke="#4f46e5"
+                    strokeWidth={2}
+                    fillOpacity={1}
+                    fill="url(#colorBinnadzor)"
                     animationDuration={800}
                     animationEasing="ease-out"
                   />
