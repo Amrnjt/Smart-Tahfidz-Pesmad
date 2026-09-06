@@ -2,6 +2,14 @@ import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Pembelaja
 
 export const INITIAL_USERS: User[] = [
   {
+    id: "USR-SUPERADMIN-01",
+    username: "anas",
+    password: "123",
+    role: "Superadmin",
+    nama: "Ust. Anas Amrullah",
+    idSantri: ""
+  },
+  {
     id: "USR-001",
     username: "admin",
     password: "123",

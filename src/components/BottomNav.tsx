@@ -3,6 +3,7 @@ import { User, ActiveTab } from '../types';
 import { LayoutDashboard, History, Users, GraduationCap, Plus, BookOpen } from 'lucide-react';
 import { useRipple } from '../hooks/useRipple';
 import { SetorActionSheet } from './SetorActionSheet';
+import { storageService } from '../services/storageService';
 
 interface BottomNavProps {
   currentUser: User | null;
@@ -130,6 +131,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         isOpen={isActionSheetOpen}
         onClose={() => setIsActionSheetOpen(false)}
         onSelect={(tab) => setActiveTab(tab)}
+        santriList={storageService.getSantriList()}
       />
     </>
   );

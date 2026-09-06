@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Santri, User, UserRole } from '../types';
 import { storageService } from '../services/storageService';
-import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, CreditCard as Edit3, UserCheck, Save, Sparkles, Phone } from 'lucide-react';
+import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, CreditCard as Edit3, UserCheck, Save, Sparkles, Phone, Copy, Share2, ToggleLeft, ToggleRight, Eye } from 'lucide-react';
 import { getClassGroup } from '../utils/classUtils';
+import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
 
 interface SantriManagementProps {
   santriList: Santri[];
@@ -273,6 +274,88 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     (u.idSantri && u.idSantri.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  const [appConfig, setAppConfig] = useState(storageService.getAppConfig());
+  const [isTogglingLiburan, setIsTogglingLiburan] = useState(false);
+  const [showMonitorModal, setShowMonitorModal] = useState(false);
+  const holidayRecordsCount = storageService.getPantauanLiburanRecords().length;
+
+  const handleToggleLiburan = async () => {
+    setIsTogglingLiburan(true);
+    const nextState = !appConfig.programLiburanActive;
+    try {
+      const updated = await storageService.setProgramLiburanActive(nextState, 'Ustadz / Admin');
+      setAppConfig(updated);
+      showToast('success', nextState
+        ? 'Program Pantauan Liburan Santri BERHASIL DIAKTIFKAN! Dasbor Wali kini dapat menginput mutaba\'ah liburan.'
+        : 'Program Pantauan Liburan Santri TELAH DINONAKTIFKAN. Dasbor Wali terkunci.');
+    } catch (err) {
+      console.error(err);
+      showToast('error', 'Gagal mengubah status program liburan.');
+    } finally {
+      setIsTogglingLiburan(false);
+    }
+  };
+
+  const getWaliCredentialText = (santri: Santri) => {
+    const waliUsername = `wali_${santri.idSantri.toLowerCase()}`;
+    const userAcc = usersList.find(u => u.role === 'Wali' && (u.idSantri === santri.idSantri || u.username.toLowerCase() === waliUsername));
+    const waliPassword = userAcc ? userAcc.password : '123';
+    const appUrl = window.location.origin;
+
+    return `Assalamu'alaikum Warahmatullahi Wabarakatuh,
+Yth. Bapak/Ibu Wali dari Ananda *${santri.namaSantri}* (Kelas: ${santri.kelas}),
+
+Berikut informasi akses akun Portal Wali Santri Madrasah Darul Fikri:
+🌐 *Link Portal:* ${appUrl}
+👤 *Username:* ${waliUsername}
+🔑 *Password:* ${waliPassword}
+
+Fasilitas Portal Wali Santri:
+1. Memantau capaian hafalan Ziyadah & Muroja'ah ananda secara real-time
+2. Membaca Mushaf Digital 30 Juz & audio murattal
+3. Mengisi Program Pantauan Liburan Santri (Wirid Yaumiyyah al-Waqi'ah, al-Mulk, al-Insyirah & Shalat 5 Waktu Berjama'ah) ketika liburan diaktifkan oleh Ustadz
+
+Jazakumullah Khairan Katsiran.
+Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
+  };
+
+  const handleCopyWaliCredentials = async (santri: Santri) => {
+    const text = getWaliCredentialText(santri);
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('success', `Kredensial login Wali untuk ${santri.namaSantri} berhasil disalin! Siap dibagikan ke WhatsApp.`);
+    } catch (err) {
+      showToast('error', 'Gagal menyalin ke clipboard.');
+    }
+  };
+
+  const getWaliWhatsAppUrl = (santri: Santri) => {
+    const text = getWaliCredentialText(santri);
+    let phone = (santri.waliKontak || '').replace(/\D/g, '');
+    if (phone.startsWith('0')) {
+      phone = '62' + phone.substring(1);
+    }
+    return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+  };
+
+  const handleCopyUserCredentials = async (u: User) => {
+    const appUrl = window.location.origin;
+    const text = `Assalamu'alaikum Warahmatullahi Wabarakatuh,
+Informasi Akun ${u.nama} (${u.role}):
+🌐 Link: ${appUrl}
+👤 Username: ${u.username}
+🔑 Password: ${u.password}
+Role: ${u.role}${u.idSantri ? ` (ID Santri: ${u.idSantri})` : ''}
+Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
+
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('success', `Kredensial akun ${u.nama} (${u.username}) berhasil disalin!`);
+    } catch (err) {
+      showToast('error', 'Gagal menyalin ke clipboard.');
+    }
+  };
+
   return (
     <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-6">
       {/* Toast Notification */}
@@ -326,6 +409,85 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
             <Key className="w-3.5 h-3.5" />
             <span>Akun Pengguna ({usersList.length})</span>
           </button>
+        </div>
+      </div>
+
+      {/* Remote Pengendali Program Pantauan Liburan Santri (Desktop & Mobile) */}
+      <div className={`p-4 sm:p-5 rounded-2xl border transition-all ${
+        appConfig.programLiburanActive
+          ? 'bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white border-emerald-700 shadow-sm'
+          : 'bg-slate-50 text-slate-800 border-slate-200/90'
+      }`}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start gap-3.5">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl shadow-xs ${
+              appConfig.programLiburanActive ? 'bg-emerald-700/80 text-white' : 'bg-slate-200 text-slate-700'
+            }`}>
+              🌴
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="font-extrabold text-sm sm:text-base leading-tight">
+                  Remote Pengendali: Program Pantauan Liburan Santri
+                </h4>
+                <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border ${
+                  appConfig.programLiburanActive
+                    ? 'bg-emerald-500/30 text-emerald-200 border-emerald-400/40 animate-pulse'
+                    : 'bg-slate-200 text-slate-600 border-slate-300'
+                }`}>
+                  {appConfig.programLiburanActive ? '🟢 PROGRAM LIBURAN AKTIF' : '⚪ PROGRAM NONAKTIF'}
+                </span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                  appConfig.programLiburanActive ? 'bg-white/15 text-emerald-100' : 'bg-slate-200/80 text-slate-600'
+                }`}>
+                  Admin/Ustadz: Khusus Remote & Pantauan
+                </span>
+              </div>
+              <p className={`text-xs max-w-2xl leading-relaxed ${
+                appConfig.programLiburanActive ? 'text-emerald-100' : 'text-slate-500'
+              }`}>
+                {appConfig.programLiburanActive
+                  ? 'Program sedang dibuka. Dasbor Wali Santri kini dapat menginput mutaba\'ah harian (Wirid Yaumiyyah al-Waqi\'ah, al-Mulk, al-Insyirah & Shalat 5 Waktu Berjama\'ah). Ustadz dapat memantau seluruh rekap laporan yang masuk.'
+                  : 'Program sedang ditutup. Fitur mutaba\'ah liburan di dasbor wali tidak berfungsi/terkunci. Aktifkan sakelar saat santri memasuki masa liburan semester/hari raya.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 self-start md:self-center flex-shrink-0">
+            <button
+              onClick={() => setShowMonitorModal(true)}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs ${
+                appConfig.programLiburanActive
+                  ? 'bg-white text-emerald-900 hover:bg-emerald-50'
+                  : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
+              }`}
+            >
+              <Eye className="w-4 h-4 text-emerald-700" />
+              <span>Pantau Rekap ({holidayRecordsCount} Laporan)</span>
+            </button>
+
+            <button
+              onClick={handleToggleLiburan}
+              disabled={isTogglingLiburan}
+              className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-sm ${
+                appConfig.programLiburanActive
+                  ? 'bg-rose-600 hover:bg-rose-500 text-white'
+                  : 'bg-emerald-700 hover:bg-emerald-600 text-white'
+              }`}
+            >
+              {appConfig.programLiburanActive ? (
+                <>
+                  <ToggleRight className="w-5 h-5 stroke-[2.5]" />
+                  <span>Matikan Program</span>
+                </>
+              ) : (
+                <>
+                  <ToggleLeft className="w-5 h-5 stroke-[2.5]" />
+                  <span>Nyalakan Program</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -450,19 +612,42 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                       </div>
                     </div>
 
-                    <div className="pt-3 border-t border-slate-200/80 text-[11px] text-slate-500 flex items-center justify-between gap-2">
+                    <div className="pt-3 border-t border-slate-200/80 text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                       <div className="truncate text-[10px] space-y-0.5">
                         <div>Wali: <code className="bg-slate-200/80 px-1 rounded font-mono text-slate-700">wali_{santri.idSantri.toLowerCase()}</code></div>
                         <div>Santri: <code className="bg-slate-200/80 px-1 rounded font-mono text-slate-700">{santri.idSantri}</code></div>
                       </div>
 
-                      <div className="flex items-center gap-1 flex-shrink-0">
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end flex-shrink-0">
+                        {/* Salin Kredensial Wali */}
+                        <button
+                          onClick={() => handleCopyWaliCredentials(santri)}
+                          title={`Salin info login akun wali ananda ${santri.namaSantri}`}
+                          className="px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-bold"
+                        >
+                          <Copy className="w-3.5 h-3.5 text-emerald-700" />
+                          <span>Salin Akun Wali</span>
+                        </button>
+
+                        {/* WhatsApp Share Button if contact is available */}
+                        {santri.waliKontak && (
+                          <a
+                            href={getWaliWhatsAppUrl(santri)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title={`Kirim kredensial via WhatsApp ke ${santri.waliNama || 'Wali'}`}
+                            className="p-1 text-teal-700 hover:bg-teal-100 bg-teal-50 border border-teal-200 rounded-lg transition flex items-center justify-center cursor-pointer"
+                          >
+                            <Share2 className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+
                         <button
                           onClick={() => handleOpenEditSantri(santri)}
                           title={`Edit data santri ${santri.namaSantri}`}
-                          className="p-1.5 text-emerald-700 hover:bg-emerald-100 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-semibold"
+                          className="p-1 text-slate-600 hover:bg-slate-200 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-semibold"
                         >
-                          <Edit3 className="w-3.5 h-3.5 text-emerald-700" />
+                          <Edit3 className="w-3.5 h-3.5 text-slate-700" />
                           <span className="hidden sm:inline">Edit</span>
                         </button>
                         <button
@@ -472,7 +657,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                             setDeleteWithHistory(true);
                           }}
                           title={`Hapus santri ${santri.namaSantri}`}
-                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-semibold"
+                          className="p-1 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-semibold"
                         >
                           <Trash2 className="w-3.5 h-3.5 text-rose-500" />
                           <span className="hidden sm:inline text-rose-600">Hapus</span>
@@ -563,19 +748,27 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                         <td className="py-3 px-3.5 text-center">
                           <div className="flex items-center justify-center gap-1.5">
                             <button
+                              onClick={() => handleCopyUserCredentials(u)}
+                              className="p-1.5 text-slate-600 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-800 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-semibold border border-slate-200"
+                              title="Salin username & password akun"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                              <span className="hidden sm:inline">Salin</span>
+                            </button>
+                            <button
                               onClick={() => handleOpenEditUser(u)}
-                              className="p-1.5 px-2.5 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-semibold border border-emerald-200"
+                              className="p-1.5 px-2 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-semibold border border-emerald-200"
                               title="Setting Role & Edit Akun"
                             >
                               <Edit3 className="w-3.5 h-3.5 text-emerald-700" />
-                              <span>Edit Role</span>
+                              <span className="hidden sm:inline">Edit</span>
                             </button>
                             <button
                               onClick={() => setUserToDelete(u)}
                               className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                               title="Hapus Akun"
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5" />
                             </button>
                           </div>
                         </td>
@@ -1225,6 +1418,18 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
             </form>
           </div>
         </div>
+      )}
+
+      {/* Modal Rekapitulasi Program Pantauan Liburan Santri (Ustadz View-Only) */}
+      {showMonitorModal && (
+        <PantauanLiburanMonitorModal
+          isOpen={showMonitorModal}
+          onClose={() => {
+            setShowMonitorModal(false);
+            setAppConfig(storageService.getAppConfig());
+          }}
+          santriList={santriList}
+        />
       )}
     </div>
   );

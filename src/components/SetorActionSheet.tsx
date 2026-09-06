@@ -1,18 +1,47 @@
-import React, { useEffect } from 'react';
-import { ActiveTab } from '../types';
-import { CirclePlus as PlusCircle, RotateCw, BookOpenCheck, BookOpen, X, ChevronRight, GraduationCap } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ActiveTab, Santri } from '../types';
+import { storageService } from '../services/storageService';
+import { CirclePlus as PlusCircle, RotateCw, BookOpenCheck, BookOpen, X, ChevronRight, GraduationCap, ToggleLeft, ToggleRight, Sparkles, Eye } from 'lucide-react';
+import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
 
 interface SetorActionSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (tab: ActiveTab) => void;
+  santriList?: Santri[];
 }
 
 export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
   isOpen,
   onClose,
-  onSelect
+  onSelect,
+  santriList = []
 }) => {
+  const [isProgramLiburanActive, setIsProgramLiburanActive] = useState(false);
+  const [isTogglingLiburan, setIsTogglingLiburan] = useState(false);
+  const [showMonitorModal, setShowMonitorModal] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      const config = storageService.getAppConfig();
+      setIsProgramLiburanActive(config.programLiburanActive);
+    }
+  }, [isOpen]);
+
+  const handleToggleLiburan = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsTogglingLiburan(true);
+    const nextState = !isProgramLiburanActive;
+    try {
+      await storageService.setProgramLiburanActive(nextState, 'Ustadz / Admin');
+      setIsProgramLiburanActive(nextState);
+    } catch (err) {
+      console.error('Failed to toggle program liburan:', err);
+    } finally {
+      setIsTogglingLiburan(false);
+    }
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && isOpen) {
@@ -102,6 +131,72 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
           </button>
         </div>
 
+        {/* Remote Pengendali Program Pantauan Liburan Santri (Mobile) */}
+        <div className={`mt-3 p-3.5 rounded-2xl border transition-all ${
+          isProgramLiburanActive
+            ? 'bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white border-emerald-700 shadow-sm'
+            : 'bg-slate-100 text-slate-800 border-slate-200'
+        }`}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xl">🌴</span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold leading-tight">Program Pantauan Liburan</span>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+                    isProgramLiburanActive
+                      ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400/40'
+                      : 'bg-slate-200 text-slate-600 border border-slate-300'
+                  }`}>
+                    {isProgramLiburanActive ? '🟢 ON (Aktif)' : '⚪ OFF'}
+                  </span>
+                </div>
+                <p className={`text-[11px] mt-0.5 leading-snug ${isProgramLiburanActive ? 'text-emerald-100' : 'text-slate-500'}`}>
+                  {isProgramLiburanActive
+                    ? 'Dasbor Wali aktif menginput wirid & shalat jama\'ah'
+                    : 'Fitur amaliyah di dasbor wali terkunci / nonaktif'}
+                </p>
+              </div>
+            </div>
+
+            {/* Interactive Toggle Switch */}
+            <button
+              type="button"
+              onClick={handleToggleLiburan}
+              disabled={isTogglingLiburan}
+              title={isProgramLiburanActive ? 'Matikan Program Liburan' : 'Nyalakan Program Liburan'}
+              className={`press-feedback p-1.5 rounded-xl cursor-pointer transition flex items-center justify-center flex-shrink-0 ${
+                isProgramLiburanActive
+                  ? 'bg-emerald-500 hover:bg-emerald-400 text-emerald-950 shadow-md ring-2 ring-emerald-300/40'
+                  : 'bg-slate-300 hover:bg-slate-400 text-slate-700'
+              }`}
+            >
+              {isProgramLiburanActive ? (
+                <ToggleRight className="w-7 h-7" />
+              ) : (
+                <ToggleLeft className="w-7 h-7" />
+              )}
+            </button>
+          </div>
+
+          {/* View Rekap Quick Button for Ustadz */}
+          <div className="mt-2.5 pt-2 border-t border-white/15 flex items-center justify-between">
+            <span className="text-[10px] opacity-80">Ustadz hanya memantau tanpa meng-input</span>
+            <button
+              type="button"
+              onClick={() => setShowMonitorModal(true)}
+              className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
+                isProgramLiburanActive
+                  ? 'bg-white/15 hover:bg-white/25 text-white'
+                  : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
+              }`}
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Lihat Rekap Liburan</span>
+            </button>
+          </div>
+        </div>
+
         {/* Action List */}
         <div className="py-3 space-y-2.5">
           {actions.map((act) => {
@@ -156,6 +251,15 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Monitor Modal */}
+      {showMonitorModal && (
+        <PantauanLiburanMonitorModal
+          isOpen={showMonitorModal}
+          onClose={() => setShowMonitorModal(false)}
+          santriList={santriList}
+        />
+      )}
     </div>
   );
 };

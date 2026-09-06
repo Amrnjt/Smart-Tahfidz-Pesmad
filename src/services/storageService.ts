@@ -1,4 +1,4 @@
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas } from '../types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas, PantauanLiburanRecord, AppConfig } from '../types';
 import { INITIAL_USERS, INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH, INITIAL_BINNADZOR, INITIAL_PEMBELAJARAN } from '../data/sampleDatabase';
 import { getClassGroup } from '../utils/classUtils';
 
@@ -34,7 +34,9 @@ const STORAGE_KEYS = {
   BINNADZOR: 'tahfidz_binnadzor_db_v2',
   PEMBELAJARAN: 'tahfidz_pembelajaran_db_v2',
   KELAS: 'tahfidz_kelas_db_v2',
-  SESSION: 'tahfidz_active_session_v2'
+  SESSION: 'tahfidz_active_session_v2',
+  PANTAUAN_LIBURAN: 'tahfidz_pantauan_liburan_v2',
+  APP_CONFIG: 'tahfidz_app_config_v2'
 };
 
 const COLLECTIONS = {
@@ -44,7 +46,9 @@ const COLLECTIONS = {
   MUROJAAH: 'murojaah',
   BINNADZOR: 'binnadzor',
   PEMBELAJARAN: 'pembelajaran',
-  KELAS: 'kelas'
+  KELAS: 'kelas',
+  PANTAUAN_LIBURAN: 'pantauan_liburan',
+  APP_CONFIG: 'app_config'
 };
 
 // Helper to remove any undefined fields before sending to Firestore
@@ -211,6 +215,40 @@ export const storageService = {
       if (!Array.isArray(parsed)) return [];
       const normalized = parsed.map((k: Kelas) => ({ ...k, tipeKelas: normalizeTipeKelas(k.tipeKelas) }));
       return normalized;
+    } catch {
+      return [];
+    }
+  },
+
+  getAppConfig(): AppConfig {
+    const data = localStorage.getItem(STORAGE_KEYS.APP_CONFIG);
+    if (!data) {
+      const defaultConfig: AppConfig = {
+        programLiburanActive: false,
+        programLiburanJudul: 'Program Pantauan Liburan Santri',
+        updatedAt: new Date().toISOString()
+      };
+      localStorage.setItem(STORAGE_KEYS.APP_CONFIG, JSON.stringify(defaultConfig));
+      return defaultConfig;
+    }
+    try {
+      const parsed = JSON.parse(data);
+      return parsed && typeof parsed.programLiburanActive === 'boolean'
+        ? parsed
+        : { programLiburanActive: false, programLiburanJudul: 'Program Pantauan Liburan Santri' };
+    } catch {
+      return { programLiburanActive: false, programLiburanJudul: 'Program Pantauan Liburan Santri' };
+    }
+  },
+
+  getPantauanLiburanRecords(): PantauanLiburanRecord[] {
+    const data = localStorage.getItem(STORAGE_KEYS.PANTAUAN_LIBURAN);
+    if (!data) {
+      return [];
+    }
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
@@ -483,6 +521,37 @@ export const storageService = {
       console.warn('Pembelajaran firestore sync error:', err);
     });
 
+    // 8. Sync AppConfig Realtime (Program Pantauan Liburan Switch)
+    const unsubAppConfig = onSnapshot(doc(db, COLLECTIONS.APP_CONFIG, 'global_settings'), (docSnap) => {
+      if (docSnap.exists()) {
+        const config = docSnap.data() as AppConfig;
+        localStorage.setItem(STORAGE_KEYS.APP_CONFIG, JSON.stringify(config));
+        if (onUpdate) onUpdate();
+      }
+    }, (err) => {
+      console.warn('AppConfig firestore sync error:', err);
+    });
+
+    // 9. Sync Pantauan Liburan Realtime
+    const unsubPantauanLiburan = onSnapshot(collection(db, COLLECTIONS.PANTAUAN_LIBURAN), (snapshot) => {
+      if (!snapshot.empty) {
+        const records: PantauanLiburanRecord[] = [];
+        const recordMap = new Map<string, PantauanLiburanRecord>();
+        snapshot.forEach((docSnap) => {
+          const r = docSnap.data() as PantauanLiburanRecord;
+          if (r && r.id && !recordMap.has(r.id)) {
+            recordMap.set(r.id, r);
+            records.push(r);
+          }
+        });
+        records.sort((a, b) => b.tanggal.localeCompare(a.tanggal) || b.timestamp.localeCompare(a.timestamp));
+        localStorage.setItem(STORAGE_KEYS.PANTAUAN_LIBURAN, JSON.stringify(records));
+        if (onUpdate) onUpdate();
+      }
+    }, (err) => {
+      console.warn('Pantauan Liburan firestore sync error:', err);
+    });
+
     return () => {
       unsubUsers();
       unsubSantri();
@@ -491,6 +560,8 @@ export const storageService = {
       unsubKelas();
       unsubBinnadzor();
       unsubPembelajaran();
+      unsubAppConfig();
+      unsubPantauanLiburan();
     };
   },
 
@@ -667,6 +738,48 @@ export const storageService = {
     return true;
   },
 
+  async deleteRecordsBatch(items: { type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran'; id: string }[]): Promise<boolean> {
+    if (!items || items.length === 0) return true;
+
+    const ziyadahIds = new Set(items.filter(i => i.type === 'Ziyadah').map(i => i.id));
+    const murojaahIds = new Set(items.filter(i => i.type === 'Murojaah').map(i => i.id));
+    const binnadzorIds = new Set(items.filter(i => i.type === 'Binnadzor').map(i => i.id));
+    const pembelajaranIds = new Set(items.filter(i => i.type === 'Pembelajaran').map(i => i.id));
+
+    if (ziyadahIds.size > 0) {
+      const records = this.getZiyadahRecords().filter(r => !ziyadahIds.has(r.id));
+      localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
+    }
+    if (murojaahIds.size > 0) {
+      const records = this.getMurojaahRecords().filter(r => !murojaahIds.has(r.id));
+      localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(records));
+    }
+    if (binnadzorIds.size > 0) {
+      const records = this.getBinnadzorRecords().filter(r => !binnadzorIds.has(r.id));
+      localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(records));
+    }
+    if (pembelajaranIds.size > 0) {
+      const records = this.getPembelajaranRecords().filter(r => !pembelajaranIds.has(r.id));
+      localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(records));
+    }
+
+    try {
+      const batch = writeBatch(db);
+      items.forEach(item => {
+        const coll = item.type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
+          : item.type === 'Murojaah' ? COLLECTIONS.MUROJAAH
+          : item.type === 'Pembelajaran' ? COLLECTIONS.PEMBELAJARAN
+          : COLLECTIONS.BINNADZOR;
+        batch.delete(doc(db, coll, item.id));
+      });
+      await batch.commit();
+    } catch (e) {
+      console.error('Failed to delete records batch from Firestore:', e);
+    }
+
+    return true;
+  },
+
   async updateRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran', id: string, updatedData: Partial<ZiyadahRecord | MurojaahRecord | BinnadzorRecord | PembelajaranRecord>): Promise<boolean> {
     if (type === 'Ziyadah') {
       const records = this.getZiyadahRecords().map(r => r.id === id ? { ...r, ...updatedData } as ZiyadahRecord : r);
@@ -712,6 +825,74 @@ export const storageService = {
           console.error('Failed to update Binnadzor in Firestore:', e);
         }
       }
+    }
+    return true;
+  },
+
+  async setProgramLiburanActive(active: boolean, updatedBy: string = 'Ustadz / Admin'): Promise<AppConfig> {
+    const prev = this.getAppConfig();
+    const updated: AppConfig = {
+      ...prev,
+      programLiburanActive: active,
+      updatedAt: new Date().toISOString(),
+      updatedBy
+    };
+    localStorage.setItem(STORAGE_KEYS.APP_CONFIG, JSON.stringify(updated));
+    try {
+      await setDoc(doc(db, COLLECTIONS.APP_CONFIG, 'global_settings'), cleanForFirestore(updated));
+    } catch (err) {
+      console.error('Failed to update app config in Firestore:', err);
+    }
+    return updated;
+  },
+
+  async savePantauanLiburan(record: Omit<PantauanLiburanRecord, 'id' | 'timestamp'> & { id?: string; timestamp?: string }): Promise<PantauanLiburanRecord> {
+    const records = this.getPantauanLiburanRecords();
+    const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
+    
+    let timestamp = record.timestamp;
+    if (!timestamp) {
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    }
+    
+    const id = record.id || `LBR-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+    
+    const newRecord: PantauanLiburanRecord = {
+      ...record,
+      id,
+      timestamp,
+      namaSantri: santri?.namaSantri || record.namaSantri || record.idSantri,
+      kelas: santri?.kelas || record.kelas || ''
+    };
+
+    const existingIndex = records.findIndex(r => r.id === newRecord.id || (r.idSantri === newRecord.idSantri && r.tanggal === newRecord.tanggal));
+    if (existingIndex >= 0) {
+      records[existingIndex] = newRecord;
+    } else {
+      records.unshift(newRecord);
+    }
+    
+    records.sort((a, b) => b.tanggal.localeCompare(a.tanggal) || b.timestamp.localeCompare(a.timestamp));
+    localStorage.setItem(STORAGE_KEYS.PANTAUAN_LIBURAN, JSON.stringify(records));
+
+    try {
+      await setDoc(doc(db, COLLECTIONS.PANTAUAN_LIBURAN, newRecord.id), cleanForFirestore(newRecord));
+    } catch (e) {
+      console.error('Failed to save Pantauan Liburan to Firestore:', e);
+    }
+
+    return newRecord;
+  },
+
+  async deletePantauanLiburan(id: string): Promise<boolean> {
+    const records = this.getPantauanLiburanRecords().filter(r => r.id !== id);
+    localStorage.setItem(STORAGE_KEYS.PANTAUAN_LIBURAN, JSON.stringify(records));
+    try {
+      await deleteDoc(doc(db, COLLECTIONS.PANTAUAN_LIBURAN, id));
+    } catch (e) {
+      console.error('Failed to delete Pantauan Liburan from Firestore:', e);
     }
     return true;
   },

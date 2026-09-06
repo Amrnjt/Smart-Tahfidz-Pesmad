@@ -25,6 +25,8 @@ export function formatTanggalLengkap(dateInput?: string | Date): string {
   return `${hari}, ${tgl} ${bln} ${thn}`;
 }
 
+export const formatTanggalIndo = formatTanggalLengkap;
+
 export function formatTanggalWaktu(dateInput?: string | Date): string {
   const d = parseDateSafe(dateInput);
   const hari = NAMA_HARI[d.getDay()];

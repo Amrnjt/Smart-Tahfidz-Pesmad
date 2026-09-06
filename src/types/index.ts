@@ -1,4 +1,4 @@
-export type UserRole = 'Ustadz' | 'Wali' | 'Santri';
+export type UserRole = 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri';
 
 export type PredikatNilai = 'Mengulang' | 'Kurang' | 'Baik' | 'Sangat Baik';
 
@@ -199,6 +199,42 @@ export interface AyahDetail {
 export interface SurahFullDetail extends SurahMeta {
   ayahs: AyahDetail[];
   audioFull?: string;
+}
+
+export type ShalatJamaahStatus = 'Jama\'ah' | 'Berhalangan' | 'Sakit';
+
+export const SHALAT_STATUS_OPTIONS: { value: ShalatJamaahStatus; label: string; color: string; emoji: string }[] = [
+  { value: 'Jama\'ah', label: 'Jama\'ah', color: 'bg-emerald-100 text-emerald-800 border-emerald-300', emoji: '🕌' },
+  { value: 'Berhalangan', label: 'Berhalangan', color: 'bg-amber-100 text-amber-800 border-amber-300', emoji: '⏳' },
+  { value: 'Sakit', label: 'Sakit', color: 'bg-rose-100 text-rose-800 border-rose-300', emoji: '🩺' },
+];
+
+export interface PantauanLiburanRecord {
+  id: string;
+  timestamp: string; // YYYY-MM-DD HH:mm atau ISO
+  tanggal: string;   // YYYY-MM-DD
+  idSantri: string;
+  namaSantri: string;
+  kelas?: string;
+  // Wirid Yaumiyyah (al-Waqi'ah, al-Mulk, al-Insyirah)
+  wiridWaqiah: boolean;
+  wiridMulk: boolean;
+  wiridInsyirah: boolean;
+  // Keaktifan Shalat Jama'ah 5 Waktu (Jama'ah | Berhalangan | Sakit)
+  shalatSubuh: ShalatJamaahStatus;
+  shalatDzuhur: ShalatJamaahStatus;
+  shalatAshar: ShalatJamaahStatus;
+  shalatMaghrib: ShalatJamaahStatus;
+  shalatIsya: ShalatJamaahStatus;
+  catatanWali?: string;
+  inputByWali?: string;
+}
+
+export interface AppConfig {
+  programLiburanActive: boolean;
+  programLiburanJudul?: string;
+  updatedAt?: string;
+  updatedBy?: string;
 }
 
 export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'binnadzor' | 'pembelajaran' | 'riwayat' | 'mushaf' | 'santri' | 'kelas';

@@ -22,5 +22,11 @@ service cloud.firestore {
     match /pembelajaran/{pembelajaranId} {
       allow read, write: if true;
     }
+    match /pantauan_liburan/{id} {
+      allow read, write: if true;
+    }
+    match /app_config/{id} {
+      allow read, write: if true;
+    }
   }
 }

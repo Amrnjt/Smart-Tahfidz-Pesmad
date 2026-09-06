@@ -8,6 +8,8 @@ import { SantriWaliDashboardSkeleton } from './SkeletonLoading';
 import { AnimatedCounter } from './AnimatedCounter';
 import { ScrollReveal } from './ScrollReveal';
 import { useRipple } from '../hooks/useRipple';
+import { PantauanLiburanWaliSection } from './PantauanLiburanWaliSection';
+import { storageService } from '../services/storageService';
 
 interface WaliDashboardProps {
   currentUser: User;
@@ -194,6 +196,15 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Program Pantauan Liburan Santri (Wirid 3 Surah & Shalat 5 Waktu Berjama'ah) */}
+      <ScrollReveal delay={50}>
+        <PantauanLiburanWaliSection
+          currentUser={currentUser}
+          targetSantri={targetSantri}
+          isActive={storageService.getAppConfig().programLiburanActive}
+        />
+      </ScrollReveal>
 
       {/* Visualisasi Grafik */}
       <ScrollReveal>

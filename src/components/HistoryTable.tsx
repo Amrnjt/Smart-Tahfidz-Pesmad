@@ -26,7 +26,10 @@ import {
   Layers,
   RotateCcw,
   SlidersHorizontal,
-  ArrowRight
+  ArrowRight,
+  AlertTriangle,
+  CheckSquare,
+  Square
 } from 'lucide-react';
 import { formatTanggalLengkap, formatTanggalRingkas, parseDateSafe } from '../utils/dateFormatter';
 import { TableSkeleton } from './SkeletonLoading';
@@ -232,10 +235,25 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const [editNilai, setEditNilai] = useState<PredikatNilai>('Sangat Baik');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
+  // Delete & Batch Delete State
+  const [itemToDelete, setItemToDelete] = useState<CombinedItem | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isBatchDeleteModalOpen, setIsBatchDeleteModalOpen] = useState(false);
+  const [isBatchDeleting, setIsBatchDeleting] = useState(false);
+  const [deleteToast, setDeleteToast] = useState<string | null>(null);
+
   if (isLoading) return <TableSkeleton rows={7} />;
 
-  const isViewOnly = currentUser.role !== 'Ustadz';
-  const targetSantriId = currentUser.idSantri || (currentUser.role === 'Santri' ? currentUser.username : '');
+  const normalizedRole = (() => {
+    if (!currentUser?.role) return 'Ustadz';
+    const r = String(currentUser.role).trim().toLowerCase();
+    if (r === 'wali' || r.includes('wali')) return 'Wali';
+    if (r === 'santri') return 'Santri';
+    return 'Ustadz';
+  })();
+  const isViewOnly = normalizedRole !== 'Ustadz';
+  const targetSantriId = currentUser.idSantri || (normalizedRole === 'Santri' ? currentUser.username : '');
 
   const actualBinnadzor = binnadzorRecords || storageService.getBinnadzorRecords();
   const actualPembelajaran = pembelajaranRecords || storageService.getPembelajaranRecords();
@@ -528,11 +546,66 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     });
   };
 
-  const handleDelete = async (item: CombinedItem) => {
-    if (confirm(`Apakah Anda yakin ingin menghapus rekaman setoran ${item.type} untuk ${item.namaSantri}?`)) {
-      await storageService.deleteRecord(item.type, item.id);
+  const handleDelete = (item: CombinedItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setItemToDelete(item);
+  };
+
+  const confirmSingleDelete = async () => {
+    if (!itemToDelete) return;
+    setIsDeleting(true);
+    try {
+      await storageService.deleteRecord(itemToDelete.type, itemToDelete.id);
       onDataChanged();
+      setDeleteToast(`Data histori ${itemToDelete.type} untuk ${itemToDelete.namaSantri} berhasil dihapus.`);
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        next.delete(itemToDelete.id);
+        return next;
+      });
+      setItemToDelete(null);
+      setTimeout(() => setDeleteToast(null), 4000);
+    } catch (err) {
+      console.error('Failed to delete record:', err);
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const confirmBatchDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setIsBatchDeleting(true);
+    try {
+      const itemsToDel = combinedItems.filter(i => selectedIds.has(i.id)).map(i => ({ type: i.type, id: i.id }));
+      await storageService.deleteRecordsBatch(itemsToDel);
+      onDataChanged();
+      setDeleteToast(`${itemsToDel.length} data rekaman histori berhasil dihapus.`);
+      setSelectedIds(new Set());
+      setIsBatchDeleteModalOpen(false);
+      setTimeout(() => setDeleteToast(null), 4000);
+    } catch (err) {
+      console.error('Failed to delete batch records:', err);
+    } finally {
+      setIsBatchDeleting(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === displayedItems.length && displayedItems.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(displayedItems.map(i => i.id)));
+    }
+  };
+
+  const toggleSelectItem = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
   const openEditModal = (item: CombinedItem) => {
@@ -999,8 +1072,59 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         </div>
       )}
 
+      {/* Batch Delete Action Bar - Appears when items are selected */}
+      {!isViewOnly && selectedIds.size > 0 && (
+        <div className="bg-rose-50 border border-rose-200 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1 shadow-xs">
+          <div className="flex items-center gap-2 text-rose-900 font-bold">
+            <span className="bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-extrabold">
+              {selectedIds.size}
+            </span>
+            <span>rekaman histori dipilih</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSelectedIds(new Set())}
+              className="px-2.5 py-1 text-slate-600 hover:text-slate-900 font-semibold cursor-pointer"
+            >
+              Batalkan
+            </button>
+            <button
+              onClick={() => setIsBatchDeleteModalOpen(true)}
+              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold rounded-lg flex items-center gap-1.5 shadow-xs transition cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Hapus {selectedIds.size} Rekaman Terpilih</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Scrollable Content Area - fixed height */}
       <div className="flex-1 overflow-y-auto min-h-0 rounded-xl border border-slate-100 bg-slate-50/50">
+        {!isViewOnly && displayedItems.length > 0 && (
+          <div className="sticky top-0 z-10 bg-slate-100/95 backdrop-blur-xs px-3 sm:px-4 py-1.5 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1.5 cursor-pointer font-semibold select-none hover:text-slate-900">
+                <input
+                  type="checkbox"
+                  checked={selectedIds.size > 0 && selectedIds.size === displayedItems.length}
+                  onChange={toggleSelectAll}
+                  className="w-3.5 h-3.5 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+                />
+                <span>Pilih Semua ({displayedItems.length})</span>
+              </label>
+              {selectedIds.size > 0 && (
+                <span className="text-[11px] text-rose-700 font-bold">
+                  ({selectedIds.size} terpilih)
+                </span>
+              )}
+            </div>
+            <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
+              Klik tempat sampah pada baris untuk hapus cepat
+            </span>
+          </div>
+        )}
+
         {displayedItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center text-slate-400">
             <Inbox className="w-10 h-10 mb-2 text-slate-300" />
@@ -1022,6 +1146,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           <div className="divide-y divide-slate-100">
             {displayedItems.map((item) => {
               const isExpanded = expandedRows.has(item.id);
+              const isSelected = selectedIds.has(item.id);
               const timePart = item.timestamp.includes(' ')
                 ? item.timestamp.split(' ')[1]
                 : item.timestamp.includes('T')
@@ -1030,21 +1155,38 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               const waLink = !isViewOnly ? buildWhatsAppLink(item) : null;
               const santri = santriList.find(s => s.idSantri === item.idSantri);
               const kelasGroup = santri ? getClassGroup(santri.kelas) : '';
+              const isIstimewa = item.type === 'Pembelajaran' && !!item.tipeKelas && item.tipeKelas.toLowerCase().includes('istimewa');
 
               return (
-                <div key={item.id} className="bg-white hover:bg-slate-50/60 transition-colors">
+                <div key={item.id} className={`transition-colors ${isSelected ? 'bg-rose-50/40' : 'bg-white hover:bg-slate-50/60'}`}>
                   {/* Compact Row - always visible */}
                   <div
                     className="flex items-center gap-2 px-3 sm:px-4 py-2.5 cursor-pointer"
                     onClick={() => toggleRow(item.id)}
                   >
+                    {/* Row Select Checkbox (For Ustadz/Admin) */}
+                    {!isViewOnly && (
+                      <div
+                        className="flex-shrink-0 text-slate-400 hover:text-emerald-700 cursor-pointer p-0.5"
+                        onClick={(e) => toggleSelectItem(item.id, e)}
+                        title="Pilih rekaman ini"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {}}
+                          className="w-3.5 h-3.5 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+                        />
+                      </div>
+                    )}
+
                     {/* Expand icon */}
                     <div className="flex-shrink-0 text-slate-400">
                       {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </div>
 
                     {/* Date */}
-                    <div className="flex-shrink-0 w-[120px] sm:w-[160px]">
+                    <div className="flex-shrink-0 w-[120px] sm:w-[150px]">
                       <div className="text-[11px] font-bold text-slate-700 leading-tight">
                         {formatTanggalLengkap(item.timestamp)}
                       </div>
@@ -1067,6 +1209,10 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                       ) : item.type === 'Binnadzor' ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 font-bold text-[10px] border border-indigo-200">
                           <BookOpenCheck className="w-2.5 h-2.5" /> Bnd
+                        </span>
+                      ) : isIstimewa ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 font-bold text-[10px] border border-purple-200">
+                          <Sparkles className="w-2.5 h-2.5" /> Istimewa
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 font-bold text-[10px] border border-amber-200">
@@ -1093,6 +1239,19 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                       {item.nilai === 'Kurang' && <span className="text-base">🟠</span>}
                       {item.nilai === 'Mengulang' && <span className="text-base">🔴</span>}
                     </div>
+
+                    {/* Quick Delete Button for Ustadz/Admin on the row */}
+                    {!isViewOnly && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleDelete(item, e)}
+                        className="flex-shrink-0 p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-100/70 rounded-lg transition-colors cursor-pointer"
+                        title={`Hapus rekaman ${item.type} untuk ${item.namaSantri}`}
+                        aria-label="Hapus rekaman"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
 
                   {/* Expanded Detail - accordion */}
@@ -1350,6 +1509,236 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         binnadzorRecords={binnadzorRecords || actualBinnadzor}
         pembelajaranRecords={pembelajaranRecords || actualPembelajaran}
       />
+
+      {/* Single Item Delete Confirmation Modal */}
+      {itemToDelete && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
+          onClick={() => !isDeleting && setItemToDelete(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-dialog-title"
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 bg-gradient-to-r from-rose-800 to-rose-900 text-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0 text-white">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 id="delete-dialog-title" className="font-extrabold text-base leading-tight">
+                    Hapus Rekaman Histori
+                  </h3>
+                  <p className="text-xs text-rose-100/90 mt-0.5">
+                    Konfirmasi penghapusan data setoran santri
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => !isDeleting && setItemToDelete(null)}
+                disabled={isDeleting}
+                className="p-1.5 rounded-lg text-white/80 hover:bg-white/15 transition cursor-pointer disabled:opacity-50"
+                aria-label="Tutup dialog"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-5 sm:p-6 space-y-4">
+              {/* Record Summary Card */}
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400 font-semibold uppercase text-[10px] tracking-wider">Kategori Setoran</span>
+                  {itemToDelete.type === 'Ziyadah' ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-800 font-bold border border-emerald-300 text-[11px]">
+                      <BookOpen className="w-3 h-3" /> Ziyadah (Hafalan Baru)
+                    </span>
+                  ) : itemToDelete.type === 'Murojaah' ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-teal-100 text-teal-800 font-bold border border-teal-300 text-[11px]">
+                      <RotateCw className="w-3 h-3" /> Muroja'ah (Pengulangan)
+                    </span>
+                  ) : itemToDelete.type === 'Binnadzor' ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-indigo-100 text-indigo-800 font-bold border border-indigo-300 text-[11px]">
+                      <BookOpenCheck className="w-3 h-3" /> Binnadzor (Bacaan Al-Qur'an)
+                    </span>
+                  ) : itemToDelete.tipeKelas && itemToDelete.tipeKelas.toLowerCase().includes('istimewa') ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-purple-100 text-purple-800 font-bold border border-purple-300 text-[11px]">
+                      <Sparkles className="w-3 h-3" /> Kelas Istimewa (Pendampingan)
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-bold border border-amber-300 text-[11px]">
+                      <GraduationCap className="w-3 h-3" /> Materi Non-Tahfidz / Jilid
+                    </span>
+                  )}
+                </div>
+
+                <div className="border-t border-slate-200/80 pt-2 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-medium">Santri:</span>
+                    <span className="font-bold text-slate-800 text-right">{itemToDelete.namaSantri} ({itemToDelete.idSantri})</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-medium">Materi:</span>
+                    <span className="font-bold text-slate-700 text-right max-w-[220px] truncate">{itemToDelete.materi}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-medium">Nilai:</span>
+                    <span>{renderNilaiBadge(itemToDelete.nilai)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-500 font-medium">Waktu:</span>
+                    <span className="text-slate-600 text-right">{formatTanggalLengkap(itemToDelete.timestamp)}</span>
+                  </div>
+                  {itemToDelete.inputBy && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500 font-medium">Dicatat Oleh:</span>
+                      <span className="text-slate-600 text-right font-medium">{itemToDelete.inputBy}</span>
+                    </div>
+                  )}
+                  {itemToDelete.catatan && (
+                    <div className="pt-1 text-[11px] text-slate-500 italic bg-white p-2 rounded-lg border border-slate-200">
+                      "{itemToDelete.catatan}"
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Warning Alert */}
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-800">
+                <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+                <p className="leading-relaxed">
+                  Rekaman ini akan <b>dihapus permanen</b> dari histori santri dan tersinkronisasi ke <b>Cloud Firestore</b>.
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setItemToDelete(null)}
+                  disabled={isDeleting}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs transition cursor-pointer disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmSingleDelete}
+                  disabled={isDeleting}
+                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isDeleting ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Menghapus...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      <span>Ya, Hapus Data Ini</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Batch Delete Confirmation Modal */}
+      {isBatchDeleteModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
+          onClick={() => !isBatchDeleting && setIsBatchDeleteModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="batch-delete-dialog-title"
+        >
+          <div
+            className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between p-5 bg-gradient-to-r from-rose-800 to-rose-900 text-white">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0 text-white">
+                  <Trash2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 id="batch-delete-dialog-title" className="font-extrabold text-base leading-tight">
+                    Hapus Masal Histori ({selectedIds.size})
+                  </h3>
+                  <p className="text-xs text-rose-100/90 mt-0.5">
+                    Hapus {selectedIds.size} rekaman yang dipilih
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => !isBatchDeleting && setIsBatchDeleteModalOpen(false)}
+                disabled={isBatchDeleting}
+                className="p-1.5 rounded-lg text-white/80 hover:bg-white/15 transition cursor-pointer disabled:opacity-50"
+                aria-label="Tutup dialog"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-5 sm:p-6 space-y-4">
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Anda memilih untuk menghapus <b>{selectedIds.size} rekaman histori</b> secara bersamaan. Rekaman yang dipilih mencakup setoran santri aktif.
+              </p>
+
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-800">
+                <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+                <p className="leading-relaxed">
+                  Tindakan ini bersifat <b>permanen</b> dan akan menghapus data terpilih dari Cloud Firestore. Apakah Anda yakin ingin melanjutkan?
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsBatchDeleteModalOpen(false)}
+                  disabled={isBatchDeleting}
+                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs transition cursor-pointer disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmBatchDelete}
+                  disabled={isBatchDeleting}
+                  className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {isBatchDeleting ? (
+                    <>
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Menghapus {selectedIds.size} data...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      <span>Ya, Hapus {selectedIds.size} Rekaman</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Success Toast */}
+      {deleteToast && (
+        <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-2.5 text-xs font-semibold animate-in fade-in slide-in-from-bottom-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+          <span>{deleteToast}</span>
+        </div>
+      )}
     </div>
   );
 };

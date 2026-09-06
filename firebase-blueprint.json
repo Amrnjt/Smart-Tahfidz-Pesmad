@@ -105,6 +105,34 @@
         "statusKenaikan": { "type": "string" },
         "inputBy": { "type": "string" }
       }
+    },
+    "PantauanLiburanRecord": {
+      "fields": {
+        "id": { "type": "string" },
+        "timestamp": { "type": "string" },
+        "tanggal": { "type": "string" },
+        "idSantri": { "type": "string" },
+        "namaSantri": { "type": "string" },
+        "kelas": { "type": "string" },
+        "wiridWaqiah": { "type": "boolean" },
+        "wiridMulk": { "type": "boolean" },
+        "wiridInsyirah": { "type": "boolean" },
+        "shalatSubuh": { "type": "string" },
+        "shalatDzuhur": { "type": "string" },
+        "shalatAshar": { "type": "string" },
+        "shalatMaghrib": { "type": "string" },
+        "shalatIsya": { "type": "string" },
+        "catatanWali": { "type": "string" },
+        "inputByWali": { "type": "string" }
+      }
+    },
+    "AppConfig": {
+      "fields": {
+        "programLiburanActive": { "type": "boolean" },
+        "programLiburanJudul": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "updatedBy": { "type": "string" }
+      }
     }
   }
 }
