@@ -1,12 +1,22 @@
-export type UserRole = 'Ustadz' | 'Wali' | 'Santri' | 'Admin';
+export type UserRole = 'Ustadz' | 'Wali' | 'Santri' | 'Admin' | 'Superadmin';
 
 export type PredikatNilai = 'Mengulang' | 'Kurang' | 'Baik' | 'Sangat Baik';
 
-export const PREDIKAT_NILAI_OPTIONS: { value: PredikatNilai; label: string; arab: string; emoji: string }[] = [
-  { value: 'Mengulang', label: 'Mengulang (I\'adah)', arab: 'I\'adah', emoji: '🔴' },
+export const PREDIKAT_NILAI_OPTIONS: {
+  value: PredikatNilai;
+  label: string;
+  arab: string;
+  emoji: string;
+}[] = [
+  { value: 'Mengulang', label: "Mengulang (I'adah)", arab: "I'adah", emoji: '🔴' },
   { value: 'Kurang', label: 'Kurang (Naqish)', arab: 'Naqish', emoji: '🟠' },
   { value: 'Baik', label: 'Baik (Jayyid)', arab: 'Jayyid', emoji: '🟡' },
-  { value: 'Sangat Baik', label: 'Sangat Baik (Jayyid Jiddan)', arab: 'Jayyid Jiddan', emoji: '🟢' },
+  {
+    value: 'Sangat Baik',
+    label: 'Sangat Baik (Jayyid Jiddan)',
+    arab: 'Jayyid Jiddan',
+    emoji: '🟢',
+  },
 ];
 
 export type TipeKelas =
@@ -24,21 +34,55 @@ export const TIPE_KELAS_OPTIONS: TipeKelas[] = [
   'Kelas Istimewa',
 ];
 
-export type AspekKualitas = 'Perlu Bimbingan' | 'Cukup' | 'Baik' | 'Sangat Baik' | 'Mutqin';
+export type AspekKualitas =
+  | 'Perlu Bimbingan'
+  | 'Cukup'
+  | 'Baik'
+  | 'Sangat Baik'
+  | 'Mutqin';
 
-export const ASPEK_KUALITAS_OPTIONS: { value: AspekKualitas; label: string; color: string }[] = [
-  { value: 'Perlu Bimbingan', label: 'Perlu Bimbingan', color: 'bg-rose-100 text-rose-800 border-rose-200' },
-  { value: 'Cukup', label: 'Cukup (Maqbul)', color: 'bg-amber-100 text-amber-800 border-amber-200' },
-  { value: 'Baik', label: 'Baik (Jayyid)', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
-  { value: 'Sangat Baik', label: 'Sangat Baik (Jayyid Jiddan)', color: 'bg-teal-100 text-teal-800 border-teal-200' },
-  { value: 'Mutqin', label: 'Mutqin / Mumtaz', color: 'bg-indigo-100 text-indigo-800 border-indigo-200' },
+export const ASPEK_KUALITAS_OPTIONS: {
+  value: AspekKualitas;
+  label: string;
+  color: string;
+}[] = [
+  {
+    value: 'Perlu Bimbingan',
+    label: 'Perlu Bimbingan',
+    color: 'bg-rose-100 text-rose-800 border-rose-200',
+  },
+  {
+    value: 'Cukup',
+    label: 'Cukup (Maqbul)',
+    color: 'bg-amber-100 text-amber-800 border-amber-200',
+  },
+  {
+    value: 'Baik',
+    label: 'Baik (Jayyid)',
+    color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  },
+  {
+    value: 'Sangat Baik',
+    label: 'Sangat Baik (Jayyid Jiddan)',
+    color: 'bg-teal-100 text-teal-800 border-teal-200',
+  },
+  {
+    value: 'Mutqin',
+    label: 'Mutqin / Mumtaz',
+    color: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+  },
 ];
 
 export interface MateriPembelajaran {
   id: string;
   judul: string;
   targetHalaman?: string;
-  kategori?: 'Ummi Dewasa' | 'Kelas Istimewa' | 'Binnadzor' | 'Tajwid & Makhroj' | 'Lainnya';
+  kategori?:
+    | 'Ummi Dewasa'
+    | 'Kelas Istimewa'
+    | 'Binnadzor'
+    | 'Tajwid & Makhroj'
+    | 'Lainnya';
   deskripsi?: string;
   urutan?: number;
 }
@@ -116,16 +160,22 @@ export interface BinnadzorRecord {
   materi: string;
   surahAtauHalaman?: string;
   nilai: PredikatNilai;
-  // 4 Aspek Kualitas Fokus Binnadzor (Tajwid, Makhroj, Kefasihan/Fashohah, Kelancaran)
+
+  // 4 aspek kualitas fokus Binnadzor
   hukumTajwid?: AspekKualitas;
   makhrojHuruf?: AspekKualitas;
   kefasihan?: AspekKualitas;
   kelancaran?: AspekKualitas;
+
   catatan: string;
   inputBy: string;
 }
 
-export type StatusKenaikan = 'Lanjut Halaman' | 'Ulang Halaman' | 'Naik Jilid' | 'Perlu Pendampingan Khusus';
+export type StatusKenaikan =
+  | 'Lanjut Halaman'
+  | 'Ulang Halaman'
+  | 'Naik Jilid'
+  | 'Perlu Pendampingan Khusus';
 
 export interface StatusKenaikanOption {
   value: StatusKenaikan;
@@ -134,10 +184,26 @@ export interface StatusKenaikanOption {
 }
 
 export const STATUS_KENAIKAN_OPTIONS: StatusKenaikanOption[] = [
-  { value: 'Lanjut Halaman', label: 'Lanjut Halaman', emoji: '➡️' },
-  { value: 'Ulang Halaman', label: 'Ulang Halaman', emoji: '🔁' },
-  { value: 'Naik Jilid', label: 'Naik Jilid', emoji: '🎉' },
-  { value: 'Perlu Pendampingan Khusus', label: 'Perlu Pendampingan', emoji: '🤝' },
+  {
+    value: 'Lanjut Halaman',
+    label: 'Lanjut Halaman',
+    emoji: '➡️',
+  },
+  {
+    value: 'Ulang Halaman',
+    label: 'Ulang Halaman',
+    emoji: '🔁',
+  },
+  {
+    value: 'Naik Jilid',
+    label: 'Naik Jilid',
+    emoji: '🎉',
+  },
+  {
+    value: 'Perlu Pendampingan Khusus',
+    label: 'Perlu Pendampingan',
+    emoji: '🤝',
+  },
 ];
 
 export interface PembelajaranRecord {
@@ -148,20 +214,27 @@ export interface PembelajaranRecord {
   kelasId?: string;
   namaKelas?: string;
   tipeKelas: TipeKelas;
-  jilidAtauKategori?: string; // e.g. "Ummi Dewasa Jilid 1", "Ummi Dewasa Jilid 2", "Kelas Istimewa (Remedial)"
-  materiPokok?: string;      // e.g. "Hal. 12 - Mad Thabi'i" atau "Terapi Makhroj 'Ain & Ha"
+
+  jilidAtauKategori?: string;
+  materiPokok?: string;
+
   halamanAwal?: number;
   halamanAkhir?: number;
   barisAwal?: number;
   barisAkhir?: number;
+
   nilai: PredikatNilai;
+
   makhroj?: AspekKualitas;
   tajwid?: AspekKualitas;
   kelancaran?: AspekKualitas;
   fashohah?: AspekKualitas;
+
   catatanBimbingan?: string;
   statusKenaikan?: StatusKenaikan;
+
   inputBy: string;
+
   // Field fleksibel kompatibilitas lintas komponen
   materi?: string;
   catatan?: string;
@@ -201,27 +274,102 @@ export interface SurahFullDetail extends SurahMeta {
   audioFull?: string;
 }
 
-export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'binnadzor' | 'pembelajaran' | 'riwayat' | 'mushaf' | 'santri' | 'kelas' | 'pantauan';
+/**
+ * Daftar tab utama aplikasi.
+ * "pantauan" digunakan untuk Program Pantauan Liburan Santri.
+ */
+export type ActiveTab =
+  | 'dashboard'
+  | 'ziyadah'
+  | 'murojaah'
+  | 'binnadzor'
+  | 'pembelajaran'
+  | 'riwayat'
+  | 'mushaf'
+  | 'santri'
+  | 'kelas'
+  | 'pantauan';
 
-// Program Pantauan Liburan Santri - Types
+/**
+ * ============================================================
+ * PROGRAM PANTAUAN LIBURAN SANTRI
+ * ============================================================
+ */
+
+/**
+ * Status pelaksanaan shalat berjamaah.
+ */
+export type StatusJamaah = 'Jamaah' | 'Berhalangan' | 'Sakit';
+
+export const STATUS_JAMAAH_OPTIONS: {
+  value: StatusJamaah;
+  label: string;
+  color: string;
+}[] = [
+  {
+    value: 'Jamaah',
+    label: 'Jamaah',
+    color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  },
+  {
+    value: 'Berhalangan',
+    label: 'Berhalangan',
+    color: 'bg-amber-100 text-amber-800 border-amber-200',
+  },
+  {
+    value: 'Sakit',
+    label: 'Sakit',
+    color: 'bg-rose-100 text-rose-800 border-rose-200',
+  },
+];
+
+/**
+ * Catatan harian Program Pantauan Liburan.
+ *
+ * Mencatat:
+ * - Al-Waqi'ah
+ * - Al-Mulk
+ * - Al-Insyirah
+ * - Shalat lima waktu berjamaah
+ */
 export interface WiridYaumiyyahRecord {
   id: string;
   timestamp: string;
+  tanggal: string;
+
   idSantri: string;
   namaSantri?: string;
+
   inputBy: string;
-  // Wirid Yaumiyyah status (true = sudah dilaksanakan)
+
+  // Wirid Yaumiyyah
   alWaqiah: boolean;
   alMulk: boolean;
   alInsyirah: boolean;
-  // Shalat Berjamaah status
-  shubuh: 'Jama\'ah' | 'Berhalangan' | 'Sakit';
-  dzuhur: 'Jama\'ah' | 'Berhalangan' | 'Sakit';
-  ashar: 'Jama\'ah' | 'Berhalangan' | 'Sakit';
-  maghrib: 'Jama\'ah' | 'Berhalangan' | 'Sakit';
-  isya: 'Jama\'ah' | 'Berhalangan' | 'Sakit';
+
+  // Shalat berjamaah
+  shubuh: StatusJamaah;
+  dzuhur: StatusJamaah;
+  ashar: StatusJamaah;
+  maghrib: StatusJamaah;
+  isya: StatusJamaah;
+
+  catatan?: string;
 }
 
+/**
+ * Alias untuk kompatibilitas apabila komponen lain
+ * menggunakan nama PantauanLiburanRecord.
+ */
+export type PantauanLiburanRecord = WiridYaumiyyahRecord;
+
+/**
+ * Konfigurasi global Program Pantauan Liburan.
+ *
+ * isEnabled:
+ * true  = fitur aktif di dashboard Wali
+ * false = fitur dinonaktifkan
+ */
 export interface ProgramPantauanConfig {
   id: string;
   isEnabled: boolean;

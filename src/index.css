@@ -108,3 +108,10 @@
   .hero-animated-bg { animation: none !important; }
   .float-slow { animation: none !important; }
 }
+
+@media (max-width: 639px) {
+  .hafalan-trend .trend-filters > div { min-height: 44px; }
+  .hafalan-trend select { font-size: 16px; min-width: 0; width: 100%; }
+  .hafalan-trend button { min-height: 44px; }
+  .hafalan-trend .recharts-default-tooltip { max-width: 260px; white-space: normal; }
+}

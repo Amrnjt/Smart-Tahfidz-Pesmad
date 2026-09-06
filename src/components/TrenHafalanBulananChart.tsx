@@ -335,7 +335,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
     : null;
 
   return (
-    <div className="bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-xs space-y-5 w-full min-w-0 max-w-full">
+    <div className="hafalan-trend bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-xs space-y-5 w-full min-w-0 max-w-full">
       {/* Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4 w-full min-w-0">
         <div className="min-w-0">
@@ -349,7 +349,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                   Tren Hafalan Santri Setiap Bulan
                 </h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200/60">
-                  Recharts Analytics
+                  Tren Bulanan
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
@@ -362,10 +362,10 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
         </div>
 
         {/* Filter Controls Row */}
-        <div className="flex flex-wrap items-center gap-2 max-w-full">
+        <div className="trend-filters grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2 w-full lg:w-auto max-w-full">
           {/* Kelas Filter */}
           {kelasList.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 max-w-[150px] sm:max-w-none">
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 min-w-0 sm:max-w-none">
               <GraduationCap className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
               <select
                 value={selectedKelas}
@@ -384,7 +384,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
           )}
 
           {/* Santri Filter */}
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 max-w-[190px] sm:max-w-none">
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 min-w-0 sm:max-w-none">
             <Filter className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
             <select
               value={selectedSantri}
@@ -621,14 +621,14 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
         </div>
 
         {/* Recharts Render Area */}
-        <div className="h-64 sm:h-80 w-full min-w-0 pt-2">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="w-full min-w-0 pt-2">
+          <ResponsiveContainer width="100%" height={metricMode === 'komparasi' ? Math.max(320, santriComparisonData.length * 64 + 64) : 320}>
             {metricMode === 'komparasi' ? (
               /* Bar Chart: Comparison of top santri */
               <BarChart
                 data={santriComparisonData}
                 layout="vertical"
-                margin={{ top: 10, right: 20, left: 40, bottom: 0 }}
+                margin={{ top: 10, right: 8, left: 0, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                 <XAxis
@@ -641,7 +641,8 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                   dataKey="namaSantri"
                   tick={{ fill: '#334155', fontSize: 11, fontWeight: 600 }}
                   axisLine={{ stroke: '#cbd5e1' }}
-                  width={110}
+                  width={90}
+                  tickFormatter={(name: string) => name.length > 13 ? name.slice(0, 12) + '…' : name}
                 />
                 <Tooltip
                   contentStyle={{

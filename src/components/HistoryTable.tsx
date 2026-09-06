@@ -1,3 +1,4 @@
+import { isStaffRole } from '../utils/roles';
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS } from '../types';
 import { storageService } from '../services/storageService';
@@ -234,7 +235,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
   if (isLoading) return <TableSkeleton rows={7} />;
 
-  const isViewOnly = currentUser.role !== 'Ustadz';
+  const isViewOnly = !isStaffRole(currentUser.role);
   const targetSantriId = currentUser.idSantri || (currentUser.role === 'Santri' ? currentUser.username : '');
 
   const actualBinnadzor = binnadzorRecords || storageService.getBinnadzorRecords();

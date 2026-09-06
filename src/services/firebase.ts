@@ -1,3 +1,5 @@
+import { getAuth } from 'firebase/auth';
+import { getFunctions } from 'firebase/functions';
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -9,4 +11,6 @@ export const db = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestore
   ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
   : getFirestore(app);
 
+export const auth = getAuth(app);
+export const functions = getFunctions(app, 'asia-southeast2');
 export default app;

@@ -1,3 +1,4 @@
+import { ProgramPantauan } from './ProgramPantauan';
 import React from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, ActiveTab, WiridYaumiyyahRecord } from '../types';
 import { ZiyadahProgressChart } from './ZiyadahProgressChart';
@@ -66,6 +67,7 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
 
   return (
     <div className="space-y-6">
+      <ProgramPantauan currentUser={currentUser} />
       {/* Banner Profil Anak - Hero Card */}
       <div className="hero-animated-bg bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 rounded-3xl p-6 sm:p-7 text-white shadow-md relative overflow-hidden fade-in-up" style={fadeDelay(0)}>
         {/* Decorative Islamic pattern */}
