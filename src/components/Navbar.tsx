@@ -53,6 +53,8 @@ export const Navbar: React.FC<NavbarProps> = ({
     : 'U';
 
   const roleBadgeConfig = {
+ Admin: { label: 'Admin', bg: 'bg-emerald-700 text-white', avatarBg: 'bg-emerald-700 text-white' },
+ Superadmin: { label: 'Superadmin', bg: 'bg-amber-600 text-white', avatarBg: 'bg-amber-600 text-white' },
     Ustadz: {
       label: 'Ustadz',
       bg: 'bg-emerald-700/90 text-emerald-100 border-emerald-500/70',
