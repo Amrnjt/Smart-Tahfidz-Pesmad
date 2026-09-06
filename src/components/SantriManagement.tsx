@@ -2,9 +2,9 @@ import { ProgramPantauan } from './ProgramPantauan';
 import { PantauanReport } from './PantauanReport';
 import { isProtectedUser } from '../utils/roles';
 import React, { useState } from 'react';
-import { Santri, User, UserRole } from '../types';
+import { Santri, User, UserRole, ProgramPantauanConfig } from '../types';
 import { storageService } from '../services/storageService';
-import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, CreditCard as Edit3, UserCheck, Save, Sparkles, Phone } from 'lucide-react';
+import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, CreditCard as Edit3, UserCheck, Save, Sparkles, Phone, ToggleLeft, ToggleRight } from 'lucide-react';
 import { getClassGroup } from '../utils/classUtils';
 
 interface SantriManagementProps {
@@ -18,7 +18,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   santriList,
   onDataChanged
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'santri' | 'users'>('santri');
+  const [activeSubTab, setActiveSubTab] = useState<'santri' | 'users' | 'program'>('santri');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [santriToDelete, setSantriToDelete] = useState<Santri | null>(null);
@@ -28,6 +28,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const [deleteWithHistory, setDeleteWithHistory] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [programConfig, setProgramConfig] = useState<ProgramPantauanConfig>(storageService.getProgramPantauanConfig());
+  const [isTogglingProgram, setIsTogglingProgram] = useState(false);
 
   // New Santri Form State
   const [newId, setNewId] = useState('');
