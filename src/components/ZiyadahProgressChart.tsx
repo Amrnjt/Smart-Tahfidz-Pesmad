@@ -253,7 +253,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
   const hasData = ziyadahRecords.length > 0;
 
   return (
-    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xs space-y-5">
+    <div className="hafalan-trend min-w-0 w-full bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-xs space-y-5">
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
@@ -262,7 +262,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
               <TrendingUp className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-extrabold text-slate-900 text-base sm:text-lg flex items-center gap-1.5">
+              <h3 className="font-extrabold text-slate-900 text-base sm:text-lg flex flex-wrap items-center gap-1.5">
                 <span>Grafik Progres Hafalan Ziyadah</span>
                 <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                   Per Pekan

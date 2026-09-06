@@ -1,6 +1,8 @@
+import { ProgramPantauan } from './ProgramPantauan';
 import React from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, ActiveTab } from '../types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, ActiveTab, WiridYaumiyyahRecord } from '../types';
 import { ZiyadahProgressChart } from './ZiyadahProgressChart';
+import { PantauanLiburanWali } from './PantauanLiburanWali';
 import { BookOpen, RotateCw, BookOpenCheck, Award, Target, Calendar, CircleCheck as CheckCircle2, ChevronRight, Sparkles, GraduationCap } from 'lucide-react';
 import { PesmadLogo } from './PesmadLogo';
 import { formatTanggalWaktu } from '../utils/dateFormatter';
@@ -16,6 +18,9 @@ interface WaliDashboardProps {
   murojaahRecords: MurojaahRecord[];
   binnadzorRecords?: BinnadzorRecord[];
   pembelajaranRecords?: PembelajaranRecord[];
+  wiridRecords?: WiridYaumiyyahRecord[];
+  pantauanEnabled?: boolean;
+  onDataChanged?: () => void;
   setActiveTab: (tab: ActiveTab) => void;
   isLoading?: boolean;
 }
@@ -27,6 +32,9 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   murojaahRecords,
   binnadzorRecords = [],
   pembelajaranRecords = [],
+  wiridRecords = [],
+  pantauanEnabled = false,
+  onDataChanged,
   setActiveTab,
   isLoading = false
 }) => {
@@ -59,6 +67,7 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
 
   return (
     <div className="space-y-6">
+      <ProgramPantauan currentUser={currentUser} />
       {/* Banner Profil Anak - Hero Card */}
       <div className="hero-animated-bg bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 rounded-3xl p-6 sm:p-7 text-white shadow-md relative overflow-hidden fade-in-up" style={fadeDelay(0)}>
         {/* Decorative Islamic pattern */}
@@ -201,6 +210,18 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
           ziyadahRecords={santriZiyadah}
           santriName={targetSantri.namaSantri}
           isSantriView={false}
+        />
+      </ScrollReveal>
+
+      {/* Program Pantauan Liburan Santri */}
+      <ScrollReveal delay={80}>
+        <PantauanLiburanWali
+          idSantri={targetSantri.idSantri}
+          namaSantri={targetSantri.namaSantri}
+          isEnabled={pantauanEnabled}
+          inputBy={currentUser.nama}
+          records={wiridRecords}
+          onSaved={() => { if (onDataChanged) onDataChanged(); }}
         />
       </ScrollReveal>
 

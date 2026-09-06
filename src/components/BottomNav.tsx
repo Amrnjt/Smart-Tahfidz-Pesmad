@@ -1,3 +1,4 @@
+import { isStaffRole } from '../utils/roles';
 import React, { useState } from 'react';
 import { User, ActiveTab } from '../types';
 import { LayoutDashboard, History, Users, GraduationCap, Plus, BookOpen } from 'lucide-react';
@@ -24,7 +25,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   const isSetorActive = activeTab === 'ziyadah' || activeTab === 'murojaah' || activeTab === 'binnadzor' || activeTab === 'pembelajaran';
 
   // Wali & Santri view-only bottom nav
-  if (role !== 'Ustadz') {
+  if (!isStaffRole(role)) {
     const isWali = role === 'Wali';
     const nonUstadzItems = [
       { id: 'dashboard' as ActiveTab, label: isWali ? 'Anak Saya' : 'Hafalan', icon: LayoutDashboard },
@@ -124,7 +125,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       </nav>
 
       {/* Action Sheet Setoran */}
-      <SetorActionSheet
+      <SetorActionSheet currentUser={currentUser}
         isOpen={isActionSheetOpen}
         onClose={() => setIsActionSheetOpen(false)}
         onSelect={(tab) => setActiveTab(tab)}

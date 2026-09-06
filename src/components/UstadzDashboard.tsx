@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, ActiveTab, Kelas } from '../types';
-import { Users, CalendarCheck, BookOpen, RotateCw, CirclePlus as PlusCircle, BookOpenCheck, ArrowRight, Award, Sparkles, GraduationCap, TrendingUp, ChartBar as BarChart3 } from 'lucide-react';
+import { Users, CalendarCheck, BookOpen, RotateCw, CirclePlus as PlusCircle, BookOpenCheck, ArrowRight, Award, Sparkles, GraduationCap, TrendingUp, ChartBar as BarChart3, Moon } from 'lucide-react';
 import { getClassGroup, isNonTahfidzClass } from '../utils/classUtils';
 import { HafalanStatsChart } from './HafalanStatsChart';
 import { TrenHafalanBulananChart } from './TrenHafalanBulananChart';
@@ -18,6 +18,8 @@ interface UstadzDashboardProps {
   binnadzorRecords?: BinnadzorRecord[];
   pembelajaranRecords?: PembelajaranRecord[];
   kelasList: Kelas[];
+  pantauanEnabled?: boolean;
+  onTogglePantauan?: (enabled: boolean) => void;
   setActiveTab: (tab: ActiveTab) => void;
   onSelectSantriForZiyadah?: (idSantri: string) => void;
   isLoading?: boolean;
@@ -31,6 +33,8 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   binnadzorRecords = [],
   pembelajaranRecords = [],
   kelasList,
+  pantauanEnabled = false,
+  onTogglePantauan,
   setActiveTab,
   onSelectSantriForZiyadah,
   isLoading = false
@@ -228,6 +232,38 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Program Pantauan Liburan Santri - Master Switch */}
+      <ScrollReveal>
+        <div className="bg-white/85 backdrop-blur-md rounded-2xl border border-slate-200/80 shadow-xs p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-colors ${pantauanEnabled ? 'bg-indigo-800 text-amber-300' : 'bg-slate-100 text-slate-400'}`}>
+              <Moon className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h4 className="text-sm sm:text-base font-bold text-slate-800">Program Pantauan Liburan Santri</h4>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${pantauanEnabled ? 'bg-emerald-100 border-emerald-200 text-emerald-800' : 'bg-slate-100 border-slate-200 text-slate-500'}`}>
+                  {pantauanEnabled ? 'AKTIF' : 'NONAKTIF'}
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed mt-1">
+                Aktifkan saat libur pesantren agar Wali Santri dapat memantau wirid Yaumiyyah (al-Waqi'ah, al-Mulk, al-Insyirah) &amp; keaktifan shalat berjama'ah ananda. Saat nonaktif, fitur ini tersembunyi di dasbor Wali.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={pantauanEnabled}
+            aria-label="Aktifkan Program Pantauan Liburan Santri"
+            onClick={() => onTogglePantauan && onTogglePantauan(!pantauanEnabled)}
+            className={`relative inline-flex h-8 w-14 flex-shrink-0 items-center rounded-full transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${pantauanEnabled ? 'bg-indigo-700' : 'bg-slate-300'}`}
+          >
+            <span className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition-transform ${pantauanEnabled ? 'translate-x-7' : 'translate-x-1'}`} />
+          </button>
+        </div>
+      </ScrollReveal>
 
       {/* Action Shortcut Banners - 4 Form Cards */}
       <ScrollReveal className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4 w-full min-w-0">
