@@ -202,3 +202,29 @@ export interface SurahFullDetail extends SurahMeta {
 }
 
 export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'binnadzor' | 'pembelajaran' | 'riwayat' | 'mushaf' | 'santri' | 'kelas';
+
+export type StatusJamaah = 'Jamaah' | 'Berhalangan' | 'Sakit';
+
+export const STATUS_JAMAAH_OPTIONS: { value: StatusJamaah; label: string; color: string }[] = [
+  { value: 'Jamaah', label: 'Jamaah', color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
+  { value: 'Berhalangan', label: 'Berhalangan', color: 'bg-amber-100 text-amber-800 border-amber-200' },
+  { value: 'Sakit', label: 'Sakit', color: 'bg-rose-100 text-rose-800 border-rose-200' },
+];
+
+export interface PantauanLiburanRecord {
+  id: string;
+  timestamp: string;
+  idSantri: string;
+  namaSantri?: string;
+  tanggal: string;
+  wiridWaqiah: boolean; // Surah al-Waqi'ah
+  wiridMulk: boolean; // Surah al-Mulk
+  wiridInsyirah: boolean; // Surah al-Insyirah
+  statusJamaah: StatusJamaah;
+  catatan?: string;
+  inputBy: string;
+}
+
+export interface ProgramPantauanConfig {
+  enabled: boolean;
+}

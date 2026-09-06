@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, ActiveTab } from './types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, ActiveTab, PantauanLiburanRecord, ProgramPantauanConfig } from './types';
 import { storageService } from './services/storageService';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
@@ -33,6 +33,8 @@ export default function App() {
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   const [snack, setSnack] = useState<SnackbarState | null>(null);
+  const [programPantauanConfig, setProgramPantauanConfig] = useState<ProgramPantauanConfig>({ enabled: false });
+  const [pantauanLiburanRecords, setPantauanLiburanRecords] = useState<PantauanLiburanRecord[]>([]);
 
   const refreshData = () => {
     setSantriList(storageService.getSantriList());
@@ -42,6 +44,8 @@ export default function App() {
     setPembelajaranRecords(storageService.getPembelajaranRecords());
     setKelasList(storageService.getKelasList());
     setUserList(storageService.getUsers());
+    setProgramPantauanConfig(storageService.getProgramPantauanConfig());
+    setPantauanLiburanRecords(storageService.getPantauanLiburanRecords());
   };
 
   // Setup real-time Firebase Firestore synchronization across all devices

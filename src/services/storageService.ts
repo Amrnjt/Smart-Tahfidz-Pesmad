@@ -1,4 +1,4 @@
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas } from '../types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas, PantauanLiburanRecord, ProgramPantauanConfig } from '../types';
 import { INITIAL_USERS, INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH, INITIAL_BINNADZOR, INITIAL_PEMBELAJARAN } from '../data/sampleDatabase';
 import { getClassGroup } from '../utils/classUtils';
 
@@ -34,7 +34,9 @@ const STORAGE_KEYS = {
   BINNADZOR: 'tahfidz_binnadzor_db_v2',
   PEMBELAJARAN: 'tahfidz_pembelajaran_db_v2',
   KELAS: 'tahfidz_kelas_db_v2',
-  SESSION: 'tahfidz_active_session_v2'
+  SESSION: 'tahfidz_active_session_v2',
+  PANTAUAN_LIBURAN: 'tahfidz_pantauan_liburan_db_v1',
+  PROGRAM_PANTAUAN_CONFIG: 'tahfidz_program_pantauan_config_v1'
 };
 
 const COLLECTIONS = {
@@ -44,7 +46,9 @@ const COLLECTIONS = {
   MUROJAAH: 'murojaah',
   BINNADZOR: 'binnadzor',
   PEMBELAJARAN: 'pembelajaran',
-  KELAS: 'kelas'
+  KELAS: 'kelas',
+  PANTAUAN_LIBURAN: 'pantauan_liburan',
+  PROGRAM_PANTAUAN_CONFIG: 'program_pantauan_config'
 };
 
 // Helper to remove any undefined fields before sending to Firestore
@@ -205,6 +209,67 @@ export const storageService = {
     } catch {
       return [];
     }
+  },
+
+  getPantauanLiburanRecords(): PantauanLiburanRecord[] {
+    const data = localStorage.getItem(STORAGE_KEYS.PANTAUAN_LIBURAN);
+    if (!data) {
+      localStorage.setItem(STORAGE_KEYS.PANTAUAN_LIBURAN, JSON.stringify([]));
+      return [];
+    }
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  },
+
+  getProgramPantauanConfig(): ProgramPantauanConfig {
+    const data = localStorage.getItem(STORAGE_KEYS.PROGRAM_PANTAUAN_CONFIG);
+    if (!data) {
+      const defaultConfig: ProgramPantauanConfig = { enabled: false };
+      localStorage.setItem(STORAGE_KEYS.PROGRAM_PANTAUAN_CONFIG, JSON.stringify(defaultConfig));
+      return defaultConfig;
+    }
+    try {
+      const parsed = JSON.parse(data);
+      return parsed || { enabled: false };
+    } catch {
+      return { enabled: false };
+    }
+  },
+
+  async setProgramPantauanConfig(config: ProgramPantauanConfig): Promise<void> {
+    localStorage.setItem(STORAGE_KEYS.PROGRAM_PANTAUAN_CONFIG, JSON.stringify(config));
+    try {
+      await setDoc(doc(db, COLLECTIONS.PROGRAM_PANTAUAN_CONFIG, 'config'), cleanForFirestore(config));
+    } catch (e) {
+      console.error('Failed to save Program Pantauan Config to Firestore:', e);
+    }
+  },
+
+  async addPantauanLiburan(record: PantauanLiburanRecord): Promise<PantauanLiburanRecord> {
+    const records = this.getPantauanLiburanRecords();
+    records.unshift(record);
+    localStorage.setItem(STORAGE_KEYS.PANTAUAN_LIBURAN, JSON.stringify(records));
+    try {
+      await setDoc(doc(db, COLLECTIONS.PANTAUAN_LIBURAN, record.id), cleanForFirestore(record));
+    } catch (e) {
+      console.error('Failed to save Pantauan Liburan to Firestore:', e);
+    }
+    return record;
+  },
+
+  async deletePantauanLiburan(id: string): Promise<boolean> {
+    const records = this.getPantauanLiburanRecords().filter(r => r.id !== id);
+    localStorage.setItem(STORAGE_KEYS.PANTAUAN_LIBURAN, JSON.stringify(records));
+    try {
+      await deleteDoc(doc(db, COLLECTIONS.PANTAUAN_LIBURAN, id));
+    } catch (e) {
+      console.error('Failed to delete Pantauan Liburan from Firestore:', e);
+    }
+    return true;
   },
 
   // Real-time Firestore Listeners that automatically update localStorage & app state across all devices
@@ -474,6 +539,43 @@ export const storageService = {
       console.warn('Pembelajaran firestore sync error:', err);
     });
 
+    // 8. Sync Program Pantauan Config Realtime
+    const unsubProgramPantauanConfig = onSnapshot(collection(db, COLLECTIONS.PROGRAM_PANTAUAN_CONFIG), (snapshot) => {
+      if (!snapshot.empty) {
+        let config: ProgramPantauanConfig | null = null;
+        snapshot.forEach((docSnap) => {
+          const c = docSnap.data() as ProgramPantauanConfig;
+          if (c) config = c;
+        });
+        if (config) {
+          localStorage.setItem(STORAGE_KEYS.PROGRAM_PANTAUAN_CONFIG, JSON.stringify(config));
+          if (onUpdate) onUpdate();
+        }
+      }
+    }, (err) => {
+      console.warn('Program Pantauan Config firestore sync error:', err);
+    });
+
+    // 9. Sync Pantauan Liburan Realtime
+    const unsubPantauanLiburan = onSnapshot(collection(db, COLLECTIONS.PANTAUAN_LIBURAN), (snapshot) => {
+      if (!snapshot.empty) {
+        const records: PantauanLiburanRecord[] = [];
+        const recordMap = new Map<string, PantauanLiburanRecord>();
+        snapshot.forEach((docSnap) => {
+          const r = docSnap.data() as PantauanLiburanRecord;
+          if (r && r.id && !recordMap.has(r.id)) {
+            recordMap.set(r.id, r);
+            records.push(r);
+          }
+        });
+        records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+        localStorage.setItem(STORAGE_KEYS.PANTAUAN_LIBURAN, JSON.stringify(records));
+        if (onUpdate) onUpdate();
+      }
+    }, (err) => {
+      console.warn('Pantauan Liburan firestore sync error:', err);
+    });
+
     return () => {
       unsubUsers();
       unsubSantri();
@@ -482,6 +584,8 @@ export const storageService = {
       unsubKelas();
       unsubBinnadzor();
       unsubPembelajaran();
+      unsubProgramPantauanConfig();
+      unsubPantauanLiburan();
     };
   },
 
