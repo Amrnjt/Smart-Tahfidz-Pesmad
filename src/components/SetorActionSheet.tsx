@@ -1,14 +1,19 @@
+import { ProgramPantauan } from './ProgramPantauan';
+import { User } from '../types';
+import { isAdminRole } from '../utils/roles';
 import React, { useEffect } from 'react';
 import { ActiveTab } from '../types';
 import { CirclePlus as PlusCircle, RotateCw, BookOpenCheck, BookOpen, X, ChevronRight, GraduationCap } from 'lucide-react';
 
 interface SetorActionSheetProps {
+  currentUser: User;
   isOpen: boolean;
   onClose: () => void;
   onSelect: (tab: ActiveTab) => void;
 }
 
 export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
+  currentUser,
   isOpen,
   onClose,
   onSelect
@@ -79,7 +84,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
 
       {/* Action Sheet Panel */}
       <div
-        className="relative w-full max-w-lg bg-white rounded-t-3xl shadow-2xl border-t border-slate-200/90 z-10 pb-8 pt-3 px-5 animate-in slide-in-from-bottom-5 duration-200"
+        className="relative w-full max-w-lg max-h-[90dvh] overflow-y-auto bg-white rounded-t-3xl shadow-2xl border-t border-slate-200/90 z-10 pb-8 pt-3 px-5 animate-in slide-in-from-bottom-5 duration-200"
         role="dialog"
         aria-modal="true"
         aria-label="Pilih Jenis Setoran"
@@ -102,6 +107,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
           </button>
         </div>
 
+        {isAdminRole(currentUser.role) && <div className="pt-3"><ProgramPantauan currentUser={currentUser} mode="control" /></div>}
         {/* Action List */}
         <div className="py-3 space-y-2.5">
           {actions.map((act) => {

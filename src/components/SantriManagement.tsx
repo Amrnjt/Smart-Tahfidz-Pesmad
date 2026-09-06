@@ -1,3 +1,6 @@
+import { ProgramPantauan } from './ProgramPantauan';
+import { PantauanReport } from './PantauanReport';
+import { isProtectedUser } from '../utils/roles';
 import React, { useState } from 'react';
 import { Santri, User, UserRole, ProgramPantauanConfig } from '../types';
 import { storageService } from '../services/storageService';
@@ -5,11 +8,13 @@ import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle
 import { getClassGroup } from '../utils/classUtils';
 
 interface SantriManagementProps {
+  currentUser: User;
   santriList: Santri[];
   onDataChanged: () => void;
 }
 
 export const SantriManagement: React.FC<SantriManagementProps> = ({
+  currentUser,
   santriList,
   onDataChanged
 }) => {
@@ -331,6 +336,9 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
         </div>
       </div>
 
+      <div className="hidden md:block"><ProgramPantauan currentUser={currentUser} mode="control" /></div>
+      <PantauanReport currentUser={currentUser} santriList={santriList} />
+
       {/* Controls: Search & Add Button */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-72">
@@ -523,10 +531,10 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                 ) : (
                   filteredUsers.map((u) => {
                     let roleBadge = null;
-                    if (u.role === 'Ustadz') {
+                    if (['Ustadz', 'Admin', 'Superadmin'].includes(u.role)) {
                       roleBadge = (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">
-                          <Shield className="w-3 h-3 text-emerald-700" /> Ustadz
+                          <Shield className="w-3 h-3 text-emerald-700" /> {u.role}
                         </span>
                       );
                     } else if (u.role === 'Wali') {
@@ -565,7 +573,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                         <td className="py-3 px-3.5 text-center">
                           <div className="flex items-center justify-center gap-1.5">
                             <button
-                              onClick={() => handleOpenEditUser(u)}
+                              disabled={isProtectedUser(u)} onClick={() => handleOpenEditUser(u)}
                               className="p-1.5 px-2.5 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition cursor-pointer flex items-center gap-1 text-[11px] font-semibold border border-emerald-200"
                               title="Setting Role & Edit Akun"
                             >
@@ -573,9 +581,9 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                               <span>Edit Role</span>
                             </button>
                             <button
-                              onClick={() => setUserToDelete(u)}
+                              disabled={isProtectedUser(u)} onClick={() => setUserToDelete(u)}
                               className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
-                              title="Hapus Akun"
+                              title={isProtectedUser(u) ? "Superadmin tidak dapat dihapus" : "Hapus Akun"}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -773,6 +781,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                   onChange={(e) => setEditRole(e.target.value as UserRole)}
                   className="w-full p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-950 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
+                  <option value="Admin">Admin</option>
                   <option value="Ustadz">🛡️ Ustadz (Input Setoran, Kelola Santri & Akun)</option>
                   <option value="Wali">👥 Wali Santri (Monitoring Mutaba'ah & Progres Ananda)</option>
                   <option value="Santri">📖 Santri (View-Only: Lihat Progres Pribadi & Mushaf)</option>
@@ -1157,7 +1166,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                     onChange={(e) => setNewUserRole(e.target.value as UserRole)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
                   >
-                    <option value="Ustadz">Ustadz</option>
+                    <option value="Admin">Admin</option>
+                  <option value="Ustadz">Ustadz</option>
                     <option value="Wali">Wali Santri</option>
                     <option value="Santri">Santri (View-Only)</option>
                   </select>

@@ -1,3 +1,7 @@
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { auth, db } from './services/firebase';
+import { isStaffRole } from './utils/roles';
 import React, { useState, useEffect } from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, ActiveTab, PantauanLiburanRecord, ProgramPantauanConfig } from './types';
 import { storageService } from './services/storageService';
@@ -52,11 +56,9 @@ export default function App() {
   useEffect(() => {
     setIsLoadingData(true);
     refreshData();
-    const session = storageService.getSession();
-    if (session) {
-      setCurrentUser(session);
-    }
 
+
+    if (!currentUser) return;
     // Subscribe to real-time changes from Firestore database
     const unsubscribe = storageService.initRealtimeSync(() => {
       refreshData();
@@ -72,6 +74,22 @@ export default function App() {
       unsubscribe();
       clearTimeout(timer);
     };
+  }, [currentUser?.id, currentUser?.role]);
+
+  useEffect(() => {
+    let stopAccount: (() => void) | undefined;
+    const stopAuth = onAuthStateChanged(auth, identity => {
+      stopAccount?.();
+      if (!identity) { setCurrentUser(null); return; }
+      stopAccount = onSnapshot(doc(db, 'users', identity.uid), snapshot => {
+        if (!snapshot.exists()) { storageService.setSession(null); setCurrentUser(null); return; }
+        const { password, ...profile } = snapshot.data();
+        const user = { ...profile, id: snapshot.id } as User;
+        storageService.setSession(user);
+        setCurrentUser(user);
+      }, () => { storageService.setSession(null); setCurrentUser(null); });
+    });
+    return () => { stopAccount?.(); stopAuth(); };
   }, []);
 
   const handleLoginSuccess = (user: User) => {
@@ -118,7 +136,7 @@ export default function App() {
     setSelectedSantriId(idSantri);
   };
 
-  const isUstadz = currentUser?.role === 'Ustadz';
+  const isUstadz = isStaffRole(currentUser?.role);
   const isWali = currentUser?.role === 'Wali';
   const isSantri = currentUser?.role === 'Santri';
 
@@ -287,7 +305,6 @@ export default function App() {
                 </button>
               )}
             </nav>
-
             {/* Content per Tab */}
             {activeTab === 'dashboard' && (
               isUstadz ? (
@@ -396,7 +413,7 @@ export default function App() {
             {activeTab === 'mushaf' && <MushafQuran />}
 
             {activeTab === 'santri' && isUstadz && (
-              <SantriManagement
+              <SantriManagement currentUser={currentUser}
                 santriList={santriList}
                 onDataChanged={refreshData}
               />

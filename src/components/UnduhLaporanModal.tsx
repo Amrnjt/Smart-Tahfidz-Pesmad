@@ -1,3 +1,4 @@
+import { isStaffRole } from '../utils/roles';
 import React, { useState, useMemo } from 'react';
 import { User, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri } from '../types';
 import { useGeneratePDF, NAMA_BULAN, ReportOptions, ReportPeriod, ReportPeriodRange } from '../hooks/useGeneratePDF';
@@ -27,7 +28,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
 }) => {
   const { isGenerating, error, success, generatePDF } = useGeneratePDF();
 
-  const isViewOnly = currentUser.role !== 'Ustadz';
+  const isViewOnly = !isStaffRole(currentUser.role);
   const targetSantriId = currentUser.idSantri || (currentUser.role === 'Santri' ? currentUser.username : '');
 
   const scopedZiyadah = isViewOnly
