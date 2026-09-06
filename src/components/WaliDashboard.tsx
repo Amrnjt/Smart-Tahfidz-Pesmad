@@ -1,6 +1,7 @@
 import React from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, ActiveTab } from '../types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, ActiveTab, WiridYaumiyyahRecord } from '../types';
 import { ZiyadahProgressChart } from './ZiyadahProgressChart';
+import { PantauanLiburanWali } from './PantauanLiburanWali';
 import { BookOpen, RotateCw, BookOpenCheck, Award, Target, Calendar, CircleCheck as CheckCircle2, ChevronRight, Sparkles, GraduationCap } from 'lucide-react';
 import { PesmadLogo } from './PesmadLogo';
 import { formatTanggalWaktu } from '../utils/dateFormatter';
@@ -16,6 +17,9 @@ interface WaliDashboardProps {
   murojaahRecords: MurojaahRecord[];
   binnadzorRecords?: BinnadzorRecord[];
   pembelajaranRecords?: PembelajaranRecord[];
+  wiridRecords?: WiridYaumiyyahRecord[];
+  pantauanEnabled?: boolean;
+  onDataChanged?: () => void;
   setActiveTab: (tab: ActiveTab) => void;
   isLoading?: boolean;
 }
@@ -27,6 +31,9 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   murojaahRecords,
   binnadzorRecords = [],
   pembelajaranRecords = [],
+  wiridRecords = [],
+  pantauanEnabled = false,
+  onDataChanged,
   setActiveTab,
   isLoading = false
 }) => {
@@ -201,6 +208,18 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
           ziyadahRecords={santriZiyadah}
           santriName={targetSantri.namaSantri}
           isSantriView={false}
+        />
+      </ScrollReveal>
+
+      {/* Program Pantauan Liburan Santri */}
+      <ScrollReveal delay={80}>
+        <PantauanLiburanWali
+          idSantri={targetSantri.idSantri}
+          namaSantri={targetSantri.namaSantri}
+          isEnabled={pantauanEnabled}
+          inputBy={currentUser.nama}
+          records={wiridRecords}
+          onSaved={() => { if (onDataChanged) onDataChanged(); }}
         />
       </ScrollReveal>
 

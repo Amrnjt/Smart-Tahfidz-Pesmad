@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, ActiveTab } from './types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, ActiveTab, WiridYaumiyyahRecord, ProgramPantauanConfig } from './types';
 import { storageService } from './services/storageService';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
@@ -30,6 +30,8 @@ export default function App() {
   const [pembelajaranRecords, setPembelajaranRecords] = useState<PembelajaranRecord[]>([]);
   const [kelasList, setKelasList] = useState<Kelas[]>([]);
   const [userList, setUserList] = useState<User[]>([]);
+  const [wiridRecords, setWiridRecords] = useState<WiridYaumiyyahRecord[]>([]);
+  const [pantauanConfig, setPantauanConfig] = useState<ProgramPantauanConfig | null>(null);
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
   const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
   const [snack, setSnack] = useState<SnackbarState | null>(null);
@@ -42,6 +44,34 @@ export default function App() {
     setPembelajaranRecords(storageService.getPembelajaranRecords());
     setKelasList(storageService.getKelasList());
     setUserList(storageService.getUsers());
+    setWiridRecords(storageService.getWiridYaumiyyahRecords());
+    setPantauanConfig(storageService.getPantauanConfigLocal());
+  };
+
+  const handleTogglePantauan = async (enabled: boolean) => {
+    const base = pantauanConfig || storageService.getPantauanConfigLocal();
+    const updated: ProgramPantauanConfig = {
+      ...base,
+      isEnabled: enabled,
+      lastUpdated: new Date().toISOString(),
+      updatedBy: currentUser?.nama || 'Admin'
+    };
+    setPantauanConfig(updated);
+    try {
+      await storageService.setPantauanConfig(updated);
+      setSnack({
+        id: `pantauan-${Date.now()}`,
+        message: enabled ? '✓ Program Pantauan Liburan diaktifkan' : 'Program Pantauan Liburan dinonaktifkan',
+        type: 'success',
+      });
+    } catch {
+      setSnack({
+        id: `pantauan-err-${Date.now()}`,
+        message: 'Gagal memperbarui status Program Pantauan.',
+        type: 'error',
+      });
+    }
+    refreshData();
   };
 
   // Setup real-time Firebase Firestore synchronization across all devices
@@ -295,6 +325,8 @@ export default function App() {
                   binnadzorRecords={binnadzorRecords}
                   pembelajaranRecords={pembelajaranRecords}
                   kelasList={kelasList}
+                  pantauanEnabled={pantauanConfig?.isEnabled ?? false}
+                  onTogglePantauan={handleTogglePantauan}
                   setActiveTab={setActiveTab}
                   onSelectSantriForZiyadah={handleSelectSantriForZiyadah}
                   isLoading={isLoadingData}
@@ -307,6 +339,9 @@ export default function App() {
                   murojaahRecords={murojaahRecords}
                   binnadzorRecords={binnadzorRecords}
                   pembelajaranRecords={pembelajaranRecords}
+                  wiridRecords={wiridRecords}
+                  pantauanEnabled={pantauanConfig?.isEnabled ?? false}
+                  onDataChanged={refreshData}
                   setActiveTab={setActiveTab}
                   isLoading={isLoadingData}
                 />

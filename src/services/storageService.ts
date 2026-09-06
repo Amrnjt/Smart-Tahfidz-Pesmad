@@ -211,6 +211,24 @@ export const storageService = {
     }
   },
 
+  // Synchronous read of the Program Pantauan config from local cache (kept in sync by the realtime listener)
+  getPantauanConfigLocal(): ProgramPantauanConfig {
+    const defaultConfig: ProgramPantauanConfig = {
+      id: 'pantauan-config-001',
+      isEnabled: false,
+      lastUpdated: new Date().toISOString(),
+      updatedBy: 'system'
+    };
+    const data = localStorage.getItem(STORAGE_KEYS.PANTAUAN_CONFIG);
+    if (!data) return defaultConfig;
+    try {
+      const parsed = JSON.parse(data);
+      return parsed && typeof parsed.isEnabled === 'boolean' ? parsed : defaultConfig;
+    } catch {
+      return defaultConfig;
+    }
+  },
+
   // Real-time Firestore Listeners that automatically update localStorage & app state across all devices
   initRealtimeSync(onUpdate?: () => void): () => void {
     // 1. Initial One-time Migration & Seeding: Ensure all local users & santri exist in Firestore
@@ -478,6 +496,35 @@ export const storageService = {
       console.warn('Pembelajaran firestore sync error:', err);
     });
 
+    // 8. Sync Program Pantauan Config Realtime (switch on/off across all devices)
+    const unsubPantauanConfig = onSnapshot(collection(db, COLLECTIONS.PANTAUAN_CONFIG), (snapshot) => {
+      if (!snapshot.empty) {
+        const config = snapshot.docs[0].data() as ProgramPantauanConfig;
+        localStorage.setItem(STORAGE_KEYS.PANTAUAN_CONFIG, JSON.stringify(config));
+        if (onUpdate) onUpdate();
+      }
+    }, (err) => {
+      console.warn('Pantauan config firestore sync error:', err);
+    });
+
+    // 9. Sync Wirid Yaumiyyah (Program Pantauan Liburan) Realtime
+    const unsubWirid = onSnapshot(collection(db, COLLECTIONS.WIRID_YAUMIYYAH), (snapshot) => {
+      const records: WiridYaumiyyahRecord[] = [];
+      const recordMap = new Map<string, WiridYaumiyyahRecord>();
+      snapshot.forEach((docSnap) => {
+        const r = docSnap.data() as WiridYaumiyyahRecord;
+        if (r && r.id && !recordMap.has(r.id)) {
+          recordMap.set(r.id, r);
+          records.push(r);
+        }
+      });
+      records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+      localStorage.setItem(STORAGE_KEYS.WIRID_YAUMIYYAH, JSON.stringify(records));
+      if (onUpdate) onUpdate();
+    }, (err) => {
+      console.warn('Wirid Yaumiyyah firestore sync error:', err);
+    });
+
     return () => {
       unsubUsers();
       unsubSantri();
@@ -486,6 +533,8 @@ export const storageService = {
       unsubKelas();
       unsubBinnadzor();
       unsubPembelajaran();
+      unsubPantauanConfig();
+      unsubWirid();
     };
   },
 
