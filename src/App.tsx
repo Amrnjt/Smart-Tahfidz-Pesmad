@@ -114,9 +114,10 @@ export default function App() {
     setSelectedSantriId(idSantri);
   };
 
-  const isUstadz = currentUser?.role === 'Ustadz';
-  const isWali = currentUser?.role === 'Wali';
-  const isSantri = currentUser?.role === 'Santri';
+  const userRoleStr = String(currentUser?.role || '').trim().toLowerCase();
+  const isWali = userRoleStr === 'wali' || userRoleStr.includes('wali');
+  const isSantri = userRoleStr === 'santri';
+  const isUstadz = !isWali && !isSantri;
 
   // Delayed notification system for Wali Santri role
   const { toasts, dismissToast } = useSetoranNotifications(

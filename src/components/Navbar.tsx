@@ -70,7 +70,15 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
-  const currentRoleStyle = currentUser ? roleBadgeConfig[currentUser.role] : roleBadgeConfig.Ustadz;
+  const normalizedRole: 'Ustadz' | 'Wali' | 'Santri' = (() => {
+    if (!currentUser?.role) return 'Ustadz';
+    const r = String(currentUser.role).trim().toLowerCase();
+    if (r === 'wali' || r.includes('wali')) return 'Wali';
+    if (r === 'santri') return 'Santri';
+    return 'Ustadz';
+  })();
+
+  const currentRoleStyle = roleBadgeConfig[normalizedRole] || roleBadgeConfig.Ustadz;
 
   return (
     <header id="main-header" className="sticky top-0 z-40 bg-emerald-900/95 backdrop-blur-md text-white shadow-sm border-b border-emerald-950/80 select-none">
@@ -167,9 +175,9 @@ export const Navbar: React.FC<NavbarProps> = ({
                           <p className="text-[11px] text-slate-500 font-mono truncate">@{currentUser.username}</p>
                           <div className="mt-1">
                             <span className={`inline-block text-[10px] px-2 py-0.5 rounded-md font-bold border ${currentRoleStyle.bg}`}>
-                              {currentUser.role === 'Ustadz' && '🛡️ Ustadz Musyrif'}
-                              {currentUser.role === 'Wali' && '👨‍👩‍👧 Wali Santri'}
-                              {currentUser.role === 'Santri' && '📖 Santri'}
+                              {normalizedRole === 'Ustadz' && '🛡️ Ustadz Musyrif'}
+                              {normalizedRole === 'Wali' && '👨‍👩‍👧 Wali Santri'}
+                              {normalizedRole === 'Santri' && '📖 Santri'}
                             </span>
                           </div>
                         </div>

@@ -92,6 +92,15 @@ export const storageService = {
     }
 
     if (matched) {
+      const r = String(matched.role || '').trim().toLowerCase();
+      if (r === 'wali' || r.includes('wali')) {
+        matched.role = 'Wali';
+      } else if (r === 'santri') {
+        matched.role = 'Santri';
+      } else {
+        matched.role = 'Ustadz';
+      }
+
       this.setSession(matched);
       return { success: true, user: matched };
     }
@@ -923,7 +932,18 @@ export const storageService = {
     const data = localStorage.getItem(STORAGE_KEYS.SESSION);
     if (!data) return null;
     try {
-      return JSON.parse(data);
+      const user = JSON.parse(data);
+      if (user) {
+        const r = String(user.role || '').trim().toLowerCase();
+        if (r === 'wali' || r.includes('wali')) {
+          user.role = 'Wali';
+        } else if (r === 'santri') {
+          user.role = 'Santri';
+        } else {
+          user.role = 'Ustadz';
+        }
+      }
+      return user;
     } catch {
       return null;
     }

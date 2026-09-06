@@ -20,12 +20,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
   if (!currentUser) return null;
 
-  const role = currentUser.role;
+  const roleStr = String(currentUser.role || '').trim().toLowerCase();
+  const isWali = roleStr === 'wali' || roleStr.includes('wali');
+  const isSantri = roleStr === 'santri';
+  const isUstadz = !isWali && !isSantri;
   const isSetorActive = activeTab === 'ziyadah' || activeTab === 'murojaah' || activeTab === 'binnadzor' || activeTab === 'pembelajaran';
 
   // Wali & Santri view-only bottom nav
-  if (role !== 'Ustadz') {
-    const isWali = role === 'Wali';
+  if (!isUstadz) {
     const nonUstadzItems = [
       { id: 'dashboard' as ActiveTab, label: isWali ? 'Anak Saya' : 'Hafalan', icon: LayoutDashboard },
       { id: 'riwayat' as ActiveTab, label: 'Riwayat', icon: History },
