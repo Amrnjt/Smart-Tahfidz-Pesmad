@@ -1,3 +1,5 @@
+import { ProgramPantauan } from './ProgramPantauan';
+import { PantauanReport } from './PantauanReport';
 import { isProtectedUser } from '../utils/roles';
 import React, { useState } from 'react';
 import { Santri, User, UserRole } from '../types';
@@ -6,11 +8,13 @@ import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle
 import { getClassGroup } from '../utils/classUtils';
 
 interface SantriManagementProps {
+  currentUser: User;
   santriList: Santri[];
   onDataChanged: () => void;
 }
 
 export const SantriManagement: React.FC<SantriManagementProps> = ({
+  currentUser,
   santriList,
   onDataChanged
 }) => {
@@ -329,6 +333,9 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
           </button>
         </div>
       </div>
+
+      <div className="hidden md:block"><ProgramPantauan currentUser={currentUser} mode="control" /></div>
+      <PantauanReport currentUser={currentUser} santriList={santriList} />
 
       {/* Controls: Search & Add Button */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">

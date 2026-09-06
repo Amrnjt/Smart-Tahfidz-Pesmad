@@ -1,8 +1,6 @@
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { auth, db } from './services/firebase';
-import { ProgramPantauan } from './components/ProgramPantauan';
-import { isAdminRole } from './utils/roles';
 import { isStaffRole } from './utils/roles';
 import React, { useState, useEffect } from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, ActiveTab } from './types';
@@ -303,8 +301,6 @@ export default function App() {
                 </button>
               )}
             </nav>
-
-            {activeTab === "dashboard" && isAdminRole(currentUser.role) && <div className="mb-5"><ProgramPantauan currentUser={currentUser} /></div>}
             {/* Content per Tab */}
             {activeTab === 'dashboard' && (
               isUstadz ? (
@@ -413,7 +409,7 @@ export default function App() {
             {activeTab === 'mushaf' && <MushafQuran />}
 
             {activeTab === 'santri' && isUstadz && (
-              <SantriManagement
+              <SantriManagement currentUser={currentUser}
                 santriList={santriList}
                 onDataChanged={refreshData}
               />

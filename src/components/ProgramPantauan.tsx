@@ -37,8 +37,8 @@ const today = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
 
-export function ProgramPantauan({ currentUser }: { currentUser: User }) {
-  const admin = isAdminRole(currentUser.role);
+export function ProgramPantauan({ currentUser, mode = "wali" }: { currentUser: User; mode?: "wali" | "control" }) {
+  const admin = mode === "control" && isAdminRole(currentUser.role);
   const [enabled, setEnabled] = useState(false);
   const [ready, setReady] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -72,7 +72,7 @@ export function ProgramPantauan({ currentUser }: { currentUser: User }) {
   );
 
   useEffect(() => {
-    if (admin || !currentUser.idSantri) return;
+    if (currentUser.role !== "Wali" || !enabled || !currentUser.idSantri) return;
     setRecordsReady(false);
     return onSnapshot(
       query(
@@ -93,7 +93,7 @@ export function ProgramPantauan({ currentUser }: { currentUser: User }) {
         setMessage("Catatan pantauan belum dapat dimuat.");
       },
     );
-  }, [admin, currentUser.idSantri]);
+  }, [enabled, currentUser.role, currentUser.idSantri]);
 
   useEffect(() => {
     const record = records.find((r) => r.timestamp.slice(0, 10) === date);
@@ -162,7 +162,7 @@ export function ProgramPantauan({ currentUser }: { currentUser: User }) {
     }
   }
 
-  if (!admin && currentUser.role !== "Wali") return null;
+  if (mode === "control" ? !admin : currentUser.role !== "Wali" || !enabled || !ready) return null;
   return (
     <section
       className="rounded-2xl border border-emerald-200 bg-white p-4 sm:p-6 space-y-4 min-w-0"

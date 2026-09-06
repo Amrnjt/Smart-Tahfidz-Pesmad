@@ -19,6 +19,7 @@ Perubahan frontend, fungsi login, dan Firestore Rules harus dirilis bersama. Jan
 
 ## Cakupan dan batasan
 
+- Switch Admin/Superadmin berada di ikon plus tengah pada mobile, dan di Santri & Kelola Akun pada desktop. Kartu program tidak tampil di dasbor admin. Dasbor Wali hanya menampilkan program ketika ON. Admin/Ustadz membaca laporan di Santri & Kelola Akun, dengan filter tanggal dan santri, tanpa dapat mengubah isian wali. Laporan tetap dapat dibaca ketika OFF.
 - Admin dan Superadmin mengendalikan switch. Ustadz mempertahankan akses pengelolaan akun yang sudah ada, termasuk menghapus Admin biasa. Superadmin tidak dapat dihapus atau diubah identitas/role melalui aplikasi maupun SDK klien. Administrator Firebase dengan Admin SDK tetap memiliki wewenang infrastruktur.
 - Akun di sini adalah dokumen `users`; ketika dihapus, login dan izin programnya dicabut. Identitas teknis Firebase Auth yang pernah diterbitkan dapat tetap tercatat, tetapi tidak dapat mengakses akun/program tanpa dokumen `users`.
 - Fungsi login menjembatani penyimpanan username/password lama. Format password lama dan akses pengelola terhadapnya belum dimigrasikan ke hash. Koleksi pengajaran lama mempertahankan aturan sebelumnya; ini bukan audit seluruh aplikasi.

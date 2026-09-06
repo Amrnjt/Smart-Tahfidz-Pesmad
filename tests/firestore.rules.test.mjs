@@ -8,6 +8,16 @@ import {
 import { doc, setDoc, deleteDoc, updateDoc, getDoc } from "firebase/firestore";
 
 let env;
+test('admin and ustadz can read Wali reports while OFF but cannot submit or edit them', async () => {
+  await setDoc(recordRef(dbFor('wali')), record());
+  for (const id of ['admin', 'ustadz']) {
+    await assertSucceeds(getDoc(recordRef(dbFor(id))));
+    await assertFails(updateDoc(recordRef(dbFor(id)), { alMulk: true }));
+    await assertFails(setDoc(doc(dbFor(id), 'wirid_yaumiyyah/staff-entry'), { ...record(), id: 'staff-entry', inputBy: id }));
+  }
+  await updateDoc(doc(dbFor('admin'), 'pantauan_config/pantauan-config-001'), { isEnabled: false });
+  for (const id of ['admin', 'ustadz']) await assertSucceeds(getDoc(recordRef(dbFor(id))));
+});
 test('reserved Anas username cannot be duplicated by a client', async () => {
   await assertFails(setDoc(doc(dbFor('admin'), 'users/duplicate-anas'), { id: 'duplicate-anas', username: 'Anas', role: 'Admin' }));
 });

@@ -107,7 +107,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
           </button>
         </div>
 
-        {isAdminRole(currentUser.role) && <div className="pt-3"><ProgramPantauan currentUser={currentUser} /></div>}
+        {isAdminRole(currentUser.role) && <div className="pt-3"><ProgramPantauan currentUser={currentUser} mode="control" /></div>}
         {/* Action List */}
         <div className="py-3 space-y-2.5">
           {actions.map((act) => {
