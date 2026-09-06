@@ -1,4 +1,4 @@
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas } from '../types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas, WiridYaumiyyahRecord, ProgramPantauanConfig } from '../types';
 import { INITIAL_USERS, INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH, INITIAL_BINNADZOR, INITIAL_PEMBELAJARAN } from '../data/sampleDatabase';
 import { getClassGroup } from '../utils/classUtils';
 
@@ -34,7 +34,9 @@ const STORAGE_KEYS = {
   BINNADZOR: 'tahfidz_binnadzor_db_v2',
   PEMBELAJARAN: 'tahfidz_pembelajaran_db_v2',
   KELAS: 'tahfidz_kelas_db_v2',
-  SESSION: 'tahfidz_active_session_v2'
+  SESSION: 'tahfidz_active_session_v2',
+  PANTAUAN_CONFIG: 'tahfidz_pantauan_config_v1',
+  WIRID_YAUMIYYAH: 'tahfidz_wirid_yaumiyyah_v1'
 };
 
 const COLLECTIONS = {
@@ -44,7 +46,9 @@ const COLLECTIONS = {
   MUROJAAH: 'murojaah',
   BINNADZOR: 'binnadzor',
   PEMBELAJARAN: 'pembelajaran',
-  KELAS: 'kelas'
+  KELAS: 'kelas',
+  PANTAUAN_CONFIG: 'pantauan_config',
+  WIRID_YAUMIYYAH: 'wirid_yaumiyyah'
 };
 
 // Helper to remove any undefined fields before sending to Firestore
@@ -1102,5 +1106,108 @@ export const storageService = {
     localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(INITIAL_BINNADZOR));
     localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(INITIAL_PEMBELAJARAN));
     localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify([]));
+  },
+
+  // Program Pantauan Liburan Santri - Config Management
+  async getPantauanConfig(): Promise<ProgramPantauanConfig> {
+    const defaultConfig: ProgramPantauanConfig = {
+      id: 'pantauan-config-001',
+      isEnabled: false,
+      lastUpdated: new Date().toISOString(),
+      updatedBy: 'system'
+    };
+
+    try {
+      // Try Firestore first
+      const configDoc = await getDocs(collection(db, COLLECTIONS.PANTAUAN_CONFIG));
+      if (!configDoc.empty) {
+        const config = configDoc.docs[0].data() as ProgramPantauanConfig;
+        localStorage.setItem(STORAGE_KEYS.PANTAUAN_CONFIG, JSON.stringify(config));
+        return config;
+      }
+    } catch (err) {
+      console.warn('Failed to fetch pantauan config from Firestore:', err);
+    }
+
+    // Fallback to localStorage
+    const localData = localStorage.getItem(STORAGE_KEYS.PANTAUAN_CONFIG);
+    if (localData) {
+      try {
+        return JSON.parse(localData);
+      } catch {
+        return defaultConfig;
+      }
+    }
+
+    return defaultConfig;
+  },
+
+  async setPantauanConfig(config: ProgramPantauanConfig): Promise<void> {
+    const updatedConfig = {
+      ...config,
+      lastUpdated: new Date().toISOString()
+    };
+
+    try {
+      await setDoc(doc(db, COLLECTIONS.PANTAUAN_CONFIG, config.id), cleanForFirestore(updatedConfig));
+      localStorage.setItem(STORAGE_KEYS.PANTAUAN_CONFIG, JSON.stringify(updatedConfig));
+    } catch (err) {
+      console.error('Failed to save pantauan config:', err);
+      localStorage.setItem(STORAGE_KEYS.PANTAUAN_CONFIG, JSON.stringify(updatedConfig));
+    }
+  },
+
+  // Wirid Yaumiyyah Records Management
+  getWiridYaumiyyahRecords(): WiridYaumiyyahRecord[] {
+    const data = localStorage.getItem(STORAGE_KEYS.WIRID_YAUMIYYAH);
+    if (!data) return [];
+    try {
+      const parsed = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  },
+
+  async saveWiridYaumiyyah(record: Omit<WiridYaumiyyahRecord, 'id'> & { id?: string }): Promise<WiridYaumiyyahRecord> {
+    const records = this.getWiridYaumiyyahRecords();
+    const now = new Date();
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const timestamp = record.timestamp || `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+    const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
+    
+    const newRecord: WiridYaumiyyahRecord = {
+      ...record,
+      id: record.id || `WYD-${Date.now()}`,
+      timestamp,
+      namaSantri: santri?.namaSantri || record.namaSantri || ''
+    };
+
+    // Check if record for same santri and date exists
+    const existingIndex = records.findIndex(
+      r => r.idSantri === record.idSantri && r.timestamp.startsWith(timestamp.substring(0, 10))
+    );
+
+    if (existingIndex >= 0) {
+      records[existingIndex] = newRecord;
+    } else {
+      records.unshift(newRecord);
+    }
+
+    try {
+      await setDoc(doc(db, COLLECTIONS.WIRID_YAUMIYYAH, newRecord.id), cleanForFirestore(newRecord));
+      localStorage.setItem(STORAGE_KEYS.WIRID_YAUMIYYAH, JSON.stringify(records));
+    } catch (err) {
+      console.error('Failed to save wirid yaumiyyah:', err);
+      localStorage.setItem(STORAGE_KEYS.WIRID_YAUMIYYAH, JSON.stringify(records));
+    }
+
+    return newRecord;
+  },
+
+  getWiridYaumiyyahBySantri(idSantri: string): WiridYaumiyyahRecord[] {
+    const records = this.getWiridYaumiyyahRecords();
+    return records.filter(r => r.idSantri === idSantri).sort((a, b) => b.timestamp.localeCompare(a.timestamp));
   }
 };

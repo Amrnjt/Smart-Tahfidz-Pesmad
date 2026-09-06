@@ -1,4 +1,4 @@
-export type UserRole = 'Ustadz' | 'Wali' | 'Santri';
+export type UserRole = 'Ustadz' | 'Wali' | 'Santri' | 'Admin';
 
 export type PredikatNilai = 'Mengulang' | 'Kurang' | 'Baik' | 'Sangat Baik';
 
@@ -201,4 +201,30 @@ export interface SurahFullDetail extends SurahMeta {
   audioFull?: string;
 }
 
-export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'binnadzor' | 'pembelajaran' | 'riwayat' | 'mushaf' | 'santri' | 'kelas';
+export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'binnadzor' | 'pembelajaran' | 'riwayat' | 'mushaf' | 'santri' | 'kelas' | 'pantauan';
+
+// Program Pantauan Liburan Santri - Types
+export interface WiridYaumiyyahRecord {
+  id: string;
+  timestamp: string;
+  idSantri: string;
+  namaSantri?: string;
+  inputBy: string;
+  // Wirid Yaumiyyah status (true = sudah dilaksanakan)
+  alWaqiah: boolean;
+  alMulk: boolean;
+  alInsyirah: boolean;
+  // Shalat Berjamaah status
+  shubuh: 'Jama\'ah' | 'Berhalangan' | 'Sakit';
+  dzuhur: 'Jama\'ah' | 'Berhalangan' | 'Sakit';
+  ashar: 'Jama\'ah' | 'Berhalangan' | 'Sakit';
+  maghrib: 'Jama\'ah' | 'Berhalangan' | 'Sakit';
+  isya: 'Jama\'ah' | 'Berhalangan' | 'Sakit';
+}
+
+export interface ProgramPantauanConfig {
+  id: string;
+  isEnabled: boolean;
+  lastUpdated: string;
+  updatedBy?: string;
+}

@@ -1,9 +1,60 @@
-node_modules/
-build/
+```gitignore
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
 dist/
-coverage/
-.DS_Store
-*.log
-.env*
-!.env.example
+build/
+target/
+
+# Dependencies
+node_modules/
+venv/
+.venv/
 .env
+.env.local
+.env.*
+
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+
+# Editors
+.vscode/
+.idea/
+
+# Coverage
+coverage/
+htmlcov/
+.coverage
+
+# Python specific
+.mypy_cache/
+.pytest_cache/
+*.pyc
+__pycache__/
+
+# Node specific
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS generated
+.DS_Store
+Thumbs.db
+```
+
+Wait, I need to reconsider this. Looking at the file changes again:
+- Added files: []
+- Deleted files: []
+- Modified files: ['src/services/storageService.ts', 'src/types/index.ts']
+
+These are TypeScript source files, not build artifacts or dependencies. The original .gitignore content appears to be empty, and there are no build artifacts or temporary files in the changes that would require adding ignore rules.
+
+Actually, since only source code files (.ts files) were modified and there are no build artifacts, dependencies, or temp files in the changes, the output should be empty.
+
+```gitignore
+
+```
