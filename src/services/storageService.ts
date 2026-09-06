@@ -1,5 +1,8 @@
+import { signInWithCustomToken, signOut } from 'firebase/auth';
+import { httpsCallable } from 'firebase/functions';
+import { isAdminRole, isProtectedUser, isStaffRole } from '../utils/roles';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas, WiridYaumiyyahRecord, ProgramPantauanConfig } from '../types';
-import { INITIAL_USERS, INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH, INITIAL_BINNADZOR, INITIAL_PEMBELAJARAN } from '../data/sampleDatabase';
+import { INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH, INITIAL_BINNADZOR, INITIAL_PEMBELAJARAN } from '../data/sampleDatabase';
 import { getClassGroup } from '../utils/classUtils';
 
 function normalizeKelas(kelas: string): string {
@@ -15,7 +18,7 @@ function normalizeTipeKelas(tipe: string): TipeKelas {
   if (normalized.toLowerCase().includes('istimewa')) return 'Kelas Istimewa';
   return 'Binnadzor';
 }
-import { db } from './firebase';
+import { db, auth, functions } from './firebase';
 import {
   collection,
   doc,
@@ -23,6 +26,11 @@ import {
   deleteDoc,
   onSnapshot,
   getDocs,
+  query,
+  where,
+  documentId,
+  getDocFromServer,
+  runTransaction,
   writeBatch
 } from 'firebase/firestore';
 
@@ -65,61 +73,31 @@ export const storageService = {
       return { success: false, message: 'Harap masukkan Username / ID Santri dan Password.' };
     }
 
-    // 1. Try local cache first for instant response
-    const localUsers = this.getUsers();
-    let matched = localUsers.find(
-      u => u.username && u.username.trim().toLowerCase() === cleanUser && u.password === cleanPass
-    );
-
-    // 2. If not matched in local cache, query Firestore directly to ensure newly created accounts on other devices or fresh sessions are immediately authenticated
-    if (!matched) {
-      try {
-        const querySnap = await getDocs(collection(db, COLLECTIONS.USERS));
-        const remoteUsers: User[] = [];
-        querySnap.forEach((docSnap) => {
-          const u = docSnap.data() as User;
-          if (u && u.username) {
-            remoteUsers.push(u);
-            if (u.username.trim().toLowerCase() === cleanUser && u.password === cleanPass) {
-              matched = u;
-            }
-          }
-        });
-
-        // Update local cache if remote has latest accounts
-        if (remoteUsers.length > 0) {
-          localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(remoteUsers));
-        }
-      } catch (err) {
-        console.warn('Direct Firestore authentication fallback error:', err);
-      }
+    try {
+      const login = httpsCallable<{ username: string; password: string }, { token: string; user: User }>(functions, 'loginAccount');
+      const result = await login({ username: cleanUser, password: cleanPass });
+      await signInWithCustomToken(auth, result.data.token);
+      this.setSession(result.data.user);
+      return { success: true, user: result.data.user };
+    } catch {
+      return { success: false, message: 'Login gagal. Periksa akun, koneksi, atau coba kembali beberapa saat lagi.' };
     }
-
-    if (matched) {
-      this.setSession(matched);
-      return { success: true, user: matched };
-    }
-
-    return {
-      success: false,
-      message: 'Username / ID Santri atau Password salah. Silakan periksa kembali huruf besar/kecil atau PIN Anda.'
-    };
   },
   getUsers(): User[] {
     const data = localStorage.getItem(STORAGE_KEYS.USERS);
     if (!data) {
-      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
-      return INITIAL_USERS;
+      localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([]));
+      return [];
     }
     try {
       const parsed = JSON.parse(data);
-      if (!Array.isArray(parsed) || parsed.length === 0) {
-        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
-        return INITIAL_USERS;
+      if (!Array.isArray(parsed)) {
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([]));
+        return [];
       }
       return parsed;
     } catch {
-      return INITIAL_USERS;
+      return [];
     }
   },
 
@@ -213,34 +191,10 @@ export const storageService = {
 
   // Real-time Firestore Listeners that automatically update localStorage & app state across all devices
   initRealtimeSync(onUpdate?: () => void): () => void {
-    // 1. Initial One-time Migration & Seeding: Ensure all local users & santri exist in Firestore
+    // Migrate teaching data only; account data is owned by the server.
     const seedAndMigrate = async () => {
       try {
-        // A. Migrate Users
-        const userSnapshot = await getDocs(collection(db, COLLECTIONS.USERS));
-        const remoteUserMap = new Map<string, User>();
-        userSnapshot.forEach((docSnap) => {
-          const u = docSnap.data() as User;
-          if (u.id) remoteUserMap.set(u.id, u);
-          if (u.username) remoteUserMap.set(u.username.toLowerCase(), u);
-        });
-
-        const localUsers = this.getUsers();
-        // Akun demo (INITIAL_USERS) hanya di-seed ketika database benar-benar
-        // kosong (belum ada satu pun akun di cloud maupun lokal). Ini mencegah
-        // akun demo muncul kembali setelah diedit atau dihapus, sekaligus tetap
-        // menyediakan akun awal agar tidak terjadi lockout pada database baru.
-        const isFreshDatabase = remoteUserMap.size === 0 && localUsers.length === 0;
-        const usersToSync = isFreshDatabase ? [...INITIAL_USERS] : [...localUsers];
-        for (const user of usersToSync) {
-          if (!remoteUserMap.has(user.id) && !remoteUserMap.has(user.username.toLowerCase())) {
-            const cleanUser = cleanForFirestore(user);
-            await setDoc(doc(db, COLLECTIONS.USERS, user.id), cleanUser).catch(console.error);
-            remoteUserMap.set(user.id, user);
-            remoteUserMap.set(user.username.toLowerCase(), user);
-          }
-        }
-
+        // Accounts are cloud authoritative: never restore deleted users from a device cache.
         // B. Migrate Santri
         const santriSnapshot = await getDocs(collection(db, COLLECTIONS.SANTRI));
         const remoteSantriMap = new Map<string, Santri>();
@@ -323,7 +277,7 @@ export const storageService = {
     seedAndMigrate();
 
     // 1. Sync Users Realtime
-    const unsubUsers = onSnapshot(collection(db, COLLECTIONS.USERS), (snapshot) => {
+    const unsubUsers = onSnapshot(isStaffRole(this.getSession()?.role) ? collection(db, COLLECTIONS.USERS) : query(collection(db, COLLECTIONS.USERS), where(documentId(), '==', auth.currentUser?.uid || '__none__')), (snapshot) => {
       if (!snapshot.empty) {
         const users: User[] = [];
         const userMap = new Map<string, User>();
@@ -342,10 +296,7 @@ export const storageService = {
         localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
         if (onUpdate) onUpdate();
       } else {
-        INITIAL_USERS.forEach((u) => {
-          setDoc(doc(db, COLLECTIONS.USERS, u.id), cleanForFirestore(u)).catch(console.error);
-        });
-        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([]));
         if (onUpdate) onUpdate();
       }
     }, (err) => {
@@ -800,51 +751,33 @@ export const storageService = {
   },
 
   async deleteSantri(idSantri: string, deleteRelatedHistory = true): Promise<boolean> {
-    // 1. Remove from Santri list
-    const santriList = this.getSantriList().filter(s => s.idSantri !== idSantri);
-    localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(santriList));
-
-    // 2. Remove associated Wali and Santri user accounts
-    const usersToDelete = this.getUsers().filter(u => u.idSantri === idSantri || u.username.toLowerCase() === idSantri.toLowerCase());
-    const users = this.getUsers().filter(u => u.idSantri !== idSantri && u.username.toLowerCase() !== idSantri.toLowerCase());
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-
-    // 3. Clean up related Ziyadah and Murojaah records if requested
-    let ziyadahToDelete: ZiyadahRecord[] = [];
-    let murojaahToDelete: MurojaahRecord[] = [];
-
+    if (!isStaffRole(this.getSession()?.role)) throw new Error('Akses pengelolaan akun diperlukan.');
+    const remoteUsers = await getDocs(collection(db, COLLECTIONS.USERS));
+    const related = remoteUsers.docs.filter(d => d.data().idSantri === idSantri || String(d.data().username || '').toLowerCase() === idSantri.toLowerCase());
+    if (related.some(d => isProtectedUser(d.data() as User))) throw new Error('Santri terhubung ke superadmin yang dilindungi.');
+    const refs = [doc(db, COLLECTIONS.SANTRI, idSantri), ...related.map(d => d.ref)];
     if (deleteRelatedHistory) {
-      ziyadahToDelete = this.getZiyadahRecords().filter(r => r.idSantri === idSantri);
-      const ziyadah = this.getZiyadahRecords().filter(r => r.idSantri !== idSantri);
-      localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(ziyadah));
-
-      murojaahToDelete = this.getMurojaahRecords().filter(r => r.idSantri === idSantri);
-      const murojaah = this.getMurojaahRecords().filter(r => r.idSantri !== idSantri);
-      localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(murojaah));
-    }
-
-    // Cloud Firestore delete
-    try {
-      await deleteDoc(doc(db, COLLECTIONS.SANTRI, idSantri));
-      for (const u of usersToDelete) {
-        await deleteDoc(doc(db, COLLECTIONS.USERS, u.id));
+      for (const name of [COLLECTIONS.ZIYADAH, COLLECTIONS.MUROJAAH]) {
+        const records = await getDocs(query(collection(db, name), where('idSantri', '==', idSantri)));
+        refs.push(...records.docs.map(d => d.ref));
       }
-      if (deleteRelatedHistory) {
-        for (const z of ziyadahToDelete) {
-          await deleteDoc(doc(db, COLLECTIONS.ZIYADAH, z.id));
-        }
-        for (const m of murojaahToDelete) {
-          await deleteDoc(doc(db, COLLECTIONS.MUROJAAH, m.id));
-        }
-      }
-    } catch (e) {
-      console.error('Failed to delete Santri from Firestore:', e);
     }
-
+    if (refs.length > 500) throw new Error('Riwayat terlalu besar untuk penghapusan sekaligus. Hubungi administrator Firebase.');
+    const batch = writeBatch(db);
+    refs.forEach(ref => batch.delete(ref));
+    await batch.commit();
+    localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(this.getSantriList().filter(s => s.idSantri !== idSantri)));
+    const deletedIds = new Set(related.map(d => d.id));
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(this.getUsers().filter(u => !deletedIds.has(u.id))));
+    if (deleteRelatedHistory) {
+      localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(this.getZiyadahRecords().filter(r => r.idSantri !== idSantri)));
+      localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(this.getMurojaahRecords().filter(r => r.idSantri !== idSantri)));
+    }
     return true;
   },
 
   async addUser(user: User): Promise<User> {
+    if (user.role === 'Superadmin') throw new Error('Superadmin hanya dapat ditetapkan melalui administrasi Firebase.');
     const users = this.getUsers();
     
     // Ensure unique ID if not provided or to prevent collisions
@@ -854,71 +787,45 @@ export const storageService = {
       password: user.password ? user.password.trim() : '123',
       role: user.role || 'Ustadz',
       nama: user.nama ? user.nama.trim() : 'Ustadz Pengajar',
-      idSantri: user.role === 'Ustadz' ? '' : (user.idSantri || '')
+      idSantri: isStaffRole(user.role) ? '' : (user.idSantri || '')
     };
 
     const existingIndex = users.findIndex(u => u.username.toLowerCase() === ensuredUser.username.toLowerCase());
-    if (existingIndex >= 0) {
-      users[existingIndex] = ensuredUser;
-    } else {
-      users.push(ensuredUser);
-    }
-
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-
-    // Cloud Firestore save directly
-    try {
-      await setDoc(doc(db, COLLECTIONS.USERS, ensuredUser.id), cleanForFirestore(ensuredUser));
-    } catch (e) {
-      console.error('Failed to save User to Firestore:', e);
-    }
+    if (existingIndex >= 0) throw new Error('Username sudah digunakan.');
+    await setDoc(doc(db, COLLECTIONS.USERS, ensuredUser.id), cleanForFirestore(ensuredUser));
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([...users, ensuredUser]));
 
     return ensuredUser;
   },
 
   async updateUser(id: string, updatedData: Partial<User>): Promise<boolean> {
+    const remote = await getDocFromServer(doc(db, COLLECTIONS.USERS, id));
+    const ownNotification = this.getSession()?.id === id && Object.keys(updatedData).every(key => key === 'notificationPermission');
+    if ((isProtectedUser(remote.data() as User) && !ownNotification) || updatedData.role === 'Superadmin') throw new Error('Perubahan superadmin hanya melalui administrasi Firebase.');
     const cleanUpdate = { ...updatedData };
     if (cleanUpdate.username) cleanUpdate.username = cleanUpdate.username.trim().toLowerCase();
     if (cleanUpdate.password) cleanUpdate.password = cleanUpdate.password.trim();
     if (cleanUpdate.nama) cleanUpdate.nama = cleanUpdate.nama.trim();
 
-    const users = this.getUsers().map(u => {
-      if (u.id === id) {
-        return { ...u, ...cleanUpdate };
-      }
-      return u;
-    });
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-
-    // Update active session if the edited user is currently logged in
-    const currentSession = this.getSession();
-    if (currentSession && currentSession.id === id) {
-      this.setSession({ ...currentSession, ...cleanUpdate });
-    }
-
-    // Cloud Firestore update
-    const target = users.find(u => u.id === id);
-    if (target) {
-      try {
-        await setDoc(doc(db, COLLECTIONS.USERS, id), cleanForFirestore(target), { merge: true });
-      } catch (e) {
-        console.error('Failed to update User in Firestore:', e);
-      }
-    }
+    if (!remote.exists()) throw new Error('Akun tidak ditemukan.');
+    const target = { ...remote.data(), ...cleanUpdate, id } as User;
+    await setDoc(doc(db, COLLECTIONS.USERS, id), cleanForFirestore(target));
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(this.getUsers().map(u => u.id === id ? target : u)));
+    if (this.getSession()?.id === id) { const { password, ...profile } = target; this.setSession(profile); }
 
     return true;
   },
 
   async deleteUser(id: string): Promise<boolean> {
-    const users = this.getUsers().filter(u => u.id !== id);
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-
-    // Cloud Firestore delete
-    try {
-      await deleteDoc(doc(db, COLLECTIONS.USERS, id));
-    } catch (e) {
-      console.error('Failed to delete User from Firestore:', e);
-    }
+    if (!isStaffRole(this.getSession()?.role)) throw new Error('Akses pengelolaan akun diperlukan.');
+    const targetRef = doc(db, COLLECTIONS.USERS, id);
+    await runTransaction(db, async transaction => {
+      const snapshot = await transaction.get(targetRef);
+      if (isProtectedUser(snapshot.data() as User)) throw new Error('Superadmin tidak dapat dihapus.');
+      transaction.delete(targetRef);
+    });
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(this.getUsers().filter(u => u.id !== id)));
+    if (this.getSession()?.id === id) this.setSession(null);
 
     return true;
   },
@@ -936,6 +843,7 @@ export const storageService = {
   setSession(user: User | null) {
     if (!user) {
       localStorage.removeItem(STORAGE_KEYS.SESSION);
+      void signOut(auth);
     } else {
       localStorage.setItem(STORAGE_KEYS.SESSION, JSON.stringify(user));
     }
@@ -1099,7 +1007,7 @@ export const storageService = {
   },
 
   async resetToDefault() {
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify([]));
     localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(INITIAL_SANTRI));
     localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(INITIAL_ZIYADAH));
     localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(INITIAL_MUROJAAH));
@@ -1119,9 +1027,9 @@ export const storageService = {
 
     try {
       // Try Firestore first
-      const configDoc = await getDocs(collection(db, COLLECTIONS.PANTAUAN_CONFIG));
-      if (!configDoc.empty) {
-        const config = configDoc.docs[0].data() as ProgramPantauanConfig;
+      const configDoc = await getDocFromServer(doc(db, COLLECTIONS.PANTAUAN_CONFIG, 'pantauan-config-001'));
+      if (configDoc.exists()) {
+        const config = configDoc.data() as ProgramPantauanConfig;
         localStorage.setItem(STORAGE_KEYS.PANTAUAN_CONFIG, JSON.stringify(config));
         return config;
       }
@@ -1129,20 +1037,11 @@ export const storageService = {
       console.warn('Failed to fetch pantauan config from Firestore:', err);
     }
 
-    // Fallback to localStorage
-    const localData = localStorage.getItem(STORAGE_KEYS.PANTAUAN_CONFIG);
-    if (localData) {
-      try {
-        return JSON.parse(localData);
-      } catch {
-        return defaultConfig;
-      }
-    }
-
     return defaultConfig;
   },
 
   async setPantauanConfig(config: ProgramPantauanConfig): Promise<void> {
+    if (!isAdminRole(this.getSession()?.role)) throw new Error('Hanya admin dapat mengubah program.');
     const updatedConfig = {
       ...config,
       lastUpdated: new Date().toISOString()
@@ -1152,8 +1051,7 @@ export const storageService = {
       await setDoc(doc(db, COLLECTIONS.PANTAUAN_CONFIG, config.id), cleanForFirestore(updatedConfig));
       localStorage.setItem(STORAGE_KEYS.PANTAUAN_CONFIG, JSON.stringify(updatedConfig));
     } catch (err) {
-      console.error('Failed to save pantauan config:', err);
-      localStorage.setItem(STORAGE_KEYS.PANTAUAN_CONFIG, JSON.stringify(updatedConfig));
+      throw err;
     }
   },
 
@@ -1170,6 +1068,8 @@ export const storageService = {
   },
 
   async saveWiridYaumiyyah(record: Omit<WiridYaumiyyahRecord, 'id'> & { id?: string }): Promise<WiridYaumiyyahRecord> {
+    const session = this.getSession();
+    if (session?.role !== 'Wali' || !session.idSantri || session.idSantri !== record.idSantri) throw new Error('Akses wali tidak sesuai.');
     const records = this.getWiridYaumiyyahRecords();
     const now = new Date();
     const pad = (n: number) => n.toString().padStart(2, '0');
@@ -1179,7 +1079,8 @@ export const storageService = {
     
     const newRecord: WiridYaumiyyahRecord = {
       ...record,
-      id: record.id || `WYD-${Date.now()}`,
+      id: encodeURIComponent(record.idSantri) + '_' + timestamp.substring(0, 10),
+      inputBy: session.id,
       timestamp,
       namaSantri: santri?.namaSantri || record.namaSantri || ''
     };
@@ -1196,11 +1097,14 @@ export const storageService = {
     }
 
     try {
-      await setDoc(doc(db, COLLECTIONS.WIRID_YAUMIYYAH, newRecord.id), cleanForFirestore(newRecord));
+      await runTransaction(db, async transaction => {
+        const config = await transaction.get(doc(db, COLLECTIONS.PANTAUAN_CONFIG, 'pantauan-config-001'));
+        if (config.data()?.isEnabled !== true) throw new Error('Program pantauan sedang nonaktif.');
+        transaction.set(doc(db, COLLECTIONS.WIRID_YAUMIYYAH, newRecord.id), cleanForFirestore(newRecord));
+      });
       localStorage.setItem(STORAGE_KEYS.WIRID_YAUMIYYAH, JSON.stringify(records));
     } catch (err) {
-      console.error('Failed to save wirid yaumiyyah:', err);
-      localStorage.setItem(STORAGE_KEYS.WIRID_YAUMIYYAH, JSON.stringify(records));
+      throw err;
     }
 
     return newRecord;
