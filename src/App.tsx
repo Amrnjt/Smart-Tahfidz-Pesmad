@@ -157,7 +157,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-5 flex-1 space-y-5 relative z-10 min-w-0">
+      <main className="max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-5 pb-24 sm:pb-8 flex-1 space-y-5 relative z-10 min-w-0">
         
         {/* If Not Logged In, Show Login View */}
         {!currentUser ? (

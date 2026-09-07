@@ -707,7 +707,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-sm flex flex-col" style={{ maxHeight: 'calc(100vh - 140px)' }}>
+    <div className="bg-white rounded-2xl sm:rounded-3xl p-3.5 sm:p-6 border border-slate-200/90 shadow-sm flex flex-col md:max-h-[calc(100vh-140px)]">
       {/* Header & Filter Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100 flex-shrink-0">
         <div className="space-y-1.5">
@@ -1100,8 +1100,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         </div>
       )}
 
-      {/* Scrollable Content Area - fixed height */}
-      <div className="flex-1 overflow-y-auto min-h-0 rounded-xl border border-slate-100 bg-slate-50/50">
+      {/* Scrollable Content Area - responsive height */}
+      <div className="flex-1 md:overflow-y-auto min-h-0 rounded-xl border border-slate-100 bg-slate-50/50">
         {!isViewOnly && displayedItems.length > 0 && (
           <div className="sticky top-0 z-10 bg-slate-100/95 backdrop-blur-xs px-3 sm:px-4 py-1.5 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
             <div className="flex items-center gap-2">
@@ -1239,24 +1239,50 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                       </div>
                       <div className="text-xs font-extrabold text-emerald-950 break-words flex items-start gap-1.5">
                         <BookOpen className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
-                        <span className="flex-1">{item.materi}</span>
+                        <span className="flex-1 leading-relaxed">{item.materi}</span>
                       </div>
                     </div>
 
+                    {/* Quick Preview Chips (Catatan, Kendala, Kenaikan) */}
+                    {(item.catatan || item.kendalaSantri || item.statusKenaikan || item.tipeKelas) && (
+                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                        {item.statusKenaikan && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200">
+                            🎯 {item.statusKenaikan}
+                          </span>
+                        )}
+                        {item.tipeKelas && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-50 text-amber-800 px-2 py-0.5 rounded-md border border-amber-200">
+                            📘 {item.tipeKelas}
+                          </span>
+                        )}
+                        {item.kendalaSantri && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-rose-50 text-rose-800 px-2 py-0.5 rounded-md border border-rose-200 truncate max-w-full">
+                            ⚠️ {item.kendalaSantri}
+                          </span>
+                        )}
+                        {item.catatan && !item.kendalaSantri && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200 truncate max-w-full">
+                            📝 {item.catatan}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
                     {/* Date & Expand Toggle */}
                     <div className="flex items-center justify-between gap-2 pt-0.5 text-xs">
-                      <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-medium">
+                      <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-medium min-w-0 flex-1">
                         <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                        <span>{formatTanggalLengkap(item.timestamp)}</span>
+                        <span className="truncate">{formatTanggalLengkap(item.timestamp)}</span>
                         {timePart && (
-                          <span className="text-slate-400 font-mono">• {timePart} WIB</span>
+                          <span className="text-slate-400 font-mono flex-shrink-0">• {timePart}</span>
                         )}
                       </div>
 
                       <button
                         type="button"
                         onClick={() => toggleRow(item.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer flex-shrink-0"
                       >
                         <span>{isExpanded ? 'Tutup' : 'Rincian'}</span>
                         {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -1392,122 +1418,169 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                   {/* Expanded Detail - accordion */}
                   {isExpanded && (
-                    <div className="px-3 sm:px-4 pb-3 pt-1 bg-slate-50/80 border-t border-slate-100">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                        {/* Left column */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-center gap-2">
-                            <span className="text-slate-400 font-semibold w-16 flex-shrink-0">Santri</span>
-                            <span className="font-bold text-slate-800">{item.namaSantri}</span>
-                            <span className="text-[10px] text-slate-400 font-mono">{item.idSantri}</span>
-                          </div>
-                          {kelasGroup && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-slate-400 font-semibold w-16 flex-shrink-0">Kelas</span>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
+                    <div className="px-3 sm:px-5 pb-4 pt-2.5 bg-slate-50/90 border-t border-slate-200/80 rounded-b-xl space-y-3 text-xs">
+                      {/* Grid cards for detail */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {/* Detail Identitas & Materi Card */}
+                        <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs space-y-2">
+                          <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2">
+                            <div className="min-w-0">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Identitas Santri</span>
+                              <h5 className="font-extrabold text-slate-900 text-sm truncate">{item.namaSantri}</h5>
+                              <span className="text-[11px] text-slate-400 font-mono">NIS: {item.idSantri}</span>
+                            </div>
+                            {kelasGroup && (
+                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200 flex-shrink-0">
                                 {kelasGroup}
                               </span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <span className="text-slate-400 font-semibold w-16 flex-shrink-0">Materi</span>
-                            <span className="font-semibold text-slate-700">{item.materi}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-slate-400 font-semibold w-16 flex-shrink-0">Nilai</span>
-                            {renderNilaiBadge(item.nilai)}
+                            )}
                           </div>
 
-                          {/* Non-Tahfidz / Pembelajaran specific details */}
-                          {item.tipeKelas && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-slate-400 font-semibold w-16 flex-shrink-0">Program</span>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 font-bold text-[10px] border border-amber-200">
-                                {item.tipeKelas}
-                              </span>
+                          <div className="space-y-1.5 pt-0.5">
+                            <div>
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Materi Hafalan / Pelajaran</span>
+                              <p className="font-extrabold text-slate-800 text-xs bg-slate-50 p-2 rounded-lg border border-slate-200/60 leading-relaxed mt-0.5">
+                                {item.materi}
+                              </p>
                             </div>
-                          )}
-                          {item.statusKenaikan && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-slate-400 font-semibold w-16 flex-shrink-0">Status</span>
-                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-bold text-[10px] border border-emerald-200">
-                                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                                {item.statusKenaikan}
-                              </span>
+
+                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-slate-400 font-medium text-[11px]">Nilai:</span>
+                                {renderNilaiBadge(item.nilai)}
+                              </div>
+                              {item.tipeKelas && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-slate-400 font-medium text-[11px]">Program:</span>
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 font-bold text-[10px] border border-amber-200">
+                                    {item.tipeKelas}
+                                  </span>
+                                </div>
+                              )}
+                              {item.statusKenaikan && (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-slate-400 font-medium text-[11px]">Kenaikan:</span>
+                                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-900 font-bold text-[10px] border border-emerald-200">
+                                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                                    {item.statusKenaikan}
+                                  </span>
+                                </div>
+                              )}
                             </div>
-                          )}
+                          </div>
+
+                          {/* 4 Aspek Kualitas Penilaian */}
                           {(item.hukumTajwid || item.makhrojHuruf || item.kefasihan || item.kelancaran) && (
-                            <div className="pt-1">
-                              <span className="text-slate-400 font-semibold block text-[10px] uppercase mb-1">4 Aspek Kualitas</span>
-                              <div className="grid grid-cols-2 gap-1 text-[10px]">
-                                {item.hukumTajwid && <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">Tajwid: <b>{item.hukumTajwid}</b></span>}
-                                {item.makhrojHuruf && <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">Makhroj: <b>{item.makhrojHuruf}</b></span>}
-                                {item.kefasihan && <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">Fashohah: <b>{item.kefasihan}</b></span>}
-                                {item.kelancaran && <span className="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">Kelancaran: <b>{item.kelancaran}</b></span>}
+                            <div className="pt-2 border-t border-slate-100">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">4 Aspek Penilaian</span>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {item.hukumTajwid && (
+                                  <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-200/60">
+                                    <span className="text-[10px] text-slate-500 block">Tajwid</span>
+                                    <span className="font-bold text-slate-800 text-[11px]">{item.hukumTajwid}</span>
+                                  </div>
+                                )}
+                                {item.makhrojHuruf && (
+                                  <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-200/60">
+                                    <span className="text-[10px] text-slate-500 block">Makhroj</span>
+                                    <span className="font-bold text-slate-800 text-[11px]">{item.makhrojHuruf}</span>
+                                  </div>
+                                )}
+                                {item.kefasihan && (
+                                  <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-200/60">
+                                    <span className="text-[10px] text-slate-500 block">Fashohah</span>
+                                    <span className="font-bold text-slate-800 text-[11px]">{item.kefasihan}</span>
+                                  </div>
+                                )}
+                                {item.kelancaran && (
+                                  <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-200/60">
+                                    <span className="text-[10px] text-slate-500 block">Kelancaran</span>
+                                    <span className="font-bold text-slate-800 text-[11px]">{item.kelancaran}</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           )}
                         </div>
 
-                        {/* Right column */}
-                        <div className="space-y-1.5">
-                          <div className="flex items-start gap-2">
-                            <span className="text-slate-400 font-semibold w-16 flex-shrink-0 mt-0.5">Catatan</span>
-                            <span className="text-slate-600 italic flex-1">{item.catatan || '-'}</span>
-                          </div>
-                          {item.kendalaSantri && (
-                            <div className="flex items-start gap-2">
-                              <span className="text-slate-400 font-semibold w-16 flex-shrink-0 mt-0.5">Kendala</span>
-                              <span className="text-amber-800 font-medium flex-1">{item.kendalaSantri}</span>
+                        {/* Catatan, Kendala, & Tindak Lanjut Card */}
+                        <div className="bg-white p-3.5 rounded-xl border border-slate-200/80 shadow-2xs flex flex-col justify-between space-y-2.5">
+                          <div className="space-y-2">
+                            <div>
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Catatan Ustadz / Guru</span>
+                              <p className="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200/70 leading-relaxed break-words">
+                                {item.catatan || <span className="text-slate-400 italic">Tidak ada catatan khusus.</span>}
+                              </p>
                             </div>
-                          )}
-                          {item.rekomendasiTindakLanjut && (
-                            <div className="flex items-start gap-2">
-                              <span className="text-slate-400 font-semibold w-16 flex-shrink-0 mt-0.5">Saran</span>
-                              <span className="text-emerald-800 font-medium flex-1">{item.rekomendasiTindakLanjut}</span>
-                            </div>
-                          )}
-                          <div className="flex items-center gap-2">
-                            <span className="text-slate-400 font-semibold w-16 flex-shrink-0">Dicatat</span>
-                            <span className="text-slate-600">{item.inputBy}</span>
+
+                            {item.kendalaSantri && (
+                              <div>
+                                <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider flex items-center gap-1 mb-1">
+                                  ⚠️ Kendala Santri
+                                </span>
+                                <p className="text-xs text-rose-950 bg-rose-50/80 p-2.5 rounded-lg border border-rose-200 leading-relaxed break-words">
+                                  {item.kendalaSantri}
+                                </p>
+                              </div>
+                            )}
+
+                            {item.rekomendasiTindakLanjut && (
+                              <div>
+                                <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1 mb-1">
+                                  💡 Saran &amp; Tindak Lanjut
+                                </span>
+                                <p className="text-xs text-emerald-950 bg-emerald-50/80 p-2.5 rounded-lg border border-emerald-200 leading-relaxed break-words">
+                                  {item.rekomendasiTindakLanjut}
+                                </p>
+                              </div>
+                            )}
                           </div>
 
-                          {/* Action buttons */}
-                          {!isViewOnly && (
-                            <div className="flex flex-wrap items-center gap-2 pt-2">
-                              {waLink ? (
-                                <a
-                                  href={waLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition cursor-pointer border border-emerald-200 text-xs font-bold"
-                                >
-                                  <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                                  <span>Kirim WA</span>
-                                </a>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-slate-400 bg-slate-100 border border-slate-200 text-xs font-medium">
-                                  <MessageCircle className="w-3.5 h-3.5 text-slate-400" />
-                                  <span>No WA belum ada</span>
-                                </span>
-                              )}
-                              <button
-                                onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer border border-slate-200 text-xs font-bold"
-                              >
-                                <Pencil className="w-3.5 h-3.5 text-slate-600" />
-                                <span>Edit</span>
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); handleDelete(item, e); }}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-rose-600 bg-rose-50 hover:bg-rose-100 transition cursor-pointer border border-rose-200 text-xs font-bold"
-                              >
-                                <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                                <span>Hapus</span>
-                              </button>
+                          <div className="pt-2 border-t border-slate-100">
+                            <div className="flex items-center justify-between text-[11px] text-slate-500 mb-2">
+                              <span>Dicatat oleh: <b className="text-slate-700">{item.inputBy}</b></span>
+                              <span className="font-mono text-[10px] text-slate-400">{formatTanggalLengkap(item.timestamp)}</span>
                             </div>
-                          )}
+
+                            {/* Action buttons on desktop and inside expanded drawer */}
+                            {!isViewOnly && (
+                              <div className="flex flex-wrap items-center gap-2 pt-1">
+                                {waLink ? (
+                                  <a
+                                    href={waLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-emerald-800 bg-emerald-50 hover:bg-emerald-100 transition cursor-pointer border border-emerald-200 text-xs font-bold"
+                                  >
+                                    <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span>Kirim Laporan WA</span>
+                                  </a>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-slate-400 bg-slate-100 border border-slate-200 text-xs font-medium">
+                                    <MessageCircle className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>No WA belum ada</span>
+                                  </span>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer border border-slate-200 text-xs font-bold"
+                                >
+                                  <Pencil className="w-3.5 h-3.5 text-slate-600" />
+                                  <span>Edit Setoran</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleDelete(item, e); }}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-rose-700 bg-rose-50 hover:bg-rose-100 transition cursor-pointer border border-rose-200 text-xs font-bold"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                                  <span>Hapus</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

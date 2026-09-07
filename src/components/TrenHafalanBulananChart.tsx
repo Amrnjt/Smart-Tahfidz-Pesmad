@@ -84,7 +84,6 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
   const [timeRangeMonths, setTimeRangeMonths] = useState<number>(6);
   const [metricMode, setMetricMode] = useState<MetricMode>('ayat');
   const [visualType, setVisualType] = useState<VisualType>('area');
-  const [activeDetailMonth, setActiveDetailMonth] = useState<string | null>(null);
   const [komparasiViewMode, setKomparasiViewMode] = useState<'cards' | 'chart'>('cards');
 
   const monthNames = [
@@ -324,14 +323,6 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
       currentMonthName: currentMonthData?.fullBulan || 'Bulan Ini'
     };
   }, [monthlyData]);
-
-  // Active selected detail data
-  const selectedDetailData = useMemo(() => {
-    if (!activeDetailMonth) {
-      return monthlyData[monthlyData.length - 1];
-    }
-    return monthlyData.find(m => m.monthKey === activeDetailMonth) || monthlyData[monthlyData.length - 1];
-  }, [monthlyData, activeDetailMonth]);
 
   const selectedSantriObj = selectedSantri !== 'ALL'
     ? santriList.find(s => s.idSantri === selectedSantri)
@@ -660,7 +651,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
             </div>
           ) : komparasiViewMode === 'cards' ? (
             /* Dedicated Mobile & Responsive Leaderboard Cards */
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {santriComparisonData.map((item, index) => {
                 const rank = index + 1;
                 const isTop1 = rank === 1;
@@ -672,7 +663,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                 return (
                   <div
                     key={item.idSantri}
-                    className={`rounded-2xl p-3 sm:p-4 border transition-all ${
+                    className={`rounded-2xl p-3.5 sm:p-4 border transition-all ${
                       isTop1
                         ? 'bg-gradient-to-r from-amber-500/10 via-amber-50/50 to-white border-amber-300 shadow-xs ring-1 ring-amber-200/50'
                         : isTop2
@@ -682,12 +673,12 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                         : 'bg-white border-slate-200/80 hover:border-slate-300'
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-2.5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                       {/* Left: Rank Badge & Name & Class */}
                       <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         {/* Rank Badge */}
                         <div
-                          className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center font-extrabold text-xs sm:text-sm flex-shrink-0 ${
+                          className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-extrabold text-sm flex-shrink-0 ${
                             isTop1
                               ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-sm'
                               : isTop2
@@ -702,8 +693,8 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
 
                         {/* Name & Class */}
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h5 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight break-words">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <h5 className="font-extrabold text-slate-900 text-sm leading-tight break-words">
                               {item.namaSantri}
                             </h5>
                             {item.kelas && (
@@ -712,25 +703,25 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                               </span>
                             )}
                           </div>
-                          <span className="text-[10px] font-mono text-slate-400">
-                            {item.idSantri}
+                          <span className="text-[10px] font-mono text-slate-400 block mt-0.5">
+                            ID: {item.idSantri}
                           </span>
                         </div>
                       </div>
 
                       {/* Right: Total Ayat Periode Highlight */}
-                      <div className="text-right flex-shrink-0">
-                        <div className="text-sm sm:text-base font-black text-emerald-800 leading-none">
+                      <div className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-center bg-emerald-50/80 sm:bg-transparent p-2 sm:p-0 rounded-xl border border-emerald-100 sm:border-0 flex-shrink-0">
+                        <span className="text-[10px] font-semibold text-emerald-800 sm:text-slate-500">
+                          Total Periode ({timeRangeMonths} Bln)
+                        </span>
+                        <div className="text-base sm:text-lg font-black text-emerald-800 leading-none">
                           <AnimatedCounter value={item.totalAyatPeriode} /> <span className="text-xs font-bold text-emerald-950">Ayat</span>
                         </div>
-                        <span className="text-[10px] font-semibold text-slate-500">
-                          Total Periode
-                        </span>
                       </div>
                     </div>
 
                     {/* Progress Bar & Sub-Metrics */}
-                    <div className="mt-2.5 space-y-1.5">
+                    <div className="mt-3 space-y-2">
                       {/* Bar indicator */}
                       <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                         <div
@@ -745,19 +736,19 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                         />
                       </div>
 
-                      {/* Chips row */}
-                      <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium pt-0.5">
+                      {/* Chips row - fully responsive without hidden info */}
+                      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1.5 text-[11px] text-slate-600 font-medium pt-0.5">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 font-bold border border-sky-200/60">
-                            <Calendar className="w-2.5 h-2.5" />
-                            Bulan Ini: <b>{item.totalAyatBulanIni} Ayat</b>
+                            <Calendar className="w-3 h-3 text-sky-600 flex-shrink-0" />
+                            <span>Bulan Ini: <b className="text-sky-950">{item.totalAyatBulanIni} Ayat</b></span>
                           </span>
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold border border-slate-200/60">
-                            <BookOpen className="w-2.5 h-2.5" />
-                            {item.totalSesi} Sesi Ziyadah
+                            <BookOpen className="w-3 h-3 text-slate-500 flex-shrink-0" />
+                            <span>{item.totalSesi} Sesi Ziyadah</span>
                           </span>
                         </div>
-                        <span className="text-[10px] text-slate-400 font-semibold hidden sm:inline">
+                        <span className="inline-flex items-center self-start xs:self-auto text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
                           {pct}% dari peringkat #1
                         </span>
                       </div>
@@ -768,65 +759,74 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
             </div>
           ) : (
             /* Bar Chart View with enhanced mobile and desktop sizes */
-            <div className="h-80 sm:h-96 w-full min-w-0 pt-2">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={santriComparisonData}
-                  layout="vertical"
-                  margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                  <XAxis
-                    type="number"
-                    tick={{ fill: '#64748b', fontSize: 10 }}
-                    axisLine={{ stroke: '#cbd5e1' }}
-                  />
-                  <YAxis
-                    type="category"
-                    dataKey="namaSantri"
-                    tick={{ fill: '#334155', fontSize: 10, fontWeight: 600 }}
-                    axisLine={{ stroke: '#cbd5e1' }}
-                    width={95}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: '#ffffff',
-                      borderRadius: '12px',
-                      border: '1px solid #e2e8f0',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                      fontSize: '11px',
-                      color: '#1e293b'
-                    }}
-                    formatter={(val: any, name: any) => [
-                      `${val} Ayat`,
-                      name === 'totalAyatPeriode' ? 'Total Ayat Periode' : 'Total Ayat Bulan Ini'
-                    ]}
-                  />
-                  <Legend
-                    verticalAlign="bottom"
-                    height={32}
-                    formatter={(val) => (
-                      <span className="text-[11px] text-slate-600 font-medium">
-                        {val === 'totalAyatPeriode' ? `Total Hafalan (${timeRangeMonths} Bln)` : 'Hafalan Bulan Ini'}
-                      </span>
-                    )}
-                  />
-                  <Bar
-                    dataKey="totalAyatPeriode"
-                    name="totalAyatPeriode"
-                    fill="#059669"
-                    radius={[0, 4, 4, 0]}
-                    maxBarSize={16}
-                  />
-                  <Bar
-                    dataKey="totalAyatBulanIni"
-                    name="totalAyatBulanIni"
-                    fill="#0ea5e9"
-                    radius={[0, 4, 4, 0]}
-                    maxBarSize={16}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="w-full min-w-0 pt-2 space-y-2">
+              <div className="h-96 sm:h-[420px] w-full min-w-0">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={santriComparisonData}
+                    layout="vertical"
+                    margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                    <XAxis
+                      type="number"
+                      tick={{ fill: '#64748b', fontSize: 10 }}
+                      axisLine={{ stroke: '#cbd5e1' }}
+                    />
+                    <YAxis
+                      type="category"
+                      dataKey="namaSantri"
+                      tick={{ fill: '#334155', fontSize: 10, fontWeight: 600 }}
+                      axisLine={{ stroke: '#cbd5e1' }}
+                      width={105}
+                      tickFormatter={(val: string) => {
+                        if (!val) return '';
+                        return val.length > 13 ? val.slice(0, 11) + '..' : val;
+                      }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: '#ffffff',
+                        borderRadius: '12px',
+                        border: '1px solid #e2e8f0',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                        fontSize: '11px',
+                        color: '#1e293b'
+                      }}
+                      formatter={(val: any, name: any) => [
+                        `${val} Ayat`,
+                        name === 'totalAyatPeriode' ? 'Total Ayat Periode' : 'Total Ayat Bulan Ini'
+                      ]}
+                    />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={32}
+                      formatter={(val) => (
+                        <span className="text-[11px] text-slate-600 font-medium">
+                          {val === 'totalAyatPeriode' ? `Total Hafalan (${timeRangeMonths} Bln)` : 'Hafalan Bulan Ini'}
+                        </span>
+                      )}
+                    />
+                    <Bar
+                      dataKey="totalAyatPeriode"
+                      name="totalAyatPeriode"
+                      fill="#059669"
+                      radius={[0, 4, 4, 0]}
+                      maxBarSize={16}
+                    />
+                    <Bar
+                      dataKey="totalAyatBulanIni"
+                      name="totalAyatBulanIni"
+                      fill="#0ea5e9"
+                      radius={[0, 4, 4, 0]}
+                      maxBarSize={16}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <p className="text-center text-[11px] text-slate-500 font-medium pt-1">
+                💡 Sentuh bilah grafik untuk detail, atau pilih tab <b>"Daftar Peringkat"</b> untuk tampilan kartu santri yang lengkap.
+              </p>
             </div>
           )}
         </div>
@@ -843,7 +843,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
             </div>
 
             <span className="text-[11px] text-slate-500 font-medium">
-              Klik batang/titik bulan untuk melihat detail surah
+              Periode {timeRangeMonths} bulan terakhir
             </span>
           </div>
 
@@ -855,11 +855,6 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                 <BarChart
                   data={monthlyData}
                   margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                  onClick={(e: any) => {
-                    if (e && e.activePayload && e.activePayload[0]) {
-                      setActiveDetailMonth(e.activePayload[0].payload.monthKey);
-                    }
-                  }}
                 >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis
@@ -928,11 +923,6 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
               <LineChart
                 data={monthlyData}
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                onClick={(e: any) => {
-                  if (e && e.activePayload && e.activePayload[0]) {
-                    setActiveDetailMonth(e.activePayload[0].payload.monthKey);
-                  }
-                }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis
@@ -1002,11 +992,6 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
               <AreaChart
                 data={monthlyData}
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                onClick={(e: any) => {
-                  if (e && e.activePayload && e.activePayload[0]) {
-                    setActiveDetailMonth(e.activePayload[0].payload.monthKey);
-                  }
-                }}
               >
                 <defs>
                   <linearGradient id="colorMonthlyAyat" x1="0" y1="0" x2="0" y2="1">
@@ -1096,66 +1081,6 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
           </ResponsiveContainer>
         </div>
       </div>
-      )}
-
-      {/* Detail Breakdown of Selected Month */}
-      {selectedDetailData && (
-        <div className="bg-emerald-50/50 rounded-2xl p-4 sm:p-5 border border-emerald-100 space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-200/60 pb-2.5">
-            <div className="flex items-center gap-2">
-              <span className="p-1 rounded-md bg-emerald-600 text-white text-xs">
-                <Calendar className="w-3.5 h-3.5" />
-              </span>
-              <h4 className="text-xs sm:text-sm font-bold text-slate-800">
-                Rincian Capaian: <span className="text-emerald-900">{selectedDetailData.fullBulan}</span>
-              </h4>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs">
-              <span className="bg-emerald-100 text-emerald-900 font-bold px-2.5 py-0.5 rounded-full">
-                {selectedDetailData.totalAyat} Ayat Dihafal
-              </span>
-              <span className="bg-teal-100 text-teal-900 font-semibold px-2 py-0.5 rounded-full">
-                {selectedDetailData.totalSesiZiyadah} Sesi Ziyadah
-              </span>
-            </div>
-          </div>
-
-          {/* Surah List in this month */}
-          <div>
-            <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Surah yang Dihafal pada {selectedDetailData.fullBulan}:
-            </p>
-            {selectedDetailData.surahList.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {selectedDetailData.surahList.map((surahText, idx) => (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center gap-1 text-xs font-semibold bg-white border border-emerald-200/80 text-emerald-900 px-2.5 py-1 rounded-lg shadow-2xs"
-                  >
-                    <BookOpen className="w-3 h-3 text-emerald-600" />
-                    <span>{surahText}</span>
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400 italic">
-                Belum ada rekaman ayat baru yang disetorkan pada bulan ini.
-              </p>
-            )}
-          </div>
-
-          {/* Top Santri in this month (if ALL santri view) */}
-          {selectedSantri === 'ALL' && selectedDetailData.topSantriBulanIni && (
-            <div className="pt-2 border-t border-emerald-200/50 flex items-center justify-between text-xs">
-              <span className="text-slate-600 font-medium">Santri Paling Produktif Bulan Ini:</span>
-              <span className="font-bold text-emerald-950 flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                {selectedDetailData.topSantriBulanIni} ({selectedDetailData.topSantriAyat} Ayat)
-              </span>
-            </div>
-          )}
-        </div>
       )}
     </div>
   );
