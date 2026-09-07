@@ -83,6 +83,27 @@
 /* Decorative elements are static by default. */
 .float-slow { animation: none; }
 
+/* === HistoryTable mobile hardening ===
+   The component intentionally keeps dense controls on small screens. Remove
+   rigid minimum widths that can force horizontal overflow and let controls
+   reflow naturally. */
+@media (max-width: 639px) {
+  [class~="min-w-[160px]"],
+  [class~="min-w-[130px]"],
+  [class~="min-w-[120px]"] {
+    min-width: 0 !important;
+  }
+
+  [class~="sm:w-56"] {
+    width: 100% !important;
+  }
+
+  input[type="date"],
+  select {
+    max-width: 100%;
+  }
+}
+
 /* === Safe area === */
 .safe-bottom {
   padding-bottom: env(safe-area-inset-bottom, 0);
