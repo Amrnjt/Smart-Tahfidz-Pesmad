@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   User,
   ZiyadahRecord,
@@ -224,8 +225,8 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
     }
   ];
 
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-950/55 flex items-end sm:items-center justify-center sm:p-4">
+  return createPortal(
+    <div className="fixed inset-0 z-[60] bg-slate-950/55 flex items-end sm:items-center justify-center sm:p-4">
       <div className="w-full sm:max-w-lg bg-white border border-slate-200 rounded-t-2xl sm:rounded-2xl max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden">
         <div className="flex-shrink-0 px-3 sm:px-5 py-2.5 sm:py-3 border-b border-slate-200 bg-white flex items-center justify-between gap-3">
           <div className="min-w-0 flex items-center gap-2">
@@ -460,7 +461,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
           </div>
         </div>
 
-        <div className="flex-shrink-0 border-t border-slate-200 bg-white px-3 sm:px-5 py-2.5 flex items-center gap-2">
+        <div className="flex-shrink-0 border-t border-slate-200 bg-white px-3 sm:px-5 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))] sm:py-2.5 flex items-center gap-2">
           <button
             type="button"
             onClick={onClose}
@@ -489,6 +490,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
