@@ -1196,22 +1196,49 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         )}
 
         {displayedItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 px-4 text-center text-slate-400">
-            <Inbox className="w-10 h-10 mb-2 text-slate-300" />
-            <p className="text-sm font-semibold text-slate-600">Tidak ada data setoran yang cocok</p>
-            <p className="text-xs text-slate-400 mt-1 max-w-sm">
-              Coba sesuaikan rentang tanggal, ubah kategori setoran, atau bersihkan kata kunci pencarian.
-            </p>
-            {isFilterActive && (
-              <button
-                onClick={resetAllFilters}
-                className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs  transition cursor-pointer"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>Reset Semua Filter</span>
-              </button>
-            )}
-          </div>
+          <>
+            {/* Mobile compact empty state */}
+            <div className="sm:hidden flex flex-col items-center justify-center py-5 px-3 text-center">
+              <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center mb-1.5">
+                <Inbox className="w-4 h-4 text-slate-400" />
+              </div>
+              <p className="text-[12px] font-semibold text-slate-700 leading-4">
+                Belum ada data
+              </p>
+              <p className="text-[10px] text-slate-400 mt-0.5 leading-4 max-w-[250px]">
+                {isFilterActive
+                  ? 'Tidak ada riwayat yang cocok dengan filter aktif.'
+                  : 'Riwayat setoran akan tampil di sini.'}
+              </p>
+              {isFilterActive && (
+                <button
+                  onClick={resetAllFilters}
+                  className="mt-2 h-7 px-2.5 inline-flex items-center gap-1 rounded-md bg-slate-100 hover:bg-slate-200 text-[10px] font-semibold text-slate-700 transition cursor-pointer"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset Filter</span>
+                </button>
+              )}
+            </div>
+
+            {/* Desktop empty state */}
+            <div className="hidden sm:flex flex-col items-center justify-center py-8 px-4 text-center text-slate-400">
+              <Inbox className="w-10 h-10 mb-2 text-slate-300" />
+              <p className="text-sm font-semibold text-slate-600">Tidak ada data setoran yang cocok</p>
+              <p className="text-xs text-slate-400 mt-1 max-w-sm">
+                Coba sesuaikan rentang tanggal, ubah kategori setoran, atau bersihkan kata kunci pencarian.
+              </p>
+              {isFilterActive && (
+                <button
+                  onClick={resetAllFilters}
+                  className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Reset Semua Filter</span>
+                </button>
+              )}
+            </div>
+          </>
         ) : (
           <div className="divide-y divide-slate-100">
             {displayedItems.map((item) => {
@@ -1226,24 +1253,35 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               const santri = santriList.find(s => s.idSantri === item.idSantri);
               const kelasGroup = santri ? getClassGroup(santri.kelas) : '';
               const isIstimewa = item.type === 'Pembelajaran' && !!item.tipeKelas && item.tipeKelas.toLowerCase().includes('istimewa');
+              const mobileTypeMeta =
+                item.type === 'Ziyadah'
+                  ? { label: 'Ziyadah', dot: 'bg-emerald-500', text: 'text-emerald-700' }
+                  : item.type === 'Murojaah'
+                  ? { label: "Muroja'ah", dot: 'bg-teal-500', text: 'text-teal-700' }
+                  : item.type === 'Binnadzor'
+                  ? { label: 'Binnadzor', dot: 'bg-indigo-500', text: 'text-indigo-700' }
+                  : isIstimewa
+                  ? { label: 'Kelas Istimewa', dot: 'bg-purple-500', text: 'text-purple-700' }
+                  : { label: 'Pembelajaran', dot: 'bg-amber-500', text: 'text-amber-700' };
 
               return (
-                <div key={item.id} className={`transition-colors ${isSelected ? 'bg-slate-50' : 'bg-white hover:bg-slate-50/70'}`}>
-                  {/* MOBILE VIEW CARD (sm:hidden) */}
-                  <div className="sm:hidden px-2 py-2">
-                    <div className="flex items-start gap-2">
+                <div key={item.id} className={`transition-colors ${isSelected ? 'bg-emerald-50/40' : 'bg-white hover:bg-slate-50/70'}`}>
+                  {/* MOBILE VIEW — compact editorial list */}
+                  <div className="sm:hidden px-3 py-2.5">
+                    <div className="flex items-start gap-2.5">
                       {!isViewOnly && (
                         <button
                           type="button"
                           onClick={(e) => toggleSelectItem(item.id, e)}
                           className="mt-0.5 flex-shrink-0 text-slate-400"
                           title="Pilih rekaman ini"
+                          aria-label="Pilih rekaman ini"
                         >
                           <input
                             type="checkbox"
                             checked={isSelected}
                             onChange={() => {}}
-                            className="w-3.5 h-3.5 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+                            className="w-4 h-4 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
                           />
                         </button>
                       )}
@@ -1253,27 +1291,30 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                         onClick={() => toggleRow(item.id)}
                         className="min-w-0 flex-1 text-left"
                       >
+                        {/* Primary line: identity + score */}
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <h4 className="truncate text-[13px] font-semibold leading-4 text-slate-900">
+                            <div className="flex items-baseline gap-1.5 min-w-0">
+                              <h4 className="truncate text-[13px] font-bold leading-4.5 text-slate-900">
                                 {item.namaSantri}
                               </h4>
                               {kelasGroup && (
-                                <span className="flex-shrink-0 text-[9px] font-semibold px-1.5 py-px rounded bg-slate-100 text-slate-600 border border-slate-200">
-                                  {kelasGroup}
-                                </span>
+                                <>
+                                  <span className="text-slate-300 text-[10px] flex-shrink-0">·</span>
+                                  <span className="text-[10px] font-medium text-slate-400 flex-shrink-0">
+                                    {kelasGroup}
+                                  </span>
+                                </>
                               )}
                             </div>
-                            <div className="mt-0.5 flex items-center gap-1.5 min-w-0 text-[10px] text-slate-500">
-                              <span className="truncate font-medium text-slate-700">{item.materi}</span>
-                              <span className="flex-shrink-0 text-slate-300">•</span>
-                              <span className="flex-shrink-0">{formatTanggalLengkap(item.timestamp)}</span>
-                              {timePart && <span className="flex-shrink-0 font-mono text-slate-400">{timePart}</span>}
-                            </div>
+
+                            {/* Material gets its own readable line */}
+                            <p className="mt-1 truncate text-[11px] font-medium leading-4 text-slate-700">
+                              {item.materi}
+                            </p>
                           </div>
 
-                          <div className="flex flex-shrink-0 items-center gap-1">
+                          <div className="flex flex-shrink-0 items-center gap-1.5">
                             {renderNilaiBadge(item.nilai)}
                             {isExpanded ? (
                               <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
@@ -1283,54 +1324,55 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                           </div>
                         </div>
 
-                        <div className="mt-1 flex items-center gap-1 overflow-hidden">
-                          {item.type === 'Ziyadah' ? (
-                            <span className="inline-flex flex-shrink-0 items-center gap-1 rounded px-1.5 py-px text-[9px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                              <BookOpen className="w-2.5 h-2.5" /> Ziyadah
-                            </span>
-                          ) : item.type === 'Murojaah' ? (
-                            <span className="inline-flex flex-shrink-0 items-center gap-1 rounded px-1.5 py-px text-[9px] font-semibold bg-teal-50 text-teal-800 border border-teal-200">
-                              <RotateCw className="w-2.5 h-2.5" /> Muroja'ah
-                            </span>
-                          ) : item.type === 'Binnadzor' ? (
-                            <span className="inline-flex flex-shrink-0 items-center gap-1 rounded px-1.5 py-px text-[9px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">
-                              <BookOpenCheck className="w-2.5 h-2.5" /> Binnadzor
-                            </span>
-                          ) : isIstimewa ? (
-                            <span className="inline-flex flex-shrink-0 items-center gap-1 rounded px-1.5 py-px text-[9px] font-semibold bg-purple-50 text-purple-800 border border-purple-200">
-                              <Sparkles className="w-2.5 h-2.5" /> Istimewa
-                            </span>
-                          ) : (
-                            <span className="inline-flex flex-shrink-0 items-center gap-1 rounded px-1.5 py-px text-[9px] font-semibold bg-amber-50 text-amber-900 border border-amber-200">
-                              <GraduationCap className="w-2.5 h-2.5" /> Pembelajaran
-                            </span>
+                        {/* Quiet metadata line — color is functional, not decorative */}
+                        <div className="mt-1.5 flex items-center gap-1.5 min-w-0 text-[10px] leading-4 text-slate-400">
+                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${mobileTypeMeta.dot}`} />
+                          <span className={`font-semibold flex-shrink-0 ${mobileTypeMeta.text}`}>
+                            {mobileTypeMeta.label}
+                          </span>
+                          <span className="text-slate-300 flex-shrink-0">·</span>
+                          <span className="flex-shrink-0">{formatTanggalRingkas(item.timestamp)}</span>
+                          {timePart && (
+                            <>
+                              <span className="text-slate-300 flex-shrink-0">·</span>
+                              <span className="font-mono flex-shrink-0">{timePart}</span>
+                            </>
                           )}
 
                           {item.statusKenaikan && (
-                            <span className="truncate rounded bg-emerald-50 px-1.5 py-px text-[9px] font-medium text-emerald-800 border border-emerald-200">
-                              {item.statusKenaikan}
-                            </span>
+                            <>
+                              <span className="text-slate-300 flex-shrink-0">·</span>
+                              <span className="truncate font-medium text-emerald-700">
+                                {item.statusKenaikan}
+                              </span>
+                            </>
                           )}
+
                           {item.tipeKelas && !item.statusKenaikan && (
-                            <span className="truncate rounded bg-slate-50 px-1.5 py-px text-[9px] font-medium text-slate-600 border border-slate-200">
-                              {item.tipeKelas}
-                            </span>
+                            <>
+                              <span className="text-slate-300 flex-shrink-0">·</span>
+                              <span className="truncate text-slate-500">
+                                {item.tipeKelas}
+                              </span>
+                            </>
                           )}
                         </div>
                       </button>
                     </div>
 
                     {isExpanded && (
-                      <div className="mt-2 ml-5 space-y-1.5 border-t border-slate-100 pt-2">
-                        <div className="grid grid-cols-[auto,1fr] gap-x-2 gap-y-1 text-[10px] leading-4">
-                          <span className="text-slate-400">ID</span>
+                      <div className="mt-2.5 ml-6 border-l-2 border-slate-100 pl-3 py-0.5">
+                        <div className="grid grid-cols-[56px,1fr] gap-x-2 gap-y-1.5 text-[10px] leading-4">
+                          <span className="text-slate-400">ID Santri</span>
                           <span className="font-mono text-slate-600">{item.idSantri}</span>
+
                           {item.kendalaSantri && (
                             <>
                               <span className="text-slate-400">Kendala</span>
                               <span className="text-rose-700">{item.kendalaSantri}</span>
                             </>
                           )}
+
                           {item.catatan && (
                             <>
                               <span className="text-slate-400">Catatan</span>
@@ -1340,34 +1382,45 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                         </div>
 
                         {!isViewOnly && (
-                          <div className="flex items-center justify-end gap-1 pt-0.5">
+                          <div className="mt-2 flex items-center gap-1.5">
                             {waLink && (
                               <a
                                 href={waLink}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                className="inline-flex h-7 items-center gap-1 px-2 rounded-md border border-emerald-200 bg-emerald-50 text-[10px] font-semibold text-emerald-700"
                                 title="Kirim WhatsApp"
                               >
-                                <MessageCircle className="w-3.5 h-3.5" />
+                                <MessageCircle className="w-3 h-3" />
+                                WA
                               </a>
                             )}
+
                             <button
                               type="button"
-                              onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-slate-50 text-slate-600 border border-slate-200"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openEditModal(item);
+                              }}
+                              className="inline-flex h-7 items-center gap-1 px-2 rounded-md border border-slate-200 bg-white text-[10px] font-semibold text-slate-600"
                               title="Edit"
                             >
-                              <Pencil className="w-3.5 h-3.5" />
+                              <Pencil className="w-3 h-3" />
+                              Edit
                             </button>
+
                             <button
                               type="button"
-                              onClick={(e) => { e.stopPropagation(); handleDelete(item, e); }}
-                              className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-rose-50 text-rose-700 border border-rose-200"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(item, e);
+                              }}
+                              className="inline-flex h-7 items-center gap-1 px-2 rounded-md border border-rose-200 bg-rose-50 text-[10px] font-semibold text-rose-700"
                               title="Hapus"
                             >
-                              <Trash2 className="w-3.5 h-3.5" />
+                              <Trash2 className="w-3 h-3" />
+                              Hapus
                             </button>
                           </div>
                         )}
