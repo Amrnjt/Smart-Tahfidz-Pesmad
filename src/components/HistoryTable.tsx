@@ -1082,57 +1082,117 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         </div>
       )}
 
-      {/* Batch Delete Action Bar - Appears when items are selected */}
+      {/* Batch Selection Action Bar */}
       {!isViewOnly && selectedIds.size > 0 && (
-        <div className="bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 flex items-center justify-between gap-2 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1 ">
-          <div className="flex items-center gap-2 text-rose-900 font-bold">
-            <span className="bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-extrabold">
-              {selectedIds.size}
-            </span>
-            <span>rekaman histori dipilih</span>
-          </div>
-          <div className="flex items-center gap-2">
+        <>
+          {/* Mobile: compact sticky selection toolbar */}
+          <div className="sm:hidden sticky top-0 z-20 -mx-0.5 px-2 py-1.5 bg-white/95 backdrop-blur border border-slate-200 rounded-lg flex items-center gap-1.5 text-[11px] flex-shrink-0 animate-in fade-in slide-in-from-top-1">
+            <div className="min-w-0 flex-1 flex items-center gap-1.5">
+              <span className="w-5 h-5 rounded-md bg-slate-900 text-white inline-flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                {selectedIds.size}
+              </span>
+              <span className="font-semibold text-slate-700 truncate">terpilih</span>
+            </div>
+
             <button
-              onClick={() => setSelectedIds(new Set())}
-              className="px-2.5 py-1 text-slate-600 hover:text-slate-900 font-semibold cursor-pointer"
+              type="button"
+              onClick={toggleSelectAll}
+              className="h-7 px-2 rounded-md bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition cursor-pointer whitespace-nowrap"
             >
-              Batalkan
+              {selectedIds.size === displayedItems.length ? 'Lepas Semua' : 'Pilih Semua'}
             </button>
+
             <button
+              type="button"
+              onClick={() => setSelectedIds(new Set())}
+              className="w-7 h-7 inline-flex items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition cursor-pointer"
+              aria-label="Batalkan pilihan"
+              title="Batalkan pilihan"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
               onClick={() => setIsBatchDeleteModalOpen(true)}
-              className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold rounded-lg flex items-center gap-1.5  transition cursor-pointer"
+              className="h-7 px-2 inline-flex items-center gap-1 rounded-md bg-rose-600 hover:bg-rose-700 text-white font-bold transition cursor-pointer"
+              aria-label={`Hapus ${selectedIds.size} rekaman terpilih`}
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Hapus {selectedIds.size} Rekaman Terpilih</span>
+              <span>Hapus</span>
             </button>
           </div>
-        </div>
+
+          {/* Desktop: retain full batch action bar */}
+          <div className="hidden sm:flex bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 items-center justify-between gap-2 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1">
+            <div className="flex items-center gap-2 text-rose-900 font-bold">
+              <span className="bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-extrabold">
+                {selectedIds.size}
+              </span>
+              <span>rekaman histori dipilih</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="px-2.5 py-1 text-slate-600 hover:text-slate-900 font-semibold cursor-pointer"
+              >
+                Batalkan
+              </button>
+              <button
+                onClick={() => setIsBatchDeleteModalOpen(true)}
+                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Hapus {selectedIds.size} Rekaman Terpilih</span>
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Scrollable Content Area - responsive height */}
       <div className="flex-1 md:overflow-y-auto min-h-0 rounded-lg border border-slate-100 bg-white">
         {!isViewOnly && displayedItems.length > 0 && (
-          <div className="sticky top-0 z-10 bg-slate-100/95 backdrop-blur-xs px-2.5 sm:px-3 py-1 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
-            <div className="flex items-center gap-2">
-              <label className="flex items-center gap-1.5 cursor-pointer font-semibold select-none hover:text-slate-900">
+          <>
+            {/* Mobile: one-line selection trigger */}
+            <div className="sm:hidden sticky top-0 z-10 bg-slate-50/95 backdrop-blur px-2 py-1 border-b border-slate-200 flex items-center justify-between text-[10px] text-slate-600">
+              <label className="flex items-center gap-1.5 cursor-pointer font-semibold select-none">
                 <input
                   type="checkbox"
                   checked={selectedIds.size > 0 && selectedIds.size === displayedItems.length}
                   onChange={toggleSelectAll}
                   className="w-3.5 h-3.5 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
                 />
-                <span>Pilih Semua ({displayedItems.length})</span>
+                <span>{selectedIds.size > 0 ? `${selectedIds.size} dipilih` : `Pilih semua ${displayedItems.length}`}</span>
               </label>
-              {selectedIds.size > 0 && (
-                <span className="text-[11px] text-rose-700 font-bold">
-                  ({selectedIds.size} terpilih)
-                </span>
+              {selectedIds.size === 0 && (
+                <span className="text-[9px] text-slate-400">ketuk kotak untuk memilih</span>
               )}
             </div>
-            <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
-              Klik tempat sampah pada baris untuk hapus cepat
-            </span>
-          </div>
+
+            {/* Desktop */}
+            <div className="hidden sm:flex sticky top-0 z-10 bg-slate-100/95 backdrop-blur-xs px-3 py-1 border-b border-slate-200 items-center justify-between text-xs text-slate-600">
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-1.5 cursor-pointer font-semibold select-none hover:text-slate-900">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.size > 0 && selectedIds.size === displayedItems.length}
+                    onChange={toggleSelectAll}
+                    className="w-3.5 h-3.5 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+                  />
+                  <span>Pilih Semua ({displayedItems.length})</span>
+                </label>
+                {selectedIds.size > 0 && (
+                  <span className="text-[11px] text-rose-700 font-bold">
+                    ({selectedIds.size} terpilih)
+                  </span>
+                )}
+              </div>
+              <span className="text-[11px] text-slate-400 font-medium">
+                Klik tempat sampah pada baris untuk hapus cepat
+              </span>
+            </div>
+          </>
         )}
 
         {displayedItems.length === 0 ? (
