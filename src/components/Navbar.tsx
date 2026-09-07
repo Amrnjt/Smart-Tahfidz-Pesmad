@@ -53,6 +53,11 @@ export const Navbar: React.FC<NavbarProps> = ({
     : 'U';
 
   const roleBadgeConfig = {
+    Superadmin: {
+      label: 'Superadmin',
+      bg: 'bg-amber-500/90 text-amber-950 font-bold border-amber-300',
+      avatarBg: 'bg-gradient-to-tr from-amber-600 to-yellow-500 border-amber-300 text-slate-900 font-extrabold'
+    },
     Ustadz: {
       label: 'Ustadz',
       bg: 'bg-emerald-700/90 text-emerald-100 border-emerald-500/70',
@@ -70,9 +75,10 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
-  const normalizedRole: 'Ustadz' | 'Wali' | 'Santri' = (() => {
+  const normalizedRole: 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri' = (() => {
     if (!currentUser?.role) return 'Ustadz';
     const r = String(currentUser.role).trim().toLowerCase();
+    if (r === 'superadmin') return 'Superadmin';
     if (r === 'wali' || r.includes('wali')) return 'Wali';
     if (r === 'santri') return 'Santri';
     return 'Ustadz';

@@ -33,7 +33,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
   userList,
   onDataChanged
 }) => {
-  const ustadzList = userList.filter(u => u.role === 'Ustadz');
+  const ustadzList = userList.filter(u => u.role === 'Ustadz' || u.role === 'Superadmin');
   const [showAddModal, setShowAddModal] = useState(false);
   const [kelasToEdit, setKelasToEdit] = useState<Kelas | null>(null);
   const [kelasToDelete, setKelasToDelete] = useState<Kelas | null>(null);

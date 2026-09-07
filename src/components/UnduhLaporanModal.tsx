@@ -27,7 +27,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
 }) => {
   const { isGenerating, error, success, generatePDF } = useGeneratePDF();
 
-  const isViewOnly = currentUser.role !== 'Ustadz';
+  const isViewOnly = currentUser.role === 'Wali' || currentUser.role === 'Santri';
   const targetSantriId = currentUser.idSantri || (currentUser.role === 'Santri' ? currentUser.username : '');
 
   const scopedZiyadah = isViewOnly

@@ -21,17 +21,38 @@ import { useSetoranNotifications } from './hooks/useSetoranNotifications';
 import { LayoutDashboard, CirclePlus as PlusCircle, RotateCw, BookOpenCheck, History, BookOpen, Users, Cloud, GraduationCap, Award } from 'lucide-react';
 
 export default function App() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    try {
+      return storageService.getSession();
+    } catch {
+      return null;
+    }
+  });
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
-  const [santriList, setSantriList] = useState<Santri[]>([]);
-  const [ziyadahRecords, setZiyadahRecords] = useState<ZiyadahRecord[]>([]);
-  const [murojaahRecords, setMurojaahRecords] = useState<MurojaahRecord[]>([]);
-  const [binnadzorRecords, setBinnadzorRecords] = useState<BinnadzorRecord[]>([]);
-  const [pembelajaranRecords, setPembelajaranRecords] = useState<PembelajaranRecord[]>([]);
-  const [kelasList, setKelasList] = useState<Kelas[]>([]);
-  const [userList, setUserList] = useState<User[]>([]);
+  const [santriList, setSantriList] = useState<Santri[]>(() => {
+    try { return storageService.getSantriList(); } catch { return []; }
+  });
+  const [ziyadahRecords, setZiyadahRecords] = useState<ZiyadahRecord[]>(() => {
+    try { return storageService.getZiyadahRecords(); } catch { return []; }
+  });
+  const [murojaahRecords, setMurojaahRecords] = useState<MurojaahRecord[]>(() => {
+    try { return storageService.getMurojaahRecords(); } catch { return []; }
+  });
+  const [binnadzorRecords, setBinnadzorRecords] = useState<BinnadzorRecord[]>(() => {
+    try { return storageService.getBinnadzorRecords(); } catch { return []; }
+  });
+  const [pembelajaranRecords, setPembelajaranRecords] = useState<PembelajaranRecord[]>(() => {
+    try { return storageService.getPembelajaranRecords(); } catch { return []; }
+  });
+  const [kelasList, setKelasList] = useState<Kelas[]>(() => {
+    try { return storageService.getKelasList(); } catch { return []; }
+  });
+  const [userList, setUserList] = useState<User[]>(() => {
+    try { return storageService.getUsers(); } catch { return []; }
+  });
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
-  const [isLoadingData, setIsLoadingData] = useState<boolean>(true);
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [snack, setSnack] = useState<SnackbarState | null>(null);
 
   const refreshData = () => {
@@ -46,38 +67,22 @@ export default function App() {
 
   // Setup real-time Firebase Firestore synchronization across all devices
   useEffect(() => {
-    setIsLoadingData(true);
     refreshData();
-    const session = storageService.getSession();
-    if (session) {
-      setCurrentUser(session);
-    }
 
     // Subscribe to real-time changes from Firestore database
     const unsubscribe = storageService.initRealtimeSync(() => {
       refreshData();
-      setIsLoadingData(false);
     });
-
-    // Provide a short fallback timeout so skeleton gives visual feedback smoothly even with fast local cache
-    const timer = setTimeout(() => {
-      setIsLoadingData(false);
-    }, 450);
 
     return () => {
       unsubscribe();
-      clearTimeout(timer);
     };
   }, []);
 
   const handleLoginSuccess = (user: User) => {
-    setIsLoadingData(true);
     setCurrentUser(user);
     setActiveTab('dashboard');
     refreshData();
-    setTimeout(() => {
-      setIsLoadingData(false);
-    }, 300);
   };
 
   const handleLogout = () => {
@@ -86,27 +91,29 @@ export default function App() {
     setActiveTab('dashboard');
   };
 
-  const handleManualRefresh = () => {
-    setIsLoadingData(true);
+  const handleManualRefresh = async () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
     try {
+      await storageService.syncWithCloud();
       refreshData();
-      setTimeout(() => {
-        setIsLoadingData(false);
-        setSnack({
-          id: `sync-${Date.now()}`,
-          message: '✓ Data berhasil diperbarui',
-          type: 'success',
-        });
-      }, 400);
-    } catch {
-      setIsLoadingData(false);
+      setSnack({
+        id: `sync-${Date.now()}`,
+        message: '✓ Data berhasil disinkronkan dengan Cloud Database',
+        type: 'success',
+      });
+    } catch (err) {
+      console.error(err);
+      refreshData();
       setSnack({
         id: `sync-err-${Date.now()}`,
-        message: 'Data belum dapat diperbarui.',
+        message: 'Gagal memperbarui data dari Cloud. Memuat cache lokal.',
         type: 'error',
         actionLabel: 'Coba Lagi',
         onAction: handleManualRefresh,
       });
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -146,7 +153,7 @@ export default function App() {
         setActiveTab={setActiveTab}
         onLogout={handleLogout}
         onRefresh={handleManualRefresh}
-        isRefreshing={isLoadingData}
+        isRefreshing={isSyncing}
       />
 
       {/* Main Container */}

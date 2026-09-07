@@ -248,11 +248,12 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const normalizedRole = (() => {
     if (!currentUser?.role) return 'Ustadz';
     const r = String(currentUser.role).trim().toLowerCase();
+    if (r === 'superadmin') return 'Superadmin';
     if (r === 'wali' || r.includes('wali')) return 'Wali';
     if (r === 'santri') return 'Santri';
     return 'Ustadz';
   })();
-  const isViewOnly = normalizedRole !== 'Ustadz';
+  const isViewOnly = normalizedRole === 'Wali' || normalizedRole === 'Santri';
   const targetSantriId = currentUser.idSantri || (normalizedRole === 'Santri' ? currentUser.username : '');
 
   const actualBinnadzor = binnadzorRecords || storageService.getBinnadzorRecords();

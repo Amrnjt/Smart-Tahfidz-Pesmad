@@ -36,7 +36,8 @@ const STORAGE_KEYS = {
   KELAS: 'tahfidz_kelas_db_v2',
   SESSION: 'tahfidz_active_session_v2',
   PANTAUAN_LIBURAN: 'tahfidz_pantauan_liburan_v2',
-  APP_CONFIG: 'tahfidz_app_config_v2'
+  APP_CONFIG: 'tahfidz_app_config_v2',
+  DELETED_RECORDS: 'tahfidz_deleted_records_v2'
 };
 
 const COLLECTIONS = {
@@ -57,6 +58,33 @@ function cleanForFirestore<T>(data: T): T {
 }
 
 export const storageService = {
+  getDeletedRecordIds(): Set<string> {
+    try {
+      const data = localStorage.getItem(STORAGE_KEYS.DELETED_RECORDS);
+      if (!data) return new Set();
+      const parsed = JSON.parse(data);
+      return new Set(Array.isArray(parsed) ? parsed : []);
+    } catch {
+      return new Set();
+    }
+  },
+
+  isDeletedRecord(id: string): boolean {
+    if (!id) return false;
+    return this.getDeletedRecordIds().has(id);
+  },
+
+  markRecordDeleted(id: string): void {
+    if (!id) return;
+    try {
+      const set = this.getDeletedRecordIds();
+      set.add(id);
+      localStorage.setItem(STORAGE_KEYS.DELETED_RECORDS, JSON.stringify(Array.from(set)));
+    } catch (e) {
+      console.error('Failed to mark record as deleted:', e);
+    }
+  },
+
   async authenticate(usernameInput: string, passwordInput: string): Promise<{ success: boolean; user?: User; message?: string }> {
     const cleanUser = usernameInput.trim().toLowerCase();
     const cleanPass = passwordInput.trim();
@@ -97,7 +125,9 @@ export const storageService = {
 
     if (matched) {
       const r = String(matched.role || '').trim().toLowerCase();
-      if (r === 'wali' || r.includes('wali')) {
+      if (r === 'superadmin') {
+        matched.role = 'Superadmin';
+      } else if (r === 'wali' || r.includes('wali')) {
         matched.role = 'Wali';
       } else if (r === 'santri') {
         matched.role = 'Santri';
@@ -125,6 +155,15 @@ export const storageService = {
       if (!Array.isArray(parsed) || parsed.length === 0) {
         localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
         return INITIAL_USERS;
+      }
+      // Ensure default superadmin (anas) is present in users list
+      const hasSuperadmin = parsed.some(u => u.username?.toLowerCase() === 'anas' || u.role === 'Superadmin');
+      if (!hasSuperadmin) {
+        const superadminUser = INITIAL_USERS.find(u => u.username === 'anas');
+        if (superadminUser) {
+          parsed.unshift(superadminUser);
+          localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(parsed));
+        }
       }
       return parsed;
     } catch {
@@ -156,7 +195,9 @@ export const storageService = {
     }
     try {
       const parsed = JSON.parse(data);
-      return Array.isArray(parsed) ? parsed : INITIAL_ZIYADAH;
+      if (!Array.isArray(parsed)) return INITIAL_ZIYADAH;
+      const deletedIds = this.getDeletedRecordIds();
+      return deletedIds.size > 0 ? parsed.filter((r: ZiyadahRecord) => !deletedIds.has(r.id)) : parsed;
     } catch {
       return INITIAL_ZIYADAH;
     }
@@ -170,7 +211,9 @@ export const storageService = {
     }
     try {
       const parsed = JSON.parse(data);
-      return Array.isArray(parsed) ? parsed : INITIAL_MUROJAAH;
+      if (!Array.isArray(parsed)) return INITIAL_MUROJAAH;
+      const deletedIds = this.getDeletedRecordIds();
+      return deletedIds.size > 0 ? parsed.filter((r: MurojaahRecord) => !deletedIds.has(r.id)) : parsed;
     } catch {
       return INITIAL_MUROJAAH;
     }
@@ -184,7 +227,9 @@ export const storageService = {
     }
     try {
       const parsed = JSON.parse(data);
-      return Array.isArray(parsed) ? parsed : INITIAL_BINNADZOR;
+      if (!Array.isArray(parsed)) return INITIAL_BINNADZOR;
+      const deletedIds = this.getDeletedRecordIds();
+      return deletedIds.size > 0 ? parsed.filter((r: BinnadzorRecord) => !deletedIds.has(r.id)) : parsed;
     } catch {
       return INITIAL_BINNADZOR;
     }
@@ -198,7 +243,9 @@ export const storageService = {
     }
     try {
       const parsed = JSON.parse(data);
-      return Array.isArray(parsed) ? parsed : INITIAL_PEMBELAJARAN;
+      if (!Array.isArray(parsed)) return INITIAL_PEMBELAJARAN;
+      const deletedIds = this.getDeletedRecordIds();
+      return deletedIds.size > 0 ? parsed.filter((r: PembelajaranRecord) => !deletedIds.has(r.id)) : parsed;
     } catch {
       return INITIAL_PEMBELAJARAN;
     }
@@ -284,7 +331,7 @@ export const storageService = {
           }
         }
 
-        // B. Migrate Santri
+        // B. Migrate Santri (Hanya saat database cloud dan lokal benar-benar baru)
         const santriSnapshot = await getDocs(collection(db, COLLECTIONS.SANTRI));
         const remoteSantriMap = new Map<string, Santri>();
         santriSnapshot.forEach((docSnap) => {
@@ -293,71 +340,15 @@ export const storageService = {
         });
 
         const localSantri = this.getSantriList();
-        const santriToSync = [...INITIAL_SANTRI, ...localSantri];
-        for (const santri of santriToSync) {
-          if (!remoteSantriMap.has(santri.idSantri)) {
+        if (remoteSantriMap.size === 0 && localSantri.length === 0 && INITIAL_SANTRI.length > 0) {
+          for (const santri of INITIAL_SANTRI) {
             const cleanSantri = cleanForFirestore(santri);
             await setDoc(doc(db, COLLECTIONS.SANTRI, santri.idSantri), cleanSantri).catch(console.error);
             remoteSantriMap.set(santri.idSantri, santri);
           }
         }
-
-        // C. Migrate Ziyadah & Murojaah records if any
-        const ziyadahSnapshot = await getDocs(collection(db, COLLECTIONS.ZIYADAH));
-        const remoteZiyadahMap = new Map<string, ZiyadahRecord>();
-        ziyadahSnapshot.forEach((docSnap) => {
-          const z = docSnap.data() as ZiyadahRecord;
-          if (z.id) remoteZiyadahMap.set(z.id, z);
-        });
-        const localZiyadah = this.getZiyadahRecords();
-        for (const z of localZiyadah) {
-          if (!remoteZiyadahMap.has(z.id)) {
-            await setDoc(doc(db, COLLECTIONS.ZIYADAH, z.id), cleanForFirestore(z)).catch(console.error);
-            remoteZiyadahMap.set(z.id, z);
-          }
-        }
-
-        const murojaahSnapshot = await getDocs(collection(db, COLLECTIONS.MUROJAAH));
-        const remoteMurojaahMap = new Map<string, MurojaahRecord>();
-        murojaahSnapshot.forEach((docSnap) => {
-          const m = docSnap.data() as MurojaahRecord;
-          if (m.id) remoteMurojaahMap.set(m.id, m);
-        });
-        const localMurojaah = this.getMurojaahRecords();
-        for (const m of localMurojaah) {
-          if (!remoteMurojaahMap.has(m.id)) {
-            await setDoc(doc(db, COLLECTIONS.MUROJAAH, m.id), cleanForFirestore(m)).catch(console.error);
-            remoteMurojaahMap.set(m.id, m);
-          }
-        }
-
-        const binnadzorSnapshot = await getDocs(collection(db, COLLECTIONS.BINNADZOR));
-        const remoteBinnadzorMap = new Map<string, BinnadzorRecord>();
-        binnadzorSnapshot.forEach((docSnap) => {
-          const b = docSnap.data() as BinnadzorRecord;
-          if (b.id) remoteBinnadzorMap.set(b.id, b);
-        });
-        const localBinnadzor = this.getBinnadzorRecords();
-        for (const b of localBinnadzor) {
-          if (!remoteBinnadzorMap.has(b.id)) {
-            await setDoc(doc(db, COLLECTIONS.BINNADZOR, b.id), cleanForFirestore(b)).catch(console.error);
-            remoteBinnadzorMap.set(b.id, b);
-          }
-        }
-
-        const pembelajaranSnapshot = await getDocs(collection(db, COLLECTIONS.PEMBELAJARAN));
-        const remotePembelajaranMap = new Map<string, PembelajaranRecord>();
-        pembelajaranSnapshot.forEach((docSnap) => {
-          const p = docSnap.data() as PembelajaranRecord;
-          if (p.id) remotePembelajaranMap.set(p.id, p);
-        });
-        const localPembelajaran = this.getPembelajaranRecords();
-        for (const p of localPembelajaran) {
-          if (!remotePembelajaranMap.has(p.id)) {
-            await setDoc(doc(db, COLLECTIONS.PEMBELAJARAN, p.id), cleanForFirestore(p)).catch(console.error);
-            remotePembelajaranMap.set(p.id, p);
-          }
-        }
+        // Catatan: Ziyadah, Murojaah, Binnadzor, & Pembelajaran TIDAK di-reupload dari lokal ke cloud.
+        // Cloud Firestore adalah Single Source of Truth, sehingga record yang telah dihapus tidak akan dibangkitkan kembali.
       } catch (err) {
         console.warn('Initial Firestore seeding/sync warning:', err);
       }
@@ -425,40 +416,40 @@ export const storageService = {
 
     // 3. Sync Ziyadah Realtime
     const unsubZiyadah = onSnapshot(collection(db, COLLECTIONS.ZIYADAH), (snapshot) => {
-      if (!snapshot.empty) {
-        const records: ZiyadahRecord[] = [];
-        const recordMap = new Map<string, ZiyadahRecord>();
-        snapshot.forEach((docSnap) => {
-          const r = docSnap.data() as ZiyadahRecord;
-          if (r && r.id && !recordMap.has(r.id)) {
-            recordMap.set(r.id, r);
-            records.push(r);
-          }
-        });
-        records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-        localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
-        if (onUpdate) onUpdate();
-      }
+      const records: ZiyadahRecord[] = [];
+      const recordMap = new Map<string, ZiyadahRecord>();
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as ZiyadahRecord;
+        const id = data.id || docSnap.id;
+        if (id && !recordMap.has(id) && !this.isDeletedRecord(id)) {
+          const r = { ...data, id };
+          recordMap.set(id, r);
+          records.push(r);
+        }
+      });
+      records.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+      localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
+      if (onUpdate) onUpdate();
     }, (err) => {
       console.warn('Ziyadah firestore sync error:', err);
     });
 
     // 4. Sync Murojaah Realtime
     const unsubMurojaah = onSnapshot(collection(db, COLLECTIONS.MUROJAAH), (snapshot) => {
-      if (!snapshot.empty) {
-        const records: MurojaahRecord[] = [];
-        const recordMap = new Map<string, MurojaahRecord>();
-        snapshot.forEach((docSnap) => {
-          const r = docSnap.data() as MurojaahRecord;
-          if (r && r.id && !recordMap.has(r.id)) {
-            recordMap.set(r.id, r);
-            records.push(r);
-          }
-        });
-        records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-        localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(records));
-        if (onUpdate) onUpdate();
-      }
+      const records: MurojaahRecord[] = [];
+      const recordMap = new Map<string, MurojaahRecord>();
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as MurojaahRecord;
+        const id = data.id || docSnap.id;
+        if (id && !recordMap.has(id) && !this.isDeletedRecord(id)) {
+          const r = { ...data, id };
+          recordMap.set(id, r);
+          records.push(r);
+        }
+      });
+      records.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+      localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(records));
+      if (onUpdate) onUpdate();
     }, (err) => {
       console.warn('Murojaah firestore sync error:', err);
     });
@@ -483,40 +474,40 @@ export const storageService = {
 
     // 6. Sync Binnadzor Realtime
     const unsubBinnadzor = onSnapshot(collection(db, COLLECTIONS.BINNADZOR), (snapshot) => {
-      if (!snapshot.empty) {
-        const records: BinnadzorRecord[] = [];
-        const recordMap = new Map<string, BinnadzorRecord>();
-        snapshot.forEach((docSnap) => {
-          const r = docSnap.data() as BinnadzorRecord;
-          if (r && r.id && !recordMap.has(r.id)) {
-            recordMap.set(r.id, r);
-            records.push(r);
-          }
-        });
-        records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-        localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(records));
-        if (onUpdate) onUpdate();
-      }
+      const records: BinnadzorRecord[] = [];
+      const recordMap = new Map<string, BinnadzorRecord>();
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as BinnadzorRecord;
+        const id = data.id || docSnap.id;
+        if (id && !recordMap.has(id) && !this.isDeletedRecord(id)) {
+          const r = { ...data, id };
+          recordMap.set(id, r);
+          records.push(r);
+        }
+      });
+      records.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+      localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(records));
+      if (onUpdate) onUpdate();
     }, (err) => {
       console.warn('Binnadzor firestore sync error:', err);
     });
 
     // 7. Sync Pembelajaran Realtime
     const unsubPembelajaran = onSnapshot(collection(db, COLLECTIONS.PEMBELAJARAN), (snapshot) => {
-      if (!snapshot.empty) {
-        const records: PembelajaranRecord[] = [];
-        const recordMap = new Map<string, PembelajaranRecord>();
-        snapshot.forEach((docSnap) => {
-          const r = docSnap.data() as PembelajaranRecord;
-          if (r && r.id && !recordMap.has(r.id)) {
-            recordMap.set(r.id, r);
-            records.push(r);
-          }
-        });
-        records.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
-        localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(records));
-        if (onUpdate) onUpdate();
-      }
+      const records: PembelajaranRecord[] = [];
+      const recordMap = new Map<string, PembelajaranRecord>();
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data() as PembelajaranRecord;
+        const id = data.id || docSnap.id;
+        if (id && !recordMap.has(id) && !this.isDeletedRecord(id)) {
+          const r = { ...data, id };
+          recordMap.set(id, r);
+          records.push(r);
+        }
+      });
+      records.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+      localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(records));
+      if (onUpdate) onUpdate();
     }, (err) => {
       console.warn('Pembelajaran firestore sync error:', err);
     });
@@ -702,6 +693,9 @@ export const storageService = {
   },
 
   async deleteRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran', id: string): Promise<boolean> {
+    if (!id) return false;
+    this.markRecordDeleted(id);
+
     if (type === 'Ziyadah') {
       const records = this.getZiyadahRecords().filter(r => r.id !== id);
       localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
@@ -741,6 +735,11 @@ export const storageService = {
   async deleteRecordsBatch(items: { type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran'; id: string }[]): Promise<boolean> {
     if (!items || items.length === 0) return true;
 
+    // Mark all items as deleted to prevent race conditions with realtime listeners
+    items.forEach(item => {
+      if (item.id) this.markRecordDeleted(item.id);
+    });
+
     const ziyadahIds = new Set(items.filter(i => i.type === 'Ziyadah').map(i => i.id));
     const murojaahIds = new Set(items.filter(i => i.type === 'Murojaah').map(i => i.id));
     const binnadzorIds = new Set(items.filter(i => i.type === 'Binnadzor').map(i => i.id));
@@ -778,6 +777,114 @@ export const storageService = {
     }
 
     return true;
+  },
+
+  // Full manual sync with Cloud Firestore without unmounting UI
+  async syncWithCloud(): Promise<{ success: boolean; message?: string }> {
+    try {
+      const deletedIds = this.getDeletedRecordIds();
+
+      // 1. Sync Users
+      const userSnap = await getDocs(collection(db, COLLECTIONS.USERS));
+      if (!userSnap.empty) {
+        const users: User[] = [];
+        const userMap = new Map<string, User>();
+        userSnap.forEach((docSnap) => {
+          const u = docSnap.data() as User;
+          if (u && u.id && !userMap.has(u.id)) {
+            userMap.set(u.id, u);
+            users.push(u);
+          }
+        });
+        localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+      }
+
+      // 2. Sync Santri
+      const santriSnap = await getDocs(collection(db, COLLECTIONS.SANTRI));
+      if (!santriSnap.empty) {
+        const santriList: Santri[] = [];
+        const santriMap = new Map<string, Santri>();
+        santriSnap.forEach((docSnap) => {
+          const s = docSnap.data() as Santri;
+          if (s && s.idSantri && !santriMap.has(s.idSantri)) {
+            const normalizedS = { ...s, kelas: normalizeKelas(s.kelas) };
+            santriMap.set(s.idSantri, normalizedS);
+            santriList.push(normalizedS);
+          }
+        });
+        localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(santriList));
+      }
+
+      // 3. Sync Ziyadah
+      const ziyadahSnap = await getDocs(collection(db, COLLECTIONS.ZIYADAH));
+      const ziyadahRecords: ZiyadahRecord[] = [];
+      ziyadahSnap.forEach((docSnap) => {
+        const data = docSnap.data() as ZiyadahRecord;
+        const id = data.id || docSnap.id;
+        if (id && !deletedIds.has(id)) {
+          ziyadahRecords.push({ ...data, id });
+        }
+      });
+      ziyadahRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+      localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(ziyadahRecords));
+
+      // 4. Sync Murojaah
+      const murojaahSnap = await getDocs(collection(db, COLLECTIONS.MUROJAAH));
+      const murojaahRecords: MurojaahRecord[] = [];
+      murojaahSnap.forEach((docSnap) => {
+        const data = docSnap.data() as MurojaahRecord;
+        const id = data.id || docSnap.id;
+        if (id && !deletedIds.has(id)) {
+          murojaahRecords.push({ ...data, id });
+        }
+      });
+      murojaahRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+      localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(murojaahRecords));
+
+      // 5. Sync Binnadzor
+      const binnadzorSnap = await getDocs(collection(db, COLLECTIONS.BINNADZOR));
+      const binnadzorRecords: BinnadzorRecord[] = [];
+      binnadzorSnap.forEach((docSnap) => {
+        const data = docSnap.data() as BinnadzorRecord;
+        const id = data.id || docSnap.id;
+        if (id && !deletedIds.has(id)) {
+          binnadzorRecords.push({ ...data, id });
+        }
+      });
+      binnadzorRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+      localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(binnadzorRecords));
+
+      // 6. Sync Pembelajaran
+      const pembelajaranSnap = await getDocs(collection(db, COLLECTIONS.PEMBELAJARAN));
+      const pembelajaranRecords: PembelajaranRecord[] = [];
+      pembelajaranSnap.forEach((docSnap) => {
+        const data = docSnap.data() as PembelajaranRecord;
+        const id = data.id || docSnap.id;
+        if (id && !deletedIds.has(id)) {
+          pembelajaranRecords.push({ ...data, id });
+        }
+      });
+      pembelajaranRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+      localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(pembelajaranRecords));
+
+      // 7. Sync Kelas
+      const kelasSnap = await getDocs(collection(db, COLLECTIONS.KELAS));
+      const kelasList: Kelas[] = [];
+      kelasSnap.forEach((docSnap) => {
+        const k = docSnap.data() as Kelas;
+        if (k && k.id) {
+          kelasList.push({ ...k, tipeKelas: normalizeTipeKelas(k.tipeKelas) });
+        }
+      });
+      if (kelasList.length > 0) {
+        localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify(kelasList));
+      }
+
+      return { success: true };
+    } catch (err) {
+      console.error('syncWithCloud error:', err);
+      return { success: false, message: (err as Error).message };
+    }
   },
 
   async updateRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran', id: string, updatedData: Partial<ZiyadahRecord | MurojaahRecord | BinnadzorRecord | PembelajaranRecord>): Promise<boolean> {
@@ -995,18 +1102,32 @@ export const storageService = {
     const users = this.getUsers().filter(u => u.idSantri !== idSantri && u.username.toLowerCase() !== idSantri.toLowerCase());
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
 
-    // 3. Clean up related Ziyadah and Murojaah records if requested
+    // 3. Clean up related Ziyadah, Murojaah, Binnadzor, and Pembelajaran records if requested
     let ziyadahToDelete: ZiyadahRecord[] = [];
     let murojaahToDelete: MurojaahRecord[] = [];
+    let binnadzorToDelete: BinnadzorRecord[] = [];
+    let pembelajaranToDelete: PembelajaranRecord[] = [];
 
     if (deleteRelatedHistory) {
       ziyadahToDelete = this.getZiyadahRecords().filter(r => r.idSantri === idSantri);
+      ziyadahToDelete.forEach(z => this.markRecordDeleted(z.id));
       const ziyadah = this.getZiyadahRecords().filter(r => r.idSantri !== idSantri);
       localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(ziyadah));
 
       murojaahToDelete = this.getMurojaahRecords().filter(r => r.idSantri === idSantri);
+      murojaahToDelete.forEach(m => this.markRecordDeleted(m.id));
       const murojaah = this.getMurojaahRecords().filter(r => r.idSantri !== idSantri);
       localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(murojaah));
+
+      binnadzorToDelete = this.getBinnadzorRecords().filter(r => r.idSantri === idSantri);
+      binnadzorToDelete.forEach(b => this.markRecordDeleted(b.id));
+      const binnadzor = this.getBinnadzorRecords().filter(r => r.idSantri !== idSantri);
+      localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(binnadzor));
+
+      pembelajaranToDelete = this.getPembelajaranRecords().filter(r => r.idSantri === idSantri);
+      pembelajaranToDelete.forEach(p => this.markRecordDeleted(p.id));
+      const pembelajaran = this.getPembelajaranRecords().filter(r => r.idSantri !== idSantri);
+      localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(pembelajaran));
     }
 
     // Cloud Firestore delete
@@ -1021,6 +1142,12 @@ export const storageService = {
         }
         for (const m of murojaahToDelete) {
           await deleteDoc(doc(db, COLLECTIONS.MUROJAAH, m.id));
+        }
+        for (const b of binnadzorToDelete) {
+          await deleteDoc(doc(db, COLLECTIONS.BINNADZOR, b.id));
+        }
+        for (const p of pembelajaranToDelete) {
+          await deleteDoc(doc(db, COLLECTIONS.PEMBELAJARAN, p.id));
         }
       }
     } catch (e) {
@@ -1040,7 +1167,7 @@ export const storageService = {
       password: user.password ? user.password.trim() : '123',
       role: user.role || 'Ustadz',
       nama: user.nama ? user.nama.trim() : 'Ustadz Pengajar',
-      idSantri: user.role === 'Ustadz' ? '' : (user.idSantri || '')
+      idSantri: (user.role === 'Ustadz' || user.role === 'Superadmin') ? '' : (user.idSantri || '')
     };
 
     const existingIndex = users.findIndex(u => u.username.toLowerCase() === ensuredUser.username.toLowerCase());
@@ -1116,7 +1243,9 @@ export const storageService = {
       const user = JSON.parse(data);
       if (user) {
         const r = String(user.role || '').trim().toLowerCase();
-        if (r === 'wali' || r.includes('wali')) {
+        if (r === 'superadmin') {
+          user.role = 'Superadmin';
+        } else if (r === 'wali' || r.includes('wali')) {
           user.role = 'Wali';
         } else if (r === 'santri') {
           user.role = 'Santri';

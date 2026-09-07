@@ -67,7 +67,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
 }) => {
   // Find musyrif's class if any
   const myKelas = useMemo(() => {
-    if (currentUser.role === 'admin' || currentUser.role === 'pimpinan') return undefined;
+    if (currentUser.role === 'admin' || currentUser.role === 'pimpinan' || currentUser.role === 'Superadmin') return undefined;
     return kelasList.find(k => k.musyrifId === currentUser.id);
   }, [kelasList, currentUser]);
 
