@@ -716,10 +716,10 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl sm:rounded-2xl p-3.5 sm:p-6 border border-slate-200/90  flex flex-col md:max-h-[calc(100vh-140px)]">
+    <div className="bg-white rounded-xl p-2.5 sm:p-4 border border-slate-200/90  flex flex-col md:max-h-[calc(100vh-140px)]">
       {/* Header & Filter Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-3 border-b border-slate-100 flex-shrink-0">
-        <div className="space-y-1.5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 pb-2 border-b border-slate-100 flex-shrink-0">
+        <div className="space-y-1">
           <h3 className="font-bold text-slate-900 text-base sm:text-lg flex items-center gap-2">
             Riwayat Setoran Hafalan
             {isViewOnly && (
@@ -729,14 +729,14 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowReportModal(true)}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs  transition cursor-pointer"
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs  transition cursor-pointer"
             >
               <FileText className="w-3.5 h-3.5" />
               <span>Unduh Laporan PDF</span>
             </button>
             <button
               onClick={exportToCSV}
-              className="inline-flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">CSV</span>
@@ -746,18 +746,18 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative flex-1 sm:w-56 min-w-[160px]">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-2 text-slate-400" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Cari santri, surah, catatan..."
-              className="w-full pl-9 pr-8 py-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 cursor-pointer"
                 title="Hapus pencarian"
               >
                 <X className="w-3.5 h-3.5" />
@@ -767,7 +767,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           <select
             value={kategoriFilter}
             onChange={(e) => setKategoriFilter(e.target.value as KategoriFilter)}
-            className="py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer flex-1 sm:flex-none min-w-[130px]"
+            className="py-1 px-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer flex-1 sm:flex-none min-w-[130px]"
           >
             <option value="ALL">Semua Kategori</option>
             <option value="Ziyadah">Ziyadah (Hafalan Baru)</option>
@@ -779,7 +779,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           <select
             value={nilaiFilter}
             onChange={(e) => setNilaiFilter(e.target.value)}
-            className="py-2 px-3 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer flex-1 sm:flex-none min-w-[120px]"
+            className="py-1 px-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer flex-1 sm:flex-none min-w-[120px]"
           >
             <option value="ALL">Semua Nilai</option>
             {PREDIKAT_NILAI_OPTIONS.map(opt => (
@@ -790,13 +790,13 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       </div>
 
       {/* Date Filter Toolbar & Mode Switcher */}
-      <div className="flex-shrink-0 pt-3 pb-2 space-y-2 border-b border-slate-100">
+      <div className="flex-shrink-0 pt-2 pb-1.5 space-y-1.5 border-b border-slate-100">
         <div className="flex flex-wrap items-center justify-between gap-2">
           {/* Mode Selector Tabs */}
-          <div className="inline-flex items-center p-1 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 max-w-full overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          <div className="inline-flex items-center p-0.5 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 max-w-full overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
             <button
               onClick={() => setDateFilterMode('bulan')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-md transition cursor-pointer ${
                 dateFilterMode === 'bulan'
                   ? 'bg-white text-emerald-900  font-extrabold'
                   : 'hover:text-slate-900'
@@ -812,7 +812,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   applyDatePreset('bulan_ini');
                 }
               }}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-md transition cursor-pointer ${
                 dateFilterMode === 'range'
                   ? 'bg-white text-emerald-900  font-extrabold'
                   : 'hover:text-slate-900'
@@ -823,7 +823,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
             </button>
             <button
               onClick={() => setDateFilterMode('all')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-md transition cursor-pointer ${
                 dateFilterMode === 'all'
                   ? 'bg-white text-emerald-900  font-extrabold'
                   : 'hover:text-slate-900'
@@ -854,7 +854,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   <button
                     key={mk}
                     onClick={() => setActiveMonthKey(mk)}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer flex-shrink-0 ${
+                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer flex-shrink-0 ${
                       activeMonthKey === mk
                         ? 'bg-emerald-800 text-white '
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -876,10 +876,10 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
         {/* Mode 2: Custom Date Range Form & Quick Presets */}
         {dateFilterMode === 'range' && (
-          <div className="p-3 bg-emerald-50/50 border border-emerald-100 rounded-2xl space-y-2.5">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="p-2 bg-emerald-50/50 border border-emerald-100 rounded-lg space-y-2">
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2">
               {/* Date Inputs */}
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
                 <div className="flex items-center gap-1.5">
                   <label className="text-xs font-bold text-slate-700 whitespace-nowrap">Dari:</label>
                   <input
@@ -889,7 +889,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                       setCustomStartDate(e.target.value);
                       setActiveDatePreset('custom');
                     }}
-                    className="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 "
+                    className="py-1 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 "
                   />
                 </div>
 
@@ -902,7 +902,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                       setCustomEndDate(e.target.value);
                       setActiveDatePreset('custom');
                     }}
-                    className="py-1.5 px-3 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 "
+                    className="py-1 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 "
                   />
                 </div>
 
@@ -913,7 +913,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                       setCustomEndDate('');
                       setActiveDatePreset('');
                     }}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-rose-600 hover:bg-rose-50 text-xs font-semibold transition cursor-pointer"
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-rose-600 hover:bg-rose-50 text-xs font-semibold transition cursor-pointer"
                     title="Kosongkan tanggal"
                   >
                     <RotateCcw className="w-3 h-3" />
@@ -927,7 +927,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                 <span className="text-[11px] font-bold text-slate-500 mr-1 hidden sm:inline">Preset Cepat:</span>
                 <button
                   onClick={() => applyDatePreset('hari_ini')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer border ${
+                  className={`px-2 py-0.5 rounded-md text-xs font-bold transition cursor-pointer border ${
                     activeDatePreset === 'hari_ini'
                       ? 'bg-emerald-800 text-white border-emerald-800 '
                       : 'bg-white text-slate-600 hover:bg-slate-100 border-slate-200'
@@ -937,7 +937,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                 </button>
                 <button
                   onClick={() => applyDatePreset('7_hari')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer border ${
+                  className={`px-2 py-0.5 rounded-md text-xs font-bold transition cursor-pointer border ${
                     activeDatePreset === '7_hari'
                       ? 'bg-emerald-800 text-white border-emerald-800 '
                       : 'bg-white text-slate-600 hover:bg-slate-100 border-slate-200'
@@ -947,7 +947,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                 </button>
                 <button
                   onClick={() => applyDatePreset('30_hari')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer border ${
+                  className={`px-2 py-0.5 rounded-md text-xs font-bold transition cursor-pointer border ${
                     activeDatePreset === '30_hari'
                       ? 'bg-emerald-800 text-white border-emerald-800 '
                       : 'bg-white text-slate-600 hover:bg-slate-100 border-slate-200'
@@ -957,7 +957,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                 </button>
                 <button
                   onClick={() => applyDatePreset('bulan_ini')}
-                  className={`px-2.5 py-1 rounded-lg text-xs font-bold transition cursor-pointer border ${
+                  className={`px-2 py-0.5 rounded-md text-xs font-bold transition cursor-pointer border ${
                     activeDatePreset === 'bulan_ini'
                       ? 'bg-emerald-800 text-white border-emerald-800 '
                       : 'bg-white text-slate-600 hover:bg-slate-100 border-slate-200'
@@ -972,7 +972,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
         {/* Mode 3: All Time Banner */}
         {dateFilterMode === 'all' && (
-          <div className="py-2 px-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 flex items-center justify-between">
+          <div className="py-1 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 flex items-center justify-between">
             <span>Menampilkan seluruh arsip data setoran tanpa pembatasan tanggal.</span>
             <button
               onClick={() => setDateFilterMode('bulan')}
@@ -985,7 +985,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       </div>
 
       {/* Kategori Setoran Filter Chips */}
-      <div className="flex-shrink-0 pt-2.5 pb-2 overflow-x-auto" style={{ scrollbarWidth: 'thin' }}>
+      <div className="flex-shrink-0 pt-1.5 pb-1.5 overflow-x-auto" style={{ scrollbarWidth: 'thin' }}>
         <div className="flex items-center gap-1.5 min-w-min pb-0.5">
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mr-1 hidden sm:inline flex-shrink-0">
             Kategori:
@@ -998,7 +998,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               <button
                 key={cat.id}
                 onClick={() => setKategoriFilter(cat.id)}
-                className={`group flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer flex-shrink-0 ${
+                className={`group flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer flex-shrink-0 ${
                   isSelected ? cat.activeColor : cat.inactiveColor
                 }`}
               >
@@ -1019,7 +1019,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
       {/* Active Filter Indicators & Reset Bar */}
       {isFilterActive && (
-        <div className="flex items-center justify-between flex-wrap gap-2 px-3 py-2 bg-emerald-50/80 border border-emerald-200 rounded-lg text-xs text-emerald-950 mb-2 flex-shrink-0">
+        <div className="flex items-center justify-between flex-wrap gap-1.5 px-2.5 py-1.5 bg-emerald-50/80 border border-emerald-200 rounded-lg text-xs text-emerald-950 mb-2 flex-shrink-0">
           <div className="flex items-center flex-wrap gap-1.5">
             <span className="font-extrabold flex items-center gap-1 text-emerald-900">
               <SlidersHorizontal className="w-3.5 h-3.5" /> Filter Aktif:
@@ -1074,7 +1074,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           </div>
           <button
             onClick={resetAllFilters}
-            className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 hover:text-rose-900 bg-white hover:bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200 transition cursor-pointer "
+            className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 hover:text-rose-900 bg-white hover:bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200 transition cursor-pointer "
           >
             <RotateCcw className="w-3 h-3" />
             <span>Reset Semua Filter</span>
@@ -1084,7 +1084,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
       {/* Batch Delete Action Bar - Appears when items are selected */}
       {!isViewOnly && selectedIds.size > 0 && (
-        <div className="bg-rose-50 border border-rose-200 rounded-lg px-4 py-2.5 flex items-center justify-between gap-3 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1 ">
+        <div className="bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 flex items-center justify-between gap-2 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1 ">
           <div className="flex items-center gap-2 text-rose-900 font-bold">
             <span className="bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px] font-extrabold">
               {selectedIds.size}
@@ -1112,7 +1112,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       {/* Scrollable Content Area - responsive height */}
       <div className="flex-1 md:overflow-y-auto min-h-0 rounded-lg border border-slate-100 bg-white">
         {!isViewOnly && displayedItems.length > 0 && (
-          <div className="sticky top-0 z-10 bg-slate-100/95 backdrop-blur-xs px-3 sm:px-4 py-1.5 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
+          <div className="sticky top-0 z-10 bg-slate-100/95 backdrop-blur-xs px-2.5 sm:px-3 py-1 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
             <div className="flex items-center gap-2">
               <label className="flex items-center gap-1.5 cursor-pointer font-semibold select-none hover:text-slate-900">
                 <input
@@ -1136,7 +1136,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         )}
 
         {displayedItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 px-4 text-center text-slate-400">
+          <div className="flex flex-col items-center justify-center py-8 px-4 text-center text-slate-400">
             <Inbox className="w-10 h-10 mb-2 text-slate-300" />
             <p className="text-sm font-semibold text-slate-600">Tidak ada data setoran yang cocok</p>
             <p className="text-xs text-slate-400 mt-1 max-w-sm">
@@ -1170,7 +1170,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               return (
                 <div key={item.id} className={`transition-colors ${isSelected ? 'bg-slate-50' : 'bg-white hover:bg-slate-50/70'}`}>
                   {/* MOBILE VIEW CARD (sm:hidden) */}
-                  <div className="sm:hidden p-3.5 space-y-2.5">
+                  <div className="sm:hidden p-2.5 space-y-1.5">
                     {/* Top Row: Checkbox + Category + Nilai */}
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -1192,23 +1192,23 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                         {/* Full Type Badge */}
                         <div className="flex-shrink-0">
                           {item.type === 'Ziyadah' ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200 ">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200 ">
                               <BookOpen className="w-3 h-3 text-emerald-600" /> Ziyadah
                             </span>
                           ) : item.type === 'Murojaah' ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-teal-50 text-teal-800 font-bold text-xs border border-teal-200 ">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 font-bold text-xs border border-teal-200 ">
                               <RotateCw className="w-3 h-3 text-teal-600" /> Muroja'ah
                             </span>
                           ) : item.type === 'Binnadzor' ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-800 font-bold text-xs border border-indigo-200 ">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 font-bold text-xs border border-indigo-200 ">
                               <BookOpenCheck className="w-3 h-3 text-indigo-600" /> Binnadzor
                             </span>
                           ) : isIstimewa ? (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-800 font-bold text-xs border border-purple-200 ">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 font-bold text-xs border border-purple-200 ">
                               <Sparkles className="w-3 h-3 text-purple-600" /> Istimewa
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-50 text-amber-900 font-bold text-xs border border-amber-200 ">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 font-bold text-xs border border-amber-200 ">
                               <GraduationCap className="w-3 h-3 text-amber-600" /> Pembelajaran
                             </span>
                           )}
@@ -1240,7 +1240,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                     {/* Materi Setoran Block */}
                     <div 
-                      className="bg-slate-50 border border-slate-200/90 rounded-lg p-2.5 cursor-pointer hover:bg-slate-100/80 transition"
+                      className="bg-slate-50 border border-slate-200/90 rounded-lg p-2 cursor-pointer hover:bg-slate-100/80 transition"
                       onClick={() => toggleRow(item.id)}
                     >
                       <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
@@ -1254,7 +1254,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                     {/* Quick Preview Chips (Catatan, Kendala, Kenaikan) */}
                     {(item.catatan || item.kendalaSantri || item.statusKenaikan || item.tipeKelas) && (
-                      <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+                      <div className="flex items-center gap-1 flex-wrap">
                         {item.statusKenaikan && (
                           <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200">
                             {item.statusKenaikan}
@@ -1279,7 +1279,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     )}
 
                     {/* Date & Expand Toggle */}
-                    <div className="flex items-center justify-between gap-2 pt-0.5 text-xs">
+                    <div className="flex items-center justify-between gap-1.5 text-xs">
                       <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-medium min-w-0 flex-1">
                         <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
                         <span className="truncate">{formatTanggalLengkap(item.timestamp)}</span>
@@ -1291,7 +1291,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                       <button
                         type="button"
                         onClick={() => toggleRow(item.id)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer flex-shrink-0"
+                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer flex-shrink-0"
                       >
                         <span>{isExpanded ? 'Tutup' : 'Rincian'}</span>
                         {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -1300,14 +1300,14 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                     {/* Quick Action Buttons on Mobile */}
                     {!isViewOnly && (
-                      <div className="flex items-center gap-1.5 pt-1.5 border-t border-slate-100">
+                      <div className="flex items-center gap-1 pt-1 border-t border-slate-100">
                         {waLink ? (
                           <a
                             href={waLink}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition"
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition"
                           >
                             <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
                             <span>Kirim WA</span>
@@ -1321,7 +1321,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200 transition cursor-pointer"
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200 transition cursor-pointer"
                         >
                           <Pencil className="w-3.5 h-3.5 text-slate-600" />
                           <span>Edit</span>
@@ -1340,7 +1340,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                   {/* DESKTOP VIEW ROW (hidden sm:flex) */}
                   <div
-                    className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-2.5 cursor-pointer"
+                    className="hidden sm:flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 cursor-pointer"
                     onClick={() => toggleRow(item.id)}
                   >
                     {/* Row Select Checkbox (For Ustadz/Admin) */}
@@ -1427,33 +1427,33 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                   {/* Expanded Detail - accordion */}
                   {isExpanded && (
-                    <div className="px-3 sm:px-5 pb-4 pt-2.5 bg-slate-50/70 border-t border-slate-200/80 rounded-b-xl space-y-3 text-xs">
+                    <div className="px-2.5 sm:px-4 pb-3 pt-2 bg-slate-50/70 border-t border-slate-200/80 rounded-b-lg space-y-2 text-xs">
                       {/* Grid cards for detail */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {/* Detail Identitas & Materi Card */}
-                        <div className="bg-white p-3.5 rounded-lg border border-slate-200/80  space-y-2">
-                          <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-2">
+                        <div className="bg-white p-2.5 rounded-lg border border-slate-200/80  space-y-2">
+                          <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-1.5">
                             <div className="min-w-0">
                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Identitas Santri</span>
                               <h5 className="font-extrabold text-slate-900 text-sm truncate">{item.namaSantri}</h5>
                               <span className="text-[11px] text-slate-400 font-mono">NIS: {item.idSantri}</span>
                             </div>
                             {kelasGroup && (
-                              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200 flex-shrink-0">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200 flex-shrink-0">
                                 {kelasGroup}
                               </span>
                             )}
                           </div>
 
-                          <div className="space-y-1.5 pt-0.5">
+                          <div className="space-y-1 pt-0.5">
                             <div>
                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Materi Hafalan / Pelajaran</span>
-                              <p className="font-extrabold text-slate-800 text-xs bg-slate-50 p-2 rounded-lg border border-slate-200/60 leading-relaxed mt-0.5">
+                              <p className="font-extrabold text-slate-800 text-xs bg-slate-50 p-1.5 rounded-md border border-slate-200/60 leading-relaxed mt-0.5">
                                 {item.materi}
                               </p>
                             </div>
 
-                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                               <div className="flex items-center gap-1.5">
                                 <span className="text-slate-400 font-medium text-[11px]">Nilai:</span>
                                 {renderNilaiBadge(item.nilai)}
@@ -1481,28 +1481,28 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                           {/* 4 Aspek Kualitas Penilaian */}
                           {(item.hukumTajwid || item.makhrojHuruf || item.kefasihan || item.kelancaran) && (
                             <div className="pt-2 border-t border-slate-100">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">4 Aspek Penilaian</span>
-                              <div className="grid grid-cols-2 gap-1.5">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">4 Aspek Penilaian</span>
+                              <div className="grid grid-cols-2 gap-1">
                                 {item.hukumTajwid && (
-                                  <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-200/60">
+                                  <div className="bg-slate-50 p-1 rounded-md border border-slate-200/60">
                                     <span className="text-[10px] text-slate-500 block">Tajwid</span>
                                     <span className="font-bold text-slate-800 text-[11px]">{item.hukumTajwid}</span>
                                   </div>
                                 )}
                                 {item.makhrojHuruf && (
-                                  <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-200/60">
+                                  <div className="bg-slate-50 p-1 rounded-md border border-slate-200/60">
                                     <span className="text-[10px] text-slate-500 block">Makhroj</span>
                                     <span className="font-bold text-slate-800 text-[11px]">{item.makhrojHuruf}</span>
                                   </div>
                                 )}
                                 {item.kefasihan && (
-                                  <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-200/60">
+                                  <div className="bg-slate-50 p-1 rounded-md border border-slate-200/60">
                                     <span className="text-[10px] text-slate-500 block">Fashohah</span>
                                     <span className="font-bold text-slate-800 text-[11px]">{item.kefasihan}</span>
                                   </div>
                                 )}
                                 {item.kelancaran && (
-                                  <div className="bg-slate-50 p-1.5 rounded-lg border border-slate-200/60">
+                                  <div className="bg-slate-50 p-1 rounded-md border border-slate-200/60">
                                     <span className="text-[10px] text-slate-500 block">Kelancaran</span>
                                     <span className="font-bold text-slate-800 text-[11px]">{item.kelancaran}</span>
                                   </div>
@@ -1513,11 +1513,11 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                         </div>
 
                         {/* Catatan, Kendala, & Tindak Lanjut Card */}
-                        <div className="bg-white p-3.5 rounded-lg border border-slate-200/80  flex flex-col justify-between space-y-2.5">
+                        <div className="bg-white p-2.5 rounded-lg border border-slate-200/80  flex flex-col justify-between space-y-2">
                           <div className="space-y-2">
                             <div>
                               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Catatan Ustadz / Guru</span>
-                              <p className="text-xs text-slate-700 bg-slate-50 p-2.5 rounded-lg border border-slate-200/70 leading-relaxed break-words">
+                              <p className="text-xs text-slate-700 bg-slate-50 p-2 rounded-md border border-slate-200/70 leading-relaxed break-words">
                                 {item.catatan || <span className="text-slate-400 italic">Tidak ada catatan khusus.</span>}
                               </p>
                             </div>
@@ -1527,7 +1527,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                                 <span className="text-[10px] font-bold text-rose-700 uppercase tracking-wider flex items-center gap-1 mb-1">
                                   ⚠️ Kendala Santri
                                 </span>
-                                <p className="text-xs text-rose-950 bg-rose-50/80 p-2.5 rounded-lg border border-rose-200 leading-relaxed break-words">
+                                <p className="text-xs text-rose-950 bg-rose-50/80 p-2 rounded-md border border-rose-200 leading-relaxed break-words">
                                   {item.kendalaSantri}
                                 </p>
                               </div>
@@ -1538,7 +1538,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                                 <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-1 mb-1">
                                   💡 Saran &amp; Tindak Lanjut
                                 </span>
-                                <p className="text-xs text-emerald-950 bg-emerald-50/80 p-2.5 rounded-lg border border-emerald-200 leading-relaxed break-words">
+                                <p className="text-xs text-emerald-950 bg-emerald-50/80 p-2 rounded-md border border-emerald-200 leading-relaxed break-words">
                                   {item.rekomendasiTindakLanjut}
                                 </p>
                               </div>
@@ -1553,20 +1553,20 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                             {/* Action buttons on desktop and inside expanded drawer */}
                             {!isViewOnly && (
-                              <div className="flex flex-wrap items-center gap-2 pt-1">
+                              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                                 {waLink ? (
                                   <a
                                     href={waLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={(e) => e.stopPropagation()}
-                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-emerald-800 bg-emerald-50 hover:bg-emerald-100 transition cursor-pointer border border-emerald-200 text-xs font-bold"
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-emerald-800 bg-emerald-50 hover:bg-emerald-100 transition cursor-pointer border border-emerald-200 text-xs font-bold"
                                   >
                                     <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
                                     <span>Kirim Laporan WA</span>
                                   </a>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-slate-400 bg-slate-100 border border-slate-200 text-xs font-medium">
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-slate-400 bg-slate-100 border border-slate-200 text-xs font-medium">
                                     <MessageCircle className="w-3.5 h-3.5 text-slate-400" />
                                     <span>No WA belum ada</span>
                                   </span>
@@ -1574,7 +1574,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer border border-slate-200 text-xs font-bold"
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer border border-slate-200 text-xs font-bold"
                                 >
                                   <Pencil className="w-3.5 h-3.5 text-slate-600" />
                                   <span>Edit Setoran</span>
@@ -1582,7 +1582,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); handleDelete(item, e); }}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-rose-700 bg-rose-50 hover:bg-rose-100 transition cursor-pointer border border-rose-200 text-xs font-bold"
+                                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-rose-700 bg-rose-50 hover:bg-rose-100 transition cursor-pointer border border-rose-200 text-xs font-bold"
                                 >
                                   <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                                   <span>Hapus</span>
@@ -1622,7 +1622,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           aria-labelledby="edit-modal-title"
         >
           <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between gap-3 p-5 bg-gradient-to-br from-emerald-800 to-teal-900 text-white">
+            <div className="flex items-center justify-between gap-2 p-5 bg-gradient-to-br from-emerald-800 to-teal-900 text-white">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0">
                   <Pencil className="w-5 h-5" />
@@ -1795,7 +1795,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   )}
                 </div>
 
-                <div className="border-t border-slate-200/80 pt-2 space-y-1.5">
+                <div className="border-t border-slate-200/80 pt-2 space-y-1">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500 font-medium">Santri:</span>
                     <span className="font-bold text-slate-800 text-right">{itemToDelete.namaSantri} ({itemToDelete.idSantri})</span>
