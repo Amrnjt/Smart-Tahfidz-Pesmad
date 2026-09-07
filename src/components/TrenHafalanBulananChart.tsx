@@ -30,7 +30,9 @@ import {
   Users,
   Target,
   Layers,
-  ChevronDown
+  ChevronDown,
+  Trophy,
+  Medal
 } from 'lucide-react';
 import { Santri, ZiyadahRecord, MurojaahRecord, Kelas } from '../types';
 import { AnimatedCounter } from './AnimatedCounter';
@@ -83,6 +85,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
   const [metricMode, setMetricMode] = useState<MetricMode>('ayat');
   const [visualType, setVisualType] = useState<VisualType>('area');
   const [activeDetailMonth, setActiveDetailMonth] = useState<string | null>(null);
+  const [komparasiViewMode, setKomparasiViewMode] = useState<'cards' | 'chart'>('cards');
 
   const monthNames = [
     'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
@@ -602,96 +605,262 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
         </div>
       </div>
 
-      {/* Main Chart Canvas */}
-      <div className="bg-slate-50/60 rounded-2xl p-3.5 sm:p-5 border border-slate-200/80 space-y-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
-            <h4 className="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wider">
-              {metricMode === 'ayat' && 'Grafik Laju Ayat Baru per Bulan'}
-              {metricMode === 'kumulatif' && 'Grafik Pertumbuhan Akumulasi Hafalan'}
-              {metricMode === 'kelancaran' && 'Grafik Tingkat Kelancaran Bacaan'}
-              {metricMode === 'komparasi' && 'Peringkat Hafalan Santri (Top 10 Santri)'}
-            </h4>
+      {/* Main Chart Canvas or Top Capaian Santri */}
+      {metricMode === 'komparasi' ? (
+        <div className="bg-slate-50/70 rounded-2xl p-3.5 sm:p-5 border border-slate-200/80 space-y-4">
+          {/* Header Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200/70">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="p-1.5 rounded-lg bg-amber-500 text-white shadow-xs">
+                  <Trophy className="w-4 h-4" />
+                </span>
+                <h4 className="text-sm sm:text-base font-extrabold text-slate-800">
+                  Top Capaian Santri (Peringkat Hafalan)
+                </h4>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Urutan santri teratas berdasarkan total capaian ayat baru Ziyadah ({timeRangeMonths} bulan terakhir)
+              </p>
+            </div>
+
+            {/* View Mode Toggle (Peringkat Cards vs Grafik Batang) */}
+            <div className="inline-flex items-center p-1 bg-slate-200/80 rounded-xl text-xs font-bold text-slate-600 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={() => setKomparasiViewMode('cards')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                  komparasiViewMode === 'cards'
+                    ? 'bg-white text-emerald-900 shadow-xs font-extrabold'
+                    : 'hover:text-slate-900'
+                }`}
+              >
+                <Medal className="w-3.5 h-3.5 text-amber-500" />
+                <span>Daftar Peringkat</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setKomparasiViewMode('chart')}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
+                  komparasiViewMode === 'chart'
+                    ? 'bg-white text-emerald-900 shadow-xs font-extrabold'
+                    : 'hover:text-slate-900'
+                }`}
+              >
+                <BarChart3 className="w-3.5 h-3.5 text-emerald-700" />
+                <span>Grafik Batang</span>
+              </button>
+            </div>
           </div>
 
-          <span className="text-[11px] text-slate-500 font-medium">
-            Klik batang/titik bulan untuk melihat detail surah
-          </span>
-        </div>
+          {/* If no data */}
+          {santriComparisonData.length === 0 ? (
+            <div className="text-center py-10 text-slate-400">
+              <p className="text-sm font-semibold">Belum ada data capaian santri untuk ditampilkan</p>
+            </div>
+          ) : komparasiViewMode === 'cards' ? (
+            /* Dedicated Mobile & Responsive Leaderboard Cards */
+            <div className="space-y-2.5">
+              {santriComparisonData.map((item, index) => {
+                const rank = index + 1;
+                const isTop1 = rank === 1;
+                const isTop2 = rank === 2;
+                const isTop3 = rank === 3;
+                const maxAyat = santriComparisonData[0]?.totalAyatPeriode || 1;
+                const pct = Math.min(100, Math.round((item.totalAyatPeriode / maxAyat) * 100));
 
-        {/* Recharts Render Area */}
-        <div className="h-64 sm:h-80 w-full min-w-0 pt-2">
-          <ResponsiveContainer width="100%" height="100%">
-            {metricMode === 'komparasi' ? (
-              /* Bar Chart: Comparison of top santri */
-              <BarChart
-                data={santriComparisonData}
-                layout="vertical"
-                margin={{ top: 10, right: 20, left: 40, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                <XAxis
-                  type="number"
-                  tick={{ fill: '#64748b', fontSize: 10 }}
-                  axisLine={{ stroke: '#cbd5e1' }}
-                />
-                <YAxis
-                  type="category"
-                  dataKey="namaSantri"
-                  tick={{ fill: '#334155', fontSize: 11, fontWeight: 600 }}
-                  axisLine={{ stroke: '#cbd5e1' }}
-                  width={110}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: '12px',
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    fontSize: '11px',
-                    color: '#1e293b'
+                return (
+                  <div
+                    key={item.idSantri}
+                    className={`rounded-2xl p-3 sm:p-4 border transition-all ${
+                      isTop1
+                        ? 'bg-gradient-to-r from-amber-500/10 via-amber-50/50 to-white border-amber-300 shadow-xs ring-1 ring-amber-200/50'
+                        : isTop2
+                        ? 'bg-gradient-to-r from-slate-200/40 via-slate-50/60 to-white border-slate-300 shadow-2xs'
+                        : isTop3
+                        ? 'bg-gradient-to-r from-orange-200/30 via-amber-50/40 to-white border-amber-200 shadow-2xs'
+                        : 'bg-white border-slate-200/80 hover:border-slate-300'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2.5">
+                      {/* Left: Rank Badge & Name & Class */}
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                        {/* Rank Badge */}
+                        <div
+                          className={`w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center font-extrabold text-xs sm:text-sm flex-shrink-0 ${
+                            isTop1
+                              ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-sm'
+                              : isTop2
+                              ? 'bg-gradient-to-br from-slate-300 to-slate-500 text-white shadow-xs'
+                              : isTop3
+                              ? 'bg-gradient-to-br from-amber-600 to-amber-800 text-white shadow-xs'
+                              : 'bg-slate-100 text-slate-700 border border-slate-200'
+                          }`}
+                        >
+                          {isTop1 ? '🥇' : isTop2 ? '🥈' : isTop3 ? '🥉' : `#${rank}`}
+                        </div>
+
+                        {/* Name & Class */}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h5 className="font-extrabold text-slate-900 text-xs sm:text-sm leading-tight break-words">
+                              {item.namaSantri}
+                            </h5>
+                            {item.kelas && (
+                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 flex-shrink-0">
+                                {item.kelas}
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-[10px] font-mono text-slate-400">
+                            {item.idSantri}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right: Total Ayat Periode Highlight */}
+                      <div className="text-right flex-shrink-0">
+                        <div className="text-sm sm:text-base font-black text-emerald-800 leading-none">
+                          <AnimatedCounter value={item.totalAyatPeriode} /> <span className="text-xs font-bold text-emerald-950">Ayat</span>
+                        </div>
+                        <span className="text-[10px] font-semibold text-slate-500">
+                          Total Periode
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Progress Bar & Sub-Metrics */}
+                    <div className="mt-2.5 space-y-1.5">
+                      {/* Bar indicator */}
+                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            isTop1
+                              ? 'bg-gradient-to-r from-amber-500 to-emerald-600'
+                              : isTop2
+                              ? 'bg-gradient-to-r from-slate-400 to-teal-600'
+                              : 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                          }`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+
+                      {/* Chips row */}
+                      <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium pt-0.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 font-bold border border-sky-200/60">
+                            <Calendar className="w-2.5 h-2.5" />
+                            Bulan Ini: <b>{item.totalAyatBulanIni} Ayat</b>
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold border border-slate-200/60">
+                            <BookOpen className="w-2.5 h-2.5" />
+                            {item.totalSesi} Sesi Ziyadah
+                          </span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-semibold hidden sm:inline">
+                          {pct}% dari peringkat #1
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            /* Bar Chart View with enhanced mobile and desktop sizes */
+            <div className="h-80 sm:h-96 w-full min-w-0 pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={santriComparisonData}
+                  layout="vertical"
+                  margin={{ top: 10, right: 20, left: 10, bottom: 10 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                  <XAxis
+                    type="number"
+                    tick={{ fill: '#64748b', fontSize: 10 }}
+                    axisLine={{ stroke: '#cbd5e1' }}
+                  />
+                  <YAxis
+                    type="category"
+                    dataKey="namaSantri"
+                    tick={{ fill: '#334155', fontSize: 10, fontWeight: 600 }}
+                    axisLine={{ stroke: '#cbd5e1' }}
+                    width={95}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: '12px',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      fontSize: '11px',
+                      color: '#1e293b'
+                    }}
+                    formatter={(val: any, name: any) => [
+                      `${val} Ayat`,
+                      name === 'totalAyatPeriode' ? 'Total Ayat Periode' : 'Total Ayat Bulan Ini'
+                    ]}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    height={32}
+                    formatter={(val) => (
+                      <span className="text-[11px] text-slate-600 font-medium">
+                        {val === 'totalAyatPeriode' ? `Total Hafalan (${timeRangeMonths} Bln)` : 'Hafalan Bulan Ini'}
+                      </span>
+                    )}
+                  />
+                  <Bar
+                    dataKey="totalAyatPeriode"
+                    name="totalAyatPeriode"
+                    fill="#059669"
+                    radius={[0, 4, 4, 0]}
+                    maxBarSize={16}
+                  />
+                  <Bar
+                    dataKey="totalAyatBulanIni"
+                    name="totalAyatBulanIni"
+                    fill="#0ea5e9"
+                    radius={[0, 4, 4, 0]}
+                    maxBarSize={16}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="bg-slate-50/60 rounded-2xl p-3.5 sm:p-5 border border-slate-200/80 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+              <h4 className="text-xs sm:text-sm font-bold text-slate-800 uppercase tracking-wider">
+                {metricMode === 'ayat' && 'Grafik Laju Ayat Baru per Bulan'}
+                {metricMode === 'kumulatif' && 'Grafik Pertumbuhan Akumulasi Hafalan'}
+                {metricMode === 'kelancaran' && 'Grafik Tingkat Kelancaran Bacaan'}
+              </h4>
+            </div>
+
+            <span className="text-[11px] text-slate-500 font-medium">
+              Klik batang/titik bulan untuk melihat detail surah
+            </span>
+          </div>
+
+          {/* Recharts Render Area */}
+          <div className="h-64 sm:h-80 w-full min-w-0 pt-2">
+            <ResponsiveContainer width="100%" height="100%">
+              {visualType === 'bar' ? (
+                /* Bar Chart View */
+                <BarChart
+                  data={monthlyData}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  onClick={(e: any) => {
+                    if (e && e.activePayload && e.activePayload[0]) {
+                      setActiveDetailMonth(e.activePayload[0].payload.monthKey);
+                    }
                   }}
-                  formatter={(val: any, name: any) => [
-                    `${val} Ayat`,
-                    name === 'totalAyatPeriode' ? 'Total Ayat Periode' : 'Total Ayat Bulan Ini'
-                  ]}
-                />
-                <Legend
-                  verticalAlign="bottom"
-                  height={32}
-                  formatter={(val) => (
-                    <span className="text-[11px] text-slate-600 font-medium">
-                      {val === 'totalAyatPeriode' ? `Total Hafalan (${timeRangeMonths} Bln)` : 'Hafalan Bulan Ini'}
-                    </span>
-                  )}
-                />
-                <Bar
-                  dataKey="totalAyatPeriode"
-                  name="totalAyatPeriode"
-                  fill="#059669"
-                  radius={[0, 4, 4, 0]}
-                  maxBarSize={18}
-                />
-                <Bar
-                  dataKey="totalAyatBulanIni"
-                  name="totalAyatBulanIni"
-                  fill="#0ea5e9"
-                  radius={[0, 4, 4, 0]}
-                  maxBarSize={18}
-                />
-              </BarChart>
-            ) : visualType === 'bar' ? (
-              /* Bar Chart View */
-              <BarChart
-                data={monthlyData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
-                onClick={(e: any) => {
-                  if (e && e.activePayload && e.activePayload[0]) {
-                    setActiveDetailMonth(e.activePayload[0].payload.monthKey);
-                  }
-                }}
-              >
+                >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis
                   dataKey="bulan"
@@ -927,6 +1096,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
           </ResponsiveContainer>
         </div>
       </div>
+      )}
 
       {/* Detail Breakdown of Selected Month */}
       {selectedDetailData && (

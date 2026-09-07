@@ -758,7 +758,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           <select
             value={kategoriFilter}
             onChange={(e) => setKategoriFilter(e.target.value as KategoriFilter)}
-            className="py-2 px-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+            className="py-2 px-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer flex-1 sm:flex-none min-w-[130px]"
           >
             <option value="ALL">Semua Kategori</option>
             <option value="Ziyadah">Ziyadah (Hafalan Baru)</option>
@@ -770,7 +770,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           <select
             value={nilaiFilter}
             onChange={(e) => setNilaiFilter(e.target.value)}
-            className="py-2 px-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer"
+            className="py-2 px-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer flex-1 sm:flex-none min-w-[120px]"
           >
             <option value="ALL">Semua Nilai</option>
             {PREDIKAT_NILAI_OPTIONS.map(opt => (
@@ -784,7 +784,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       <div className="flex-shrink-0 pt-3 pb-2 space-y-2 border-b border-slate-100">
         <div className="flex flex-wrap items-center justify-between gap-2">
           {/* Mode Selector Tabs */}
-          <div className="inline-flex items-center p-1 bg-slate-100 rounded-xl text-xs font-bold text-slate-600">
+          <div className="inline-flex items-center p-1 bg-slate-100 rounded-xl text-xs font-bold text-slate-600 max-w-full overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
             <button
               onClick={() => setDateFilterMode('bulan')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition cursor-pointer ${
@@ -1160,9 +1160,152 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
               return (
                 <div key={item.id} className={`transition-colors ${isSelected ? 'bg-rose-50/40' : 'bg-white hover:bg-slate-50/60'}`}>
-                  {/* Compact Row - always visible */}
+                  {/* MOBILE VIEW CARD (sm:hidden) */}
+                  <div className="sm:hidden p-3.5 space-y-2.5">
+                    {/* Top Row: Checkbox + Category + Nilai */}
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        {!isViewOnly && (
+                          <div
+                            className="flex-shrink-0 text-slate-400 hover:text-emerald-700 cursor-pointer p-0.5"
+                            onClick={(e) => toggleSelectItem(item.id, e)}
+                            title="Pilih rekaman ini"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => {}}
+                              className="w-4 h-4 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+                            />
+                          </div>
+                        )}
+
+                        {/* Full Type Badge */}
+                        <div className="flex-shrink-0">
+                          {item.type === 'Ziyadah' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200 shadow-2xs">
+                              <BookOpen className="w-3 h-3 text-emerald-600" /> Ziyadah
+                            </span>
+                          ) : item.type === 'Murojaah' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-teal-50 text-teal-800 font-bold text-xs border border-teal-200 shadow-2xs">
+                              <RotateCw className="w-3 h-3 text-teal-600" /> Muroja'ah
+                            </span>
+                          ) : item.type === 'Binnadzor' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-800 font-bold text-xs border border-indigo-200 shadow-2xs">
+                              <BookOpenCheck className="w-3 h-3 text-indigo-600" /> Binnadzor
+                            </span>
+                          ) : isIstimewa ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-purple-50 text-purple-800 font-bold text-xs border border-purple-200 shadow-2xs">
+                              <Sparkles className="w-3 h-3 text-purple-600" /> Istimewa
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-50 text-amber-900 font-bold text-xs border border-amber-200 shadow-2xs">
+                              <GraduationCap className="w-3 h-3 text-amber-600" /> Pembelajaran
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Nilai Badge */}
+                      <div className="flex-shrink-0">
+                        {renderNilaiBadge(item.nilai)}
+                      </div>
+                    </div>
+
+                    {/* Santri & Kelas Info */}
+                    <div className="cursor-pointer" onClick={() => toggleRow(item.id)}>
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="text-sm font-extrabold text-slate-900 leading-snug break-words">
+                          {item.namaSantri}
+                        </h4>
+                        {kelasGroup && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 flex-shrink-0">
+                            {kelasGroup}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[10px] font-mono text-slate-400 mt-0.5">
+                        ID: {item.idSantri}
+                      </div>
+                    </div>
+
+                    {/* Materi Setoran Block */}
+                    <div 
+                      className="bg-slate-50 border border-slate-200/90 rounded-xl p-2.5 cursor-pointer hover:bg-slate-100/80 transition"
+                      onClick={() => toggleRow(item.id)}
+                    >
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
+                        Materi / Ayat Setoran
+                      </div>
+                      <div className="text-xs font-extrabold text-emerald-950 break-words flex items-start gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                        <span className="flex-1">{item.materi}</span>
+                      </div>
+                    </div>
+
+                    {/* Date & Expand Toggle */}
+                    <div className="flex items-center justify-between gap-2 pt-0.5 text-xs">
+                      <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-medium">
+                        <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                        <span>{formatTanggalLengkap(item.timestamp)}</span>
+                        {timePart && (
+                          <span className="text-slate-400 font-mono">• {timePart} WIB</span>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => toggleRow(item.id)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                      >
+                        <span>{isExpanded ? 'Tutup' : 'Rincian'}</span>
+                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+
+                    {/* Quick Action Buttons on Mobile */}
+                    {!isViewOnly && (
+                      <div className="flex items-center gap-1.5 pt-1.5 border-t border-slate-100">
+                        {waLink ? (
+                          <a
+                            href={waLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
+                            <span>Kirim WA</span>
+                          </a>
+                        ) : (
+                          <span className="flex-1 inline-flex items-center justify-center gap-1 py-1.5 px-2 rounded-xl bg-slate-100 text-slate-400 text-[11px] font-medium border border-slate-200/70">
+                            <MessageCircle className="w-3 h-3 text-slate-400" />
+                            <span>No WA belum ada</span>
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
+                          className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200 transition cursor-pointer"
+                        >
+                          <Pencil className="w-3.5 h-3.5 text-slate-600" />
+                          <span>Edit</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); handleDelete(item, e); }}
+                          className="p-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold border border-rose-200 transition cursor-pointer flex-shrink-0"
+                          title="Hapus setoran"
+                        >
+                          <Trash2 className="w-4 h-4 text-rose-600" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* DESKTOP VIEW ROW (hidden sm:flex) */}
                   <div
-                    className="flex items-center gap-2 px-3 sm:px-4 py-2.5 cursor-pointer"
+                    className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-2.5 cursor-pointer"
                     onClick={() => toggleRow(item.id)}
                   >
                     {/* Row Select Checkbox (For Ustadz/Admin) */}
@@ -1229,16 +1372,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     </div>
 
                     {/* Nilai badge */}
-                    <div className="flex-shrink-0 hidden sm:block">
+                    <div className="flex-shrink-0">
                       {renderNilaiBadge(item.nilai)}
-                    </div>
-
-                    {/* Mobile nilai - compact */}
-                    <div className="flex-shrink-0 sm:hidden">
-                      {item.nilai === 'Sangat Baik' && <span className="text-base">🟢</span>}
-                      {item.nilai === 'Baik' && <span className="text-base">🟡</span>}
-                      {item.nilai === 'Kurang' && <span className="text-base">🟠</span>}
-                      {item.nilai === 'Mengulang' && <span className="text-base">🔴</span>}
                     </div>
 
                     {/* Quick Delete Button for Ustadz/Admin on the row */}
@@ -1339,36 +1474,36 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                           {/* Action buttons */}
                           {!isViewOnly && (
-                            <div className="flex items-center gap-2 pt-1.5">
+                            <div className="flex flex-wrap items-center gap-2 pt-2">
                               {waLink ? (
                                 <a
                                   href={waLink}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   onClick={(e) => e.stopPropagation()}
-                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-green-600 hover:bg-green-50 transition cursor-pointer border border-green-200 text-xs font-semibold"
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition cursor-pointer border border-emerald-200 text-xs font-bold"
                                 >
-                                  <MessageCircle className="w-3.5 h-3.5" />
+                                  <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
                                   <span>Kirim WA</span>
                                 </a>
                               ) : (
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-300 cursor-not-allowed border border-slate-100 text-xs font-semibold">
-                                  <MessageCircle className="w-3.5 h-3.5" />
-                                  <span>No HP wali belum terdaftar</span>
+                                <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-slate-400 bg-slate-100 border border-slate-200 text-xs font-medium">
+                                  <MessageCircle className="w-3.5 h-3.5 text-slate-400" />
+                                  <span>No WA belum ada</span>
                                 </span>
                               )}
                               <button
                                 onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-emerald-700 hover:bg-emerald-50 transition cursor-pointer border border-emerald-200 text-xs font-semibold"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-700 bg-slate-100 hover:bg-slate-200 transition cursor-pointer border border-slate-200 text-xs font-bold"
                               >
-                                <Pencil className="w-3.5 h-3.5" />
+                                <Pencil className="w-3.5 h-3.5 text-slate-600" />
                                 <span>Edit</span>
                               </button>
                               <button
-                                onClick={(e) => { e.stopPropagation(); handleDelete(item); }}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-rose-600 hover:bg-rose-50 transition cursor-pointer border border-rose-200 text-xs font-semibold"
+                                onClick={(e) => { e.stopPropagation(); handleDelete(item, e); }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-rose-600 bg-rose-50 hover:bg-rose-100 transition cursor-pointer border border-rose-200 text-xs font-bold"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 className="w-3.5 h-3.5 text-rose-600" />
                                 <span>Hapus</span>
                               </button>
                             </div>
