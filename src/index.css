@@ -102,6 +102,127 @@
   select {
     max-width: 100%;
   }
+
+  /* Compact the HistoryTable filter header without changing its logic. */
+  [class~="flex-col"][class~="md:flex-row"][class~="md:items-center"] {
+    gap: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+  }
+
+  /* Keep the title/actions row compact. */
+  [class~="space-y-1.5"] {
+    row-gap: 0.375rem !important;
+  }
+
+  /* Search becomes the primary control; category and nilai selects share the
+     next row instead of creating three wide controls side-by-side. */
+  [class~="flex-wrap"][class~="items-center"][class~="gap-2"] > [class~="relative"] {
+    flex-basis: 100% !important;
+  }
+
+  [class~="flex-wrap"][class~="items-center"][class~="gap-2"] > select {
+    flex: 1 1 0% !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    padding-left: 0.625rem !important;
+    padding-right: 1.75rem !important;
+    min-height: 40px;
+  }
+
+  /* Date mode switcher: use a compact horizontal strip. */
+  [class~="inline-flex"][class~="items-center"][class~="p-1"][class~="bg-slate-100"] {
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  [class~="inline-flex"][class~="items-center"][class~="p-1"][class~="bg-slate-100"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  [class~="inline-flex"][class~="items-center"][class~="p-1"][class~="bg-slate-100"] > button {
+    min-height: 38px;
+    padding-left: 0.625rem !important;
+    padding-right: 0.625rem !important;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  /* Period indicator stays visible but takes only one compact line. */
+  [class~="flex"][class~="items-center"][class~="gap-2"][class~="text-xs"][class~="text-slate-500"] {
+    min-width: 0;
+  }
+
+  [class~="flex"][class~="items-center"][class~="gap-2"][class~="text-xs"][class~="text-slate-500"] > span:last-child {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Month tabs remain horizontally scrollable instead of increasing page
+     height. */
+  [class~="overflow-x-auto"][class~="pt-1"] {
+    padding-top: 0.25rem !important;
+  }
+
+  [class~="overflow-x-auto"][class~="pt-1"] button {
+    min-height: 38px;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0.5rem !important;
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+  }
+
+  /* Category chips duplicate the category select on mobile. Hide the
+     duplicate row so the filter area does not become excessively tall. */
+  [class~="overflow-x-auto"][class~="pt-2.5"][class~="pb-2"] {
+    display: none !important;
+  }
+
+  /* Custom date range becomes a compact vertical form with two equal inputs. */
+  [class~="p-3"][class~="bg-emerald-50/50"][class~="border"][class~="border-emerald-100"] {
+    padding: 0.625rem !important;
+    border-radius: 0.75rem !important;
+  }
+
+  [class~="p-3"][class~="bg-emerald-50/50"][class~="border"][class~="border-emerald-100"] input[type="date"] {
+    min-height: 40px;
+    width: 100%;
+  }
+
+  /* Presets become a single horizontal strip rather than wrapping into
+     multiple rows. */
+  [class~="p-3"][class~="bg-emerald-50/50"][class~="border"][class~="border-emerald-100"] [class~="flex-wrap"] {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 1px;
+  }
+
+  [class~="p-3"][class~="bg-emerald-50/50"][class~="border"][class~="border-emerald-100"] [class~="flex-wrap"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  [class~="p-3"][class~="bg-emerald-50/50"][class~="border"][class~="border-emerald-100"] [class~="flex-wrap"] button {
+    flex-shrink: 0;
+    min-height: 36px;
+  }
+
+  /* Active filters use a dense single-line action area. */
+  [class~="bg-emerald-50/80"][class~="border-emerald-200"] {
+    padding: 0.5rem 0.625rem !important;
+    margin-bottom: 0.375rem !important;
+  }
+
+  /* Batch selection bar remains compact and usable on narrow screens. */
+  [class~="bg-rose-50"][class~="border-rose-200"][class~="px-4"] {
+    padding: 0.5rem 0.625rem !important;
+  }
+
+  [class~="bg-rose-50"][class~="border-rose-200"][class~="px-4"] button {
+    min-height: 38px;
+  }
 }
 
 /* === Safe area === */
