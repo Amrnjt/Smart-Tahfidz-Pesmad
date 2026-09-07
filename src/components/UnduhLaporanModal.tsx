@@ -226,57 +226,62 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   ];
 
   return createPortal(
-    <div className="fixed inset-0 z-[60] bg-slate-950/55 flex items-end sm:items-center justify-center sm:p-4">
-      <div className="w-full sm:max-w-lg bg-white border border-slate-200 rounded-t-2xl sm:rounded-2xl max-h-[92dvh] sm:max-h-[90vh] flex flex-col overflow-hidden">
-        <div className="flex-shrink-0 px-3 sm:px-5 py-2.5 sm:py-3 border-b border-slate-200 bg-white flex items-center justify-between gap-3">
-          <div className="min-w-0 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-emerald-700 flex-shrink-0" />
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[calc(100dvh-1.5rem)] sm:max-h-[90vh] overflow-y-auto">
+        {/* Modal Header */}
+        <div className="sticky top-0 z-10 bg-gradient-to-r from-emerald-800 to-teal-800 text-white px-5 sm:px-6 py-4 rounded-t-3xl flex items-center justify-between">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
+              <FileText className="w-5 h-5" />
+            </div>
             <div className="min-w-0">
-              <h3 className="text-sm font-bold text-slate-900 truncate">
-                Unduh Laporan PDF
+              <h3 className="font-bold text-sm sm:text-base truncate">
+                Unduh Laporan Hafalan (PDF)
               </h3>
-              <p className="text-[10px] sm:text-[11px] text-slate-500">
-                Pilih periode dan isi laporan
+              <p className="text-[11px] text-emerald-100">
+                Pilih periode dan konten laporan
               </p>
             </div>
           </div>
 
           <button
-            type="button"
             onClick={onClose}
-            className="w-8 h-8 inline-flex items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition cursor-pointer flex-shrink-0"
+            className="p-2 rounded-xl hover:bg-white/15 transition cursor-pointer flex-shrink-0"
+            title="Tutup"
             aria-label="Tutup"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4 space-y-3 sm:space-y-4">
+        {/* Modal Body */}
+        <div className="p-5 sm:p-6 space-y-5">
           {success && (
-            <div className="px-2.5 py-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-semibold flex items-center gap-2">
-              <CheckCircle className="w-3.5 h-3.5 flex-shrink-0" />
-              <span>PDF berhasil diunduh.</span>
+            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2.5">
+              <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+              <span>PDF berhasil diunduh! Periksa folder Unduhan Anda.</span>
             </div>
           )}
 
           {error && (
-            <div className="px-2.5 py-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-[11px] font-semibold flex items-center gap-2">
-              <AlertCircle className="w-3.5 h-3.5 flex-shrink-0" />
+            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2.5">
+              <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
               <span className="min-w-0 break-words">{error}</span>
             </div>
           )}
 
           {!isViewOnly && santriList.length > 0 && (
             <div>
-              <label className="block text-[11px] font-semibold text-slate-700 mb-1">
-                Santri
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Pilih Santri
               </label>
+
               <select
                 value={selectedSantriId}
                 onChange={e => setSelectedSantriId(e.target.value)}
-                className="w-full min-w-0 h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full min-w-0 py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
-                <option value="">Semua Santri</option>
+                <option value="">Semua Santri (Gabungan)</option>
                 {santriList.map(s => (
                   <option key={s.idSantri} value={s.idSantri}>
                     {s.namaSantri} ({s.idSantri})
@@ -286,64 +291,70 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
             </div>
           )}
 
+          {/* Period Selector */}
           <div>
-            <label className="block text-[11px] font-semibold text-slate-700 mb-1.5">
-              Periode
-            </label>
-
-            <div className="grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-lg mb-2">
+            <div className="flex items-center gap-2 mb-2 overflow-x-auto">
               <button
                 type="button"
                 onClick={() => setUseRange(false)}
-                className={`min-w-0 h-8 rounded-md text-[11px] font-semibold transition cursor-pointer inline-flex items-center justify-center gap-1 ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   !useRange
-                    ? 'bg-white text-slate-900 border border-slate-200'
-                    : 'text-slate-500 hover:text-slate-800'
+                    ? 'bg-emerald-800 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="truncate">Satu Bulan</span>
+                <Calendar className="w-3.5 h-3.5" />
+                Satu Bulan
               </button>
 
               <button
                 type="button"
                 onClick={() => setUseRange(true)}
-                className={`min-w-0 h-8 rounded-md text-[11px] font-semibold transition cursor-pointer inline-flex items-center justify-center gap-1 ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   useRange
-                    ? 'bg-white text-slate-900 border border-slate-200'
-                    : 'text-slate-500 hover:text-slate-800'
+                    ? 'bg-emerald-800 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
-                <CalendarRange className="w-3.5 h-3.5 flex-shrink-0" />
-                <span className="truncate">Rentang Bulan</span>
+                <CalendarRange className="w-3.5 h-3.5" />
+                Beberapa Bulan
               </button>
             </div>
 
             {!useRange ? (
-              <select
-                value={period}
-                onChange={e => setPeriod(e.target.value)}
-                className="w-full min-w-0 h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                {availablePeriods.map(p => (
-                  <option
-                    key={`${p.year}-${p.month}`}
-                    value={`${p.year}-${p.month}`}
-                  >
-                    {p.label}
-                  </option>
-                ))}
-              </select>
+              <div>
+                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+                  Periode Laporan
+                </label>
+
+                <select
+                  value={period}
+                  onChange={e => setPeriod(e.target.value)}
+                  className="w-full min-w-0 py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                >
+                  {availablePeriods.map(p => (
+                    <option
+                      key={`${p.year}-${p.month}`}
+                      value={`${p.year}-${p.month}`}
+                    >
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="min-w-0">
-                  <label className="block text-[10px] text-slate-500 mb-1">
-                    Dari
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+                    Dari Bulan
                   </label>
+
                   <select
                     value={rangeStart}
                     onChange={e => setRangeStart(e.target.value)}
-                    className="w-full min-w-0 h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full min-w-0 py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
                     {availablePeriods.map(p => (
                       <option
@@ -357,13 +368,15 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
                 </div>
 
                 <div className="min-w-0">
-                  <label className="block text-[10px] text-slate-500 mb-1">
-                    Sampai
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-emerald-700" />
+                    Sampai Bulan
                   </label>
+
                   <select
                     value={rangeEnd}
                     onChange={e => setRangeEnd(e.target.value)}
-                    className="w-full min-w-0 h-9 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    className="w-full min-w-0 py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   >
                     {availablePeriods.map(p => (
                       <option
@@ -379,35 +392,52 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
             )}
 
             {useRange && !rangeValid && (
-              <p className="mt-1.5 text-[10px] font-medium text-rose-600">
-                Bulan awal tidak boleh melewati bulan akhir.
+              <p className="text-[11px] text-rose-600 font-semibold mt-1.5">
+                Bulan awal harus sebelum atau sama dengan bulan akhir.
               </p>
             )}
           </div>
 
+          {/* Content Options */}
           <div>
-            <label className="block text-[11px] font-semibold text-slate-700 mb-1.5">
-              Isi Laporan
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+              Konten Laporan
             </label>
 
-            <div className="divide-y divide-slate-100 border-y border-slate-100">
+            <div className="space-y-2">
               {optionItems.map(item => (
                 <label
                   key={item.key}
-                  className="flex items-start gap-2 py-2 cursor-pointer"
+                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                    options[item.key]
+                      ? 'bg-emerald-50/70 border-emerald-300'
+                      : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                  }`}
                 >
+                  <div
+                    className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition ${
+                      options[item.key]
+                        ? 'bg-emerald-600 border-emerald-600'
+                        : 'border-slate-300'
+                    }`}
+                  >
+                    {options[item.key] && (
+                      <CheckCircle className="w-3.5 h-3.5 text-white" />
+                    )}
+                  </div>
+
                   <input
                     type="checkbox"
                     checked={options[item.key]}
                     onChange={() => toggleOption(item.key)}
-                    className="mt-0.5 w-3.5 h-3.5 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 flex-shrink-0"
+                    className="sr-only"
                   />
 
-                  <div className="min-w-0">
-                    <div className="text-[11px] font-semibold text-slate-800 leading-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="text-xs font-bold text-slate-800">
                       {item.label}
                     </div>
-                    <div className="text-[10px] text-slate-500 leading-4">
+                    <div className="text-[11px] text-slate-500">
                       {item.desc}
                     </div>
                   </div>
@@ -416,7 +446,15 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
             </div>
           </div>
 
-          <div className="border-t border-slate-100 pt-2 text-[10px] text-slate-500 leading-4">
+          {/* Preview Info */}
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500">
+            <div className="flex items-center gap-1.5 mb-1">
+              <FileText className="w-3.5 h-3.5 text-slate-400" />
+              <span className="font-semibold text-slate-600">
+                Pratinjau Data
+              </span>
+            </div>
+
             {(() => {
               const prefixes =
                 useRange && rangeValid
@@ -429,8 +467,11 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
                         list.push(
                           `${yr}-${(m + 1).toString().padStart(2, '0')}`
                         );
+
                         if (yr === rangeEndYear && m === rangeEndMonth) break;
+
                         m++;
+
                         if (m > 11) {
                           m = 0;
                           yr++;
@@ -451,39 +492,62 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
               };
 
               return (
-                <p>
-                  Ziyadah <b>{reportZiyadah.filter(r => matchFn(r.timestamp)).length}</b>
-                  {' · '}Muroja'ah <b>{reportMurojaah.filter(r => matchFn(r.timestamp)).length}</b>
-                  {' · '}Binnadzor <b>{reportBinnadzor.filter(r => matchFn(r.timestamp)).length}</b>
-                </p>
+                <>
+                  <p>
+                    Ziyadah pada periode ini:{' '}
+                    <b>
+                      {
+                        reportZiyadah.filter(r => matchFn(r.timestamp)).length
+                      }
+                    </b>{' '}
+                    setoran
+                  </p>
+                  <p>
+                    Muroja'ah pada periode ini:{' '}
+                    <b>
+                      {
+                        reportMurojaah.filter(r => matchFn(r.timestamp)).length
+                      }
+                    </b>{' '}
+                    setoran
+                  </p>
+                  <p>
+                    Binnadzor pada periode ini:{' '}
+                    <b>
+                      {
+                        reportBinnadzor.filter(r => matchFn(r.timestamp)).length
+                      }
+                    </b>{' '}
+                    setoran
+                  </p>
+                </>
               );
             })()}
           </div>
         </div>
 
-        <div className="flex-shrink-0 border-t border-slate-200 bg-white px-3 sm:px-5 pt-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom,0px))] sm:py-2.5 flex items-center gap-2">
+        {/* Modal Footer */}
+        <div className="sticky bottom-0 z-10 bg-white border-t border-slate-100 px-5 sm:px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] flex items-center justify-end gap-3 rounded-b-3xl">
           <button
-            type="button"
             onClick={onClose}
-            className="h-9 px-3 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer"
+            className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer"
           >
             Batal
           </button>
 
           <button
-            type="button"
             onClick={handleDownload}
             disabled={isGenerating || (useRange && !rangeValid)}
-            className="h-9 min-w-0 flex-1 sm:flex-none sm:px-4 rounded-lg bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-bold text-xs transition inline-flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="px-6 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isGenerating ? (
               <>
-                <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
-                <span className="truncate">Memproses...</span>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Memproses PDF...</span>
               </>
             ) : (
               <>
-                <Download className="w-4 h-4 flex-shrink-0" />
+                <Download className="w-4 h-4" />
                 <span>Unduh PDF</span>
               </>
             )}
