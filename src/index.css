@@ -10,7 +10,7 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
-/* === Staggered Fade-In-Up === */
+/* === Entry transitions === */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
@@ -69,25 +69,19 @@
 .snackbar-enter { animation: snackbar-in var(--duration-normal) var(--ease-out) forwards; }
 .snackbar-exit { animation: snackbar-out var(--duration-fast) var(--ease-in-out) forwards; }
 
-/* === Hero subtle gradient animation === */
-@keyframes hero-gradient-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
+/* === Hero treatment ===
+   Keep the visual hierarchy of dashboard banners without continuously moving
+   the background. Motion should communicate feedback or state changes, not
+   run indefinitely as decoration. */
 .hero-animated-bg {
-  background-size: 200% 200%;
-  animation: hero-gradient-shift 12s ease-in-out infinite;
+  background-size: cover;
 }
 .hero-animated-bg.fade-in-up {
-  animation: hero-gradient-shift 12s ease-in-out infinite, fadeInUp var(--duration-slow) var(--ease-out) forwards;
+  animation: fadeInUp var(--duration-slow) var(--ease-out) forwards;
 }
 
-/* === Decorative float === */
-@keyframes float-slow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-.float-slow { animation: float-slow 6s ease-in-out infinite; }
+/* Decorative elements are static by default. */
+.float-slow { animation: none; }
 
 /* === Safe area === */
 .safe-bottom {
@@ -106,5 +100,4 @@
     transform: none !important;
   }
   .hero-animated-bg { animation: none !important; }
-  .float-slow { animation: none !important; }
 }
