@@ -1170,170 +1170,147 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               return (
                 <div key={item.id} className={`transition-colors ${isSelected ? 'bg-slate-50' : 'bg-white hover:bg-slate-50/70'}`}>
                   {/* MOBILE VIEW CARD (sm:hidden) */}
-                  <div className="sm:hidden p-2.5 space-y-1.5">
-                    {/* Top Row: Checkbox + Category + Nilai */}
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0 flex-1">
-                        {!isViewOnly && (
-                          <div
-                            className="flex-shrink-0 text-slate-400 hover:text-emerald-700 cursor-pointer p-0.5"
-                            onClick={(e) => toggleSelectItem(item.id, e)}
-                            title="Pilih rekaman ini"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => {}}
-                              className="w-4 h-4 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
-                            />
-                          </div>
-                        )}
-
-                        {/* Full Type Badge */}
-                        <div className="flex-shrink-0">
-                          {item.type === 'Ziyadah' ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 font-bold text-xs border border-emerald-200 ">
-                              <BookOpen className="w-3 h-3 text-emerald-600" /> Ziyadah
-                            </span>
-                          ) : item.type === 'Murojaah' ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 font-bold text-xs border border-teal-200 ">
-                              <RotateCw className="w-3 h-3 text-teal-600" /> Muroja'ah
-                            </span>
-                          ) : item.type === 'Binnadzor' ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 font-bold text-xs border border-indigo-200 ">
-                              <BookOpenCheck className="w-3 h-3 text-indigo-600" /> Binnadzor
-                            </span>
-                          ) : isIstimewa ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 font-bold text-xs border border-purple-200 ">
-                              <Sparkles className="w-3 h-3 text-purple-600" /> Istimewa
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 font-bold text-xs border border-amber-200 ">
-                              <GraduationCap className="w-3 h-3 text-amber-600" /> Pembelajaran
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Nilai Badge */}
-                      <div className="flex-shrink-0">
-                        {renderNilaiBadge(item.nilai)}
-                      </div>
-                    </div>
-
-                    {/* Santri & Kelas Info */}
-                    <div className="cursor-pointer" onClick={() => toggleRow(item.id)}>
-                      <div className="flex items-center justify-between gap-2">
-                        <h4 className="text-sm font-semibold text-slate-900 leading-snug break-words">
-                          {item.namaSantri}
-                        </h4>
-                        {kelasGroup && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200 flex-shrink-0">
-                            {kelasGroup}
-                          </span>
-                        )}
-                      </div>
-                      <div className="text-[10px] font-mono text-slate-400 mt-0.5">
-                        ID: {item.idSantri}
-                      </div>
-                    </div>
-
-                    {/* Materi Setoran Block */}
-                    <div 
-                      className="bg-slate-50 border border-slate-200/90 rounded-lg p-2 cursor-pointer hover:bg-slate-100/80 transition"
-                      onClick={() => toggleRow(item.id)}
-                    >
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-0.5">
-                        Materi / Ayat Setoran
-                      </div>
-                      <div className="text-xs font-semibold text-slate-900 break-words flex items-start gap-1.5">
-                        <BookOpen className="w-3.5 h-3.5 text-slate-500 flex-shrink-0 mt-0.5" />
-                        <span className="flex-1 leading-relaxed">{item.materi}</span>
-                      </div>
-                    </div>
-
-                    {/* Quick Preview Chips (Catatan, Kendala, Kenaikan) */}
-                    {(item.catatan || item.kendalaSantri || item.statusKenaikan || item.tipeKelas) && (
-                      <div className="flex items-center gap-1 flex-wrap">
-                        {item.statusKenaikan && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200">
-                            {item.statusKenaikan}
-                          </span>
-                        )}
-                        {item.tipeKelas && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-50 text-amber-800 px-2 py-0.5 rounded-md border border-amber-200">
-                            {item.tipeKelas}
-                          </span>
-                        )}
-                        {item.kendalaSantri && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold bg-rose-50 text-rose-800 px-2 py-0.5 rounded-md border border-rose-200 truncate max-w-full">
-                            {item.kendalaSantri}
-                          </span>
-                        )}
-                        {item.catatan && !item.kendalaSantri && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200 truncate max-w-full">
-                            {item.catatan}
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Date & Expand Toggle */}
-                    <div className="flex items-center justify-between gap-1.5 text-xs">
-                      <div className="flex items-center gap-1.5 text-slate-500 text-[11px] font-medium min-w-0 flex-1">
-                        <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
-                        <span className="truncate">{formatTanggalLengkap(item.timestamp)}</span>
-                        {timePart && (
-                          <span className="text-slate-400 font-mono flex-shrink-0">• {timePart}</span>
-                        )}
-                      </div>
+                  <div className="sm:hidden px-2 py-2">
+                    <div className="flex items-start gap-2">
+                      {!isViewOnly && (
+                        <button
+                          type="button"
+                          onClick={(e) => toggleSelectItem(item.id, e)}
+                          className="mt-0.5 flex-shrink-0 text-slate-400"
+                          title="Pilih rekaman ini"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {}}
+                            className="w-3.5 h-3.5 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+                          />
+                        </button>
+                      )}
 
                       <button
                         type="button"
                         onClick={() => toggleRow(item.id)}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer flex-shrink-0"
+                        className="min-w-0 flex-1 text-left"
                       >
-                        <span>{isExpanded ? 'Tutup' : 'Rincian'}</span>
-                        {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <h4 className="truncate text-[13px] font-semibold leading-4 text-slate-900">
+                                {item.namaSantri}
+                              </h4>
+                              {kelasGroup && (
+                                <span className="flex-shrink-0 text-[9px] font-semibold px-1.5 py-px rounded bg-slate-100 text-slate-600 border border-slate-200">
+                                  {kelasGroup}
+                                </span>
+                              )}
+                            </div>
+                            <div className="mt-0.5 flex items-center gap-1.5 min-w-0 text-[10px] text-slate-500">
+                              <span className="truncate font-medium text-slate-700">{item.materi}</span>
+                              <span className="flex-shrink-0 text-slate-300">•</span>
+                              <span className="flex-shrink-0">{formatTanggalLengkap(item.timestamp)}</span>
+                              {timePart && <span className="flex-shrink-0 font-mono text-slate-400">{timePart}</span>}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-shrink-0 items-center gap-1">
+                            {renderNilaiBadge(item.nilai)}
+                            {isExpanded ? (
+                              <ChevronUp className="w-3.5 h-3.5 text-slate-400" />
+                            ) : (
+                              <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mt-1 flex items-center gap-1 overflow-hidden">
+                          {item.type === 'Ziyadah' ? (
+                            <span className="inline-flex flex-shrink-0 items-center gap-1 rounded px-1.5 py-px text-[9px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              <BookOpen className="w-2.5 h-2.5" /> Ziyadah
+                            </span>
+                          ) : item.type === 'Murojaah' ? (
+                            <span className="inline-flex flex-shrink-0 items-center gap-1 rounded px-1.5 py-px text-[9px] font-semibold bg-teal-50 text-teal-800 border border-teal-200">
+                              <RotateCw className="w-2.5 h-2.5" /> Muroja'ah
+                            </span>
+                          ) : item.type === 'Binnadzor' ? (
+                            <span className="inline-flex flex-shrink-0 items-center gap-1 rounded px-1.5 py-px text-[9px] font-semibold bg-indigo-50 text-indigo-800 border border-indigo-200">
+                              <BookOpenCheck className="w-2.5 h-2.5" /> Binnadzor
+                            </span>
+                          ) : isIstimewa ? (
+                            <span className="inline-flex flex-shrink-0 items-center gap-1 rounded px-1.5 py-px text-[9px] font-semibold bg-purple-50 text-purple-800 border border-purple-200">
+                              <Sparkles className="w-2.5 h-2.5" /> Istimewa
+                            </span>
+                          ) : (
+                            <span className="inline-flex flex-shrink-0 items-center gap-1 rounded px-1.5 py-px text-[9px] font-semibold bg-amber-50 text-amber-900 border border-amber-200">
+                              <GraduationCap className="w-2.5 h-2.5" /> Pembelajaran
+                            </span>
+                          )}
+
+                          {item.statusKenaikan && (
+                            <span className="truncate rounded bg-emerald-50 px-1.5 py-px text-[9px] font-medium text-emerald-800 border border-emerald-200">
+                              {item.statusKenaikan}
+                            </span>
+                          )}
+                          {item.tipeKelas && !item.statusKenaikan && (
+                            <span className="truncate rounded bg-slate-50 px-1.5 py-px text-[9px] font-medium text-slate-600 border border-slate-200">
+                              {item.tipeKelas}
+                            </span>
+                          )}
+                        </div>
                       </button>
                     </div>
 
-                    {/* Quick Action Buttons on Mobile */}
-                    {!isViewOnly && (
-                      <div className="flex items-center gap-1 pt-1 border-t border-slate-100">
-                        {waLink ? (
-                          <a
-                            href={waLink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="flex-1 inline-flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs border border-emerald-200 transition"
-                          >
-                            <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                            <span>Kirim WA</span>
-                          </a>
-                        ) : (
-                          <span className="flex-1 inline-flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg bg-slate-100 text-slate-400 text-[11px] font-medium border border-slate-200/70">
-                            <MessageCircle className="w-3 h-3 text-slate-400" />
-                            <span>No WA belum ada</span>
-                          </span>
+                    {isExpanded && (
+                      <div className="mt-2 ml-5 space-y-1.5 border-t border-slate-100 pt-2">
+                        <div className="grid grid-cols-[auto,1fr] gap-x-2 gap-y-1 text-[10px] leading-4">
+                          <span className="text-slate-400">ID</span>
+                          <span className="font-mono text-slate-600">{item.idSantri}</span>
+                          {item.kendalaSantri && (
+                            <>
+                              <span className="text-slate-400">Kendala</span>
+                              <span className="text-rose-700">{item.kendalaSantri}</span>
+                            </>
+                          )}
+                          {item.catatan && (
+                            <>
+                              <span className="text-slate-400">Catatan</span>
+                              <span className="text-slate-700">{item.catatan}</span>
+                            </>
+                          )}
+                        </div>
+
+                        {!isViewOnly && (
+                          <div className="flex items-center justify-end gap-1 pt-0.5">
+                            {waLink && (
+                              <a
+                                href={waLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                title="Kirim WhatsApp"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-slate-50 text-slate-600 border border-slate-200"
+                              title="Edit"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleDelete(item, e); }}
+                              className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-rose-50 text-rose-700 border border-rose-200"
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         )}
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); openEditModal(item); }}
-                          className="flex-1 inline-flex items-center justify-center gap-1.5 py-1 px-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs border border-slate-200 transition cursor-pointer"
-                        >
-                          <Pencil className="w-3.5 h-3.5 text-slate-600" />
-                          <span>Edit</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); handleDelete(item, e); }}
-                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold border border-rose-200 transition cursor-pointer flex-shrink-0"
-                          title="Hapus setoran"
-                        >
-                          <Trash2 className="w-4 h-4 text-rose-600" />
-                        </button>
                       </div>
                     )}
                   </div>
