@@ -1,7 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { ActiveTab, Santri } from '../types';
 import { storageService } from '../services/storageService';
-import { CirclePlus as PlusCircle, RotateCw, BookOpenCheck, BookOpen, X, ChevronRight, GraduationCap, ToggleLeft, ToggleRight, Sparkles, Eye } from 'lucide-react';
+import {
+  CirclePlus as PlusCircle,
+  RotateCw,
+  BookOpenCheck,
+  BookOpen,
+  X,
+  ChevronRight,
+  GraduationCap,
+  ToggleLeft,
+  ToggleRight,
+  Eye
+} from 'lucide-react';
 import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
 
 interface SetorActionSheetProps {
@@ -32,6 +43,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
     e.stopPropagation();
     setIsTogglingLiburan(true);
     const nextState = !isProgramLiburanActive;
+
     try {
       await storageService.setProgramLiburanActive(nextState, 'Ustadz / Admin');
       setIsProgramLiburanActive(nextState);
@@ -48,6 +60,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
         onClose();
       }
     };
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
@@ -58,149 +71,131 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
     {
       tab: 'ziyadah' as ActiveTab,
       title: 'Ziyadah',
-      subtitle: 'Setoran hafalan baru per ayat & surah',
-      badge: 'Bil-Ghoib (Hafalan)',
-      badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+      subtitle: 'Hafalan baru',
+      badge: 'Bil-Ghoib',
+      badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       icon: PlusCircle,
-      iconBg: 'bg-emerald-600 text-white',
-      borderHover: 'hover:border-emerald-500 hover:bg-emerald-50/50'
+      iconBg: 'bg-emerald-600 text-white'
     },
     {
       tab: 'murojaah' as ActiveTab,
       title: "Muroja'ah",
-      subtitle: 'Pengulangan hafalan agar tetap mutqin & lancar',
-      badge: 'Bil-Ghoib (Pengulangan)',
-      badgeColor: 'bg-teal-100 text-teal-800 border-teal-200',
+      subtitle: 'Pengulangan hafalan',
+      badge: 'Pengulangan',
+      badgeColor: 'bg-teal-50 text-teal-700 border-teal-200',
       icon: RotateCw,
-      iconBg: 'bg-teal-600 text-white',
-      borderHover: 'hover:border-teal-500 hover:bg-teal-50/50'
+      iconBg: 'bg-teal-600 text-white'
     },
     {
       tab: 'binnadzor' as ActiveTab,
       title: 'Binnadzor',
-      subtitle: 'Setoran tilawah Al-Qur\'an (Fokus Tajwid & Makhroj)',
-      badge: 'Bin-Nadzor (Melihat Mushaf)',
-      badgeColor: 'bg-indigo-100 text-indigo-800 border-indigo-200',
+      subtitle: 'Tilawah, tajwid & makhraj',
+      badge: 'Bin-Nadzor',
+      badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
       icon: BookOpenCheck,
-      iconBg: 'bg-indigo-600 text-white',
-      borderHover: 'hover:border-indigo-500 hover:bg-indigo-50/50'
+      iconBg: 'bg-indigo-600 text-white'
     },
     {
       tab: 'pembelajaran' as ActiveTab,
-      title: 'Pembelajaran Non-Tahfidz',
-      subtitle: 'Materi Jilid Ummi Dewasa & Pendampingan Kelas Istimewa',
-      badge: 'Jilid Ummi & Kelas Istimewa',
-      badgeColor: 'bg-amber-100 text-amber-900 border-amber-200',
+      title: 'Non-Tahfidz',
+      subtitle: 'Jilid Ummi & kelas istimewa',
+      badge: 'Pembelajaran',
+      badgeColor: 'bg-amber-50 text-amber-800 border-amber-200',
       icon: GraduationCap,
-      iconBg: 'bg-amber-600 text-white',
-      borderHover: 'hover:border-amber-500 hover:bg-amber-50/50'
+      iconBg: 'bg-amber-600 text-white'
     }
   ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
-      {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in"
+        className="fixed inset-0 bg-slate-950/50 backdrop-blur-[1px] animate-in fade-in"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Action Sheet Panel */}
       <div
-        className="relative w-full max-w-lg bg-white rounded-t-3xl shadow-2xl border-t border-slate-200/90 z-10 pb-8 pt-3 px-5 animate-in slide-in-from-bottom-5 duration-200"
+        className="relative z-10 w-full max-w-lg max-h-[88dvh] overflow-y-auto bg-white rounded-t-2xl border-t border-slate-200 px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] animate-in slide-in-from-bottom-5 duration-200"
         role="dialog"
         aria-modal="true"
         aria-label="Pilih Jenis Setoran"
       >
-        {/* Pull bar indicator */}
-        <div className="w-12 h-1.5 bg-slate-300 rounded-full mx-auto mb-4" />
+        <div className="w-9 h-1 bg-slate-300 rounded-full mx-auto mb-2" />
 
-        {/* Sheet Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div>
-            <h2 className="text-base font-bold text-slate-900 tracking-tight">Input Setoran Santri</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Pilih jenis setoran hafalan atau tadarrus yang disimak</p>
+        <div className="flex items-start justify-between gap-3 pb-2 border-b border-slate-100">
+          <div className="min-w-0">
+            <h2 className="text-sm font-bold text-slate-900 leading-5">Input Setoran Santri</h2>
+            <p className="text-[11px] text-slate-500 leading-4">
+              Pilih jenis setoran yang akan diinput
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+            className="w-8 h-8 -mr-1 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer flex-shrink-0"
             aria-label="Tutup"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Remote Pengendali Program Pantauan Liburan Santri (Mobile) */}
-        <div className={`mt-3 p-3.5 rounded-2xl border transition-all ${
-          isProgramLiburanActive
-            ? 'bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white border-emerald-700 shadow-sm'
-            : 'bg-slate-100 text-slate-800 border-slate-200'
-        }`}>
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <span className="text-xl">🌴</span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold leading-tight">Program Pantauan Liburan</span>
-                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
+        <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2">
+          <div className="flex items-center gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-xs font-bold text-slate-900 truncate">
+                  Pantauan Liburan
+                </span>
+                <span
+                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border flex-shrink-0 ${
                     isProgramLiburanActive
-                      ? 'bg-emerald-500/30 text-emerald-200 border border-emerald-400/40'
-                      : 'bg-slate-200 text-slate-600 border border-slate-300'
-                  }`}>
-                    {isProgramLiburanActive ? '🟢 ON (Aktif)' : '⚪ OFF'}
-                  </span>
-                </div>
-                <p className={`text-[11px] mt-0.5 leading-snug ${isProgramLiburanActive ? 'text-emerald-100' : 'text-slate-500'}`}>
-                  {isProgramLiburanActive
-                    ? 'Dasbor Wali aktif menginput wirid & shalat jama\'ah'
-                    : 'Fitur amaliyah di dasbor wali terkunci / nonaktif'}
-                </p>
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-white text-slate-500 border-slate-200'
+                  }`}
+                >
+                  {isProgramLiburanActive ? 'AKTIF' : 'NONAKTIF'}
+                </span>
               </div>
+              <p className="text-[10px] text-slate-500 leading-4 truncate">
+                {isProgramLiburanActive
+                  ? 'Input wali aktif untuk wirid & jamaah'
+                  : 'Fitur amaliyah wali sedang terkunci'}
+              </p>
             </div>
 
-            {/* Interactive Toggle Switch */}
+            <button
+              type="button"
+              onClick={() => setShowMonitorModal(true)}
+              className="h-8 px-2 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white text-[10px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer flex-shrink-0"
+              title="Lihat Rekap Liburan"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Rekap</span>
+            </button>
+
             <button
               type="button"
               onClick={handleToggleLiburan}
               disabled={isTogglingLiburan}
               title={isProgramLiburanActive ? 'Matikan Program Liburan' : 'Nyalakan Program Liburan'}
-              className={`press-feedback p-1.5 rounded-xl cursor-pointer transition flex items-center justify-center flex-shrink-0 ${
+              className={`h-8 w-9 flex items-center justify-center rounded-lg transition cursor-pointer flex-shrink-0 ${
                 isProgramLiburanActive
-                  ? 'bg-emerald-500 hover:bg-emerald-400 text-emerald-950 shadow-md ring-2 ring-emerald-300/40'
-                  : 'bg-slate-300 hover:bg-slate-400 text-slate-700'
-              }`}
+                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                  : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+              } ${isTogglingLiburan ? 'opacity-60 cursor-wait' : ''}`}
             >
               {isProgramLiburanActive ? (
-                <ToggleRight className="w-7 h-7" />
+                <ToggleRight className="w-5 h-5" />
               ) : (
-                <ToggleLeft className="w-7 h-7" />
+                <ToggleLeft className="w-5 h-5" />
               )}
-            </button>
-          </div>
-
-          {/* View Rekap Quick Button for Ustadz */}
-          <div className="mt-2.5 pt-2 border-t border-white/15 flex items-center justify-between">
-            <span className="text-[10px] opacity-80">Ustadz hanya memantau tanpa meng-input</span>
-            <button
-              type="button"
-              onClick={() => setShowMonitorModal(true)}
-              className={`text-[11px] font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1.5 cursor-pointer ${
-                isProgramLiburanActive
-                  ? 'bg-white/15 hover:bg-white/25 text-white'
-                  : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
-              }`}
-            >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Lihat Rekap Liburan</span>
             </button>
           </div>
         </div>
 
-        {/* Action List */}
-        <div className="py-3 space-y-2.5">
+        <div className="py-2 space-y-1.5">
           {actions.map((act) => {
             const Icon = act.icon;
+
             return (
               <button
                 key={act.tab}
@@ -208,51 +203,57 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
                   onSelect(act.tab);
                   onClose();
                 }}
-                className={`w-full p-3.5 rounded-2xl border border-slate-200/90 bg-white transition-all flex items-center justify-between group text-left cursor-pointer shadow-xs ${act.borderHover}`}
+                className="w-full min-h-[54px] px-2.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-2.5 text-left cursor-pointer group"
               >
-                <div className="flex items-center gap-3.5">
-                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-xs ${act.iconBg}`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-bold text-slate-900">{act.title}</span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${act.badgeColor}`}>
-                        {act.badge}
-                      </span>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-0.5">{act.subtitle}</p>
-                  </div>
+                <div
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${act.iconBg}`}
+                >
+                  <Icon className="w-[18px] h-[18px]" />
                 </div>
-                <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-600 transition-colors flex-shrink-0" />
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-[13px] font-bold text-slate-900 truncate">
+                      {act.title}
+                    </span>
+                    <span
+                      className={`text-[9px] leading-4 font-semibold px-1.5 rounded-md border whitespace-nowrap flex-shrink-0 ${act.badgeColor}`}
+                    >
+                      {act.badge}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 leading-4 truncate">
+                    {act.subtitle}
+                  </p>
+                </div>
+
+                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 flex-shrink-0" />
               </button>
             );
           })}
         </div>
 
-        {/* Quick Mushaf Navigation */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+        <div className="pt-1.5 border-t border-slate-100 flex items-center gap-2">
           <button
             onClick={() => {
               onSelect('mushaf');
               onClose();
             }}
-            className="flex items-center gap-2 text-xs font-semibold text-emerald-800 hover:text-emerald-900 py-1.5 px-2 rounded-lg hover:bg-emerald-50 transition cursor-pointer"
+            className="h-9 flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-50 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
           >
-            <BookOpen className="w-4 h-4 text-emerald-600" />
-            <span>Buka Mushaf Digital 30 Juz</span>
+            <BookOpen className="w-4 h-4" />
+            <span>Mushaf Digital</span>
           </button>
 
           <button
             onClick={onClose}
-            className="text-xs font-semibold text-slate-500 hover:text-slate-700 py-1.5 px-3 rounded-lg hover:bg-slate-100 transition cursor-pointer"
+            className="h-9 px-4 rounded-lg bg-slate-100 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition cursor-pointer"
           >
             Tutup
           </button>
         </div>
       </div>
 
-      {/* Monitor Modal */}
       {showMonitorModal && (
         <PantauanLiburanMonitorModal
           isOpen={showMonitorModal}
