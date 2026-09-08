@@ -8,6 +8,7 @@ on:
       - 'src/app-shell.css'
       - 'src/dashboard-experience.css'
       - 'src/input-workflow.css'
+      - 'src/history-experience.css'
       - 'src/design-system/**'
       - 'src/components/Navbar.tsx'
       - 'src/components/BottomNav.tsx'
@@ -20,6 +21,7 @@ on:
       - 'src/components/PembelajaranForm.tsx'
       - 'src/components/SetoranFormNav.tsx'
       - 'src/components/SetorActionSheet.tsx'
+      - 'src/components/HistoryTable.tsx'
       - 'src/main.tsx'
       - 'P2_DESIGN_FOUNDATION.md'
       - '.github/workflows/p2-design-foundation.yml'
@@ -59,6 +61,8 @@ jobs:
           grep -q 'forced-colors: active' src/dashboard-experience.css
           grep -q 'prefers-reduced-motion: reduce' src/input-workflow.css
           grep -q 'forced-colors: active' src/input-workflow.css
+          grep -q 'prefers-reduced-motion: reduce' src/history-experience.css
+          grep -q 'forced-colors: active' src/history-experience.css
           grep -q 'p2-dashboard-ustadz' src/components/UstadzDashboard.tsx
           grep -q 'p2-dashboard-wali' src/components/WaliDashboard.tsx
           grep -q 'p2-dashboard-santri' src/components/SantriDashboard.tsx
@@ -68,10 +72,12 @@ jobs:
           grep -q 'ui-form-identity' src/components/PembelajaranForm.tsx
           grep -q 'Navigasi form setoran' src/components/SetoranFormNav.tsx
           grep -q 'setor-action-sheet-title' src/components/SetorActionSheet.tsx
+          grep -q 'p2-history' src/components/HistoryTable.tsx
+          grep -q 'data-selected' src/components/HistoryTable.tsx
 
       - name: Reject expensive global effects
         run: |
-          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/design-foundation.css src/app-shell.css src/dashboard-experience.css src/input-workflow.css; then
+          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/design-foundation.css src/app-shell.css src/dashboard-experience.css src/input-workflow.css src/history-experience.css; then
             echo 'P2 visual system contains an expensive global effect.'
             exit 1
           fi
