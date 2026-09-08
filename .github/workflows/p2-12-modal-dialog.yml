@@ -1,0 +1,324 @@
+name: P2.12 Modal Dialog Validation
+
+on:
+  push:
+    branches:
+      - p2-12-modal-dialog
+    paths:
+      - .github/workflows/p2-12-modal-dialog.yml
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: p2-12-modal-dialog
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Apply P2.12 dialog visual contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new, count=None):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f'Pattern not found in {path}: {old[:160]!r}')
+              text = text.replace(old, new) if count is None else text.replace(old, new, count)
+              p.write_text(text)
+
+          # Shared centered-dialog visual contract.
+          path = 'src/index.css'
+          marker = '''.ui-control {
+            min-height: 44px;
+            border-radius: var(--radius-control);
+          }
+          '''
+          addition = '''.ui-control {
+            min-height: 44px;
+            border-radius: var(--radius-control);
+          }
+
+          /* === Dialog contract ===
+             Centered operational dialogs share one calm overlay, panel, header,
+             footer and close-control system. Specialized bottom sheets remain separate. */
+          .ui-dialog-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 70;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem;
+            background: rgba(15, 23, 42, 0.56);
+          }
+
+          .ui-dialog-panel,
+          .ui-dialog-frame {
+            width: 100%;
+            max-height: calc(100dvh - 1.5rem);
+            background: var(--surface-primary);
+            border: 1px solid var(--stroke-primary);
+            border-radius: var(--radius-major);
+            box-shadow: var(--shadow-overlay);
+          }
+
+          .ui-dialog-panel {
+            overflow-y: auto;
+            overscroll-behavior: contain;
+          }
+
+          .ui-dialog-frame {
+            overflow: hidden;
+          }
+
+          .ui-dialog-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 1rem;
+            color: var(--content-primary);
+            background: var(--surface-primary);
+            border-bottom: 1px solid var(--stroke-primary);
+          }
+
+          .ui-dialog-body {
+            padding: 1rem;
+          }
+
+          .ui-dialog-footer {
+            display: flex;
+            flex-direction: column-reverse;
+            gap: 0.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--stroke-primary);
+          }
+
+          .ui-dialog-footer > button,
+          .ui-dialog-footer > a {
+            width: 100%;
+            min-height: 44px;
+          }
+
+          .ui-dialog-close {
+            display: inline-flex;
+            width: 44px;
+            height: 44px;
+            flex: 0 0 44px;
+            align-items: center;
+            justify-content: center;
+            border-radius: var(--radius-control);
+            color: var(--content-secondary);
+            background: transparent;
+          }
+
+          .ui-dialog-close:hover {
+            background: var(--surface-muted);
+            color: var(--content-primary);
+          }
+
+          @media (min-width: 640px) {
+            .ui-dialog-overlay {
+              padding: 1rem;
+            }
+
+            .ui-dialog-panel,
+            .ui-dialog-frame {
+              max-height: calc(100dvh - 2rem);
+            }
+
+            .ui-dialog-header,
+            .ui-dialog-body {
+              padding: 1.25rem 1.5rem;
+            }
+
+            .ui-dialog-footer {
+              flex-direction: row;
+              justify-content: flex-end;
+            }
+
+            .ui-dialog-footer > button,
+            .ui-dialog-footer > a {
+              width: auto;
+            }
+          }
+          '''
+          replace(path, marker, addition, 1)
+
+          # HistoryTable: edit + single delete + batch delete.
+          path = 'src/components/HistoryTable.tsx'
+          replace(path, 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm', 'ui-dialog-overlay')
+          replace(path, 'fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs', 'ui-dialog-overlay')
+          replace(path, 'w-full max-w-lg max-h-[calc(100dvh-2rem)] bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-y-auto overscroll-contain', 'ui-dialog-panel max-w-lg')
+          replace(path, 'w-full max-w-md max-h-[calc(100dvh-2rem)] bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-y-auto overscroll-contain animate-in fade-in zoom-in-95 duration-150', 'ui-dialog-panel max-w-md')
+          replace(path, 'flex items-center justify-between gap-2 p-5 bg-gradient-to-br from-emerald-800 to-teal-900 text-white', 'ui-dialog-header')
+          replace(path, 'w-10 h-10 rounded-lg bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0', 'w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center flex-shrink-0')
+          replace(path, 'text-xs text-emerald-100/90', 'text-xs text-slate-500')
+          replace(path, 'p-1.5 rounded-lg text-white/80 hover:bg-white/15 transition cursor-pointer', 'ui-dialog-close cursor-pointer')
+          replace(path, 'p-5 sm:p-6 space-y-4', 'ui-dialog-body space-y-4', 1)
+          replace(path, 'flex items-center justify-end gap-3 pt-3 border-t border-slate-100', 'ui-dialog-footer')
+          replace(path, 'px-5 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer flex items-center gap-1.5', 'ui-control w-full sm:w-auto px-5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5')
+          replace(path, 'px-6 py-2.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-bold text-xs  transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed', 'ui-control w-full sm:w-auto px-6 rounded-lg bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed')
+          replace(path, 'flex items-center justify-between p-5 bg-gradient-to-r from-rose-800 to-rose-900 text-white', 'ui-dialog-header')
+          replace(path, 'w-10 h-10 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0 text-white', 'w-10 h-10 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center flex-shrink-0 text-rose-700')
+          replace(path, 'text-xs text-rose-100/90 mt-0.5', 'text-xs text-slate-500 mt-0.5')
+          replace(path, 'p-1.5 rounded-lg text-white/80 hover:bg-white/15 transition cursor-pointer disabled:opacity-50', 'ui-dialog-close cursor-pointer disabled:opacity-50')
+          replace(path, 'p-5 sm:p-6 space-y-4', 'ui-dialog-body space-y-4')
+          replace(path, 'bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5 text-xs', 'bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5 text-xs')
+          replace(path, 'p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-800', 'p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2.5 text-sm text-rose-800')
+          replace(path, 'flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100', 'ui-dialog-footer')
+          replace(path, 'px-4 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs transition cursor-pointer disabled:opacity-50', 'ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-sm transition-colors cursor-pointer disabled:opacity-50')
+          replace(path, 'px-5 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs  transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed', 'ui-control w-full sm:w-auto px-5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed')
+
+          # SantriManagement: six centered management dialogs keep handlers, use one shell.
+          path = 'src/components/SantriManagement.tsx'
+          replace(path, 'fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4', 'ui-dialog-overlay')
+          replace(path, 'bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain p-6 sm:p-7 border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150', 'ui-dialog-panel max-w-md p-5 sm:p-6 space-y-5')
+          replace(path, 'flex items-center justify-between pb-3 border-b border-slate-100', 'flex items-start justify-between gap-3 pb-4 border-b border-slate-200')
+          replace(path, 'text-slate-400 hover:text-slate-600 text-lg cursor-pointer', 'ui-dialog-close cursor-pointer text-lg')
+          replace(path, 'flex items-center justify-end gap-2 pt-3 border-t border-slate-100', 'ui-dialog-footer')
+          replace(path, 'flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100', 'ui-dialog-footer')
+          replace(path, 'px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer', 'ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer')
+          replace(path, 'px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer transition disabled:opacity-50', 'ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors disabled:opacity-50')
+          replace(path, 'px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition disabled:opacity-50', 'ui-control w-full sm:w-auto px-5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50')
+          replace(path, 'px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition disabled:opacity-50', 'ui-control w-full sm:w-auto px-5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-sm font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50')
+          replace(path, '<option value="Superadmin">👑 Superadmin</option>', '<option value="Superadmin">Superadmin</option>')
+          replace(path, '<option value="Ustadz">🛡️ Ustadz</option>', '<option value="Ustadz">Ustadz</option>')
+          replace(path, '<option value="Wali">👥 Wali Santri</option>', '<option value="Wali">Wali Santri</option>')
+          replace(path, '<option value="Santri">📖 Santri (View-Only)</option>', '<option value="Santri">Santri (View-Only)</option>')
+
+          # KelasManagement: add/edit/delete dialogs.
+          path = 'src/components/KelasManagement.tsx'
+          replace(path, 'fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4', 'ui-dialog-overlay')
+          replace(path, 'bg-white rounded-3xl shadow-xl max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain', 'ui-dialog-panel max-w-lg')
+          replace(path, 'flex items-center justify-between p-5 border-b border-slate-100 sticky top-0 bg-white rounded-t-3xl z-10', 'ui-dialog-header sticky top-0 z-10')
+          replace(path, 'p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer', 'ui-dialog-close cursor-pointer')
+          replace(path, 'p-5 space-y-4', 'ui-dialog-body space-y-4')
+          replace(path, 'flex gap-2 pt-3 border-t border-slate-100', 'ui-dialog-footer')
+          replace(path, 'flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer', 'ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-sm font-semibold transition-colors cursor-pointer')
+          replace(path, 'flex-1 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-900 text-white text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60 shadow-xs', 'ui-control w-full sm:w-auto px-5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60')
+          replace(path, "'✨ Santri yang sudah masuk kelas disembunyikan. Tinggal pilih santri yang belum ditempatkan.'", "'Santri yang sudah masuk kelas disembunyikan. Tinggal pilih santri yang belum ditempatkan.'")
+          replace(path, 'bg-white rounded-3xl shadow-xl max-w-md w-full p-6', 'ui-dialog-panel max-w-md p-5 sm:p-6')
+          replace(path, 'w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center', 'w-11 h-11 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center')
+          replace(path, 'flex gap-2', 'ui-dialog-footer', 1)
+          replace(path, 'flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition cursor-pointer disabled:opacity-60', 'ui-control w-full sm:w-auto px-5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-sm font-semibold transition-colors cursor-pointer disabled:opacity-60')
+
+          # PDF report dialog: deliberately simple and operational, no hero-style gradient.
+          path = 'src/components/UnduhLaporanModal.tsx'
+          replace(path, 'fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200', 'ui-dialog-overlay')
+          replace(path, 'bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain', 'ui-dialog-panel max-w-lg')
+          replace(path, 'sticky top-0 z-10 bg-gradient-to-r from-emerald-800 to-teal-800 text-white px-5 sm:px-6 py-4 rounded-t-3xl flex items-center justify-between', 'ui-dialog-header sticky top-0 z-10')
+          replace(path, 'w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0', 'w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center flex-shrink-0')
+          replace(path, 'text-[11px] text-emerald-100', 'text-xs text-slate-500')
+          replace(path, 'p-2 rounded-xl hover:bg-white/15 transition cursor-pointer flex-shrink-0', 'ui-dialog-close cursor-pointer')
+          replace(path, 'p-5 sm:p-6 space-y-5', 'ui-dialog-body space-y-5')
+          replace(path, 'p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2.5', 'p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center gap-2.5')
+          replace(path, 'p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2.5', 'p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-medium flex items-center gap-2.5')
+          replace(path, 'text-[11px] text-rose-600 font-semibold mt-1.5', 'text-xs text-rose-700 font-semibold mt-1.5')
+          replace(path, 'text-[11px] text-slate-500', 'text-xs text-slate-500')
+          replace(path, 'p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500', 'p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500')
+          replace(path, 'sticky bottom-0 z-10 bg-white border-t border-slate-100 px-5 sm:px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] flex items-center justify-end gap-3 rounded-b-3xl', 'ui-dialog-footer sticky bottom-0 z-10 bg-white px-5 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom,0px))]')
+          replace(path, 'px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer', 'ui-control w-full sm:w-auto px-5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-sm transition-colors cursor-pointer')
+          replace(path, 'px-6 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed', 'ui-control w-full sm:w-auto px-6 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed')
+
+          # Already-modern Pantauan dialogs: align only shell/elevation contract.
+          path = 'src/components/PantauanLiburanMonitorModal.tsx'
+          replace(path, 'relative z-10 flex w-full max-w-5xl max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[calc(100dvh-2.5rem)]', 'ui-dialog-frame relative z-10 flex max-w-5xl flex-col overscroll-contain')
+
+          path = 'src/components/PantauanLiburanWaliSection.tsx'
+          replace(path, 'fixed inset-0 z-50 bg-slate-950/50 flex items-center justify-center p-4', 'ui-dialog-overlay')
+          replace(path, 'w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white border border-slate-200 shadow-xl p-5 space-y-4', 'ui-dialog-panel max-w-sm p-5 space-y-4')
+          replace(path, 'flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-4', 'ui-dialog-footer')
+          PY
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: P2.12 finish gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          css = Path('src/index.css').read_text()
+          history = Path('src/components/HistoryTable.tsx').read_text()
+          santri = Path('src/components/SantriManagement.tsx').read_text()
+          kelas = Path('src/components/KelasManagement.tsx').read_text()
+          report = Path('src/components/UnduhLaporanModal.tsx').read_text()
+          monitor = Path('src/components/PantauanLiburanMonitorModal.tsx').read_text()
+          wali = Path('src/components/PantauanLiburanWaliSection.tsx').read_text()
+
+          for token in ['.ui-dialog-overlay', '.ui-dialog-panel', '.ui-dialog-frame', '.ui-dialog-header', '.ui-dialog-body', '.ui-dialog-footer', '.ui-dialog-close']:
+              assert token in css, f'missing dialog contract {token}'
+
+          assert history.count('ui-dialog-overlay') >= 3
+          assert 'bg-gradient-to-br from-emerald-800 to-teal-900' not in history
+          assert 'bg-gradient-to-r from-rose-800 to-rose-900' not in history
+          assert 'rounded-3xl shadow-2xl' not in history
+          assert 'confirmSingleDelete' in history and 'confirmBatchDelete' in history and 'handleSaveEdit' in history
+          assert 'useAccessibleDialog' in history
+
+          assert santri.count('ui-dialog-overlay') >= 6
+          assert 'backdrop-blur-xs' not in santri
+          assert 'rounded-3xl shadow-2xl' not in santri
+          for emoji in ['👑', '🛡️', '👥', '📖']:
+              assert emoji not in santri
+          for handler in ['handleSaveEditSantri', 'handleSaveEditUser', 'handleDeleteSantri', 'handleDeleteUser', 'handleAddSantri', 'handleAddUser']:
+              assert handler in santri
+          assert 'useAccessibleDialog' in santri
+
+          assert kelas.count('ui-dialog-overlay') >= 3
+          assert 'bg-black/40 backdrop-blur-sm' not in kelas
+          assert 'rounded-3xl shadow-xl' not in kelas
+          assert '✨ Santri' not in kelas
+          for handler in ['handleAddKelas', 'handleSaveEdit', 'handleDeleteKelas']:
+              assert handler in kelas
+          assert 'useAccessibleDialog' in kelas
+
+          assert 'ui-dialog-overlay' in report and 'ui-dialog-panel max-w-lg' in report
+          assert 'backdrop-blur-sm' not in report
+          assert 'bg-gradient-to-r from-emerald-800 to-teal-800' not in report
+          assert 'text-[11px]' not in report
+          assert 'handleDownload' in report and 'useAccessibleDialog' in report
+
+          assert 'ui-dialog-frame' in monitor and 'useAccessibleDialog' in monitor
+          assert 'shadow-2xl' not in monitor
+
+          assert 'ui-dialog-overlay' in wali and 'ui-dialog-panel max-w-sm' in wali
+          assert 'confirmDeleteRecord' in wali and 'useAccessibleDialog' in wali
+
+          # Specialized navigation sheet intentionally remains separate in P2.12.
+          sheet = Path('src/components/SetorActionSheet.tsx').read_text()
+          assert 'rounded-t-2xl' in sheet and 'role="dialog"' in sheet
+          PY
+          git diff --check
+
+      - name: Commit verified P2.12 source
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No source changes to commit"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/index.css src/components/HistoryTable.tsx src/components/SantriManagement.tsx src/components/KelasManagement.tsx src/components/UnduhLaporanModal.tsx src/components/PantauanLiburanMonitorModal.tsx src/components/PantauanLiburanWaliSection.tsx
+          git commit -m "refactor: unify P2.12 modal dialog system"
+          git push origin HEAD:p2-12-modal-dialog
