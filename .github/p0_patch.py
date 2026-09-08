@@ -1,0 +1,665 @@
+from pathlib import Path
+import re
+
+
+def replace_once(text: str, old: str, new: str, label: str) -> str:
+    count = text.count(old)
+    if count != 1:
+        raise RuntimeError(f'{label}: expected exactly 1 match, found {count}')
+    return text.replace(old, new, 1)
+
+
+def write_changed(path: str, text: str, original: str) -> None:
+    if text == original:
+        raise RuntimeError(f'{path}: no changes produced')
+    Path(path).write_text(text, encoding='utf-8')
+
+
+def remove_progress_block(text: str, next_marker: str, label: str) -> str:
+    start = text.index('        {/* Progres Bar */}')
+    marker = text.index(next_marker, start)
+    hero_close = text.rfind('      </div>\n\n', start, marker)
+    if hero_close <= start:
+        raise RuntimeError(f'{label}: hero closing tag not found')
+    return text[:start] + text[hero_close:]
+
+
+# P0.1 + P0.2: Wali dashboard, only real profile/metrics.
+path = 'src/components/WaliDashboard.tsx'
+original = Path(path).read_text(encoding='utf-8')
+text = original
+text = replace_once(
+    text,
+    "import { BookOpen, RotateCw, BookOpenCheck, Award, Target, Calendar, CircleCheck as CheckCircle2, ChevronRight, Sparkles, GraduationCap } from 'lucide-react';",
+    "import { BookOpen, RotateCw, BookOpenCheck, Award, Calendar, CircleCheck as CheckCircle2, ChevronRight, Sparkles, GraduationCap } from 'lucide-react';",
+    'Wali remove Target import'
+)
+text = replace_once(
+    text,
+    """  const targetSantri = santriList.find(s => s.idSantri === currentUser.idSantri) || {
+    idSantri: currentUser.idSantri || 'STR001',
+    namaSantri: currentUser.nama.replace('Wali ', ''),
+    kelas: 'Tahfidz',
+    targetHafalan: 'Juz 30 (37 Surah)'
+  };
+""",
+    """  const targetSantri = santriList.find(s => s.idSantri === currentUser.idSantri);
+
+  if (!targetSantri) {
+    return (
+      <div
+        className="bg-white rounded-2xl border border-emerald-200 p-5 sm:p-6 shadow-xs"
+        role="status"
+        aria-live="polite"
+      >
+        <h2 className="text-base font-extrabold text-slate-900">Profil santri belum terhubung</h2>
+        <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">
+          Akun wali ini belum terhubung ke profil santri yang tersedia. Hubungi admin untuk memeriksa relasi ID santri sebelum melihat perkembangan.
+        </p>
+        <p className="mt-3 text-xs font-semibold text-emerald-800">
+          ID terhubung: {currentUser.idSantri || 'Tidak tersedia'}
+        </p>
+      </div>
+    );
+  }
+""",
+    'Wali remove fabricated profile fallback'
+)
+text = replace_once(
+    text,
+    "  const lastPembelajaran = santriPembelajaran[0];\n\n  const estimatedProgressPercent = Math.min(100, Math.max(35, santriZiyadah.length * 8));\n",
+    """  const lastPembelajaran = santriPembelajaran[0];
+
+  const latestRatedRecord = [
+    ...santriZiyadah,
+    ...santriMurojaah,
+    ...santriBinnadzor,
+    ...santriPembelajaran
+  ]
+    .filter(record => Boolean(record.nilai))
+    .sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''))[0];
+""",
+    'Wali remove estimated progress metric'
+)
+text = replace_once(text, '{targetSantri.kelas}</span>', "{targetSantri.kelas || 'Belum ditetapkan'}</span>", 'Wali class truth')
+text = replace_once(text, '{targetSantri.targetHafalan}', "{targetSantri.targetHafalan || 'Belum ditetapkan'}", 'Wali target truth')
+text = remove_progress_block(text, '      {/* Ringkasan 4 Card */}', 'Wali progress block')
+text = replace_once(
+    text,
+    """            <p className="text-xs font-semibold text-slate-500">Kualitas Hafalan</p>
+            <h3 className="text-sm sm:text-lg font-extrabold text-emerald-700 mt-0.5">
+              🟢 Sangat Baik
+            </h3>
+            <span className="text-[10px] text-slate-500 font-medium">Tajwid & makhraj</span>
+""",
+    """            <p className="text-xs font-semibold text-slate-500">Penilaian Terakhir</p>
+            <h3 className="text-sm sm:text-lg font-extrabold text-emerald-700 mt-0.5">
+              {latestRatedRecord?.nilai || 'Belum ada'}
+            </h3>
+            <span className="text-[10px] text-slate-500 font-medium">
+              {latestRatedRecord ? 'Berdasarkan setoran terbaru' : 'Belum ada setoran dinilai'}
+            </span>
+""",
+    'Wali replace fake quality metric'
+)
+write_changed(path, text, original)
+
+# P0.1 + P0.2: Santri dashboard, only real profile/metrics.
+path = 'src/components/SantriDashboard.tsx'
+original = Path(path).read_text(encoding='utf-8')
+text = original
+text = replace_once(
+    text,
+    "import { BookOpen, RotateCw, BookOpenCheck, Award, Target, Sparkles, BookMarked, Calendar, GraduationCap } from 'lucide-react';",
+    "import { BookOpen, RotateCw, BookOpenCheck, Award, Sparkles, BookMarked, Calendar, GraduationCap } from 'lucide-react';",
+    'Santri remove Target import'
+)
+text = replace_once(
+    text,
+    """  const currentSantri = santriList.find(s => s.idSantri === currentUser.idSantri) || {
+    idSantri: currentUser.idSantri || currentUser.username,
+    namaSantri: currentUser.nama,
+    kelas: 'Tahfidz',
+    targetHafalan: 'Juz 30 (37 Surah)'
+  };
+""",
+    """  const currentSantri = santriList.find(s => s.idSantri === currentUser.idSantri);
+
+  if (!currentSantri) {
+    return (
+      <div
+        className="bg-white rounded-2xl border border-emerald-200 p-5 sm:p-6 shadow-xs"
+        role="status"
+        aria-live="polite"
+      >
+        <h2 className="text-base font-extrabold text-slate-900">Profil santri belum terhubung</h2>
+        <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">
+          Akun ini belum terhubung ke profil santri yang tersedia. Hubungi admin untuk memeriksa relasi ID santri sebelum melihat data hafalan.
+        </p>
+        <p className="mt-3 text-xs font-semibold text-emerald-800">
+          ID terhubung: {currentUser.idSantri || currentUser.username || 'Tidak tersedia'}
+        </p>
+      </div>
+    );
+  }
+""",
+    'Santri remove fabricated profile fallback'
+)
+text = replace_once(
+    text,
+    "  const lastPembelajaran = santriPembelajaran[0];\n\n  const estimatedProgressPercent = Math.min(100, Math.max(30, santriZiyadah.length * 9));\n",
+    """  const lastPembelajaran = santriPembelajaran[0];
+
+  const latestRatedRecord = [
+    ...santriZiyadah,
+    ...santriMurojaah,
+    ...santriBinnadzor,
+    ...santriPembelajaran
+  ]
+    .filter(record => Boolean(record.nilai))
+    .sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''))[0];
+""",
+    'Santri remove estimated progress metric'
+)
+text = replace_once(text, '{currentSantri.kelas}</span>', "{currentSantri.kelas || 'Belum ditetapkan'}</span>", 'Santri class truth')
+text = replace_once(text, '{currentSantri.targetHafalan}', "{currentSantri.targetHafalan || 'Belum ditetapkan'}", 'Santri target truth')
+text = remove_progress_block(text, '      {/* 4 Metric Cards */}', 'Santri progress block')
+text = replace_once(
+    text,
+    """            <p className="text-xs font-semibold text-slate-500">Predikat Terakhir</p>
+            <h3 className="text-xs sm:text-sm font-extrabold text-emerald-700 mt-0.5 truncate">
+              {lastZiyadah?.nilai ? `🟢 ${lastZiyadah.nilai}` : lastBinnadzor?.nilai ? `🟢 ${lastBinnadzor.nilai}` : '🟢 Aktif'}
+            </h3>
+            <span className="text-[10px] text-slate-500 font-medium">Semangat terus!</span>
+""",
+    """            <p className="text-xs font-semibold text-slate-500">Penilaian Terakhir</p>
+            <h3 className="text-xs sm:text-sm font-extrabold text-emerald-700 mt-0.5 truncate">
+              {latestRatedRecord?.nilai || 'Belum ada'}
+            </h3>
+            <span className="text-[10px] text-slate-500 font-medium">
+              {latestRatedRecord ? 'Berdasarkan setoran terbaru' : 'Belum ada setoran dinilai'}
+            </span>
+""",
+    'Santri replace fake predikat fallback'
+)
+write_changed(path, text, original)
+
+# P0.4: explicit application timezone helpers.
+path = 'src/utils/dateFormatter.ts'
+original = Path(path).read_text(encoding='utf-8')
+text = original
+text = replace_once(
+    text,
+    "];\n\nexport function parseDateSafe",
+    """\];
+
+export const APP_TIME_ZONE = 'Asia/Jakarta';
+
+function getAppTimeParts(date: Date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: APP_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(date);
+
+  const value = (type: string) => parts.find(part => part.type === type)?.value || '';
+  return {
+    year: value('year'),
+    month: value('month'),
+    day: value('day'),
+    hour: value('hour'),
+    minute: value('minute')
+  };
+}
+
+export function parseDateSafe""",
+    'dateFormatter add timezone helper'
+)
+text = replace_once(
+    text,
+    """export function getTodayInputFormat(): string {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = (d.getMonth() + 1).toString().padStart(2, '0');
+  const day = d.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+export function getCurrentTimeInputFormat(): string {
+  const d = new Date();
+  const hours = d.getHours().toString().padStart(2, '0');
+  const minutes = d.getMinutes().toString().padStart(2, '0');
+  return `${hours}:${minutes}`;
+}
+""",
+    """export function getTodayInputFormat(date: Date = new Date()): string {
+  const { year, month, day } = getAppTimeParts(date);
+  return `${year}-${month}-${day}`;
+}
+
+export function getCurrentTimeInputFormat(date: Date = new Date()): string {
+  const { hour, minute } = getAppTimeParts(date);
+  return `${hour}:${minute}`;
+}
+
+export function addDaysToDateInput(dateInput: string, days: number): string {
+  const [year, month, day] = dateInput.split('-').map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, day + days));
+  const nextYear = shifted.getUTCFullYear();
+  const nextMonth = (shifted.getUTCMonth() + 1).toString().padStart(2, '0');
+  const nextDay = shifted.getUTCDate().toString().padStart(2, '0');
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+}
+""",
+    'dateFormatter WIB input helpers'
+)
+write_changed(path, text, original)
+
+# P0.3 + P0.4: Firestore failures must reach UI; generated timestamps use WIB.
+path = 'src/services/storageService.ts'
+original = Path(path).read_text(encoding='utf-8')
+text = original
+text = replace_once(
+    text,
+    "import { getClassGroup } from '../utils/classUtils';\n",
+    "import { getClassGroup } from '../utils/classUtils';\nimport { getTodayInputFormat, getCurrentTimeInputFormat } from '../utils/dateFormatter';\n",
+    'storageService date helper import'
+)
+timestamp_pattern = re.compile(
+    r"    let timestamp = record\.timestamp;\n"
+    r"    if \(!timestamp\) \{\n"
+    r"      const now = new Date\(\);\n"
+    r"      const pad = \(n: number\) => n\.toString\(\)\.padStart\(2, '0'\);\n"
+    r"      timestamp = `\$\{now\.getFullYear\(\)\}-\$\{pad\(now\.getMonth\(\) \+ 1\)\}-\$\{pad\(now\.getDate\(\)\)\} \$\{pad\(now\.getHours\(\)\)\}:\$\{pad\(now\.getMinutes\(\)\)\}`;\n"
+    r"    \}"
+)
+text, timestamp_count = timestamp_pattern.subn(
+    "    let timestamp = record.timestamp;\n    if (!timestamp) {\n      timestamp = `${getTodayInputFormat()} ${getCurrentTimeInputFormat()}`;\n    }",
+    text
+)
+if timestamp_count != 5:
+    raise RuntimeError(f'storageService WIB timestamps: expected 5 blocks, found {timestamp_count}')
+text = replace_once(
+    text,
+    """    } catch (err) {
+      console.error('Failed to update app config in Firestore:', err);
+    }
+    return updated;
+""",
+    """    } catch (err) {
+      console.error('Failed to update app config in Firestore:', err);
+      localStorage.setItem(STORAGE_KEYS.APP_CONFIG, JSON.stringify(prev));
+      throw err;
+    }
+    return updated;
+""",
+    'storageService app config cloud truth'
+)
+
+
+def rethrow_cloud_errors_in_method(source: str, method_name: str) -> tuple[str, int]:
+    start = source.find(f'  async {method_name}(')
+    if start < 0:
+        raise RuntimeError(f'storageService method not found: {method_name}')
+    end = source.find('\n  async ', start + 8)
+    if end < 0:
+        end = len(source)
+    region = source[start:end]
+    pattern = re.compile(
+        r"catch \((e|err)\) \{\n(?P<indent>\s+)console\.error\((?P<message>[^\n]+)\);\n(?P=indent)\}"
+    )
+
+    def replacement(match: re.Match) -> str:
+        var_name = match.group(1)
+        indent = match.group('indent')
+        return (
+            f"catch ({var_name}) {{\n"
+            f"{indent}console.error({match.group('message')});\n"
+            f"{indent}throw {var_name};\n"
+            f"{indent[:-2]}}}"
+        )
+
+    patched, count = pattern.subn(replacement, region)
+    return source[:start] + patched + source[end:], count
+
+
+write_methods = [
+    'saveZiyadah',
+    'saveMurojaah',
+    'saveBinnadzor',
+    'savePembelajaran',
+    'updateRecord',
+    'savePantauanLiburan',
+    'addSantri',
+    'updateSantri',
+    'addUser',
+    'updateUser',
+    'addKelas',
+    'updateKelas'
+]
+total_rethrows = 0
+for method in write_methods:
+    text, count = rethrow_cloud_errors_in_method(text, method)
+    if count == 0:
+        raise RuntimeError(f'storageService {method}: no swallowed Firestore error found')
+    total_rethrows += count
+if total_rethrows < len(write_methods):
+    raise RuntimeError('storageService: incomplete Firestore error propagation')
+write_changed(path, text, original)
+
+# P0.4: Ustadz dashboard today must be WIB.
+path = 'src/components/UstadzDashboard.tsx'
+original = Path(path).read_text(encoding='utf-8')
+text = original
+text = replace_once(
+    text,
+    "import { getClassGroup, isNonTahfidzClass } from '../utils/classUtils';\n",
+    "import { getClassGroup, isNonTahfidzClass } from '../utils/classUtils';\nimport { getTodayInputFormat } from '../utils/dateFormatter';\n",
+    'Ustadz WIB import'
+)
+text = replace_once(text, "  const today = new Date().toISOString().split('T')[0];", "  const today = getTodayInputFormat();", 'Ustadz today WIB')
+write_changed(path, text, original)
+
+# P0.4: History presets/current month must use WIB, not device timezone.
+path = 'src/components/HistoryTable.tsx'
+original = Path(path).read_text(encoding='utf-8')
+text = original
+text = replace_once(
+    text,
+    "import { formatTanggalLengkap, formatTanggalRingkas, parseDateSafe } from '../utils/dateFormatter';",
+    "import { addDaysToDateInput, formatTanggalLengkap, formatTanggalRingkas, getTodayInputFormat, parseDateSafe } from '../utils/dateFormatter';",
+    'History WIB imports'
+)
+text = replace_once(
+    text,
+    """    const now = new Date();
+    const currentKey = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+""",
+    """    const currentKey = getTodayInputFormat().slice(0, 7);
+""",
+    'History current month WIB'
+)
+start = text.index("  const applyDatePreset = (preset: 'hari_ini' | '7_hari' | '30_hari' | 'bulan_ini' | 'semua') => {")
+end = text.index('  // Counts per category matching current date filter', start)
+replacement = """  const applyDatePreset = (preset: 'hari_ini' | '7_hari' | '30_hari' | 'bulan_ini' | 'semua') => {
+    setActiveDatePreset(preset);
+    const todayStr = getTodayInputFormat();
+
+    if (preset === 'semua') {
+      setDateFilterMode('all');
+      setCustomStartDate('');
+      setCustomEndDate('');
+      return;
+    }
+
+    setDateFilterMode('range');
+
+    if (preset === 'hari_ini') {
+      setCustomStartDate(todayStr);
+      setCustomEndDate(todayStr);
+      return;
+    }
+
+    if (preset === '7_hari') {
+      setCustomStartDate(addDaysToDateInput(todayStr, -6));
+      setCustomEndDate(todayStr);
+      return;
+    }
+
+    if (preset === '30_hari') {
+      setCustomStartDate(addDaysToDateInput(todayStr, -29));
+      setCustomEndDate(todayStr);
+      return;
+    }
+
+    if (preset === 'bulan_ini') {
+      setCustomStartDate(`${todayStr.slice(0, 7)}-01`);
+      setCustomEndDate(todayStr);
+      return;
+    }
+  };
+
+"""
+text = text[:start] + replacement + text[end:]
+write_changed(path, text, original)
+
+# P0.4 + P0.5: Pantauan Liburan date and shalat inputs must be explicit.
+path = 'src/components/PantauanLiburanWaliSection.tsx'
+original = Path(path).read_text(encoding='utf-8')
+text = original
+text = replace_once(text, "import { formatTanggalIndo } from '../utils/dateFormatter';", "import { formatTanggalIndo, getTodayInputFormat } from '../utils/dateFormatter';", 'Pantauan WIB import')
+text = replace_once(text, "  const todayStr = new Date().toISOString().split('T')[0];", "  const todayStr = getTodayInputFormat();", 'Pantauan today WIB')
+text = replace_once(
+    text,
+    """  const [shalatSubuh, setShalatSubuh] = useState<ShalatJamaahStatus>('Jama\\'ah');
+  const [shalatDzuhur, setShalatDzuhur] = useState<ShalatJamaahStatus>('Jama\\'ah');
+  const [shalatAshar, setShalatAshar] = useState<ShalatJamaahStatus>('Jama\\'ah');
+  const [shalatMaghrib, setShalatMaghrib] = useState<ShalatJamaahStatus>('Jama\\'ah');
+  const [shalatIsya, setShalatIsya] = useState<ShalatJamaahStatus>('Jama\\'ah');
+""",
+    """  const [shalatSubuh, setShalatSubuh] = useState<ShalatJamaahStatus | ''>('');
+  const [shalatDzuhur, setShalatDzuhur] = useState<ShalatJamaahStatus | ''>('');
+  const [shalatAshar, setShalatAshar] = useState<ShalatJamaahStatus | ''>('');
+  const [shalatMaghrib, setShalatMaghrib] = useState<ShalatJamaahStatus | ''>('');
+  const [shalatIsya, setShalatIsya] = useState<ShalatJamaahStatus | ''>('');
+""",
+    'Pantauan empty shalat defaults'
+)
+text = replace_once(
+    text,
+    "  const [toastMessage, setToastMessage] = useState<string | null>(null);\n",
+    "  const [toastMessage, setToastMessage] = useState<string | null>(null);\n  const [toastType, setToastType] = useState<'success' | 'error'>('success');\n  const [validationError, setValidationError] = useState<string | null>(null);\n",
+    'Pantauan feedback states'
+)
+text = replace_once(text, """    } else if (editingRecordId) {
+      resetForm();
+    }
+""", """    } else {
+      resetForm();
+    }
+""", 'Pantauan reset on unsaved date')
+text = replace_once(
+    text,
+    """    setShalatSubuh('Jama\\'ah');
+    setShalatDzuhur('Jama\\'ah');
+    setShalatAshar('Jama\\'ah');
+    setShalatMaghrib('Jama\\'ah');
+    setShalatIsya('Jama\\'ah');
+    setCatatanWali('');
+    setEditingRecordId(null);
+""",
+    """    setShalatSubuh('');
+    setShalatDzuhur('');
+    setShalatAshar('');
+    setShalatMaghrib('');
+    setShalatIsya('');
+    setCatatanWali('');
+    setValidationError(null);
+    setEditingRecordId(null);
+""",
+    'Pantauan reset blank shalat'
+)
+text = replace_once(text, "    setToastMessage('Catatan amaliyah liburan berhasil dihapus.');\n", "    setToastType('success');\n    setToastMessage('Catatan amaliyah liburan berhasil dihapus.');\n", 'Pantauan delete success tone')
+text = replace_once(
+    text,
+    """  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+""",
+    """  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!shalatSubuh || !shalatDzuhur || !shalatAshar || !shalatMaghrib || !shalatIsya) {
+      setValidationError('Pilih status untuk seluruh 5 waktu shalat sebelum menyimpan laporan.');
+      return;
+    }
+
+    setValidationError(null);
+    setIsSubmitting(true);
+
+    try {
+""",
+    'Pantauan require explicit shalat input'
+)
+text = replace_once(text, """      loadRecords();
+      setToastMessage(`Laporan amaliyah ${formatTanggalIndo(selectedTanggal)} berhasil disimpan!`);
+""", """      loadRecords();
+      setToastType('success');
+      setToastMessage(`Laporan amaliyah ${formatTanggalIndo(selectedTanggal)} berhasil disimpan ke Cloud.`);
+""", 'Pantauan confirmed success copy')
+text = replace_once(text, """    } catch (err) {
+      console.error(err);
+      setToastMessage('Gagal menyimpan laporan. Silakan coba kembali.');
+""", """    } catch (err) {
+      console.error(err);
+      setToastType('error');
+      setToastMessage('Gagal menyimpan ke Cloud. Data belum terkonfirmasi. Periksa koneksi lalu coba kembali.');
+""", 'Pantauan cloud error copy')
+text = replace_once(
+    text,
+    """      {toastMessage && (
+        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+""",
+    """      {toastMessage && (
+        <div
+          className={`p-3.5 rounded-2xl border text-xs font-semibold flex items-center gap-2 animate-in fade-in ${
+            toastType === 'error'
+              ? 'bg-rose-50 border-rose-200 text-rose-900'
+              : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+          }`}
+          role={toastType === 'error' ? 'alert' : 'status'}
+          aria-live="polite"
+        >
+          {toastType === 'error' ? (
+            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          )}
+          <span>{toastMessage}</span>
+        </div>
+      )}
+""",
+    'Pantauan truthful toast styling'
+)
+text = replace_once(text, "<span className=\"text-[11px] text-slate-500\">Pilih status: Jama'ah / Berhalangan / Sakit</span>", "<span className=\"text-[11px] text-slate-500\">Pilih satu status untuk setiap waktu shalat</span>", 'Pantauan helper copy')
+text = replace_once(
+    text,
+    """              const setVal = (status: ShalatJamaahStatus) => {
+                if (waktu.key === 'shalatSubuh') setShalatSubuh(status);
+                else if (waktu.key === 'shalatDzuhur') setShalatDzuhur(status);
+                else if (waktu.key === 'shalatAshar') setShalatAshar(status);
+                else if (waktu.key === 'shalatMaghrib') setShalatMaghrib(status);
+                else setShalatIsya(status);
+              };
+""",
+    """              const setVal = (status: ShalatJamaahStatus) => {
+                if (waktu.key === 'shalatSubuh') setShalatSubuh(status);
+                else if (waktu.key === 'shalatDzuhur') setShalatDzuhur(status);
+                else if (waktu.key === 'shalatAshar') setShalatAshar(status);
+                else if (waktu.key === 'shalatMaghrib') setShalatMaghrib(status);
+                else setShalatIsya(status);
+                setValidationError(null);
+              };
+""",
+    'Pantauan clear validation on selection'
+)
+text = replace_once(
+    text,
+    """                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      currentVal === 'Jama\\'ah' ? 'bg-emerald-100 text-emerald-800'
+                      : currentVal === 'Berhalangan' ? 'bg-amber-100 text-amber-800'
+                      : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      {currentVal}
+                    </span>
+""",
+    """                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
+                      !currentVal ? 'bg-slate-100 text-slate-600'
+                      : currentVal === 'Jama\\'ah' ? 'bg-emerald-100 text-emerald-800'
+                      : currentVal === 'Berhalangan' ? 'bg-amber-100 text-amber-800'
+                      : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      {currentVal || 'Belum dipilih'}
+                    </span>
+""",
+    'Pantauan empty status badge'
+)
+text = replace_once(text, """                          type="button"
+                          key={opt.value}
+                          onClick={() => setVal(opt.value)}
+""", """                          type="button"
+                          key={opt.value}
+                          aria-pressed={isSelected}
+                          onClick={() => setVal(opt.value)}
+""", 'Pantauan status aria pressed')
+text = replace_once(
+    text,
+    """          </div>
+        </div>
+
+        {/* Section 3: Catatan Wali Santri */}
+""",
+    """          </div>
+
+          {validationError && (
+            <div
+              id="shalat-status-error"
+              role="alert"
+              className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-semibold text-rose-800"
+            >
+              <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+              <span>{validationError}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Section 3: Catatan Wali Santri */}
+""",
+    'Pantauan validation message'
+)
+text = replace_once(text, "<span>{isSubmitting ? 'Menyimpan...' : editingRecordId ? 'Perbarui Laporan' : 'Simpan Laporan Hari Ini'}</span>", "<span>{isSubmitting ? 'Menyimpan...' : editingRecordId ? 'Perbarui Laporan' : 'Simpan Laporan'}</span>", 'Pantauan truthful submit label')
+text = replace_once(text, '<span className="text-[11px] text-slate-500">Tersimpan di Cloud Firestore</span>', '<span className="text-[11px] text-slate-500">Riwayat laporan tersimpan</span>', 'Pantauan neutral history storage label')
+write_changed(path, text, original)
+
+# P0.6: keep visual design, standardize overlay layer contract.
+path = 'src/index.css'
+original = Path(path).read_text(encoding='utf-8')
+text = original
+text = replace_once(text, '  to { opacity: 1; transform: translateY(0); }', '  to { opacity: 1; transform: none; }', 'fadeInUp stacking context cleanup')
+text = replace_once(text, """.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+""", """.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+""", 'scroll reveal stacking context cleanup')
+text = replace_once(
+    text,
+    ".float-slow { animation: none; }\n",
+    """.float-slow { animation: none; }
+
+/* === Overlay layer contract ===
+   BottomNav intentionally stays at z-40. Full-screen dialogs and sheets must
+   render above it, including when nested in an animated page section. */
+.fixed.inset-0.z-50,
+.fixed.inset-0[class~="z-[60]"] {
+  z-index: 70 !important;
+}
+""",
+    'overlay z contract'
+)
+write_changed(path, text, original)
+
+print('P0 patch applied successfully.')
