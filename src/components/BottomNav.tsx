@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { User, ActiveTab, Santri } from '../types';
-import { LayoutDashboard, History, Users, School, Plus, BookOpen } from 'lucide-react';
+import { LayoutDashboard, History, Plus, BookOpen, Settings2 } from 'lucide-react';
 import { useRipple } from '../hooks/useRipple';
 import { SetorActionSheet } from './SetorActionSheet';
+import { ManageActionSheet } from './ManageActionSheet';
 import type { NotifyFn } from './Snackbar';
 
 interface BottomNavProps {
@@ -21,6 +22,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   onNotify
 }) => {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
+  const [isManageSheetOpen, setIsManageSheetOpen] = useState(false);
   const fabRipple = useRipple<HTMLButtonElement>();
 
   if (!currentUser) return null;
@@ -30,6 +32,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   const isSantri = roleStr === 'santri';
   const isUstadz = !isWali && !isSantri;
   const isSetorActive = activeTab === 'ziyadah' || activeTab === 'murojaah' || activeTab === 'binnadzor' || activeTab === 'pembelajaran';
+  const isManageActive = activeTab === 'kelas' || activeTab === 'santri';
 
   // Wali & Santri view-only bottom nav
   if (!isUstadz) {
@@ -67,7 +70,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     );
   }
 
-  // Ustadz: Option 1 (4 Compact Items + 1 Central Floating Action Button)
+  // Ustadz: primary navigation mirrors desktop while grouping management on mobile.
   return (
     <>
       <nav
@@ -75,7 +78,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         aria-label="Navigasi Bawah"
       >
         <div className="max-w-md mx-auto grid grid-cols-5 items-center">
-          {/* 1. Beranda */}
           <NavButton
             label="Beranda"
             icon={LayoutDashboard}
@@ -83,7 +85,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             onClick={() => setActiveTab('dashboard')}
           />
 
-          {/* 2. Riwayat */}
           <NavButton
             label="Riwayat"
             icon={History}
@@ -91,7 +92,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             onClick={() => setActiveTab('riwayat')}
           />
 
-          {/* 3. Central FAB: + Setor */}
           <div className="flex flex-col items-center justify-center relative -top-3 px-0.5">
             <button
               type="button"
@@ -117,31 +117,34 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             </span>
           </div>
 
-          {/* 4. Kelas */}
           <NavButton
-            label="Kelas"
-            icon={School}
-            isActive={activeTab === 'kelas'}
-            onClick={() => setActiveTab('kelas')}
+            label="Kelola"
+            icon={Settings2}
+            isActive={isManageActive}
+            onClick={() => setIsManageSheetOpen(true)}
           />
 
-          {/* 5. Santri */}
           <NavButton
-            label="Santri"
-            icon={Users}
-            isActive={activeTab === 'santri'}
-            onClick={() => setActiveTab('santri')}
+            label="Mushaf"
+            icon={BookOpen}
+            isActive={activeTab === 'mushaf'}
+            onClick={() => setActiveTab('mushaf')}
           />
         </div>
       </nav>
 
-      {/* Action Sheet Setoran */}
       <SetorActionSheet
         isOpen={isActionSheetOpen}
         onClose={() => setIsActionSheetOpen(false)}
         onSelect={(tab) => setActiveTab(tab)}
         santriList={santriList}
         onNotify={onNotify}
+      />
+
+      <ManageActionSheet
+        isOpen={isManageSheetOpen}
+        onClose={() => setIsManageSheetOpen(false)}
+        onSelect={(tab) => setActiveTab(tab)}
       />
     </>
   );
