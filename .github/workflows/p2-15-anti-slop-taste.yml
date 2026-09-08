@@ -40,7 +40,9 @@ jobs:
           rm -rf dist
 
       - name: Apply P2.15 polish
-        run: python .github/p2-15-polish.py
+        run: |
+          python .github/p2-15-polish.py
+          python .github/p2-15-solidify.py
 
       - name: TypeScript check
         run: npm run lint
@@ -59,7 +61,6 @@ jobs:
           echo "Final CSS bytes: $FINAL_CSS (baseline $BASE_CSS)"
           echo "Largest final JS chunks:"
           find dist/assets -type f -name '*.js' -printf '%s %p\n' | sort -nr | head -5
-          # This phase adds no dependency. Allow only 20 KiB unexplained JS growth.
           MAX_JS=$((BASE_JS + 20480))
           if [ "$FINAL_JS" -gt "$MAX_JS" ]; then
             echo "P2.15 introduced excessive JS growth: $FINAL_JS > $MAX_JS"
@@ -85,14 +86,13 @@ jobs:
           ]
           combined = '\n'.join(Path(f).read_text() for f in files)
 
-          for token in ['Sparkles', 'text-[9px]', 'text-[10px]', 'text-[11px]']:
+          for token in ['Sparkles', 'text-[9px]', 'text-[10px]', 'text-[11px]', 'bg-gradient-to', 'backdrop-blur', 'Recharts Analytics']:
               assert token not in combined, f'legacy token remains: {token}'
 
-          assert 'bg-gradient-to' not in combined, 'Tailwind gradient remains in P2.15 scope'
-          assert 'backdrop-blur' not in combined, 'glass blur remains in P2.15 scope'
-          assert 'Recharts Analytics' not in combined
-          assert 'shadow-2xl' not in Path('src/components/LoginModal.tsx').read_text()
-          assert "bg-emerald-950" in Path('src/components/LoginModal.tsx').read_text()
+          login = Path('src/components/LoginModal.tsx').read_text()
+          assert 'shadow-2xl' not in login
+          assert 'bg-emerald-950' in login
+          assert 'storageService.authenticate' in login and 'onLoginSuccess' in login
 
           b = Path('src/components/BinnadzorForm.tsx').read_text()
           p = Path('src/components/PembelajaranForm.tsx').read_text()
@@ -100,11 +100,7 @@ jobs:
           assert '{opt.emoji}' not in b
           assert '{opt.emoji}' not in p
           assert '{st.emoji}' not in p
-          assert 'purple-' not in h, 'Kelas Istimewa still uses purple in History'
-
-          # Business/data contracts stay intact.
-          for required in ['storageService.authenticate', 'onLoginSuccess']:
-              assert required in Path('src/components/LoginModal.tsx').read_text()
+          assert 'purple-' not in h
           for required in ['saveBinnadzor', 'onSuccess', 'onNotify']:
               assert required in b
           for required in ['savePembelajaran', 'onSuccess', 'onNotify']:
@@ -114,8 +110,6 @@ jobs:
               assert required in sheet
           app = Path('src/App.tsx').read_text()
           assert '<BottomNav' in app and '<Navbar' in app
-
-          # No dependency changes are allowed in this sweep.
           PY
           git diff --check
           git diff --exit-code -- package.json 2>/dev/null || { echo 'package.json changed unexpectedly'; exit 1; }
