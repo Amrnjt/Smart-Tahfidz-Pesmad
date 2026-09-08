@@ -1,0 +1,82 @@
+name: Typography System Polish Validation
+
+on:
+  push:
+    branches:
+      - typography-system-polish
+    paths:
+      - .github/workflows/typography-system-polish.yml
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: typography-system-polish
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Apply typography system polish
+        run: python scripts/typography_system_polish.py
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Typography finish gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          pkg = json.loads(Path('package.json').read_text())
+          assert pkg['dependencies']['@fontsource-variable/plus-jakarta-sans'] == '^5.3.0'
+
+          main = Path('src/main.tsx').read_text()
+          css = Path('src/index.css').read_text()
+          contract = Path('DESIGN_CONTRACT.md').read_text()
+          dash = Path('src/components/UstadzDashboard.tsx').read_text()
+
+          assert "@fontsource-variable/plus-jakarta-sans/wght.css" in main
+          for token in ['Plus Jakarta Sans Variable', '.ui-display-title', '.ui-eyebrow', '.ui-number', 'font-kerning: normal']:
+              assert token in css, token
+          assert 'Primary interface typeface: **Plus Jakarta Sans Variable**' in contract
+          assert 'ui-display-title' in dash
+          assert 'ui-eyebrow' in dash
+          assert 'ui-number' in dash
+          assert 'text-[9px]' not in dash and 'text-[10px]' not in dash and 'text-[11px]' not in dash
+          PY
+
+          FONT_COUNT=$(find dist -type f -name '*.woff2' | wc -l)
+          FONT_BYTES=$(find dist -type f -name '*.woff2' -printf '%s\n' | awk '{s+=$1} END{print s+0}')
+          echo "Emitted WOFF2 files: ${FONT_COUNT}"
+          echo "Total emitted font bytes: ${FONT_BYTES}"
+          test "$FONT_COUNT" -ge 1
+          test "$FONT_BYTES" -lt 700000
+          git diff --check
+
+      - name: Commit verified typography source
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json src/main.tsx src/index.css DESIGN_CONTRACT.md src/components/UstadzDashboard.tsx
+          if git diff --cached --quiet; then
+            echo "No source changes"
+            exit 1
+          fi
+          git commit -m "refactor: establish Pesmad typography system"
+          git push origin HEAD:typography-system-polish
