@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Santri, PantauanLiburanRecord, ShalatJamaahStatus, SHALAT_STATUS_OPTIONS } from '../types';
 import { storageService } from '../services/storageService';
-import { Sparkles, Calendar, BookOpen, CircleCheck as CheckCircle2, CircleAlert as AlertCircle, Check, Trash2, Edit3, Save, RotateCcw, Clock, Lock } from 'lucide-react';
+import { CircleAlert as AlertCircle, Check, Trash2, Edit3, Save, Clock, Lock } from 'lucide-react';
 import { formatTanggalIndo, getTodayInputFormat } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
@@ -14,12 +14,12 @@ interface PantauanLiburanWaliSectionProps {
   onNotify: NotifyFn;
 }
 
-const WAKTU_SHALAT: { key: 'shalatSubuh' | 'shalatDzuhur' | 'shalatAshar' | 'shalatMaghrib' | 'shalatIsya'; label: string; icon: string }[] = [
-  { key: 'shalatSubuh', label: 'Subuh', icon: '🌅' },
-  { key: 'shalatDzuhur', label: 'Dzuhur', icon: '☀️' },
-  { key: 'shalatAshar', label: 'Ashar', icon: '🌤️' },
-  { key: 'shalatMaghrib', label: 'Maghrib', icon: '🌇' },
-  { key: 'shalatIsya', label: 'Isya', icon: '🌌' },
+const WAKTU_SHALAT: { key: 'shalatSubuh' | 'shalatDzuhur' | 'shalatAshar' | 'shalatMaghrib' | 'shalatIsya'; label: string }[] = [
+  { key: 'shalatSubuh', label: 'Subuh' },
+  { key: 'shalatDzuhur', label: 'Dzuhur' },
+  { key: 'shalatAshar', label: 'Ashar' },
+  { key: 'shalatMaghrib', label: 'Maghrib' },
+  { key: 'shalatIsya', label: 'Isya' },
 ];
 
 export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProps> = ({
@@ -174,81 +174,52 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
     }
   };
 
-  // 1. If Program Liburan is OFF
+
   if (!isActive) {
     return (
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-xs space-y-4">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-500">
-              <Lock className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="font-extrabold text-slate-800 text-base">
-                Program Pantauan Liburan Santri
-              </h3>
-              <p className="text-xs text-slate-500">
-                Mutaba'ah wirid yaumiyyah & keaktifan shalat jama'ah di rumah
-              </p>
-            </div>
-          </div>
-          <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold border border-slate-200">
-            ⚪ Saat Ini Nonaktif
+      <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-lg font-bold text-slate-900">Pantauan Liburan</h3>
+          <span className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-1 text-sm font-semibold text-slate-700">
+            <Lock className="h-4 w-4" aria-hidden="true" /> Nonaktif
           </span>
         </div>
-
-        <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 text-center space-y-2">
-          <p className="text-sm font-semibold text-slate-700">
-            Fitur Pantauan Liburan Sedang Ditutup oleh Ustadz/Admin
-          </p>
-          <p className="text-xs text-slate-500 max-w-lg mx-auto leading-relaxed">
-            Form mutaba'ah liburan (Wirid Al-Waqi'ah, Al-Mulk, Al-Insyirah & Shalat 5 Waktu Berjama'ah) hanya dibuka ketika masa liburan pesantren/madrasah telah diaktifkan oleh pihak Ustadz. Saat ini seluruh aktivitas santri terpantau melalui setoran reguler di madrasah.
+        <div className="border-t border-slate-200 pt-4 space-y-1">
+          <p className="text-sm font-semibold text-slate-800">Pengisian laporan belum dibuka.</p>
+          <p className="text-sm leading-relaxed text-slate-600">
+            Wali dapat mencatat wirid dan shalat ananda setelah Ustadz/Admin mengaktifkan program
+            liburan.
           </p>
         </div>
-      </div>
+      </section>
     );
   }
 
-  // 2. If Program Liburan is ON
   return (
-    <div className="bg-white rounded-3xl p-5 sm:p-7 border border-emerald-200 shadow-sm space-y-6">
-
-      {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-emerald-100">
-        <div className="flex items-start gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center flex-shrink-0 shadow-xs">
-            <Sparkles className="w-6 h-6 text-emerald-700" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-extrabold text-slate-900 text-base sm:text-lg">
-                Program Pantauan Liburan Santri
-              </h3>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-300 animate-pulse">
-                🟢 Aktif
-              </span>
-            </div>
-            <p className="text-xs text-slate-600 mt-0.5">
-              Mutaba'ah Yaumiyyah Ananda <b>{targetSantri.namaSantri}</b>: Wirid 3 Surah & Shalat 5 Waktu Berjama'ah
-            </p>
-          </div>
-        </div>
-
-        <div className="text-left sm:text-right">
-          <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 inline-flex items-center gap-1.5">
-            <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
-            Input Khusus Wali Santri
+    <section className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 space-y-6">
+      <header className="border-b border-slate-200 pb-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-lg font-bold text-slate-900">Pantauan Liburan</h3>
+          <span className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-semibold text-emerald-800">
+            Aktif
           </span>
         </div>
-      </div>
+        <p className="mt-2 break-words text-sm text-slate-600">
+          Laporan harian <strong className="text-slate-900">{targetSantri.namaSantri}</strong>
+        </p>
+        <p className="mt-1 text-sm text-slate-600">
+          Catat wirid dan status setiap waktu shalat sesuai kegiatan ananda.
+        </p>
+      </header>
 
-      {/* Form Input Amaliyah */}
-      <form onSubmit={handleSubmit} className="space-y-5 bg-emerald-50/40 p-5 rounded-2xl border border-emerald-100">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-emerald-200/60">
-          <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-emerald-700" />
-            <label htmlFor="tanggal-pantauan" className="text-xs font-bold text-slate-800">
-              Pilih Tanggal Amaliyah:
+      <form onSubmit={handleSubmit} aria-busy={isSubmitting} className="space-y-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0 space-y-2">
+            <label
+              htmlFor="tanggal-pantauan"
+              className="block text-sm font-semibold text-slate-800"
+            >
+              Tanggal amaliyah
             </label>
             <input
               id="tanggal-pantauan"
@@ -256,141 +227,98 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
               value={selectedTanggal}
               onChange={(e) => setSelectedTanggal(e.target.value)}
               max={todayStr}
-              className="px-3 py-1.5 bg-white border border-slate-300 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="min-h-11 w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-base text-slate-900 sm:w-auto"
             />
           </div>
+          <p
+            role="status"
+            className={editingRecordId ? 'text-sm text-amber-800' : 'text-sm text-slate-600'}
+          >
+            {editingRecordId
+              ? 'Mengedit laporan tanggal ini. Simpan untuk memperbarui.'
+              : 'Laporan baru untuk tanggal yang dipilih.'}
+          </p>
+        </div>
 
-          {editingRecordId && (
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] text-amber-700 font-semibold bg-amber-50 border border-amber-200 px-2.5 py-1 rounded-lg">
-                Mode Edit Laporan Tanggal {selectedTanggal}
-              </span>
+        <fieldset className="space-y-3 border-t border-slate-200 pt-4">
+          <legend className="pr-3 text-base font-semibold text-slate-900">
+            1. Wirid yaumiyyah
+          </legend>
+          <p className="text-sm text-slate-600">Tandai surah yang sudah dibaca.</p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {[
+              {
+                label: "Al-Waqi'ah",
+                detail: 'Surah 56 · 96 ayat',
+                checked: wiridWaqiah,
+                toggle: () => setWiridWaqiah(!wiridWaqiah)
+              },
+              {
+                label: 'Al-Mulk',
+                detail: 'Surah 67 · 30 ayat',
+                checked: wiridMulk,
+                toggle: () => setWiridMulk(!wiridMulk)
+              },
+              {
+                label: 'Al-Insyirah',
+                detail: 'Surah 94 · 8 ayat',
+                checked: wiridInsyirah,
+                toggle: () => setWiridInsyirah(!wiridInsyirah)
+              }
+            ].map((surah) => (
               <button
+                key={surah.label}
                 type="button"
-                onClick={resetForm}
-                className="text-[11px] text-slate-500 hover:text-slate-700 hover:bg-slate-200 px-2 py-1 rounded-lg transition"
+                aria-pressed={surah.checked}
+                onClick={surah.toggle}
+                className={`flex min-h-11 items-start justify-between gap-3 rounded-lg border p-3 text-left transition-colors ${
+                  surah.checked
+                    ? 'border-emerald-600 bg-emerald-50 text-emerald-900'
+                    : 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50'
+                }`}
               >
-                Batal Edit
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold">{surah.label}</span>
+                  <span className="mt-1 block text-xs text-slate-600">{surah.detail}</span>
+                  <span className="mt-2 block text-sm">
+                    {surah.checked ? 'Sudah dibaca' : 'Belum dibaca'}
+                  </span>
+                </span>
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border ${surah.checked ? 'border-emerald-700 bg-emerald-700 text-white' : 'border-slate-400'}`}
+                  aria-hidden="true"
+                >
+                  {surah.checked && <Check className="h-4 w-4" />}
+                </span>
               </button>
-            </div>
-          )}
-        </div>
-
-        {/* Section 1: Wirid Yaumiyyah (3 Surah) */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-600" />
-              1. Bacaan Wirid Yaumiyyah (3 Surah Pilihan)
-            </h4>
-            <span className="text-[11px] text-slate-500">Centang surah yang telah dibaca ananda</span>
+            ))}
           </div>
+        </fieldset>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {/* Surah Al-Waqi'ah */}
-            <button
-              type="button"
-              onClick={() => setWiridWaqiah(!wiridWaqiah)}
-              className={`p-3.5 rounded-xl border text-left transition-all flex items-start justify-between cursor-pointer ${
-                wiridWaqiah
-                  ? 'bg-emerald-800 text-white border-emerald-900 shadow-xs ring-2 ring-emerald-400/30'
-                  : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300'
-              }`}
-            >
-              <div>
-                <div className="text-xs font-extrabold flex items-center gap-1.5">
-                  <span>Surah Al-Waqi'ah</span>
-                </div>
-                <div className={`text-[11px] mt-0.5 ${wiridWaqiah ? 'text-emerald-100' : 'text-slate-500'}`}>
-                  (Surah ke-56 • 96 Ayat)
-                </div>
-                <div className={`text-[10px] mt-1 font-semibold ${wiridWaqiah ? 'text-emerald-200' : 'text-emerald-700'}`}>
-                  {wiridWaqiah ? '✓ Sudah Dibaca' : '○ Belum Dibaca'}
-                </div>
-              </div>
-              <div className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-colors ${
-                wiridWaqiah ? 'bg-white text-emerald-800 border-white' : 'border-slate-300 bg-slate-50'
-              }`}>
-                {wiridWaqiah && <Check className="w-4 h-4 stroke-[3]" />}
-              </div>
-            </button>
-
-            {/* Surah Al-Mulk */}
-            <button
-              type="button"
-              onClick={() => setWiridMulk(!wiridMulk)}
-              className={`p-3.5 rounded-xl border text-left transition-all flex items-start justify-between cursor-pointer ${
-                wiridMulk
-                  ? 'bg-emerald-800 text-white border-emerald-900 shadow-xs ring-2 ring-emerald-400/30'
-                  : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300'
-              }`}
-            >
-              <div>
-                <div className="text-xs font-extrabold flex items-center gap-1.5">
-                  <span>Surah Al-Mulk</span>
-                </div>
-                <div className={`text-[11px] mt-0.5 ${wiridMulk ? 'text-emerald-100' : 'text-slate-500'}`}>
-                  (Surah ke-67 • 30 Ayat)
-                </div>
-                <div className={`text-[10px] mt-1 font-semibold ${wiridMulk ? 'text-emerald-200' : 'text-emerald-700'}`}>
-                  {wiridMulk ? '✓ Sudah Dibaca' : '○ Belum Dibaca'}
-                </div>
-              </div>
-              <div className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-colors ${
-                wiridMulk ? 'bg-white text-emerald-800 border-white' : 'border-slate-300 bg-slate-50'
-              }`}>
-                {wiridMulk && <Check className="w-4 h-4 stroke-[3]" />}
-              </div>
-            </button>
-
-            {/* Surah Al-Insyirah */}
-            <button
-              type="button"
-              onClick={() => setWiridInsyirah(!wiridInsyirah)}
-              className={`p-3.5 rounded-xl border text-left transition-all flex items-start justify-between cursor-pointer ${
-                wiridInsyirah
-                  ? 'bg-emerald-800 text-white border-emerald-900 shadow-xs ring-2 ring-emerald-400/30'
-                  : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300'
-              }`}
-            >
-              <div>
-                <div className="text-xs font-extrabold flex items-center gap-1.5">
-                  <span>Surah Al-Insyirah</span>
-                </div>
-                <div className={`text-[11px] mt-0.5 ${wiridInsyirah ? 'text-emerald-100' : 'text-slate-500'}`}>
-                  (Surah ke-94 • 8 Ayat)
-                </div>
-                <div className={`text-[10px] mt-1 font-semibold ${wiridInsyirah ? 'text-emerald-200' : 'text-emerald-700'}`}>
-                  {wiridInsyirah ? '✓ Sudah Dibaca' : '○ Belum Dibaca'}
-                </div>
-              </div>
-              <div className={`w-6 h-6 rounded-lg flex items-center justify-center border transition-colors ${
-                wiridInsyirah ? 'bg-white text-emerald-800 border-white' : 'border-slate-300 bg-slate-50'
-              }`}>
-                {wiridInsyirah && <Check className="w-4 h-4 stroke-[3]" />}
-              </div>
-            </button>
-          </div>
-        </div>
-
-        {/* Section 2: Keaktifan Shalat 5 Waktu Berjama'ah */}
-        <div className="space-y-2.5 pt-2">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-600" />
-              2. Keaktifan Shalat 5 Waktu Berjama'ah
-            </h4>
-            <span className="text-[11px] text-slate-500">Pilih satu status untuk setiap waktu shalat</span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-2.5">
+        <fieldset
+          className="space-y-3 border-t border-slate-200 pt-4"
+          aria-describedby={
+            validationError ? 'shalat-status-help shalat-status-error' : 'shalat-status-help'
+          }
+        >
+          <legend className="pr-3 text-base font-semibold text-slate-900">
+            2. Shalat lima waktu
+          </legend>
+          <p id="shalat-status-help" className="text-sm text-slate-600">
+            Wajib memilih satu status untuk setiap waktu shalat.
+          </p>
+          <div className="divide-y divide-slate-200">
             {WAKTU_SHALAT.map((waktu) => {
               const currentVal =
-                waktu.key === 'shalatSubuh' ? shalatSubuh
-                : waktu.key === 'shalatDzuhur' ? shalatDzuhur
-                : waktu.key === 'shalatAshar' ? shalatAshar
-                : waktu.key === 'shalatMaghrib' ? shalatMaghrib
-                : shalatIsya;
+                waktu.key === 'shalatSubuh'
+                  ? shalatSubuh
+                  : waktu.key === 'shalatDzuhur'
+                    ? shalatDzuhur
+                    : waktu.key === 'shalatAshar'
+                      ? shalatAshar
+                      : waktu.key === 'shalatMaghrib'
+                        ? shalatMaghrib
+                        : shalatIsya;
 
               const setVal = (status: ShalatJamaahStatus) => {
                 if (waktu.key === 'shalatSubuh') setShalatSubuh(status);
@@ -402,24 +330,29 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
               };
 
               return (
-                <div key={waktu.key} className="bg-white p-3 rounded-xl border border-slate-200/90 space-y-2 shadow-2xs">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1">
-                      <span>{waktu.icon}</span>
-                      <span>{waktu.label}</span>
+                <div
+                  key={waktu.key}
+                  role="group"
+                  aria-labelledby={`${waktu.key}-label`}
+                  aria-describedby={
+                    validationError && !currentVal ? 'shalat-status-error' : undefined
+                  }
+                  className="space-y-3 py-4 sm:flex sm:items-center sm:justify-between sm:gap-4 sm:space-y-0"
+                >
+                  <div className="flex flex-wrap items-center gap-2 sm:block sm:min-w-28">
+                    <span
+                      id={`${waktu.key}-label`}
+                      className="text-sm font-semibold text-slate-900"
+                    >
+                      {waktu.label}
                     </span>
-                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                      !currentVal ? 'bg-slate-100 text-slate-600'
-                      : currentVal === 'Jama\'ah' ? 'bg-emerald-100 text-emerald-800'
-                      : currentVal === 'Berhalangan' ? 'bg-amber-100 text-amber-800'
-                      : 'bg-rose-100 text-rose-800'
-                    }`}>
+                    <span
+                      className={`text-xs sm:mt-1 sm:block ${!currentVal && validationError ? 'text-rose-700' : 'text-slate-600'}`}
+                    >
                       {currentVal || 'Belum dipilih'}
                     </span>
                   </div>
-
-                  {/* 3 Status Options: Jama'ah | Berhalangan | Sakit */}
-                  <div className="grid grid-cols-3 gap-1">
+                  <div className="grid grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] gap-2 sm:w-full sm:max-w-md">
                     {SHALAT_STATUS_OPTIONS.map((opt) => {
                       const isSelected = currentVal === opt.value;
                       return (
@@ -428,18 +361,17 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
                           key={opt.value}
                           aria-pressed={isSelected}
                           onClick={() => setVal(opt.value)}
-                          className={`py-1.5 px-1 rounded-lg text-[10px] font-bold transition flex flex-col items-center justify-center cursor-pointer ${
+                          className={`min-h-11 rounded-lg border px-2 py-2 text-sm font-semibold transition-colors ${
                             isSelected
-                              ? opt.value === 'Jama\'ah'
-                                ? 'bg-emerald-700 text-white shadow-xs'
+                              ? opt.value === "Jama'ah"
+                                ? 'border-emerald-700 bg-emerald-700 text-white'
                                 : opt.value === 'Berhalangan'
-                                ? 'bg-amber-600 text-white shadow-xs'
-                                : 'bg-rose-600 text-white shadow-xs'
-                              : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                                  ? 'border-amber-700 bg-amber-100 text-amber-900'
+                                  : 'border-rose-700 bg-rose-100 text-rose-900'
+                              : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
                           }`}
                         >
-                          <span>{opt.emoji}</span>
-                          <span className="mt-0.5 leading-none">{opt.label}</span>
+                          {opt.label}
                         </button>
                       );
                     })}
@@ -448,195 +380,214 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
               );
             })}
           </div>
-
           {validationError && (
             <div
               id="shalat-status-error"
               role="alert"
-              className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-semibold text-rose-800"
+              className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"
             >
-              <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               <span>{validationError}</span>
             </div>
           )}
-        </div>
+        </fieldset>
 
-        {/* Section 3: Catatan Wali Santri */}
-        <div className="space-y-1.5 pt-1">
-          <label htmlFor="catatan-wali-input" className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-600" />
-            3. Catatan Wali Santri (Opsional)
+        <div className="space-y-2 border-t border-slate-200 pt-4">
+          <label
+            htmlFor="catatan-wali-input"
+            className="block text-base font-semibold text-slate-900"
+          >
+            3. Catatan Wali <span className="text-sm font-normal text-slate-600">(opsional)</span>
           </label>
-          <input
+          <textarea
             id="catatan-wali-input"
-            type="text"
+            rows={3}
             value={catatanWali}
             onChange={(e) => setCatatanWali(e.target.value)}
-            placeholder="Contoh: Ananda rajin muroja'ah ba'da Maghrib & shalat tepat waktu di masjid kampung..."
-            className="w-full px-3.5 py-2 bg-white border border-slate-300 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 text-slate-800"
+            placeholder="Keterangan tambahan tentang kegiatan atau kondisi ananda."
+            className="w-full resize-y rounded-lg border border-slate-300 bg-white px-3 py-2 text-base leading-relaxed text-slate-900"
           />
         </div>
-
-        {/* Submit Button */}
-        <div className="flex items-center justify-end gap-2 pt-2">
-          {editingRecordId && (
+        <div className="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <p role="status" className="text-sm text-slate-600">
+            {isSubmitting
+              ? 'Menyimpan ke Cloud. Tunggu konfirmasi.'
+              : 'Penyimpanan berhasil setelah ada konfirmasi Cloud.'}
+          </p>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            {editingRecordId && (
+              <button
+                type="button"
+                onClick={resetForm}
+                className="min-h-11 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+              >
+                Batal edit
+              </button>
+            )}
             <button
-              type="button"
-              onClick={resetForm}
-              className="px-4 py-2 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer"
+              type="submit"
+              disabled={isSubmitting}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-emerald-800 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-900 disabled:cursor-wait disabled:opacity-60"
             >
-              Batal
+              <Save className="h-4 w-4" aria-hidden="true" />
+              <span>
+                {isSubmitting
+                  ? 'Menyimpan...'
+                  : editingRecordId
+                    ? 'Perbarui laporan'
+                    : 'Simpan laporan'}
+              </span>
             </button>
-          )}
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
-          >
-            <Save className="w-4 h-4" />
-            <span>{isSubmitting ? 'Menyimpan...' : editingRecordId ? 'Perbarui Laporan' : 'Simpan Laporan'}</span>
-          </button>
+          </div>
         </div>
       </form>
 
-      {/* Riwayat Mutaba'ah Liburan Santri */}
-      <div className="space-y-3 pt-2">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-          <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-2">
-            <Clock className="w-4 h-4 text-emerald-700" />
-            Riwayat Mutaba'ah Liburan Ananda ({records.length} Hari Dicatat)
+      <section
+        className="space-y-4 border-t border-slate-200 pt-6"
+        aria-labelledby="pantauan-history-title"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h4
+            id="pantauan-history-title"
+            className="flex items-center gap-2 text-base font-semibold text-slate-900"
+          >
+            <Clock className="h-4 w-4" aria-hidden="true" />
+            Riwayat laporan
           </h4>
-          <span className="text-[11px] text-slate-500">Riwayat laporan tersimpan</span>
+          <span className="text-sm text-slate-600">{records.length} laporan</span>
         </div>
-
         {records.length === 0 ? (
-          <div className="text-center py-8 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 text-xs">
-            Belum ada laporan liburan yang dicatat. Silakan simpan amaliyah ananda pada form di atas.
-          </div>
+          <p className="rounded-lg bg-slate-50 p-4 text-sm leading-relaxed text-slate-600">
+            Belum ada laporan liburan. Isi kegiatan ananda pada form di atas, lalu simpan.
+          </p>
         ) : (
-          <div className="space-y-2.5">
+          <div className="space-y-4">
             {records.map((rec) => {
-              const wiridCount = [rec.wiridWaqiah, rec.wiridMulk, rec.wiridInsyirah].filter(Boolean).length;
-              const jamaahCount = [rec.shalatSubuh, rec.shalatDzuhur, rec.shalatAshar, rec.shalatMaghrib, rec.shalatIsya].filter(s => s === 'Jama\'ah').length;
-
+              const wiridCount = [rec.wiridWaqiah, rec.wiridMulk, rec.wiridInsyirah].filter(
+                Boolean
+              ).length;
+              const jamaahCount = [
+                rec.shalatSubuh,
+                rec.shalatDzuhur,
+                rec.shalatAshar,
+                rec.shalatMaghrib,
+                rec.shalatIsya
+              ].filter((s) => s === "Jama'ah").length;
               return (
-                <div
-                  key={rec.id}
-                  className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-2xs hover:border-emerald-300 transition-all space-y-2.5"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-extrabold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg">
-                        📅 {formatTanggalIndo(rec.tanggal)}
-                      </span>
-                      <span className="text-[11px] text-emerald-800 font-semibold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                        {wiridCount}/3 Wirid Selesai
-                      </span>
-                      <span className="text-[11px] text-teal-800 font-semibold bg-teal-50 border border-teal-200 px-2 py-0.5 rounded-md">
-                        {jamaahCount}/5 Shalat Jama'ah
-                      </span>
+                <article key={rec.id} className="space-y-4 rounded-lg border border-slate-200 p-4">
+                  <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+                    <div>
+                      <h5 className="text-sm font-semibold text-slate-900">
+                        {formatTanggalIndo(rec.tanggal)}
+                      </h5>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {wiridCount}/3 wirid dibaca · {jamaahCount}/5 shalat Jama'ah
+                      </p>
                     </div>
-
-                    <div className="flex items-center gap-1.5 self-end sm:self-auto">
+                    <div className="flex gap-2">
                       <button
                         onClick={() => handleEditRecord(rec)}
-                        className="p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                        className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
                         title="Edit laporan ini"
                       >
-                        <Edit3 className="w-3.5 h-3.5" />
-                        <span>Edit</span>
+                        <Edit3 className="h-4 w-4" aria-hidden="true" />
+                        Edit
                       </button>
                       <button
                         onClick={() => setRecordToDelete(rec)}
-                        className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
+                        className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50"
                         title="Hapus laporan ini"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        <span>Hapus</span>
+                        <Trash2 className="h-4 w-4" aria-hidden="true" />
+                        Hapus
                       </button>
                     </div>
                   </div>
-
-                  {/* Wirid Badges */}
-                  <div className="flex items-center gap-2 flex-wrap text-xs">
-                    <span className="text-slate-500 font-medium">Wirid:</span>
-                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1 ${
-                      rec.wiridWaqiah ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      {rec.wiridWaqiah ? '✓' : '✗'} Al-Waqi'ah
-                    </span>
-                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1 ${
-                      rec.wiridMulk ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      {rec.wiridMulk ? '✓' : '✗'} Al-Mulk
-                    </span>
-                    <span className={`px-2 py-0.5 rounded-md text-[11px] font-semibold flex items-center gap-1 ${
-                      rec.wiridInsyirah ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' : 'bg-slate-100 text-slate-500'
-                    }`}>
-                      {rec.wiridInsyirah ? '✓' : '✗'} Al-Insyirah
-                    </span>
-                  </div>
-
-                  {/* Shalat Badges */}
-                  <div className="flex items-center gap-1.5 flex-wrap text-xs">
-                    <span className="text-slate-500 font-medium">Shalat:</span>
-                    {[
-                      { waktu: 'Subuh', status: rec.shalatSubuh },
-                      { waktu: 'Dzuhur', status: rec.shalatDzuhur },
-                      { waktu: 'Ashar', status: rec.shalatAshar },
-                      { waktu: 'Maghrib', status: rec.shalatMaghrib },
-                      { waktu: 'Isya', status: rec.shalatIsya },
-                    ].map(s => (
-                      <span
-                        key={s.waktu}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${
-                          s.status === 'Jama\'ah'
-                            ? 'bg-emerald-50 text-emerald-900 border-emerald-300'
-                            : s.status === 'Berhalangan'
-                            ? 'bg-amber-50 text-amber-900 border-amber-300'
-                            : 'bg-rose-50 text-rose-900 border-rose-300'
-                        }`}
-                      >
-                        {s.waktu}: {s.status}
-                      </span>
-                    ))}
-                  </div>
-
-                  {/* Catatan */}
-                  {rec.catatanWali && (
-                    <div className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 italic">
-                      "{rec.catatanWali}"
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <h6 className="mb-2 text-sm font-semibold text-slate-800">Wirid</h6>
+                      <dl className="space-y-2 text-sm">
+                        {[
+                          { label: "Al-Waqi'ah", done: rec.wiridWaqiah },
+                          { label: 'Al-Mulk', done: rec.wiridMulk },
+                          { label: 'Al-Insyirah', done: rec.wiridInsyirah }
+                        ].map((s) => (
+                          <div key={s.label} className="flex flex-wrap justify-between gap-2">
+                            <dt className="text-slate-600">{s.label}</dt>
+                            <dd
+                              className={s.done ? 'font-medium text-emerald-800' : 'text-slate-600'}
+                            >
+                              {s.done ? 'Sudah dibaca' : 'Belum dibaca'}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
                     </div>
+                    <div>
+                      <h6 className="mb-2 text-sm font-semibold text-slate-800">Shalat</h6>
+                      <dl className="space-y-2 text-sm">
+                        {WAKTU_SHALAT.map((waktu) => (
+                          <div key={waktu.key} className="flex flex-wrap justify-between gap-2">
+                            <dt className="text-slate-600">{waktu.label}</dt>
+                            <dd
+                              className={
+                                rec[waktu.key] === "Jama'ah"
+                                  ? 'font-medium text-emerald-800'
+                                  : rec[waktu.key] === 'Berhalangan'
+                                    ? 'font-medium text-amber-800'
+                                    : 'font-medium text-rose-800'
+                              }
+                            >
+                              {rec[waktu.key]}
+                            </dd>
+                          </div>
+                        ))}
+                      </dl>
+                    </div>
+                  </div>
+                  {rec.catatanWali && (
+                    <p className="whitespace-pre-wrap break-words border-t border-slate-200 pt-3 text-sm leading-relaxed text-slate-700">
+                      <span className="font-semibold">Catatan: </span>
+                      {rec.catatanWali}
+                    </p>
                   )}
-                </div>
+                </article>
               );
             })}
           </div>
         )}
-      </div>
+      </section>
 
       {recordToDelete && (
-        <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-[1px] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-950/50 flex items-center justify-center p-4">
           <div
             ref={deleteDialogRef}
             className="w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white border border-slate-200 shadow-xl p-5 space-y-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby="pantauan-delete-title"
+            aria-describedby="pantauan-delete-description"
+            aria-busy={isDeletingRecord}
             tabIndex={-1}
           >
             <div>
-              <h4 id="pantauan-delete-title" className="text-sm font-extrabold text-slate-900">Hapus catatan amaliyah?</h4>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                Catatan tanggal {formatTanggalIndo(recordToDelete.tanggal)} akan dihapus dari Cloud dan tidak dapat dipulihkan dari halaman ini.
+              <h4 id="pantauan-delete-title" className="text-base font-semibold text-slate-900">
+                Hapus catatan amaliyah?
+              </h4>
+              <p
+                id="pantauan-delete-description"
+                className="mt-2 text-sm leading-relaxed text-slate-600"
+              >
+                Catatan tanggal {formatTanggalIndo(recordToDelete.tanggal)} akan dihapus dari Cloud
+                dan tidak dapat dipulihkan dari halaman ini.
               </p>
             </div>
-            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+            <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-4">
               <button
                 type="button"
                 onClick={() => setRecordToDelete(null)}
                 disabled={isDeletingRecord}
-                className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                className="min-h-11 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
               >
                 Batal
               </button>
@@ -644,7 +595,7 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
                 type="button"
                 onClick={confirmDeleteRecord}
                 disabled={isDeletingRecord}
-                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50"
+                className="min-h-11 rounded-lg bg-rose-700 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-800 disabled:opacity-50"
               >
                 {isDeletingRecord ? 'Menghapus...' : 'Hapus dari Cloud'}
               </button>
@@ -652,6 +603,6 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 };

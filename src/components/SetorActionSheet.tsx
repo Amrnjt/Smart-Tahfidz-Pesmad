@@ -138,59 +138,59 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
           </button>
         </div>
 
-        <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-2">
-          <div className="flex items-center gap-2">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-xs font-bold text-slate-900 truncate">
-                  Pantauan Liburan
-                </span>
-                <span
-                  className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md border flex-shrink-0 ${
-                    isProgramLiburanActive
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : 'bg-white text-slate-500 border-slate-200'
-                  }`}
-                >
-                  {isProgramLiburanActive ? 'AKTIF' : 'NONAKTIF'}
-                </span>
-              </div>
-              <p className="text-[10px] text-slate-500 leading-4 truncate">
-                {isProgramLiburanActive
-                  ? 'Input wali aktif untuk wirid & jamaah'
-                  : 'Fitur amaliyah wali sedang terkunci'}
-              </p>
-            </div>
-
+        <section
+          aria-labelledby="setor-liburan-title"
+          className="mt-3 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 id="setor-liburan-title" className="text-sm font-semibold text-slate-900">
+              Pantauan Liburan
+            </h3>
+            <span
+              className={`rounded-md border px-2 py-1 text-xs font-semibold ${isProgramLiburanActive ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-700'}`}
+            >
+              {isProgramLiburanActive ? 'Aktif' : 'Nonaktif'}
+            </span>
+          </div>
+          <p className="text-sm leading-5 text-slate-600">
+            {isProgramLiburanActive
+              ? 'Wali dapat mengisi wirid dan shalat ananda.'
+              : 'Pengisian Wali ditutup. Rekap tetap tersedia.'}
+          </p>
+          <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setShowMonitorModal(true)}
-              className="h-8 px-2 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white text-[10px] font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer flex-shrink-0"
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100"
               title="Lihat Rekap Liburan"
             >
-              <Eye className="w-3.5 h-3.5" />
-              <span>Rekap</span>
+              <Eye className="h-4 w-4" aria-hidden="true" />
+              Lihat rekap
             </button>
-
             <button
               type="button"
+              role="switch"
+              aria-checked={isProgramLiburanActive}
+              aria-label="Aktifkan Program Pantauan Liburan"
+              aria-busy={isTogglingLiburan}
               onClick={handleToggleLiburan}
               disabled={isTogglingLiburan}
-              title={isProgramLiburanActive ? 'Matikan Program Liburan' : 'Nyalakan Program Liburan'}
-              className={`h-8 w-9 flex items-center justify-center rounded-lg transition cursor-pointer flex-shrink-0 ${
-                isProgramLiburanActive
-                  ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                  : 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-              } ${isTogglingLiburan ? 'opacity-60 cursor-wait' : ''}`}
+              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100 disabled:cursor-wait disabled:opacity-60"
             >
               {isProgramLiburanActive ? (
-                <ToggleRight className="w-5 h-5" />
+                <ToggleRight className="h-6 w-6 shrink-0 text-emerald-700" aria-hidden="true" />
               ) : (
-                <ToggleLeft className="w-5 h-5" />
+                <ToggleLeft className="h-6 w-6 shrink-0 text-slate-600" aria-hidden="true" />
               )}
+              {isTogglingLiburan ? 'Menyimpan...' : isProgramLiburanActive ? 'Nonaktifkan' : 'Aktifkan'}
             </button>
           </div>
-        </div>
+          {isTogglingLiburan && (
+            <p role="status" className="text-sm text-slate-600">
+              Menyimpan status ke Cloud...
+            </p>
+          )}
+        </section>
 
         <div className="py-2 space-y-1.5">
           {actions.map((act) => {
