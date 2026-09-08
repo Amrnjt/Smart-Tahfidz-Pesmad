@@ -1,0 +1,48 @@
+name: P2 Design Foundation Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/design-foundation.css'
+      - 'src/design-system/**'
+      - 'src/main.tsx'
+      - 'P2_DESIGN_FOUNDATION.md'
+      - '.github/workflows/p2-design-foundation.yml'
+  push:
+    branches:
+      - design/p2-0-foundation
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Verify P2 accessibility contract
+        run: |
+          grep -q 'prefers-reduced-motion: reduce' src/design-foundation.css
+          grep -q 'min-height: 44px' src/design-foundation.css
+          grep -q 'forced-colors: active' src/design-foundation.css
+
+      - name: Reject expensive global effects
+        run: |
+          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/design-foundation.css; then
+            echo 'P2 foundation contains an expensive global visual effect.'
+            exit 1
+          fi
