@@ -1,0 +1,192 @@
+name: Final Static Polish Validation
+
+on:
+  push:
+    branches:
+      - final-polish-static
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: final-polish-static
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Apply final static polish
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace(path, old, new, count=None):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f'Pattern not found in {path}: {old[:140]!r}')
+              text = text.replace(old, new) if count is None else text.replace(old, new, count)
+              p.write_text(text)
+
+          # App: remove decorative perpetual pulse from the institutional footer.
+          replace(
+              'src/App.tsx',
+              'className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"',
+              'className="w-2 h-2 rounded-full bg-emerald-500"'
+          )
+
+          # Setor: keep a true mobile bottom sheet, but recompose as a centered
+          # operational dialog on tablet/desktop rather than stretching mobile UI.
+          replace(
+              'src/components/SetorActionSheet.tsx',
+              'className="fixed inset-0 z-50 flex items-end justify-center"',
+              'className="fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-4"'
+          )
+          replace(
+              'src/components/SetorActionSheet.tsx',
+              'className="relative z-10 w-full max-w-lg max-h-[88dvh] overflow-y-auto overscroll-contain bg-white rounded-t-2xl border-t border-slate-200 ui-sheet-insets pt-2 animate-in slide-in-from-bottom-5 duration-200"',
+              'className="relative z-10 w-full max-w-lg max-h-[88dvh] overflow-y-auto overscroll-contain bg-white rounded-t-2xl border-t border-slate-200 ui-sheet-insets pt-2 animate-in slide-in-from-bottom-5 duration-200 md:max-w-2xl md:max-h-[calc(100dvh-2rem)] md:rounded-2xl md:border md:border-slate-200 md:pt-3 md:shadow-xl"'
+          )
+          replace(
+              'src/components/SetorActionSheet.tsx',
+              'className="w-9 h-1 bg-slate-300 rounded-full mx-auto mb-2"',
+              'className="w-9 h-1 bg-slate-300 rounded-full mx-auto mb-2 md:hidden"'
+          )
+          replace(
+              'src/components/SetorActionSheet.tsx',
+              'className="py-2 space-y-1.5"',
+              'className="grid grid-cols-1 gap-2 py-3 md:grid-cols-2"'
+          )
+          replace(
+              'src/components/SetorActionSheet.tsx',
+              'className="w-full min-h-[54px] px-2.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-2.5 text-left cursor-pointer group"',
+              'className="w-full min-h-[54px] px-2.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-2.5 text-left cursor-pointer group md:min-h-[68px] md:p-3"'
+          )
+
+          # History: finish the old dense toolbar and restore touch-size actions.
+          path = 'src/components/HistoryTable.tsx'
+          replace(path,
+              'className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-800 hover:bg-emerald-700 text-white font-bold text-xs transition cursor-pointer"',
+              'className="ui-control inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white font-semibold text-sm transition cursor-pointer"')
+          replace(path,
+              'className="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold transition cursor-pointer"',
+              'className="ui-control inline-flex items-center gap-2 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold transition cursor-pointer"')
+          replace(path,
+              'className="relative w-56 min-w-[180px]"',
+              'className="relative w-64 min-w-[220px]"')
+          replace(path,
+              'className="w-3.5 h-3.5 absolute left-2.5 top-2 text-slate-400"',
+              'className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"')
+          replace(path,
+              'className="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"',
+              'className="ui-control w-full pl-9 pr-11 bg-slate-50 border border-slate-300 rounded-lg text-sm font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"')
+          replace(path,
+              'className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 cursor-pointer"',
+              'className="absolute right-0 top-0 flex h-11 w-11 items-center justify-center text-slate-400 hover:text-slate-700 cursor-pointer"')
+          replace(path,
+              'className="py-1 px-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer min-w-[130px]"',
+              'className="ui-control px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer min-w-[150px]"')
+          replace(path,
+              'className="py-1 px-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer min-w-[120px]"',
+              'className="ui-control px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer min-w-[140px]"')
+          replace(path,
+              'className="inline-flex items-center p-0.5 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 max-w-full overflow-x-auto"',
+              'className="inline-flex items-center gap-1 p-1 bg-slate-100 rounded-lg text-sm font-semibold text-slate-600 max-w-full overflow-x-auto"')
+          replace(path,
+              'className={`flex items-center gap-1 px-2 py-0.5 rounded-md transition cursor-pointer ${',
+              'className={`min-h-11 flex items-center gap-1.5 px-3 py-2 rounded-md transition cursor-pointer ${')
+          replace(path,
+              'className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition cursor-pointer flex-shrink-0 ${',
+              'className={`min-h-11 flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition cursor-pointer flex-shrink-0 ${')
+          replace(path,
+              'className="py-1 px-2.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 "',
+              'className="ui-control px-3 bg-white border border-slate-300 rounded-lg text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 "')
+          replace(path,
+              'className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-rose-600 hover:bg-rose-50 text-xs font-semibold transition cursor-pointer"',
+              'className="ui-control inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-rose-700 hover:bg-rose-50 text-sm font-semibold transition cursor-pointer"')
+          replace(path,
+              'className={`px-2 py-0.5 rounded-md text-xs font-bold transition cursor-pointer border ${',
+              'className={`min-h-11 px-3 py-2 rounded-md text-sm font-semibold transition cursor-pointer border ${')
+          replace(path,
+              'className={`group flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer flex-shrink-0 ${',
+              'className={`group min-h-11 flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold border transition-colors cursor-pointer flex-shrink-0 ${')
+          replace(path,
+              'className="inline-flex items-center gap-1 text-xs font-bold text-rose-700 hover:text-rose-900 bg-white hover:bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200 transition cursor-pointer flex-shrink-0"',
+              'className="ui-control inline-flex items-center gap-1.5 text-sm font-semibold text-rose-700 hover:text-rose-900 bg-white hover:bg-rose-50 px-3 py-2 rounded-md border border-rose-200 transition cursor-pointer flex-shrink-0"')
+          replace(path,
+              'className="h-7 px-2 rounded-md bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition cursor-pointer whitespace-nowrap"',
+              'className="min-h-11 px-3 rounded-md bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition cursor-pointer whitespace-nowrap"')
+          replace(path,
+              'className="w-7 h-7 inline-flex items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition cursor-pointer"',
+              'className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition cursor-pointer"')
+          replace(path,
+              'className="h-7 px-2 inline-flex items-center gap-1 rounded-md bg-rose-600 hover:bg-rose-700 text-white font-bold transition cursor-pointer"',
+              'className="min-h-11 px-3 inline-flex items-center gap-1.5 rounded-md bg-rose-600 hover:bg-rose-700 text-white font-semibold transition cursor-pointer"')
+          replace(path,
+              'className="px-2.5 py-1 text-slate-600 hover:text-slate-900 font-semibold cursor-pointer"',
+              'className="min-h-11 px-3 py-2 text-slate-600 hover:text-slate-900 font-semibold cursor-pointer"')
+          replace(path,
+              'className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold rounded-lg flex items-center gap-1.5 transition cursor-pointer"',
+              'className="min-h-11 px-3 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"')
+          PY
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Final static polish gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          app = Path('src/App.tsx').read_text()
+          sheet = Path('src/components/SetorActionSheet.tsx').read_text()
+          history = Path('src/components/HistoryTable.tsx').read_text()
+
+          assert 'bg-emerald-500 animate-pulse' not in app
+          assert "syncState === 'syncing' ? 'animate-pulse' : ''" in app
+
+          assert 'md:items-center md:p-4' in sheet
+          assert 'md:max-w-2xl' in sheet
+          assert 'md:grid-cols-2' in sheet
+          assert 'md:hidden' in sheet
+          assert 'setProgramLiburanActive' in sheet
+          assert "onSelect(act.tab)" in sheet
+          assert "onSelect('mushaf')" in sheet
+
+          assert 'ui-control inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-800' in history
+          assert 'ui-control w-full pl-9 pr-11' in history
+          assert 'group min-h-11 flex items-center' in history
+          assert 'min-h-11 min-w-11 inline-flex items-center justify-center' in history
+          assert 'h-7 px-2 rounded-md bg-slate-100' not in history
+          assert 'h-7 px-2 inline-flex items-center' not in history
+          assert 'w-7 h-7 inline-flex items-center' not in history
+
+          # Preserve critical behavior/contracts.
+          for token in ['exportToCSV', 'setShowReportModal(true)', 'resetAllFilters', 'toggleSelectAll', 'setIsBatchDeleteModalOpen(true)']:
+              assert token in history, token
+          PY
+          git diff --check
+          git diff --exit-code -- package.json || { echo 'package.json changed unexpectedly'; exit 1; }
+
+      - name: Commit verified source
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.tsx src/components/SetorActionSheet.tsx src/components/HistoryTable.tsx
+          git diff --cached --quiet && { echo "No source change to commit"; exit 1; }
+          git commit -m "refactor: apply final static polish"
+          git push origin HEAD:final-polish-static
