@@ -1,14 +1,31 @@
-# Smart Tahfidz Pesmad — Design Contract
+# Smart Tahfidz Pesmad — Final Design Contract v2
 
 ## Product Character
 
 **Pesmad Institutional Modern**: tenang, matang, terpercaya, operasional, Qur'ani secara subtil, mobile-first, dan tidak terasa seperti template SaaS, government UI mentah, atau AI-generated interface.
 
-Visual strength harus datang dari hierarchy, typography, composition, whitespace, semantic color, rhythm, border, subtle elevation, state design, dan data presentation — bukan dari dekorasi berlebih.
+Visual strength harus datang dari hierarchy, typography, composition, whitespace, semantic color, rhythm, state design, data presentation, purposeful motion, dan brand-specific interaction — bukan dari dekorasi tanpa fungsi.
+
+Final design tidak harus minimalis dan tidak harus selalu ringan. Kompleksitas visual maupun teknis diperbolehkan ketika memberi peningkatan nyata pada task clarity, comprehension, brand, feedback, atau delight, serta tetap terukur, proporsional, dan maintainable.
+
+## Final Quality Priority
+
+Urutan prioritas ketika terjadi trade-off:
+
+1. Data truth
+2. Task clarity
+3. Accessibility
+4. Responsive behavior
+5. Visual taste
+6. Purposeful motion
+7. Performance measurement
+8. Maintainability
+
+Tidak ada polish visual yang boleh mengalahkan data truth, alur kerja, atau aksesibilitas.
 
 ## Guardrails
 
-P2 tidak boleh merusak:
+Final P2 tidak boleh merusak:
 
 - Data Truth P0
 - Firestore reliability P0
@@ -55,12 +72,13 @@ Do not color every card or section with brand color.
 
 ### Tahfidz Categories
 
-These mappings are immutable across P2:
+These mappings are immutable:
 
 - Ziyadah = Emerald
 - Muroja'ah = Teal
 - Binnadzor = Indigo
 - Pembelajaran = Amber
+- Kelas Istimewa = Amber as part of Pembelajaran semantics
 
 Category color identifies the activity; it must not be confused with system status.
 
@@ -76,7 +94,7 @@ Status must always have wording and/or an icon. Color alone is never sufficient.
 
 ## Typography Contract
 
-Use the system sans-serif stack. Do not add a font dependency in P2 unless there is a measured product reason.
+Use the system sans-serif stack by default. A font dependency may only be introduced when there is a measured product/brand reason and the loading cost is understood.
 
 ### Mobile
 
@@ -139,6 +157,7 @@ Shadow is reserved for real elevation:
 - floating navigation
 - FAB
 - elevated selected surface
+- a purposeful visual focal layer
 
 Avoid layered shadows, glow, and shadow-as-decoration.
 
@@ -161,7 +180,7 @@ Primary action must be visually obvious. Destructive action must not visually co
 
 Keyboard focus must be clearly visible. Do not remove the browser outline unless replaced with an equal or stronger focus treatment.
 
-P2 uses an emerald focus ring with visible offset. Dialog focus trapping / return focus remains governed by the P1 accessibility foundation.
+Use an emerald focus ring with visible offset when compatible with the surface. Dialog focus trapping / return focus remains governed by the accessibility foundation.
 
 ## Surface & Hierarchy Contract
 
@@ -179,6 +198,7 @@ Prefer:
 - one strong primary panel plus supporting structures
 - list/table for operational density
 - whitespace and dividers for grouping
+- deliberate visual focal points
 
 Avoid:
 
@@ -186,18 +206,21 @@ Avoid:
 - equal-weight metric cards
 - card-per-field layouts
 - colored card collections where color has no meaning
+- generic dashboard composition copied from SaaS templates
 
 ## Forms
 
 Similar setoran forms must share the same architecture and action hierarchy.
 
 - visible labels
+- programmatic labels
 - helper text only when useful
 - inline actionable validation
 - group related fields
 - `Simpan` is primary CTA
 - Reset is tertiary
 - steps/progressive disclosure only when they reduce cognitive load
+- async save state must be explicit
 
 ## Tables & Operational Lists
 
@@ -216,7 +239,7 @@ Mobile may use a compact row/list hybrid; desktop may use a table or operational
 
 All major data surfaces must account for:
 
-- loading
+- loading only when real loading exists
 - empty
 - no filter result
 - error
@@ -224,6 +247,7 @@ All major data surfaces must account for:
 - success
 - warning/attention
 - offline / partial sync where relevant
+- syncing / cloud verification where relevant
 
 Wording must be specific to the workflow. Example: `Belum ada setoran bulan ini` is preferable to `Tidak ada data`.
 
@@ -233,37 +257,116 @@ Error copy should explain:
 2. what remains safe when relevant
 3. what the user can do next
 
+Never fabricate relative time, loading, cloud health, progress, or placeholder metrics.
+
+## Responsive Contract
+
+Responsive behavior is a composition decision, not a shrinking exercise.
+
+Reference viewports for final QA:
+
+- 360px mobile
+- 375px mobile
+- 390px mobile
+- 768px tablet
+- 1024px desktop
+- 1280px desktop
+- 1440px desktop
+
+Rules:
+
+- recompose when density or hierarchy requires it; do not merely scale down desktop UI
+- BottomNav and safe-area padding must never obscure actionable content
+- modal, sheet, chart, table, form, and dashboard composition must be intentional at each viewport class
+- horizontal scroll is allowed only for content that genuinely requires it, never as a default escape hatch
+- touch targets remain usable at narrow widths
+- mobile may hide/reorder secondary metadata, but never hide critical task/status information
+- tablet should not be treated as a stretched phone or compressed desktop
+
 ## Motion Contract
 
-Motion supports feedback and spatial understanding only.
+Motion supports feedback, spatial understanding, emphasis, and product feel.
 
-- use transform/opacity
-- short durations
+Allowed when purposeful:
+
+- transform/opacity transitions
+- spring motion
+- staggered reveals
+- shared or spatial transitions
+- progressive chart/data reveals
+- tasteful microinteraction
+
+Rules:
+
 - no continuous decorative motion
+- no bounce/confetti for success unless a future product decision explicitly justifies it
+- avoid motion that delays primary tasks
 - respect `prefers-reduced-motion`
-- no bounce/confetti for success
+- any motion library must earn its bundle/runtime cost through real UX gain
+
+## Performance Contract
+
+The product does **not** optimize for the smallest possible bundle at the expense of quality.
+
+The standard is **performance-proportionate, measured, and maintainable**.
+
+Rules:
+
+- measure before and after material technical/visual additions
+- judge cost against UX/product gain
+- rich charts, motion, interaction, and libraries are allowed when the application remains healthy
+- prefer lazy loading / code splitting for expensive features that are not required for first interaction
+- do not ship heavy dependencies to the initial route merely because implementation is convenient
+- do not remove valuable capability solely to chase a smaller bundle number
+- build warnings and large chunks are signals to investigate, not automatic failures
+- performance decisions should consider initial JS, gzip size, loading behavior, runtime responsiveness, Core Web Vitals where measurable, and target-device experience
+
+## Taste Gate
+
+Before accepting a final UI decision, ask:
+
+> Apakah ini terasa spesifik milik Pesmad?
+
+If a composition could be pasted unchanged into a bank, CRM, inventory dashboard, generic school app, or AI template, it is still too generic.
+
+Pesmad-specific taste should come from:
+
+- calm institutional confidence
+- Qur'anic learning context expressed subtly
+- emerald/teal brand discipline
+- meaningful category semantics
+- operational language familiar to Ustadz, Wali, and Santri
+- hierarchy built around real pesantren workflows
+
+Taste is not ornamental complexity. It is product specificity.
 
 ## Anti-Slop Gate
 
-Before adding a card, badge, gradient, icon, animation, shadow, decorative surface, or helper copy, ask:
+Before adding a card, badge, gradient, icon, animation, shadow, decorative surface, helper copy, or library, ask:
 
-> Does this improve hierarchy, status, comprehension, brand, or action?
+> Does this improve hierarchy, status, comprehension, brand, task execution, or product-specific feel?
 
 If not, omit or simplify it.
 
-## Finish Gate for Every P2 Screen
+Anti-slop does not mean anti-richness. Purposeful richness is allowed; generic or unjustified richness is not.
 
-A redesign is not complete until it passes:
+## Final Finish Gate
+
+A screen or system is not final until it passes:
 
 - first-read is obvious
 - primary task is faster or clearer
 - displayed data remains factual
 - semantic colors are consistent
 - text remains readable at mobile density
-- mobile and tablet composition are intentional
-- state coverage is adequate
+- mobile, tablet, and desktop composition are intentional
+- state coverage is truthful and adequate
 - keyboard/focus remains usable
 - status is not color-only
 - touch targets are adequate
+- dialogs/overlays respect focus, stacking, and safe-area contracts
 - no unnecessary decorative UI was introduced
-- implementation remains lightweight and maintainable
+- visual decisions pass the Pesmad Taste Gate
+- performance impact of material additions is measured
+- expensive non-critical capability is code-split when practical and low-risk
+- implementation remains maintainable
