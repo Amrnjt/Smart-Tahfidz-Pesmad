@@ -220,7 +220,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   };
 
   return (
-    <div className="w-full min-w-0 max-w-full space-y-6">
+    <div className="p2-dashboard p2-dashboard-ustadz w-full min-w-0 max-w-full space-y-6">
       <section aria-label="Pusat kerja Ustadz" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="relative isolate overflow-hidden rounded-2xl border border-emerald-800 bg-emerald-950 text-white shadow-[0_18px_48px_-32px_rgba(6,78,59,0.8)] lg:col-span-3">
           <div aria-hidden="true" className="pointer-events-none absolute -right-10 top-12 hidden h-60 w-48 rounded-t-[999px] border border-emerald-700/50 lg:block" />

@@ -6,6 +6,7 @@ import '@fontsource-variable/plus-jakarta-sans/wght.css';
 import './index.css';
 import './design-foundation.css';
 import './app-shell.css';
+import './dashboard-experience.css';
 
 // P0.3: Firestore is the commit gate; LocalStorage remains cache only.
 installCloudCommitGate();

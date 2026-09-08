@@ -1,0 +1,397 @@
+/* P2.2 — Role-specific dashboard experience
+   Visual composition only: no derived data, no fake metrics, no global blur, no infinite motion. */
+
+:root {
+  --dashboard-gap: 1rem;
+  --dashboard-radius: 1.35rem;
+  --dashboard-radius-lg: 1.65rem;
+  --dashboard-border: rgba(148, 163, 184, 0.22);
+  --dashboard-shadow: 0 18px 48px -38px rgba(15, 23, 42, 0.34);
+  --dashboard-shadow-raised: 0 24px 64px -42px rgba(15, 23, 42, 0.42);
+}
+
+.p2-dashboard {
+  position: relative;
+  isolation: isolate;
+}
+
+.p2-dashboard > * {
+  min-width: 0;
+}
+
+.p2-dashboard > section,
+.p2-dashboard > .ui-panel,
+.p2-dashboard > [class*="ScrollReveal"] {
+  animation: p2-dashboard-enter var(--duration-enter) var(--ease-emphasized) both;
+}
+
+.p2-dashboard > :nth-child(2) { animation-delay: 55ms; }
+.p2-dashboard > :nth-child(3) { animation-delay: 95ms; }
+.p2-dashboard > :nth-child(4) { animation-delay: 135ms; }
+.p2-dashboard > :nth-child(5) { animation-delay: 175ms; }
+
+.p2-dashboard .ui-panel {
+  border-color: var(--dashboard-border);
+  border-radius: var(--dashboard-radius);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.025);
+}
+
+.p2-dashboard .ui-section-title {
+  letter-spacing: -0.025em;
+}
+
+.p2-dashboard .ui-number {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.035em;
+}
+
+.p2-dashboard button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ------------------------------------------------------------
+   USTADZ — operational command center
+   ------------------------------------------------------------ */
+
+.p2-dashboard-ustadz > section[aria-label="Pusat kerja Ustadz"] {
+  grid-template-columns: minmax(0, 1.58fr) minmax(19rem, 0.92fr);
+  gap: 1rem;
+}
+
+.p2-dashboard-ustadz > section[aria-label="Pusat kerja Ustadz"] > :first-child {
+  grid-column: auto !important;
+  border-radius: var(--dashboard-radius-lg) !important;
+  background:
+    radial-gradient(circle at 84% 12%, rgba(52, 211, 153, 0.15), transparent 22rem),
+    radial-gradient(circle at 10% 92%, rgba(13, 148, 136, 0.14), transparent 24rem),
+    linear-gradient(145deg, #032f28 0%, #064e3b 52%, #043c30 100%) !important;
+  border-color: rgba(110, 231, 183, 0.16) !important;
+  box-shadow: 0 30px 76px -50px rgba(3, 47, 40, 0.92) !important;
+}
+
+.p2-dashboard-ustadz > section[aria-label="Pusat kerja Ustadz"] > aside {
+  grid-column: auto !important;
+  border-radius: var(--dashboard-radius-lg) !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(245, 158, 11, 0.08), transparent 14rem),
+    linear-gradient(180deg, #ffffff 0%, #fcfdfd 100%);
+  box-shadow: var(--dashboard-shadow);
+}
+
+.p2-dashboard-ustadz [role="img"][aria-label*="tujuh hari"] span[style] {
+  transform-origin: bottom;
+  animation: p2-dashboard-bar-rise 520ms var(--ease-emphasized) both;
+}
+
+.p2-dashboard-ustadz > section[aria-label="Status operasional"] {
+  grid-template-columns: 1.08fr 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.p2-dashboard-ustadz > section[aria-label="Status operasional"] > button {
+  position: relative;
+  overflow: hidden;
+  min-height: 7rem;
+  border-radius: 1.15rem;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+  box-shadow: var(--dashboard-shadow);
+}
+
+.p2-dashboard-ustadz > section[aria-label="Status operasional"] > button::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 3px;
+  background: var(--brand-primary);
+  opacity: 0.76;
+  transform: scaleX(0.18);
+  transform-origin: left;
+  transition: transform var(--duration-normal) var(--ease-emphasized), opacity var(--duration-fast) var(--ease-standard);
+}
+
+.p2-dashboard-ustadz > section[aria-label="Status operasional"] > button:nth-child(2)::after { background: #0f766e; }
+.p2-dashboard-ustadz > section[aria-label="Status operasional"] > button:nth-child(3)::after { background: #0369a1; }
+
+.p2-dashboard-ustadz #dashboard-analytics {
+  padding: 0.35rem 0.2rem 0;
+}
+
+.p2-dashboard-ustadz #dashboard-analytics + * {
+  border-radius: var(--dashboard-radius-lg) !important;
+}
+
+.p2-dashboard-ustadz .recharts-wrapper,
+.p2-dashboard-ustadz .recharts-surface {
+  max-width: 100%;
+}
+
+/* ------------------------------------------------------------
+   WALI — calm parent progress briefing
+   ------------------------------------------------------------ */
+
+.p2-dashboard-wali > section:first-child,
+.p2-dashboard-santri > section:first-child {
+  grid-template-columns: minmax(0, 1.48fr) minmax(18rem, 0.92fr);
+  gap: 1rem;
+}
+
+.p2-dashboard-wali > section:first-child > :first-child,
+.p2-dashboard-wali > section:first-child > :nth-child(2),
+.p2-dashboard-santri > section:first-child > :first-child,
+.p2-dashboard-santri > section:first-child > :nth-child(2) {
+  grid-column: auto !important;
+}
+
+.p2-dashboard-wali > section:first-child > :first-child {
+  border-radius: var(--dashboard-radius-lg) !important;
+  background:
+    radial-gradient(circle at 90% 12%, rgba(45, 212, 191, 0.15), transparent 20rem),
+    radial-gradient(circle at 5% 100%, rgba(16, 185, 129, 0.12), transparent 20rem),
+    linear-gradient(145deg, #073b35 0%, #064e3b 58%, #0f3f3c 100%) !important;
+  box-shadow: 0 28px 70px -48px rgba(6, 78, 59, 0.9);
+}
+
+.p2-dashboard-wali > section:first-child > :nth-child(2) {
+  border-radius: var(--dashboard-radius-lg) !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(14, 116, 144, 0.06), transparent 16rem),
+    linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+  box-shadow: var(--dashboard-shadow-raised);
+}
+
+.p2-dashboard-wali > section:nth-of-type(2) {
+  grid-template-columns: minmax(0, 1.35fr) minmax(17rem, 0.85fr);
+  gap: 1rem;
+}
+
+.p2-dashboard-wali > section:nth-of-type(2) > :first-child,
+.p2-dashboard-wali > section:nth-of-type(2) > :nth-child(2) {
+  grid-column: auto !important;
+}
+
+.p2-dashboard-wali > section:nth-of-type(2) > :first-child {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(110deg, rgba(14, 116, 144, 0.055), transparent 42%),
+    #ffffff;
+}
+
+.p2-dashboard-wali > section:nth-of-type(2) > :first-child::after {
+  content: "“";
+  position: absolute;
+  right: 1.1rem;
+  top: -0.4rem;
+  color: rgba(14, 116, 144, 0.08);
+  font-family: Georgia, serif;
+  font-size: 7rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.p2-dashboard-wali > section:nth-of-type(2) > :nth-child(2) {
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbfa 100%);
+}
+
+.p2-dashboard-wali section:has(#tanggal-pantauan) {
+  border-radius: var(--dashboard-radius-lg) !important;
+  border-color: rgba(16, 185, 129, 0.16) !important;
+  box-shadow: var(--dashboard-shadow);
+}
+
+/* ------------------------------------------------------------
+   SANTRI — personal learning cockpit
+   ------------------------------------------------------------ */
+
+.p2-dashboard-santri > section:first-child > :first-child {
+  border-radius: var(--dashboard-radius-lg) !important;
+  background:
+    radial-gradient(circle at 86% 8%, rgba(56, 189, 248, 0.14), transparent 20rem),
+    radial-gradient(circle at 8% 100%, rgba(52, 211, 153, 0.15), transparent 22rem),
+    linear-gradient(145deg, #043c30 0%, #065f46 58%, #075985 145%) !important;
+  box-shadow: 0 30px 74px -50px rgba(6, 78, 59, 0.88);
+}
+
+.p2-dashboard-santri > section:first-child > :nth-child(2) {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--dashboard-radius-lg) !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(56, 189, 248, 0.08), transparent 15rem),
+    linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  box-shadow: var(--dashboard-shadow-raised);
+}
+
+.p2-dashboard-santri > section:first-child > :nth-child(2)::after {
+  content: "";
+  position: absolute;
+  right: -2.3rem;
+  bottom: -2.3rem;
+  width: 6.5rem;
+  height: 6.5rem;
+  border: 1px solid rgba(14, 116, 144, 0.08);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.p2-dashboard-santri > section:nth-of-type(2) {
+  grid-template-columns: minmax(0, 1.35fr) minmax(17rem, 0.85fr);
+  gap: 1rem;
+}
+
+.p2-dashboard-santri > section:nth-of-type(2) > :first-child,
+.p2-dashboard-santri > section:nth-of-type(2) > :nth-child(2) {
+  grid-column: auto !important;
+}
+
+.p2-dashboard-santri > section:nth-of-type(2) > :first-child {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(110deg, rgba(2, 132, 199, 0.055), transparent 42%),
+    #ffffff;
+}
+
+.p2-dashboard-santri > section:nth-of-type(2) > :first-child::after {
+  content: "“";
+  position: absolute;
+  right: 1.1rem;
+  top: -0.4rem;
+  color: rgba(2, 132, 199, 0.075);
+  font-family: Georgia, serif;
+  font-size: 7rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.p2-dashboard-santri > section:nth-of-type(2) > :nth-child(2) {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(16, 185, 129, 0.055), transparent 12rem),
+    #ffffff;
+}
+
+.p2-dashboard-santri > .ui-panel,
+.p2-dashboard-santri > [class*="ui-panel"] {
+  box-shadow: var(--dashboard-shadow);
+}
+
+/* Shared dashboard list / chart polish */
+.p2-dashboard :where(.divide-y) > button,
+.p2-dashboard :where(.divide-y) > div {
+  transition: background-color var(--duration-fast) var(--ease-standard), transform var(--duration-micro) var(--ease-standard);
+}
+
+.p2-dashboard :where(.recharts-cartesian-grid-horizontal line),
+.p2-dashboard :where(.recharts-cartesian-grid-vertical line) {
+  stroke: rgba(148, 163, 184, 0.22);
+}
+
+.p2-dashboard :where(.recharts-text) {
+  fill: #64748b;
+  font-size: 0.72rem;
+}
+
+.p2-dashboard :where(.recharts-tooltip-wrapper) {
+  outline: none;
+}
+
+@keyframes p2-dashboard-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes p2-dashboard-bar-rise {
+  from {
+    opacity: 0.45;
+    transform: scaleY(0.22);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .p2-dashboard-ustadz > section[aria-label="Status operasional"] > button:hover::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  .p2-dashboard :where(.divide-y) > button:hover {
+    transform: translateX(2px);
+  }
+}
+
+@media (max-width: 1023px) {
+  .p2-dashboard-ustadz > section[aria-label="Pusat kerja Ustadz"],
+  .p2-dashboard-wali > section:first-child,
+  .p2-dashboard-santri > section:first-child,
+  .p2-dashboard-wali > section:nth-of-type(2),
+  .p2-dashboard-santri > section:nth-of-type(2) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .p2-dashboard-ustadz > section[aria-label="Status operasional"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 639px) {
+  :root {
+    --dashboard-gap: 0.75rem;
+    --dashboard-radius: 1.1rem;
+    --dashboard-radius-lg: 1.25rem;
+  }
+
+  .p2-dashboard {
+    gap: 1rem;
+  }
+
+  .p2-dashboard > section {
+    gap: 0.75rem !important;
+  }
+
+  .p2-dashboard-ustadz > section[aria-label="Status operasional"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .p2-dashboard-ustadz > section[aria-label="Status operasional"] > button {
+    min-height: 5.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p2-dashboard > section,
+  .p2-dashboard > .ui-panel,
+  .p2-dashboard > [class*="ScrollReveal"],
+  .p2-dashboard-ustadz [role="img"][aria-label*="tujuh hari"] span[style] {
+    animation: none !important;
+  }
+
+  .p2-dashboard :where(.divide-y) > button,
+  .p2-dashboard-ustadz > section[aria-label="Status operasional"] > button::after {
+    transition-duration: 0.01ms !important;
+    transform: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .p2-dashboard .ui-panel,
+  .p2-dashboard-ustadz > section[aria-label="Pusat kerja Ustadz"] > :first-child,
+  .p2-dashboard-wali > section:first-child > :first-child,
+  .p2-dashboard-santri > section:first-child > :first-child {
+    border: 1px solid CanvasText !important;
+  }
+
+  .p2-dashboard-ustadz > section[aria-label="Status operasional"] > button::after,
+  .p2-dashboard-wali > section:nth-of-type(2) > :first-child::after,
+  .p2-dashboard-santri > section:nth-of-type(2) > :first-child::after {
+    display: none;
+  }
+}
