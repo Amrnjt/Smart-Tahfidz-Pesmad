@@ -25,7 +25,7 @@ jobs:
         run: npm ci
 
       - name: TypeScript check
-        run: npm run lint:types
+        run: npm run lint
 
       - name: Production build
         run: npm run build
