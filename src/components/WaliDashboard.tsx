@@ -41,6 +41,7 @@ interface WaliDashboardProps {
 }
 
 type ActivityCategory = 'Ziyadah' | "Muroja'ah" | 'Binnadzor' | 'Pembelajaran';
+type RecencyKind = 'empty' | 'today' | 'recent' | 'older';
 
 interface WaliActivity {
   id: string;
@@ -50,6 +51,12 @@ interface WaliActivity {
   nilai: PredikatNilai;
   catatan: string;
   inputBy: string;
+}
+
+interface RecencyInfo {
+  label: string;
+  description: string;
+  kind: RecencyKind;
 }
 
 const categoryMeta: Record<ActivityCategory, {
@@ -91,6 +98,60 @@ const scoreTone: Record<PredikatNilai, string> = {
   Mengulang: 'text-rose-700'
 };
 
+const getRecencyInfo = (timestamp?: string): RecencyInfo => {
+  if (!timestamp) {
+    return {
+      label: 'Belum ada setoran',
+      description: 'Belum ada aktivitas pembelajaran yang tercatat untuk santri ini.',
+      kind: 'empty'
+    };
+  }
+
+  const activityDate = new Date(timestamp);
+  if (Number.isNaN(activityDate.getTime())) {
+    return {
+      label: 'Waktu belum tersedia',
+      description: 'Timestamp aktivitas terakhir tidak dapat dibaca.',
+      kind: 'empty'
+    };
+  }
+
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const activityUtc = Date.UTC(activityDate.getFullYear(), activityDate.getMonth(), activityDate.getDate());
+  const dayDifference = Math.max(0, Math.floor((todayUtc - activityUtc) / 86_400_000));
+
+  if (dayDifference === 0) {
+    return {
+      label: 'Diperbarui hari ini',
+      description: 'Aktivitas terakhir tercatat hari ini.',
+      kind: 'today'
+    };
+  }
+
+  if (dayDifference === 1) {
+    return {
+      label: 'Diperbarui kemarin',
+      description: 'Aktivitas terakhir tercatat kemarin.',
+      kind: 'recent'
+    };
+  }
+
+  if (dayDifference <= 7) {
+    return {
+      label: `Diperbarui ${dayDifference} hari lalu`,
+      description: `Aktivitas terakhir tercatat ${dayDifference} hari lalu.`,
+      kind: 'recent'
+    };
+  }
+
+  return {
+    label: `Terakhir ${dayDifference} hari lalu`,
+    description: `Aktivitas terakhir tercatat ${dayDifference} hari lalu. Buka riwayat untuk melihat konteks lengkapnya.`,
+    kind: 'older'
+  };
+};
+
 export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   currentUser,
   santriList,
@@ -101,7 +162,6 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   setActiveTab,
   onNotify
 }) => {
-
   const targetSantri = santriList.find(santri => santri.idSantri === currentUser.idSantri);
 
   if (!targetSantri) {
@@ -173,76 +233,153 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   const latestNote = activities.find(activity => Boolean(activity.catatan));
   const totalRecords = activities.length;
   const latestByCategory = (category: ActivityCategory) => activities.find(activity => activity.category === category);
-  const categoryRowsSource: { category: ActivityCategory; count: number; latest?: WaliActivity }[] = [
+  const categoryRows: { category: ActivityCategory; count: number; latest?: WaliActivity }[] = [
     { category: 'Ziyadah', count: santriZiyadah.length, latest: latestByCategory('Ziyadah') },
     { category: "Muroja'ah", count: santriMurojaah.length, latest: latestByCategory("Muroja'ah") },
     { category: 'Binnadzor', count: santriBinnadzor.length, latest: latestByCategory('Binnadzor') },
     { category: 'Pembelajaran', count: santriPembelajaran.length, latest: latestByCategory('Pembelajaran') }
   ];
-  const categoryRows = categoryRowsSource.filter(row => row.count > 0 || row.category !== 'Pembelajaran');
 
   const latestCategory = latestActivity ? categoryMeta[latestActivity.category] : null;
   const LatestIcon = latestCategory?.icon || BookOpen;
+  const latestRecency = getRecencyInfo(latestActivity?.timestamp);
   const programLiburanActive = storageService.getAppConfig().programLiburanActive;
 
+  const jumpToPantauanLiburan = () => {
+    if (typeof document === 'undefined') return;
+
+    const dateControl = document.getElementById('tanggal-pantauan');
+    const destination = dateControl?.closest('section') || dateControl;
+    if (!destination) return;
+
+    const reduceMotion = typeof window !== 'undefined'
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    destination.scrollIntoView({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      block: 'start'
+    });
+  };
+
+  const primaryAction = programLiburanActive
+    ? {
+        label: 'Isi pantauan liburan',
+        description: 'Program pantauan liburan sedang aktif.',
+        icon: ArrowRight,
+        onClick: jumpToPantauanLiburan
+      }
+    : latestActivity
+      ? {
+          label: 'Lihat riwayat',
+          description: 'Buka detail aktivitas yang benar-benar tercatat.',
+          icon: ArrowRight,
+          onClick: () => setActiveTab('riwayat')
+        }
+      : {
+          label: 'Buka Mushaf',
+          description: 'Belum ada setoran; Mushaf tetap tersedia untuk dibaca.',
+          icon: BookOpen,
+          onClick: () => setActiveTab('mushaf')
+        };
+
+  const secondaryAction = programLiburanActive
+    ? latestActivity
+      ? { label: 'Lihat riwayat', onClick: () => setActiveTab('riwayat') }
+      : { label: 'Buka Mushaf', onClick: () => setActiveTab('mushaf') }
+    : latestActivity
+      ? { label: 'Buka Mushaf', onClick: () => setActiveTab('mushaf') }
+      : null;
+
+  const PrimaryActionIcon = primaryAction.icon;
+
   return (
-    <div className="p2-dashboard p2-dashboard-wali w-full min-w-0 space-y-6">
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <div className="relative overflow-hidden rounded-2xl bg-emerald-950 p-5 text-white sm:p-6 lg:col-span-3 lg:p-7">
-          <div className="absolute inset-y-0 left-0 w-1 bg-emerald-400" aria-hidden="true" />
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white p-1.5 sm:h-14 sm:w-14">
-              <PesmadLogo size="lg" className="h-full w-full" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold uppercase tracking-[0.08em] text-emerald-200">Perkembangan Santri · Pesmad</p>
-              <h1 className="mt-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{targetSantri.namaSantri}</h1>
-              <p className="mt-1 text-sm leading-relaxed text-emerald-100/90">
-                {targetSantri.kelas || 'Kelas belum ditetapkan'} · ID {targetSantri.idSantri}
-              </p>
-            </div>
-          </div>
+    <div className="p2-dashboard p2-dashboard-wali p3-wali-page w-full min-w-0 space-y-6">
+      <section
+        className="p321-briefing-grid grid grid-cols-1 gap-4 lg:grid-cols-5"
+        aria-label={`Briefing wali untuk ${targetSantri.namaSantri}`}
+      >
+        <article className="p321-parent-hero relative overflow-hidden p-5 text-white sm:p-6 lg:col-span-3 lg:p-7">
+          <div className="p321-hero-accent" aria-hidden="true" />
 
-          <div className="mt-6 grid grid-cols-1 gap-3 border-t border-white/15 pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 text-emerald-200">
-                <Target className="h-4 w-4" aria-hidden="true" />
-                <span className="text-xs font-semibold uppercase tracking-[0.06em]">Target hafalan</span>
+          <div className="flex flex-col gap-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex min-w-0 items-start gap-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white p-1.5 sm:h-14 sm:w-14">
+                  <PesmadLogo size="lg" className="h-full w-full" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="p321-kicker text-emerald-100">Briefing Wali · Pesmad</p>
+                  <h1 className="p321-display mt-1 break-words text-white">{targetSantri.namaSantri}</h1>
+                  <p className="p321-body mt-1 text-emerald-100/90">
+                    {targetSantri.kelas || 'Kelas belum ditetapkan'} · ID {targetSantri.idSantri}
+                  </p>
+                </div>
               </div>
-              <p className="mt-1 text-base font-bold text-white sm:text-lg">
-                {targetSantri.targetHafalan || 'Belum ditetapkan'}
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-emerald-200/90">
-                Data target ditampilkan sesuai profil santri yang tersimpan.
-              </p>
+
+              <div className={`p321-recency p321-recency-${latestRecency.kind}`} title={latestRecency.description}>
+                <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                <span>{latestRecency.label}</span>
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 sm:justify-end">
-              <button
-                type="button"
-                onClick={() => setActiveTab('riwayat')}
-                className="ui-control press-feedback inline-flex items-center justify-center gap-2 border border-white/20 bg-white/10 px-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/15"
-              >
-                Riwayat
-                <ArrowRight className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('mushaf')}
-                className="ui-control press-feedback inline-flex items-center justify-center gap-2 bg-white px-3.5 text-sm font-bold text-emerald-950 transition-colors hover:bg-emerald-50"
-              >
-                <BookOpen className="h-4 w-4" />
-                Mushaf
-              </button>
+            <div className="p321-briefing-copy">
+              <p className="p321-kicker text-emerald-100">Ringkasan saat ini</p>
+              {latestActivity ? (
+                <p className="p321-body mt-1.5 text-white">
+                  Setoran terakhir berupa <strong>{latestActivity.category}</strong> dengan penilaian{' '}
+                  <strong>{latestActivity.nilai}</strong>. Detail lengkap tetap tersedia di riwayat.
+                </p>
+              ) : (
+                <p className="p321-body mt-1.5 text-white">
+                  Belum ada setoran yang tercatat. Tidak ada progres estimasi atau angka pengganti yang ditampilkan.
+                </p>
+              )}
+            </div>
+
+            <div className="p321-hero-footer grid grid-cols-1 gap-4 border-t border-white/15 pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 text-emerald-100">
+                  <Target className="h-4 w-4" aria-hidden="true" />
+                  <span className="p321-kicker">Target hafalan</span>
+                </div>
+                <p className="p321-heading mt-1 text-white">
+                  {targetSantri.targetHafalan || 'Belum ditetapkan'}
+                </p>
+                <p className="p321-meta mt-1 text-emerald-100/85">
+                  Ditampilkan persis dari profil santri yang tersimpan.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2 sm:justify-end">
+                {secondaryAction && (
+                  <button
+                    type="button"
+                    onClick={secondaryAction.onClick}
+                    className="ui-control press-feedback inline-flex items-center justify-center border border-white/20 bg-white/10 px-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/15"
+                  >
+                    {secondaryAction.label}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={primaryAction.onClick}
+                  aria-label={`${primaryAction.label}. ${primaryAction.description}`}
+                  className="ui-control press-feedback inline-flex items-center justify-center gap-2 bg-white px-3.5 text-sm font-bold text-emerald-950 transition-colors hover:bg-emerald-50"
+                >
+                  <PrimaryActionIcon className="h-4 w-4" aria-hidden="true" />
+                  {primaryAction.label}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </article>
 
-        <div className="ui-panel p-5 sm:p-6 lg:col-span-2">
+        <article className="ui-panel p321-surface-secondary p-5 sm:p-6 lg:col-span-2" aria-labelledby="wali-latest-title">
           <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-4">
             <div>
-              <p className="ui-meta font-semibold uppercase tracking-[0.06em]">First read</p>
-              <h2 className="ui-section-title mt-1">Setoran terbaru</h2>
+              <p className="p321-kicker text-slate-500">Setoran aktual</p>
+              <h2 id="wali-latest-title" className="p321-heading mt-1 text-slate-950">Setoran terbaru</h2>
             </div>
             <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${latestCategory?.surface || 'bg-slate-100'} ${latestCategory?.text || 'text-slate-600'}`}>
               <LatestIcon className="h-5 w-5" aria-hidden="true" />
@@ -251,20 +388,24 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
 
           {latestActivity ? (
             <div className="pt-4">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className={`text-sm font-bold ${latestCategory?.text}`}>{latestActivity.category}</p>
-                <p className="ui-meta">{formatTanggalWaktu(latestActivity.timestamp)}</p>
+                <span className={`p321-recency p321-recency-${latestRecency.kind}`}>
+                  <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                  {latestRecency.label}
+                </span>
               </div>
-              <p className="mt-2 text-base font-bold leading-snug text-slate-950 sm:text-lg">{latestActivity.material}</p>
+              <p className="p321-heading mt-2 text-slate-950">{latestActivity.material}</p>
+              <p className="p321-meta mt-1 text-slate-500">{formatTanggalWaktu(latestActivity.timestamp)}</p>
 
-              <div className="mt-5 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4 border-t border-slate-100 pt-4">
+              <div className="mt-5 grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
                 <div>
-                  <p className="ui-meta font-semibold">Penilaian terakhir</p>
+                  <p className="p321-meta font-semibold text-slate-500">Penilaian terakhir</p>
                   <p className={`mt-1 text-lg font-bold ${scoreTone[latestActivity.nilai]}`}>{latestActivity.nilai}</p>
                 </div>
                 <div className="min-w-0 sm:text-right">
-                  <p className="ui-meta font-semibold">Dicatat oleh</p>
-                  <p className="mt-1 max-w-[11rem] truncate text-sm font-semibold text-slate-700">{latestActivity.inputBy}</p>
+                  <p className="p321-meta font-semibold text-slate-500">Dicatat oleh</p>
+                  <p className="mt-1 max-w-[11rem] truncate text-sm font-semibold text-slate-700 sm:ml-auto">{latestActivity.inputBy}</p>
                 </div>
               </div>
             </div>
@@ -272,44 +413,44 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
             <div className="py-8 text-center">
               <BookOpen className="mx-auto h-6 w-6 text-slate-400" aria-hidden="true" />
               <p className="mt-2 text-sm font-bold text-slate-700">Belum ada setoran tercatat.</p>
-              <p className="ui-meta mt-1">Setoran pertama akan muncul di sini setelah tersimpan.</p>
+              <p className="p321-meta mt-1 text-slate-500">Setoran pertama akan muncul di sini setelah benar-benar tersimpan.</p>
             </div>
           )}
-        </div>
+        </article>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <div className="ui-panel p-5 sm:p-6 lg:col-span-3">
+      <section className="p321-context-grid grid grid-cols-1 gap-4 lg:grid-cols-5" aria-label="Konteks perkembangan santri">
+        <article className="ui-panel p321-surface-tertiary p-5 sm:p-6 lg:col-span-3">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-800">
               <MessageSquareText className="h-5 w-5" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="ui-meta font-semibold uppercase tracking-[0.06em]">Catatan Ustadz</p>
+              <p className="p321-kicker text-slate-500">Catatan Ustadz</p>
               {latestNote ? (
                 <>
-                  <p className="mt-2 text-base font-semibold leading-relaxed text-slate-900">“{latestNote.catatan}”</p>
+                  <p className="p321-body mt-2 font-semibold text-slate-900">“{latestNote.catatan}”</p>
                   <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="text-sm font-semibold text-slate-700">{latestNote.inputBy}</span>
-                    <span className="ui-meta">{latestNote.category}</span>
-                    <span className="ui-meta">{formatTanggalWaktu(latestNote.timestamp)}</span>
+                    <span className="p321-meta text-slate-500">{latestNote.category}</span>
+                    <span className="p321-meta text-slate-500">{getRecencyInfo(latestNote.timestamp).label}</span>
                   </div>
                 </>
               ) : (
                 <>
                   <p className="mt-2 text-sm font-semibold text-slate-700">Belum ada catatan khusus dari Ustadz.</p>
-                  <p className="ui-secondary mt-1">Catatan yang ditulis pada setoran akan ditampilkan di bagian ini.</p>
+                  <p className="p321-body mt-1 text-slate-600">Catatan yang ditulis pada setoran akan ditampilkan di bagian ini.</p>
                 </>
               )}
             </div>
           </div>
-        </div>
+        </article>
 
-        <div className="ui-panel p-5 sm:p-6 lg:col-span-2">
+        <article className="ui-panel p321-surface-tertiary p-5 sm:p-6 lg:col-span-2" aria-labelledby="wali-activity-title">
           <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-4">
             <div>
-              <p className="ui-meta font-semibold uppercase tracking-[0.06em]">Perkembangan aktual</p>
-              <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">{totalRecords} setoran</h2>
+              <p className="p321-kicker text-slate-500">Aktivitas tersimpan</p>
+              <h2 id="wali-activity-title" className="p321-heading mt-1 text-slate-950">{totalRecords} setoran tercatat</h2>
             </div>
             <Clock3 className="h-5 w-5 text-slate-500" aria-hidden="true" />
           </div>
@@ -325,10 +466,10 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
               );
             })}
           </div>
-        </div>
+        </article>
       </section>
 
-      <ScrollReveal delay={40}>
+      <ScrollReveal delay={40} className="p321-deferred-surface">
         <PantauanLiburanWaliSection
           currentUser={currentUser}
           targetSantri={targetSantri}
@@ -337,11 +478,11 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
         />
       </ScrollReveal>
 
-      <ScrollReveal delay={60}>
+      <ScrollReveal delay={60} className="p321-deferred-surface">
         <div className="space-y-3">
           <div className="px-1">
-            <h2 className="ui-section-title">Tren Ziyadah</h2>
-            <p className="ui-secondary mt-0.5">Grafik hanya menggunakan setoran Ziyadah aktual yang tercatat.</p>
+            <h2 className="p321-heading text-slate-950">Tren Ziyadah</h2>
+            <p className="p321-body mt-0.5 text-slate-600">Grafik hanya menggunakan setoran Ziyadah aktual yang tercatat.</p>
           </div>
           <ZiyadahProgressChart
             ziyadahRecords={santriZiyadah}
@@ -351,11 +492,11 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
         </div>
       </ScrollReveal>
 
-      <ScrollReveal delay={80} className="ui-panel p-5 sm:p-6">
+      <ScrollReveal delay={80} className="ui-panel p321-surface-tertiary p321-deferred-surface p-5 sm:p-6">
         <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="ui-section-title">Riwayat terakhir per kategori</h2>
-            <p className="ui-secondary mt-0.5">Ringkasan terbaru tanpa menyembunyikan kategori yang belum memiliki setoran.</p>
+            <h2 className="p321-heading text-slate-950">Riwayat terakhir per kategori</h2>
+            <p className="p321-body mt-0.5 text-slate-600">Semua kategori ditampilkan, termasuk yang belum memiliki setoran.</p>
           </div>
           <button
             type="button"
@@ -371,6 +512,8 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
             const meta = categoryMeta[row.category];
             const Icon = meta.icon;
             const latest = row.latest;
+            const rowRecency = getRecencyInfo(latest?.timestamp);
+
             return (
               <div key={row.category} className="flex items-start gap-3 py-4">
                 <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${meta.surface} ${meta.text}`}>
@@ -379,18 +522,20 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                     <p className="text-sm font-bold text-slate-900">{meta.label}</p>
-                    <span className="ui-meta">{row.count} setoran</span>
+                    <span className="p321-meta text-slate-500">{row.count} setoran</span>
                   </div>
                   {latest ? (
                     <div className="mt-1 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4">
                       <div className="min-w-0">
                         <p className="truncate text-sm text-slate-700">{latest.material}</p>
-                        <p className="ui-meta mt-1">{formatTanggalWaktu(latest.timestamp)}</p>
+                        <p className="p321-meta mt-1 text-slate-500">
+                          {rowRecency.label} · {formatTanggalWaktu(latest.timestamp)}
+                        </p>
                       </div>
                       <p className={`mt-1 text-sm font-bold sm:mt-0 ${scoreTone[latest.nilai]}`}>{latest.nilai}</p>
                     </div>
                   ) : (
-                    <p className="ui-secondary mt-1">Belum ada setoran {meta.label}.</p>
+                    <p className="p321-body mt-1 text-slate-600">Belum ada setoran {meta.label}.</p>
                   )}
                 </div>
               </div>
