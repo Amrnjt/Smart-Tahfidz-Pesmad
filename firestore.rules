@@ -1,32 +1,51 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // P0.0 security gate: Firestore must never accept anonymous access.
+    // P0.5 will further narrow these permissions by application role.
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
     match /users/{userId} {
-      allow read, write: if true;
+      allow read, write: if isAuthenticated();
     }
+
     match /santri/{santriId} {
-      allow read, write: if true;
+      allow read, write: if isAuthenticated();
     }
+
     match /ziyadah/{ziyadahId} {
-      allow read, write: if true;
+      allow read, write: if isAuthenticated();
     }
+
     match /murojaah/{murojaahId} {
-      allow read, write: if true;
+      allow read, write: if isAuthenticated();
     }
+
     match /binnadzor/{binnadzorId} {
-      allow read, write: if true;
+      allow read, write: if isAuthenticated();
     }
+
     match /kelas/{kelasId} {
-      allow read, write: if true;
+      allow read, write: if isAuthenticated();
     }
+
     match /pembelajaran/{pembelajaranId} {
-      allow read, write: if true;
+      allow read, write: if isAuthenticated();
     }
+
     match /pantauan_liburan/{id} {
-      allow read, write: if true;
+      allow read, write: if isAuthenticated();
     }
+
     match /app_config/{id} {
-      allow read, write: if true;
+      allow read, write: if isAuthenticated();
+    }
+
+    // Deny every collection/path that is not explicitly listed above.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
