@@ -1,0 +1,124 @@
+name: Icon System Pass Validation
+
+on:
+  push:
+    branches:
+      - icon-system-pass
+    paths:
+      - .github/workflows/icon-system-pass.yml
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: icon-system-pass
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Record legacy icon footprint
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          files = list(Path('public').glob('pesmad-app-icon-v2-*.png')) + list(Path('public').glob('pesmad-app-icon-v3-*.png')) + list(Path('public').glob('pesmad-icon-*')) + [Path('public/pesmad-icon.svg')]
+          files = list(dict.fromkeys(files))
+          print('Legacy icon bytes before cleanup:', sum(p.stat().st_size for p in files if p.exists()))
+          PY
+
+      - name: Apply icon system pass
+        run: python scripts/icon_system_pass.py
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Iconography finish gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          required = {
+              'DESIGN_CONTRACT.md': ['## Iconography Contract', 'Ziyadah: `BookPlus`', 'Kelas: `School`', 'Edit: `SquarePen`'],
+              'src/App.tsx': ['School'],
+              'src/components/BottomNav.tsx': ['School'],
+              'src/components/UstadzDashboard.tsx': ['icon: BookPlus'],
+              'src/components/WaliDashboard.tsx': ['icon: BookPlus'],
+              'src/components/SantriDashboard.tsx': ['icon: BookPlus'],
+              'src/components/HistoryTable.tsx': ['icon: BookPlus'],
+              'src/components/SetorActionSheet.tsx': ['icon: BookPlus'],
+              'src/components/ZiyadahForm.tsx': ['BookPlus'],
+              'src/components/SantriManagement.tsx': ['SquarePen'],
+              'src/components/KelasManagement.tsx': ['SquarePen'],
+              'src/components/PantauanLiburanWaliSection.tsx': ['SquarePen'],
+              'src/components/UnduhLaporanModal.tsx': ['<Check className="w-3.5 h-3.5 text-white"'],
+              'src/components/TrenHafalanBulananChart.tsx': ['Gauge', 'ListOrdered'],
+              'src/components/PesmadLogo.tsx': ['className="w-full h-full object-contain"'],
+              'src/components/PantauanLiburanMonitorModal.tsx': ["appConfig.programLiburanActive ? 'Nonaktifkan Program Pantauan Liburan'"],
+          }
+          for path, tokens in required.items():
+              text = Path(path).read_text()
+              for token in tokens:
+                  assert token in text, f'{token!r} missing in {path}'
+
+          forbidden_source = [
+              'CreditCard as Edit3',
+              'CirclePlus as PlusCircle, BookOpen, Save',
+              'Circle as HelpCircle',
+              'CheckSquare,',
+              'emoji:',
+          ]
+          source_paths = list(Path('src').rglob('*.ts')) + list(Path('src').rglob('*.tsx'))
+          source = '\n'.join(p.read_text() for p in source_paths)
+          for token in forbidden_source:
+              assert token not in source, f'forbidden source token remains: {token}'
+
+          legacy = [
+              *Path('public').glob('pesmad-app-icon-v2-*'),
+              *Path('public').glob('pesmad-app-icon-v3-*'),
+              *Path('public').glob('pesmad-icon-*'),
+              Path('public/pesmad-icon.svg'),
+          ]
+          assert not [str(p) for p in legacy if p.exists()], 'legacy PWA assets remain'
+
+          for active in [
+              'public/pesmad-app-icon-v4-32.png',
+              'public/pesmad-app-icon-v4-180.png',
+              'public/pesmad-app-icon-v4-192.png',
+              'public/pesmad-app-icon-v4-512.png',
+          ]:
+              assert Path(active).exists(), f'active v4 icon missing: {active}'
+
+          assert '/pesmad-app-icon-v4-32.png' in Path('index.html').read_text()
+          assert '/pesmad-app-icon-v4-180.png' in Path('index.html').read_text()
+          assert '/pesmad-app-icon-v4-192.png' in Path('public/manifest.webmanifest').read_text()
+          assert '/pesmad-app-icon-v4-512.png' in Path('public/manifest.webmanifest').read_text()
+          assert '/pesmad-app-icon-v4-192.png' in Path('src/hooks/useSetoranNotifications.ts').read_text()
+          PY
+          git diff --check
+
+      - name: Commit verified icon system source
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add DESIGN_CONTRACT.md src public
+          if git diff --cached --quiet; then
+            echo "No verified source changes"
+            exit 1
+          fi
+          git commit -m "refactor: standardize application icon system"
+          git push origin HEAD:icon-system-pass
