@@ -257,7 +257,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p3-management-page p3-kelas-management space-y-6">
 
       {/* Header & Main Action */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-slate-200">

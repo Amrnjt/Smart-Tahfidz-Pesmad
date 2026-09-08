@@ -369,7 +369,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
   };
 
   return (
-    <div className="space-y-6">
+    <div className="p3-management-page p3-santri-management space-y-6">
 
       {/* Header & Sub-Tabs */}
       <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 pb-5 border-b border-slate-200">

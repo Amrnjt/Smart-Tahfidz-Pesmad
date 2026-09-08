@@ -316,7 +316,7 @@ export const MushafQuran: React.FC = () => {
 
   return (
     <div
-      className={`space-y-4 ${playbackMode !== 'idle' ? 'pb-[calc(24rem+env(safe-area-inset-bottom,0px))]' : 'pb-6'} ${isNightMode ? 'night-mode-active rounded-xl bg-slate-950 text-slate-100' : ''}`}
+      className={`p3-mushaf-page space-y-4 ${playbackMode !== 'idle' ? 'pb-[calc(24rem+env(safe-area-inset-bottom,0px))]' : 'pb-6'} ${isNightMode ? 'night-mode-active rounded-xl bg-slate-950 text-slate-100' : ''}`}
     >
       <header className={`rounded-xl border p-4 sm:p-6 ${surfaceClass}`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
