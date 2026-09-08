@@ -12,6 +12,7 @@ on:
       - 'src/components/SantriManagement.tsx'
       - 'src/components/KelasManagement.tsx'
       - 'src/components/MushafQuran.tsx'
+      - 'src/components/WaliDashboard.tsx'
       - 'src/main.tsx'
       - '.github/workflows/p3-release-polish.yml'
   push:
@@ -74,6 +75,20 @@ jobs:
           grep -q 'scroll-margin-top' src/responsive-accessibility.css
           grep -q 'prefers-reduced-motion: reduce' src/responsive-accessibility.css
           grep -q 'forced-colors: active' src/responsive-accessibility.css
+
+      - name: Verify P3.2.1 Wali experience contract
+        run: |
+          grep -q 'p3-wali-page' src/components/WaliDashboard.tsx
+          grep -q 'p321-parent-hero' src/components/WaliDashboard.tsx
+          grep -q 'getRecencyInfo' src/components/WaliDashboard.tsx
+          grep -q 'programLiburanActive' src/components/WaliDashboard.tsx
+          grep -q 'p321-deferred-surface' src/components/WaliDashboard.tsx
+          grep -q 'p3-wali-page' src/release-polish.css
+          grep -q 'p321-surface-secondary' src/release-polish.css
+          grep -q 'p321-surface-tertiary' src/release-polish.css
+          grep -q '@media (max-width: 767px) and (pointer: coarse)' src/release-polish.css
+          grep -q '@media (prefers-reduced-motion: reduce)' src/release-polish.css
+          grep -q '@media (forced-colors: active)' src/release-polish.css
 
       - name: Enforce P3 performance budget
         run: |
