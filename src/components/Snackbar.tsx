@@ -1,10 +1,19 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { CheckCircle2, AlertCircle, X } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+
+export type SnackbarKind = 'success' | 'error' | 'info';
+
+export interface SnackbarActionOptions {
+  actionLabel?: string;
+  onAction?: () => void;
+}
+
+export type NotifyFn = (type: SnackbarKind, message: string, options?: SnackbarActionOptions) => void;
 
 export interface SnackbarState {
   id: string;
   message: string;
-  type: 'success' | 'error';
+  type: SnackbarKind;
   actionLabel?: string;
   onAction?: () => void;
 }
@@ -40,13 +49,17 @@ export const Snackbar: React.FC<SnackbarProps> = ({ snack, onDismiss, duration =
         className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-xl border ${
           snack.type === 'success'
             ? 'bg-emerald-800 text-white border-emerald-700'
-            : 'bg-rose-800 text-white border-rose-700'
+            : snack.type === 'error'
+            ? 'bg-rose-800 text-white border-rose-700'
+            : 'bg-slate-800 text-white border-slate-700'
         } ${isExiting ? 'snackbar-exit' : 'snackbar-enter'}`}
       >
         {snack.type === 'success' ? (
           <CheckCircle2 className="w-5 h-5 text-emerald-200 flex-shrink-0" />
-        ) : (
+        ) : snack.type === 'error' ? (
           <AlertCircle className="w-5 h-5 text-rose-200 flex-shrink-0" />
+        ) : (
+          <Info className="w-5 h-5 text-slate-200 flex-shrink-0" />
         )}
         <span className="text-sm font-semibold flex-1">{snack.message}</span>
         {snack.actionLabel && snack.onAction && (

@@ -3,15 +3,18 @@ import { Santri, User, UserRole } from '../types';
 import { storageService } from '../services/storageService';
 import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, CreditCard as Edit3, UserCheck, Save, Sparkles, Phone, Copy, Share2, Crown, Lock } from 'lucide-react';
 import { getClassGroup } from '../utils/classUtils';
+import type { NotifyFn } from './Snackbar';
 
 interface SantriManagementProps {
   santriList: Santri[];
   onDataChanged: () => void;
+  onNotify: NotifyFn;
 }
 
 export const SantriManagement: React.FC<SantriManagementProps> = ({
   santriList,
-  onDataChanged
+  onDataChanged,
+  onNotify
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'santri' | 'users'>('santri');
   const [showAddModal, setShowAddModal] = useState(false);
@@ -22,7 +25,6 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [deleteWithHistory, setDeleteWithHistory] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   // New Santri Form State
   const [newId, setNewId] = useState('');
@@ -56,12 +58,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const [editRole, setEditRole] = useState<UserRole>('Ustadz');
   const [editIdSantri, setEditIdSantri] = useState('');
 
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => {
-      setNotification(null);
-    }, 3500);
-  };
+  const showToast = (type: 'success' | 'error', message: string) => onNotify(type, message);
 
   const handleOpenEditUser = (u: User) => {
     setUserToEdit(u);
@@ -231,7 +228,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       setIsDeleting(false);
       setSantriToDelete(null);
       onDataChanged();
-      showToast('success', `Data santri ${deletedName} (${deletedId}) berhasil dihapus.`);
+      showToast('success', `Data santri ${deletedName} (${deletedId}) berhasil dihapus dari Cloud.`);
     } catch (err) {
       setIsDeleting(false);
       showToast('error', 'Gagal menghapus santri.');
@@ -248,7 +245,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       setIsDeleting(false);
       setUserToDelete(null);
       onDataChanged();
-      showToast('success', `Akun ${deletedName} berhasil dihapus.`);
+      showToast('success', `Akun ${deletedName} berhasil dihapus dari Cloud.`);
     } catch (err) {
       setIsDeleting(false);
       showToast('error', 'Gagal menghapus akun pengguna.');
@@ -365,20 +362,6 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
 
   return (
     <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-6">
-      {/* Toast Notification */}
-      {notification && (
-        <div
-          id="santri-toast-notification"
-          className={`p-3.5 rounded-2xl flex items-center gap-3 text-xs font-semibold shadow-sm transition-all duration-300 ${
-            notification.type === 'success'
-              ? 'bg-emerald-50 text-emerald-900 border border-emerald-200'
-              : 'bg-rose-50 text-rose-900 border border-rose-200'
-          }`}
-        >
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-          <span className="flex-1">{notification.message}</span>
-        </div>
-      )}
 
       {/* Header & Sub-Tabs */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">

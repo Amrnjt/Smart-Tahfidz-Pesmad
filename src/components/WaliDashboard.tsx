@@ -10,6 +10,7 @@ import { ScrollReveal } from './ScrollReveal';
 import { useRipple } from '../hooks/useRipple';
 import { PantauanLiburanWaliSection } from './PantauanLiburanWaliSection';
 import { storageService } from '../services/storageService';
+import type { NotifyFn } from './Snackbar';
 
 interface WaliDashboardProps {
   currentUser: User;
@@ -20,6 +21,7 @@ interface WaliDashboardProps {
   pembelajaranRecords?: PembelajaranRecord[];
   setActiveTab: (tab: ActiveTab) => void;
   isLoading?: boolean;
+  onNotify: NotifyFn;
 }
 
 export const WaliDashboard: React.FC<WaliDashboardProps> = ({
@@ -30,7 +32,8 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   binnadzorRecords = [],
   pembelajaranRecords = [],
   setActiveTab,
-  isLoading = false
+  isLoading = false,
+  onNotify
 }) => {
   const mushafRipple = useRipple<HTMLButtonElement>();
 
@@ -207,6 +210,7 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
           currentUser={currentUser}
           targetSantri={targetSantri}
           isActive={storageService.getAppConfig().programLiburanActive}
+          onNotify={onNotify}
         />
       </ScrollReveal>
 

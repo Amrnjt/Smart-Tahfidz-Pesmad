@@ -3,9 +3,11 @@ import { User } from '../types';
 import { storageService } from '../services/storageService';
 import { UserCheck, Lock, AlertCircle, ArrowRight, Eye, EyeOff, ShieldCheck, BookOpenCheck, MoonStar, Sparkles } from 'lucide-react';
 import { PesmadLogo } from './PesmadLogo';
+import type { NotifyFn } from './Snackbar';
 
 interface LoginViewProps {
   onLoginSuccess: (user: User) => void;
+  onNotify: NotifyFn;
 }
 
 /** Tracks whether the viewport is desktop-sized (lg breakpoint: 1024px). */
@@ -41,7 +43,7 @@ interface FormState {
   onForgotPassword: () => void;
 }
 
-export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
+export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNotify }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -72,9 +74,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess }) => {
 
   const handleForgotPassword = () => {
     setErrorMsg('');
-    alert(
-      'Lupa Password?\n\nSilakan hubungi Ustadz/Admin Tahfidz untuk melakukan pengaturan ulang PIN atau kata sandi akun Anda.'
-    );
+    onNotify('info', 'Lupa password? Hubungi Ustadz/Admin Tahfidz untuk pengaturan ulang PIN atau kata sandi.');
   };
 
   const formState: FormState = {

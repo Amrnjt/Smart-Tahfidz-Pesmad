@@ -691,40 +691,24 @@ export const storageService = {
 
   async deleteRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran', id: string): Promise<boolean> {
     if (!id) return false;
+
+    const collectionName = type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
+      : type === 'Murojaah' ? COLLECTIONS.MUROJAAH
+      : type === 'Pembelajaran' ? COLLECTIONS.PEMBELAJARAN
+      : COLLECTIONS.BINNADZOR;
+
+    // Cloud is the commit gate: do not hide local data if Firestore delete fails.
+    await deleteDoc(doc(db, collectionName, id));
     this.markRecordDeleted(id);
 
     if (type === 'Ziyadah') {
-      const records = this.getZiyadahRecords().filter(r => r.id !== id);
-      localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
-      try {
-        await deleteDoc(doc(db, COLLECTIONS.ZIYADAH, id));
-      } catch (e) {
-        console.error('Failed to delete Ziyadah from Firestore:', e);
-      }
+      localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(this.getZiyadahRecords().filter(r => r.id !== id)));
     } else if (type === 'Murojaah') {
-      const records = this.getMurojaahRecords().filter(r => r.id !== id);
-      localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(records));
-      try {
-        await deleteDoc(doc(db, COLLECTIONS.MUROJAAH, id));
-      } catch (e) {
-        console.error('Failed to delete Murojaah from Firestore:', e);
-      }
+      localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(this.getMurojaahRecords().filter(r => r.id !== id)));
     } else if (type === 'Pembelajaran') {
-      const records = this.getPembelajaranRecords().filter(r => r.id !== id);
-      localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(records));
-      try {
-        await deleteDoc(doc(db, COLLECTIONS.PEMBELAJARAN, id));
-      } catch (e) {
-        console.error('Failed to delete Pembelajaran from Firestore:', e);
-      }
+      localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(this.getPembelajaranRecords().filter(r => r.id !== id)));
     } else {
-      const records = this.getBinnadzorRecords().filter(r => r.id !== id);
-      localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(records));
-      try {
-        await deleteDoc(doc(db, COLLECTIONS.BINNADZOR, id));
-      } catch (e) {
-        console.error('Failed to delete Binnadzor from Firestore:', e);
-      }
+      localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(this.getBinnadzorRecords().filter(r => r.id !== id)));
     }
     return true;
   },
@@ -732,7 +716,17 @@ export const storageService = {
   async deleteRecordsBatch(items: { type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran'; id: string }[]): Promise<boolean> {
     if (!items || items.length === 0) return true;
 
-    // Mark all items as deleted to prevent race conditions with realtime listeners
+    // Commit all Cloud deletes first so UI/local cache only change after Firestore confirms.
+    const batch = writeBatch(db);
+    items.forEach(item => {
+      const coll = item.type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
+        : item.type === 'Murojaah' ? COLLECTIONS.MUROJAAH
+        : item.type === 'Pembelajaran' ? COLLECTIONS.PEMBELAJARAN
+        : COLLECTIONS.BINNADZOR;
+      batch.delete(doc(db, coll, item.id));
+    });
+    await batch.commit();
+
     items.forEach(item => {
       if (item.id) this.markRecordDeleted(item.id);
     });
@@ -742,36 +736,10 @@ export const storageService = {
     const binnadzorIds = new Set(items.filter(i => i.type === 'Binnadzor').map(i => i.id));
     const pembelajaranIds = new Set(items.filter(i => i.type === 'Pembelajaran').map(i => i.id));
 
-    if (ziyadahIds.size > 0) {
-      const records = this.getZiyadahRecords().filter(r => !ziyadahIds.has(r.id));
-      localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(records));
-    }
-    if (murojaahIds.size > 0) {
-      const records = this.getMurojaahRecords().filter(r => !murojaahIds.has(r.id));
-      localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(records));
-    }
-    if (binnadzorIds.size > 0) {
-      const records = this.getBinnadzorRecords().filter(r => !binnadzorIds.has(r.id));
-      localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(records));
-    }
-    if (pembelajaranIds.size > 0) {
-      const records = this.getPembelajaranRecords().filter(r => !pembelajaranIds.has(r.id));
-      localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(records));
-    }
-
-    try {
-      const batch = writeBatch(db);
-      items.forEach(item => {
-        const coll = item.type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
-          : item.type === 'Murojaah' ? COLLECTIONS.MUROJAAH
-          : item.type === 'Pembelajaran' ? COLLECTIONS.PEMBELAJARAN
-          : COLLECTIONS.BINNADZOR;
-        batch.delete(doc(db, coll, item.id));
-      });
-      await batch.commit();
-    } catch (e) {
-      console.error('Failed to delete records batch from Firestore:', e);
-    }
+    if (ziyadahIds.size > 0) localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(this.getZiyadahRecords().filter(r => !ziyadahIds.has(r.id))));
+    if (murojaahIds.size > 0) localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(this.getMurojaahRecords().filter(r => !murojaahIds.has(r.id))));
+    if (binnadzorIds.size > 0) localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(this.getBinnadzorRecords().filter(r => !binnadzorIds.has(r.id))));
+    if (pembelajaranIds.size > 0) localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(this.getPembelajaranRecords().filter(r => !pembelajaranIds.has(r.id))));
 
     return true;
   },
@@ -996,13 +964,9 @@ export const storageService = {
   },
 
   async deletePantauanLiburan(id: string): Promise<boolean> {
+    await deleteDoc(doc(db, COLLECTIONS.PANTAUAN_LIBURAN, id));
     const records = this.getPantauanLiburanRecords().filter(r => r.id !== id);
     localStorage.setItem(STORAGE_KEYS.PANTAUAN_LIBURAN, JSON.stringify(records));
-    try {
-      await deleteDoc(doc(db, COLLECTIONS.PANTAUAN_LIBURAN, id));
-    } catch (e) {
-      console.error('Failed to delete Pantauan Liburan from Firestore:', e);
-    }
     return true;
   },
 
@@ -1097,65 +1061,38 @@ export const storageService = {
   },
 
   async deleteSantri(idSantri: string, deleteRelatedHistory = true): Promise<boolean> {
-    // 1. Remove from Santri list
-    const santriList = this.getSantriList().filter(s => s.idSantri !== idSantri);
-    localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(santriList));
-
-    // 2. Remove associated Wali and Santri user accounts
     const usersToDelete = this.getUsers().filter(u => u.idSantri === idSantri || u.username.toLowerCase() === idSantri.toLowerCase());
-    const users = this.getUsers().filter(u => u.idSantri !== idSantri && u.username.toLowerCase() !== idSantri.toLowerCase());
-    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+    const ziyadahToDelete = deleteRelatedHistory ? this.getZiyadahRecords().filter(r => r.idSantri === idSantri) : [];
+    const murojaahToDelete = deleteRelatedHistory ? this.getMurojaahRecords().filter(r => r.idSantri === idSantri) : [];
+    const binnadzorToDelete = deleteRelatedHistory ? this.getBinnadzorRecords().filter(r => r.idSantri === idSantri) : [];
+    const pembelajaranToDelete = deleteRelatedHistory ? this.getPembelajaranRecords().filter(r => r.idSantri === idSantri) : [];
 
-    // 3. Clean up related Ziyadah, Murojaah, Binnadzor, and Pembelajaran records if requested
-    let ziyadahToDelete: ZiyadahRecord[] = [];
-    let murojaahToDelete: MurojaahRecord[] = [];
-    let binnadzorToDelete: BinnadzorRecord[] = [];
-    let pembelajaranToDelete: PembelajaranRecord[] = [];
-
-    if (deleteRelatedHistory) {
-      ziyadahToDelete = this.getZiyadahRecords().filter(r => r.idSantri === idSantri);
-      ziyadahToDelete.forEach(z => this.markRecordDeleted(z.id));
-      const ziyadah = this.getZiyadahRecords().filter(r => r.idSantri !== idSantri);
-      localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(ziyadah));
-
-      murojaahToDelete = this.getMurojaahRecords().filter(r => r.idSantri === idSantri);
-      murojaahToDelete.forEach(m => this.markRecordDeleted(m.id));
-      const murojaah = this.getMurojaahRecords().filter(r => r.idSantri !== idSantri);
-      localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(murojaah));
-
-      binnadzorToDelete = this.getBinnadzorRecords().filter(r => r.idSantri === idSantri);
-      binnadzorToDelete.forEach(b => this.markRecordDeleted(b.id));
-      const binnadzor = this.getBinnadzorRecords().filter(r => r.idSantri !== idSantri);
-      localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(binnadzor));
-
-      pembelajaranToDelete = this.getPembelajaranRecords().filter(r => r.idSantri === idSantri);
-      pembelajaranToDelete.forEach(p => this.markRecordDeleted(p.id));
-      const pembelajaran = this.getPembelajaranRecords().filter(r => r.idSantri !== idSantri);
-      localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(pembelajaran));
+    const operationCount = 1 + usersToDelete.length + ziyadahToDelete.length + murojaahToDelete.length + binnadzorToDelete.length + pembelajaranToDelete.length;
+    if (operationCount > 450) {
+      throw new Error('Data terkait santri terlalu banyak untuk satu operasi hapus Cloud.');
     }
 
-    // Cloud Firestore delete
-    try {
-      await deleteDoc(doc(db, COLLECTIONS.SANTRI, idSantri));
-      for (const u of usersToDelete) {
-        await deleteDoc(doc(db, COLLECTIONS.USERS, u.id));
-      }
-      if (deleteRelatedHistory) {
-        for (const z of ziyadahToDelete) {
-          await deleteDoc(doc(db, COLLECTIONS.ZIYADAH, z.id));
-        }
-        for (const m of murojaahToDelete) {
-          await deleteDoc(doc(db, COLLECTIONS.MUROJAAH, m.id));
-        }
-        for (const b of binnadzorToDelete) {
-          await deleteDoc(doc(db, COLLECTIONS.BINNADZOR, b.id));
-        }
-        for (const p of pembelajaranToDelete) {
-          await deleteDoc(doc(db, COLLECTIONS.PEMBELAJARAN, p.id));
-        }
-      }
-    } catch (e) {
-      console.error('Failed to delete Santri from Firestore:', e);
+    const batch = writeBatch(db);
+    batch.delete(doc(db, COLLECTIONS.SANTRI, idSantri));
+    usersToDelete.forEach(u => batch.delete(doc(db, COLLECTIONS.USERS, u.id)));
+    ziyadahToDelete.forEach(r => batch.delete(doc(db, COLLECTIONS.ZIYADAH, r.id)));
+    murojaahToDelete.forEach(r => batch.delete(doc(db, COLLECTIONS.MUROJAAH, r.id)));
+    binnadzorToDelete.forEach(r => batch.delete(doc(db, COLLECTIONS.BINNADZOR, r.id)));
+    pembelajaranToDelete.forEach(r => batch.delete(doc(db, COLLECTIONS.PEMBELAJARAN, r.id)));
+    await batch.commit();
+
+    localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(this.getSantriList().filter(s => s.idSantri !== idSantri)));
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(this.getUsers().filter(u => u.idSantri !== idSantri && u.username.toLowerCase() !== idSantri.toLowerCase())));
+
+    if (deleteRelatedHistory) {
+      ziyadahToDelete.forEach(r => this.markRecordDeleted(r.id));
+      murojaahToDelete.forEach(r => this.markRecordDeleted(r.id));
+      binnadzorToDelete.forEach(r => this.markRecordDeleted(r.id));
+      pembelajaranToDelete.forEach(r => this.markRecordDeleted(r.id));
+      localStorage.setItem(STORAGE_KEYS.ZIYADAH, JSON.stringify(this.getZiyadahRecords().filter(r => r.idSantri !== idSantri)));
+      localStorage.setItem(STORAGE_KEYS.MUROJAAH, JSON.stringify(this.getMurojaahRecords().filter(r => r.idSantri !== idSantri)));
+      localStorage.setItem(STORAGE_KEYS.BINNADZOR, JSON.stringify(this.getBinnadzorRecords().filter(r => r.idSantri !== idSantri)));
+      localStorage.setItem(STORAGE_KEYS.PEMBELAJARAN, JSON.stringify(this.getPembelajaranRecords().filter(r => r.idSantri !== idSantri)));
     }
 
     return true;
@@ -1229,16 +1166,9 @@ export const storageService = {
   },
 
   async deleteUser(id: string): Promise<boolean> {
+    await deleteDoc(doc(db, COLLECTIONS.USERS, id));
     const users = this.getUsers().filter(u => u.id !== id);
     localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
-
-    // Cloud Firestore delete
-    try {
-      await deleteDoc(doc(db, COLLECTIONS.USERS, id));
-    } catch (e) {
-      console.error('Failed to delete User from Firestore:', e);
-    }
-
     return true;
   },
 
@@ -1407,33 +1337,20 @@ export const storageService = {
     const list = this.getKelasList();
     const deletedKelas = list.find(k => k.id === id);
     const affectedSantriIds = new Set(deletedKelas?.santriIds || []);
-
-    const updatedList = list.filter(k => k.id !== id);
-    localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify(updatedList));
-    try {
-      await deleteDoc(doc(db, COLLECTIONS.KELAS, id));
-    } catch (e) {
-      console.error('Failed to delete Kelas from Firestore:', e);
-    }
-
-    // Reset santri.kelas for santri in deleted class
     const allSantri = this.getSantriList();
-    let santriChanged = false;
-    for (const s of allSantri) {
-      if (affectedSantriIds.has(s.idSantri)) {
-        s.kelas = '';
-        santriChanged = true;
-        try {
-          await setDoc(doc(db, COLLECTIONS.SANTRI, s.idSantri), cleanForFirestore(s), { merge: true });
-        } catch (e) {
-          console.error('Failed to reset santri.kelas on delete:', e);
-        }
-      }
-    }
-    if (santriChanged) {
-      localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(allSantri));
-    }
+    const updatedSantri = allSantri.map(s => affectedSantriIds.has(s.idSantri) ? { ...s, kelas: '' } : s);
 
+    const batch = writeBatch(db);
+    batch.delete(doc(db, COLLECTIONS.KELAS, id));
+    updatedSantri.filter(s => affectedSantriIds.has(s.idSantri)).forEach(s => {
+      batch.set(doc(db, COLLECTIONS.SANTRI, s.idSantri), cleanForFirestore(s), { merge: true });
+    });
+    await batch.commit();
+
+    localStorage.setItem(STORAGE_KEYS.KELAS, JSON.stringify(list.filter(k => k.id !== id)));
+    if (affectedSantriIds.size > 0) {
+      localStorage.setItem(STORAGE_KEYS.SANTRI, JSON.stringify(updatedSantri));
+    }
     return true;
   },
 

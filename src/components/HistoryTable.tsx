@@ -35,6 +35,7 @@ import { addDaysToDateInput, formatTanggalLengkap, formatTanggalRingkas, getToda
 import { TableSkeleton } from './SkeletonLoading';
 import { UnduhLaporanModal } from './UnduhLaporanModal';
 import { getClassGroup } from '../utils/classUtils';
+import type { NotifyFn } from './Snackbar';
 
 interface EditableItem {
   id: string;
@@ -57,6 +58,7 @@ interface HistoryTableProps {
   onDataChanged: () => void;
   isLoading?: boolean;
   santriList?: Santri[];
+  onNotify: NotifyFn;
 }
 
 interface CombinedItem {
@@ -210,7 +212,7 @@ const KATEGORI_OPTIONS: KategoriOption[] = [
 ];
 
 export const HistoryTable: React.FC<HistoryTableProps> = ({
-  currentUser, ziyadahRecords, murojaahRecords, binnadzorRecords, pembelajaranRecords, onDataChanged, isLoading = false, santriList = []
+  currentUser, ziyadahRecords, murojaahRecords, binnadzorRecords, pembelajaranRecords, onDataChanged, isLoading = false, santriList = [], onNotify
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [kategoriFilter, setKategoriFilter] = useState<KategoriFilter>('ALL');
@@ -241,7 +243,6 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBatchDeleteModalOpen, setIsBatchDeleteModalOpen] = useState(false);
   const [isBatchDeleting, setIsBatchDeleting] = useState(false);
-  const [deleteToast, setDeleteToast] = useState<string | null>(null);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   if (isLoading) return <TableSkeleton rows={7} />;
@@ -557,16 +558,16 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     try {
       await storageService.deleteRecord(itemToDelete.type, itemToDelete.id);
       onDataChanged();
-      setDeleteToast(`Data histori ${itemToDelete.type} untuk ${itemToDelete.namaSantri} berhasil dihapus.`);
+      onNotify('success', `Data histori ${itemToDelete.type} untuk ${itemToDelete.namaSantri} berhasil dihapus dari Cloud.`);
       setSelectedIds(prev => {
         const next = new Set(prev);
         next.delete(itemToDelete.id);
         return next;
       });
       setItemToDelete(null);
-      setTimeout(() => setDeleteToast(null), 4000);
     } catch (err) {
       console.error('Failed to delete record:', err);
+      onNotify('error', 'Gagal menghapus histori dari Cloud. Data tidak dinyatakan terhapus.');
     } finally {
       setIsDeleting(false);
     }
@@ -579,12 +580,12 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       const itemsToDel = combinedItems.filter(i => selectedIds.has(i.id)).map(i => ({ type: i.type, id: i.id }));
       await storageService.deleteRecordsBatch(itemsToDel);
       onDataChanged();
-      setDeleteToast(`${itemsToDel.length} data rekaman histori berhasil dihapus.`);
+      onNotify('success', `${itemsToDel.length} data rekaman histori berhasil dihapus dari Cloud.`);
       setSelectedIds(new Set());
       setIsBatchDeleteModalOpen(false);
-      setTimeout(() => setDeleteToast(null), 4000);
     } catch (err) {
       console.error('Failed to delete batch records:', err);
+      onNotify('error', 'Gagal menghapus pilihan histori dari Cloud. Tidak ada success palsu.');
     } finally {
       setIsBatchDeleting(false);
     }
@@ -650,10 +651,11 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         });
       }
       onDataChanged();
+      onNotify('success', `Perubahan ${editingItem.type} berhasil disimpan ke Cloud.`);
       closeEditModal();
     } catch (err) {
       console.error('Gagal menyimpan perubahan:', err);
-      alert('Terjadi kendala saat menyimpan perubahan. Silakan coba lagi.');
+      onNotify('error', 'Perubahan belum tersimpan ke Cloud. Silakan coba lagi.');
       setIsSavingEdit(false);
     }
   };
@@ -2262,13 +2264,6 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         </div>
       )}
 
-      {/* Floating Success Toast */}
-      {deleteToast && (
-        <div className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50 bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700 flex items-center gap-2.5 text-xs font-semibold animate-in fade-in slide-in-from-bottom-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-          <span>{deleteToast}</span>
-        </div>
-      )}
     </div>
   );
 };

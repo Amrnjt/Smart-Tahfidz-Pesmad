@@ -2,8 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, Kelas, AspekKualitas, ASPEK_KUALITAS_OPTIONS } from '../types';
 import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
-import { BookOpenCheck, CircleCheck as CheckCircle, Save, RotateCcw, Calendar, Clock, BookOpen, Layers, Bookmark, Sparkles, Check, AlertCircle } from 'lucide-react';
+import { BookOpenCheck, Save, RotateCcw, Calendar, Clock, BookOpen, Layers, Bookmark, Sparkles, Check } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
+import type { NotifyFn } from './Snackbar';
 
 interface BinnadzorFormProps {
   currentUser: User;
@@ -11,6 +12,7 @@ interface BinnadzorFormProps {
   kelasList: Kelas[];
   selectedSantriId?: string;
   onSuccess: () => void;
+  onNotify: NotifyFn;
 }
 
 type ModeInput = 'surah' | 'halaman' | 'juz';
@@ -28,7 +30,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
   santriList,
   kelasList,
   selectedSantriId,
-  onSuccess
+  onSuccess,
+  onNotify
 }) => {
   const myKelas = useMemo(() => kelasList.find(k => k.musyrifId === currentUser.id), [kelasList, currentUser.id]);
   const mySantriList = useMemo(() => {
@@ -63,8 +66,6 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
 
   const [catatan, setCatatan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   const selectedSurah = SURAH_LIST.find(s => s.nameLatin === surahName) || SURAH_LIST[0];
 
@@ -93,8 +94,6 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
     e.preventDefault();
     if (!idSantri) return;
 
-    setFormError(null);
-    setShowSuccessToast(false);
     setIsSubmitting(true);
     try {
       const customTimestamp = `${tanggalSetor} ${waktuSetor || '00:00'}`;
@@ -122,15 +121,11 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
       });
 
       setIsSubmitting(false);
-      setShowSuccessToast(true);
-
-      setTimeout(() => {
-        setShowSuccessToast(false);
-        onSuccess();
-      }, 900);
+      onNotify('success', 'Binnadzor berhasil disimpan ke Cloud.');
+      onSuccess();
     } catch (err) {
       console.error(err);
-      setFormError('Binnadzor belum tersimpan ke Cloud. Periksa koneksi lalu coba lagi.');
+      onNotify('error', 'Binnadzor belum tersimpan ke Cloud. Periksa koneksi lalu coba simpan lagi.');
       setIsSubmitting(false);
     }
   };
@@ -151,8 +146,6 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
     setKefasihan('Baik');
     setKelancaran('Sangat Baik');
     setCatatan('');
-    setShowSuccessToast(false);
-    setFormError(null);
   };
 
   return (
@@ -172,19 +165,6 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
           </div>
         </div>
 
-        {showSuccessToast && (
-          <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-800 text-xs font-semibold flex items-center gap-2" role="status">
-            <CheckCircle className="w-4 h-4 text-indigo-600 flex-shrink-0" />
-            <span>Binnadzor berhasil disimpan ke Cloud.</span>
-          </div>
-        )}
-
-        {formError && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-semibold flex items-start gap-2" role="alert">
-            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-            <span>{formError}</span>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Disclaimer Info */}

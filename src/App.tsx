@@ -17,7 +17,7 @@ import { MushafQuran } from './components/MushafQuran';
 import { SantriManagement } from './components/SantriManagement';
 import { KelasManagement } from './components/KelasManagement';
 import { NotificationToastContainer } from './components/NotificationToastContainer';
-import { Snackbar, SnackbarState } from './components/Snackbar';
+import { Snackbar, SnackbarState, NotifyFn } from './components/Snackbar';
 import { useSetoranNotifications } from './hooks/useSetoranNotifications';
 import { LayoutDashboard, CirclePlus as PlusCircle, History, BookOpen, Users, Cloud, GraduationCap } from 'lucide-react';
 
@@ -56,6 +56,15 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [snack, setSnack] = useState<SnackbarState | null>(null);
   const [isSetorMenuOpen, setIsSetorMenuOpen] = useState(false);
+
+  const notify: NotifyFn = (type, message, options = {}) => {
+    setSnack({
+      id: `feedback-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+      type,
+      message,
+      ...options
+    });
+  };
 
   const refreshData = () => {
     setSantriList(storageService.getSantriList());
@@ -97,11 +106,14 @@ export default function App() {
     if (isSyncing) return;
     setIsSyncing(true);
     try {
-      await storageService.syncWithCloud();
+      const result = await storageService.syncWithCloud();
+      if (!result.success) {
+        throw new Error(result.message || 'Cloud tidak dapat dijangkau.');
+      }
       refreshData();
       setSnack({
         id: `sync-${Date.now()}`,
-        message: '✓ Data berhasil disinkronkan dengan Cloud Database',
+        message: 'Data berhasil disinkronkan dengan Cloud Firestore.',
         type: 'success',
       });
     } catch (err) {
@@ -109,7 +121,7 @@ export default function App() {
       refreshData();
       setSnack({
         id: `sync-err-${Date.now()}`,
-        message: 'Gagal memperbarui data dari Cloud. Memuat cache lokal.',
+        message: 'Gagal memperbarui data dari Cloud. Data lokal hanya digunakan sebagai cache.',
         type: 'error',
         actionLabel: 'Coba Lagi',
         onAction: handleManualRefresh,
@@ -166,6 +178,7 @@ export default function App() {
         {!currentUser ? (
           <LoginView
             onLoginSuccess={handleLoginSuccess}
+            onNotify={notify}
           />
         ) : (
           <div className="space-y-5 min-w-0">
@@ -289,6 +302,7 @@ export default function App() {
                   pembelajaranRecords={pembelajaranRecords}
                   setActiveTab={setActiveTab}
                   isLoading={isLoadingData}
+                  onNotify={notify}
                 />
               ) : (
                 <SantriDashboard
@@ -314,6 +328,7 @@ export default function App() {
                   refreshData();
                   setActiveTab('riwayat');
                 }}
+                onNotify={notify}
               />
             )}
 
@@ -327,6 +342,7 @@ export default function App() {
                   refreshData();
                   setActiveTab('riwayat');
                 }}
+                onNotify={notify}
               />
             )}
 
@@ -340,6 +356,7 @@ export default function App() {
                   refreshData();
                   setActiveTab('riwayat');
                 }}
+                onNotify={notify}
               />
             )}
 
@@ -353,6 +370,7 @@ export default function App() {
                   refreshData();
                   setActiveTab('riwayat');
                 }}
+                onNotify={notify}
               />
             )}
 
@@ -366,6 +384,7 @@ export default function App() {
                 onDataChanged={refreshData}
                 isLoading={isLoadingData}
                 santriList={santriList}
+                onNotify={notify}
               />
             )}
 
@@ -375,6 +394,7 @@ export default function App() {
               <SantriManagement
                 santriList={santriList}
                 onDataChanged={refreshData}
+                onNotify={notify}
               />
             )}
 
@@ -384,6 +404,7 @@ export default function App() {
                 santriList={santriList}
                 userList={userList}
                 onDataChanged={refreshData}
+                onNotify={notify}
               />
             )}
 
@@ -396,7 +417,7 @@ export default function App() {
                 </div>
                 <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 text-[11px] font-semibold">
                   <Cloud className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Cloud Database Firestore Terhubung (Real-Time Multi-Device)</span>
+                  <span>Cloud Firestore • Sinkronisasi Real-Time Multi-Device</span>
                 </div>
               </div>
             </div>
@@ -412,6 +433,7 @@ export default function App() {
           onClose={() => setIsSetorMenuOpen(false)}
           onSelect={(tab) => setActiveTab(tab)}
           santriList={santriList}
+          onNotify={notify}
         />
       )}
 

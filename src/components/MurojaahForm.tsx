@@ -2,8 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, Kelas } from '../types';
 import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
-import { RotateCw, CircleCheck as CheckCircle, Save, RotateCcw, Calendar, Clock, BookOpen, AlertCircle } from 'lucide-react';
+import { RotateCw, Save, RotateCcw, Calendar, Clock, BookOpen } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
+import type { NotifyFn } from './Snackbar';
 
 interface MurojaahFormProps {
   currentUser: User;
@@ -11,6 +12,7 @@ interface MurojaahFormProps {
   kelasList: Kelas[];
   selectedSantriId?: string;
   onSuccess: () => void;
+  onNotify: NotifyFn;
 }
 
 export const MurojaahForm: React.FC<MurojaahFormProps> = ({
@@ -18,7 +20,8 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
   santriList,
   kelasList,
   selectedSantriId,
-  onSuccess
+  onSuccess,
+  onNotify
 }) => {
   const myKelas = useMemo(() => kelasList.find(k => k.musyrifId === currentUser.id), [kelasList, currentUser.id]);
   const mySantriList = useMemo(() => {
@@ -35,8 +38,6 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
   const [nilai, setNilai] = useState<PredikatNilai>('Sangat Baik');
   const [catatan, setCatatan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   const selectedSurah = SURAH_LIST.find(s => s.nameLatin === surahName) || SURAH_LIST[0];
 
@@ -53,8 +54,6 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
     e.preventDefault();
     if (!idSantri || !surahName) return;
 
-    setFormError(null);
-    setShowSuccessToast(false);
     setIsSubmitting(true);
     try {
       const customTimestamp = `${tanggalSetor} ${waktuSetor || '00:00'}`;
@@ -69,14 +68,11 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
       });
 
       setIsSubmitting(false);
-      setShowSuccessToast(true);
-      setTimeout(() => {
-        setShowSuccessToast(false);
-        onSuccess();
-      }, 900);
+      onNotify('success', "Muroja'ah berhasil disimpan ke Cloud.");
+      onSuccess();
     } catch (err) {
       console.error('Error saving murojaah:', err);
-      setFormError("Muroja'ah belum tersimpan ke Cloud. Periksa koneksi lalu coba lagi.");
+      onNotify('error', "Muroja'ah belum tersimpan ke Cloud. Periksa koneksi lalu coba simpan lagi.");
       setIsSubmitting(false);
     }
   };
@@ -89,8 +85,6 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
     setCatatan('');
     setTanggalSetor(getTodayInputFormat());
     setWaktuSetor(getCurrentTimeInputFormat());
-    setShowSuccessToast(false);
-    setFormError(null);
   };
 
   return (
@@ -111,19 +105,6 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
           </div>
         </div>
 
-        {showSuccessToast && (
-          <div className="p-3 bg-teal-50 border border-teal-200 rounded-xl text-teal-800 text-xs font-semibold flex items-center gap-2" role="status">
-            <CheckCircle className="w-4 h-4 text-teal-600 flex-shrink-0" />
-            <span>Muroja'ah berhasil disimpan ke Cloud.</span>
-          </div>
-        )}
-
-        {formError && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-semibold flex items-start gap-2" role="alert">
-            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-            <span>{formError}</span>
-          </div>
-        )}
 
         {mySantriList.length === 0 ? (
           <div className="text-center py-10 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 space-y-3">

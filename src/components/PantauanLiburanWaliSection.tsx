@@ -3,12 +3,14 @@ import { User, Santri, PantauanLiburanRecord, ShalatJamaahStatus, SHALAT_STATUS_
 import { storageService } from '../services/storageService';
 import { Sparkles, Calendar, BookOpen, CircleCheck as CheckCircle2, CircleAlert as AlertCircle, Check, Trash2, Edit3, Save, RotateCcw, Clock, Lock } from 'lucide-react';
 import { formatTanggalIndo, getTodayInputFormat } from '../utils/dateFormatter';
+import type { NotifyFn } from './Snackbar';
 
 interface PantauanLiburanWaliSectionProps {
   currentUser: User;
   targetSantri: Santri;
   isActive: boolean;
   onDataChanged?: () => void;
+  onNotify: NotifyFn;
 }
 
 const WAKTU_SHALAT: { key: 'shalatSubuh' | 'shalatDzuhur' | 'shalatAshar' | 'shalatMaghrib' | 'shalatIsya'; label: string; icon: string }[] = [
@@ -23,7 +25,8 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
   currentUser,
   targetSantri,
   isActive,
-  onDataChanged
+  onDataChanged,
+  onNotify
 }) => {
   const todayStr = getTodayInputFormat();
 
@@ -43,8 +46,8 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [recordToDelete, setRecordToDelete] = useState<PantauanLiburanRecord | null>(null);
+  const [isDeletingRecord, setIsDeletingRecord] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
   // Local state of records for target santri
@@ -108,15 +111,22 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
     window.scrollTo({ top: 300, behavior: 'smooth' });
   };
 
-  const handleDeleteRecord = async (id: string) => {
-    if (!window.confirm('Hapus rekaman amaliyah liburan ini?')) return;
-    await storageService.deletePantauanLiburan(id);
-    loadRecords();
-    if (editingRecordId === id) resetForm();
-    setToastType('success');
-    setToastMessage('Catatan amaliyah liburan berhasil dihapus.');
-    setTimeout(() => setToastMessage(null), 3000);
-    if (onDataChanged) onDataChanged();
+  const confirmDeleteRecord = async () => {
+    if (!recordToDelete) return;
+    setIsDeletingRecord(true);
+    try {
+      await storageService.deletePantauanLiburan(recordToDelete.id);
+      loadRecords();
+      if (editingRecordId === recordToDelete.id) resetForm();
+      if (onDataChanged) onDataChanged();
+      onNotify('success', 'Catatan amaliyah liburan berhasil dihapus dari Cloud.');
+      setRecordToDelete(null);
+    } catch (err) {
+      console.error(err);
+      onNotify('error', 'Catatan amaliyah gagal dihapus dari Cloud. Data tidak dinyatakan terhapus.');
+    } finally {
+      setIsDeletingRecord(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -150,14 +160,11 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
       });
 
       loadRecords();
-      setToastType('success');
-      setToastMessage(`Laporan amaliyah ${formatTanggalIndo(selectedTanggal)} berhasil disimpan ke Cloud.`);
-      setTimeout(() => setToastMessage(null), 3500);
+      onNotify('success', `Laporan amaliyah ${formatTanggalIndo(selectedTanggal)} berhasil disimpan ke Cloud.`);
       if (onDataChanged) onDataChanged();
     } catch (err) {
       console.error(err);
-      setToastType('error');
-      setToastMessage('Gagal menyimpan ke Cloud. Data belum terkonfirmasi. Periksa koneksi lalu coba kembali.');
+      onNotify('error', 'Gagal menyimpan ke Cloud. Data belum terkonfirmasi. Periksa koneksi lalu coba kembali.');
     } finally {
       setIsSubmitting(false);
     }
@@ -201,25 +208,6 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
   // 2. If Program Liburan is ON
   return (
     <div className="bg-white rounded-3xl p-5 sm:p-7 border border-emerald-200 shadow-sm space-y-6">
-      {/* Toast */}
-      {toastMessage && (
-        <div
-          className={`p-3.5 rounded-2xl border text-xs font-semibold flex items-center gap-2 animate-in fade-in ${
-            toastType === 'error'
-              ? 'bg-rose-50 border-rose-200 text-rose-900'
-              : 'bg-emerald-50 border-emerald-200 text-emerald-900'
-          }`}
-          role={toastType === 'error' ? 'alert' : 'status'}
-          aria-live="polite"
-        >
-          {toastType === 'error' ? (
-            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-          ) : (
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-          )}
-          <span>{toastMessage}</span>
-        </div>
-      )}
 
       {/* Header Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-emerald-100">
@@ -555,7 +543,7 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
                         <span>Edit</span>
                       </button>
                       <button
-                        onClick={() => handleDeleteRecord(rec.id)}
+                        onClick={() => setRecordToDelete(rec)}
                         className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg text-xs font-semibold flex items-center gap-1 transition cursor-pointer"
                         title="Hapus laporan ini"
                       >
@@ -622,6 +610,42 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
           </div>
         )}
       </div>
+
+      {recordToDelete && (
+        <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-[1px] flex items-center justify-center p-4">
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white border border-slate-200 shadow-xl p-5 space-y-4"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pantauan-delete-title"
+          >
+            <div>
+              <h4 id="pantauan-delete-title" className="text-sm font-extrabold text-slate-900">Hapus catatan amaliyah?</h4>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Catatan tanggal {formatTanggalIndo(recordToDelete.tanggal)} akan dihapus dari Cloud dan tidak dapat dipulihkan dari halaman ini.
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setRecordToDelete(null)}
+                disabled={isDeletingRecord}
+                className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={confirmDeleteRecord}
+                disabled={isDeletingRecord}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold disabled:opacity-50"
+              >
+                {isDeletingRecord ? 'Menghapus...' : 'Hapus dari Cloud'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

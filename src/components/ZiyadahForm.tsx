@@ -2,8 +2,9 @@ import React, { useState, useMemo } from 'react';
 import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, Kelas } from '../types';
 import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
-import { CirclePlus as PlusCircle, BookOpen, CircleCheck as CheckCircle, Save, RotateCcw, Calendar, Clock, AlertCircle } from 'lucide-react';
+import { CirclePlus as PlusCircle, BookOpen, Save, RotateCcw, Calendar, Clock } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
+import type { NotifyFn } from './Snackbar';
 
 interface ZiyadahFormProps {
   currentUser: User;
@@ -11,6 +12,7 @@ interface ZiyadahFormProps {
   kelasList: Kelas[];
   selectedSantriId?: string;
   onSuccess: () => void;
+  onNotify: NotifyFn;
 }
 
 export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
@@ -18,7 +20,8 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
   santriList,
   kelasList,
   selectedSantriId,
-  onSuccess
+  onSuccess,
+  onNotify
 }) => {
   const myKelas = useMemo(() => kelasList.find(k => k.musyrifId === currentUser.id), [kelasList, currentUser.id]);
   const mySantriList = useMemo(() => {
@@ -35,8 +38,6 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
   const [nilai, setNilai] = useState<PredikatNilai>('Sangat Baik');
   const [catatan, setCatatan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   const selectedSurah = SURAH_LIST.find(s => s.nameLatin === surahName) || SURAH_LIST[0];
 
@@ -53,8 +54,6 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
     e.preventDefault();
     if (!idSantri || !surahName) return;
 
-    setFormError(null);
-    setShowSuccessToast(false);
     setIsSubmitting(true);
     try {
       const customTimestamp = `${tanggalSetor} ${waktuSetor || '00:00'}`;
@@ -71,14 +70,11 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
       });
 
       setIsSubmitting(false);
-      setShowSuccessToast(true);
-      setTimeout(() => {
-        setShowSuccessToast(false);
-        onSuccess();
-      }, 900);
+      onNotify('success', 'Ziyadah berhasil disimpan ke Cloud.');
+      onSuccess();
     } catch (err) {
       console.error('Error saving ziyadah:', err);
-      setFormError('Ziyadah belum tersimpan ke Cloud. Periksa koneksi lalu coba lagi.');
+      onNotify('error', 'Ziyadah belum tersimpan ke Cloud. Periksa koneksi lalu coba simpan lagi.');
       setIsSubmitting(false);
     }
   };
@@ -91,8 +87,6 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
     setCatatan('');
     setTanggalSetor(getTodayInputFormat());
     setWaktuSetor(getCurrentTimeInputFormat());
-    setShowSuccessToast(false);
-    setFormError(null);
   };
 
   return (
@@ -113,19 +107,6 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
           </div>
         </div>
 
-        {showSuccessToast && (
-          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2" role="status">
-            <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-            <span>Ziyadah berhasil disimpan ke Cloud.</span>
-          </div>
-        )}
-
-        {formError && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-semibold flex items-start gap-2" role="alert">
-            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-            <span>{formError}</span>
-          </div>
-        )}
 
         {mySantriList.length === 0 ? (
           <div className="text-center py-10 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 space-y-3">

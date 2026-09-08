@@ -32,6 +32,7 @@ import {
   Award
 } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
+import type { NotifyFn } from './Snackbar';
 import { isNonTahfidzClass } from '../utils/classUtils';
 
 interface PembelajaranFormProps {
@@ -41,6 +42,7 @@ interface PembelajaranFormProps {
   selectedSantriId?: string;
   defaultTipeKelas?: TipeKelas;
   onSuccess: () => void;
+  onNotify: NotifyFn;
 }
 
 const QUICK_NOTES_JILID = [
@@ -63,7 +65,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
   kelasList,
   selectedSantriId,
   defaultTipeKelas,
-  onSuccess
+  onSuccess,
+  onNotify
 }) => {
   // Find musyrif's class if any
   const myKelas = useMemo(() => {
@@ -123,8 +126,6 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
   const [statusKenaikan, setStatusKenaikan] = useState<StatusKenaikan>('Lanjut Halaman');
   const [catatan, setCatatan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   // Switch santri
   const handleSantriChange = (newSantriId: string) => {
@@ -154,8 +155,6 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
     e.preventDefault();
     if (!idSantri) return;
 
-    setFormError(null);
-    setShowSuccessToast(false);
     setIsSubmitting(true);
     try {
       const customTimestamp = `${tanggalSetor} ${waktuSetor || '00:00'}`;
@@ -186,15 +185,11 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
       });
 
       setIsSubmitting(false);
-      setShowSuccessToast(true);
-
-      setTimeout(() => {
-        setShowSuccessToast(false);
-        onSuccess();
-      }, 900);
+      onNotify('success', 'Pembelajaran berhasil disimpan ke Cloud.');
+      onSuccess();
     } catch (err) {
       console.error(err);
-      setFormError('Pembelajaran belum tersimpan ke Cloud. Periksa koneksi lalu coba lagi.');
+      onNotify('error', 'Pembelajaran belum tersimpan ke Cloud. Periksa koneksi lalu coba simpan lagi.');
       setIsSubmitting(false);
     }
   };
@@ -211,8 +206,6 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
     setCatatan('');
     setKendalaSantri('');
     setRekomendasiTindakLanjut('');
-    setShowSuccessToast(false);
-    setFormError(null);
   };
 
   return (
@@ -229,19 +222,6 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
           </div>
         </div>
 
-        {showSuccessToast && (
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs font-semibold flex items-center gap-2" role="status">
-            <CheckCircle className="w-4 h-4 text-amber-700 flex-shrink-0" />
-            <span>Pembelajaran berhasil disimpan ke Cloud.</span>
-          </div>
-        )}
-
-        {formError && (
-          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-semibold flex items-start gap-2" role="alert">
-            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-            <span>{formError}</span>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* 1. Pemilihan Tipe Kelas Non-Tahfidz */}

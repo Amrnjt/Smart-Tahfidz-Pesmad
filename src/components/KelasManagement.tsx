@@ -19,25 +19,27 @@ import {
   ChevronUp,
   Sparkles
 } from 'lucide-react';
+import type { NotifyFn } from './Snackbar';
 
 interface KelasManagementProps {
   kelasList: Kelas[];
   santriList: Santri[];
   userList: User[];
   onDataChanged: () => void;
+  onNotify: NotifyFn;
 }
 
 export const KelasManagement: React.FC<KelasManagementProps> = ({
   kelasList,
   santriList,
   userList,
-  onDataChanged
+  onDataChanged,
+  onNotify
 }) => {
   const ustadzList = userList.filter(u => u.role === 'Ustadz' || u.role === 'Superadmin');
   const [showAddModal, setShowAddModal] = useState(false);
   const [kelasToEdit, setKelasToEdit] = useState<Kelas | null>(null);
   const [kelasToDelete, setKelasToDelete] = useState<Kelas | null>(null);
-  const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showUnassignedList, setShowUnassignedList] = useState(false);
@@ -127,10 +129,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
     return list;
   }, [kelasToEdit, santriList, santriClassMap, showOtherAssignedInEdit, editSearchQuery]);
 
-  const showToast = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 3500);
-  };
+  const showToast = (type: 'success' | 'error', message: string) => onNotify(type, message);
 
   const handleOpenAdd = (preselectedIds?: string[]) => {
     setNewNamaKelas('');
@@ -165,7 +164,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
       setNewMusyrifId('');
       setNewSantriIds([]);
       onDataChanged();
-      showToast('success', `Kelas "${newKelas.namaKelas}" berhasil dibuat dengan ${newSantriIds.length} santri.`);
+      showToast('success', `Kelas "${newKelas.namaKelas}" berhasil dibuat di Cloud dengan ${newSantriIds.length} santri.`);
     } catch {
       setIsSaving(false);
       showToast('error', 'Gagal membuat kelas baru.');
@@ -199,7 +198,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
       setIsSaving(false);
       setKelasToEdit(null);
       onDataChanged();
-      showToast('success', `Kelas "${editNamaKelas.trim()}" berhasil diperbarui.`);
+      showToast('success', `Kelas "${editNamaKelas.trim()}" berhasil diperbarui di Cloud.`);
     } catch {
       setIsSaving(false);
       showToast('error', 'Gagal memperbarui kelas.');
@@ -214,7 +213,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
       setIsDeleting(false);
       setKelasToDelete(null);
       onDataChanged();
-      showToast('success', `Kelas "${kelasToDelete.namaKelas}" berhasil dihapus.`);
+      showToast('success', `Kelas "${kelasToDelete.namaKelas}" berhasil dihapus dari Cloud.`);
     } catch {
       setIsDeleting(false);
       showToast('error', 'Gagal menghapus kelas.');
@@ -249,12 +248,6 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
 
   return (
     <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-6">
-      {notification && (
-        <div className={`p-3.5 rounded-2xl flex items-center gap-3 text-xs font-semibold shadow-sm ${notification.type === 'success' ? 'bg-emerald-50 text-emerald-900 border border-emerald-200' : 'bg-rose-50 text-rose-900 border border-rose-200'}`}>
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-          <span className="flex-1">{notification.message}</span>
-        </div>
-      )}
 
       {/* Header & Main Action */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">

@@ -14,19 +14,22 @@ import {
   Eye
 } from 'lucide-react';
 import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
+import type { NotifyFn } from './Snackbar';
 
 interface SetorActionSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (tab: ActiveTab) => void;
   santriList?: Santri[];
+  onNotify: NotifyFn;
 }
 
 export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
   isOpen,
   onClose,
   onSelect,
-  santriList = []
+  santriList = [],
+  onNotify
 }) => {
   const [isProgramLiburanActive, setIsProgramLiburanActive] = useState(false);
   const [isTogglingLiburan, setIsTogglingLiburan] = useState(false);
@@ -47,8 +50,10 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
     try {
       await storageService.setProgramLiburanActive(nextState, 'Ustadz / Admin');
       setIsProgramLiburanActive(nextState);
+      onNotify('success', nextState ? 'Program Pantauan Liburan aktif dan tersimpan di Cloud.' : 'Program Pantauan Liburan dinonaktifkan dan tersimpan di Cloud.');
     } catch (err) {
       console.error('Failed to toggle program liburan:', err);
+      onNotify('error', 'Status Program Pantauan Liburan gagal diperbarui di Cloud.');
     } finally {
       setIsTogglingLiburan(false);
     }
