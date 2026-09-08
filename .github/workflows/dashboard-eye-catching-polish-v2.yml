@@ -1,0 +1,60 @@
+name: Dashboard Eye-Catching Polish Validation v2
+
+on:
+  push:
+    branches:
+      - dashboard-eye-catching-polish
+    paths:
+      - scripts/dashboard_eye_catching_patch.py
+      - .github/workflows/dashboard-eye-catching-polish-v2.yml
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dashboard-eye-catching-polish
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Apply dashboard polish
+        run: python scripts/dashboard_eye_catching_patch.py
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: TypeScript check
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Dashboard polish finish gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/components/UstadzDashboard.tsx').read_text()
+          assert "const categoryTargetTabs" in p
+          assert "rounded-t-[999px]" in p
+          assert 'pathLength="100"' in p
+          assert "Buka form ${item.label}" in p
+          assert "onOpenSetorMenu" in p
+          assert "todayAttention" in p and "activities.length" in p
+          assert "bg-gradient" not in p
+          assert "Sparkles" not in p
+          assert "backdrop-blur" not in p
+          assert "text-[9px]" not in p and "text-[10px]" not in p and "text-[11px]" not in p
+          assert "storageService" not in p
+          PY
+          git diff --check
+          git diff --exit-code -- package.json package-lock.json
+      - name: Commit verified dashboard source
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/UstadzDashboard.tsx
+          git commit -m "refactor: enrich Ustadz dashboard interaction and depth"
+          git push origin HEAD:dashboard-eye-catching-polish
