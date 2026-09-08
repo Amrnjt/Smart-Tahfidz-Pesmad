@@ -741,9 +741,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl p-2.5 sm:p-4 border border-slate-200/90  flex flex-col lg:max-h-[calc(100dvh-140px)]">
+    <div className="p2-history bg-white rounded-xl p-2.5 sm:p-4 border border-slate-200/90 flex flex-col lg:max-h-[calc(100dvh-140px)]">
       {/* Header & Filter Controls */}
-      <div className="pb-2 border-b border-slate-100 flex-shrink-0 space-y-2">
+      <div className="p2-history-toolbar pb-2 border-b border-slate-100 flex-shrink-0 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="min-w-0 w-full lg:w-auto">
             <h3 className="font-bold text-slate-900 text-base sm:text-lg flex flex-wrap items-center gap-2 min-w-0">
@@ -1418,7 +1418,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       </div>
 
       {/* Scrollable Content Area - responsive height */}
-      <div className="flex-1 lg:overflow-y-auto min-h-0 rounded-2xl border border-slate-200 bg-white overflow-hidden">
+      <div className="p2-history-results flex-1 lg:overflow-y-auto min-h-0 rounded-2xl border border-slate-200 bg-white overflow-hidden">
         {!isViewOnly && displayedItems.length > 0 && (
           <>
             {/* Mobile: one-line selection trigger */}
@@ -1465,7 +1465,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         {displayedItems.length === 0 ? (
           <>
             {/* Mobile compact empty state */}
-            <div className="lg:hidden flex flex-col items-center justify-center py-10 px-5 text-center">
+            <div className="p2-history-empty lg:hidden flex flex-col items-center justify-center py-10 px-5 text-center">
               <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center mb-2.5">
                 <Inbox className="w-4 h-4 text-slate-400" />
               </div>
@@ -1489,7 +1489,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
             </div>
 
             {/* Desktop empty state */}
-            <div className="hidden lg:flex flex-col items-center justify-center py-8 px-4 text-center text-slate-400">
+            <div className="p2-history-empty hidden lg:flex flex-col items-center justify-center py-8 px-4 text-center text-slate-400">
               <Inbox className="w-10 h-10 mb-2 text-slate-300" />
               <p className="text-sm font-semibold text-slate-600">Tidak ada data setoran yang cocok</p>
               <p className="text-xs text-slate-400 mt-1 max-w-sm">
@@ -1532,9 +1532,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   : { label: 'Pembelajaran', dot: 'bg-amber-500', text: 'text-amber-700' };
 
               return (
-                <div key={item.id} className={`transition-colors ${isSelected ? 'bg-emerald-50/40' : 'bg-white hover:bg-slate-50/70'}`}>
+                <div key={item.id} data-selected={isSelected ? 'true' : 'false'} className={`p2-history-record transition-colors ${isSelected ? 'bg-emerald-50/40' : 'bg-white hover:bg-slate-50/70'}`}>
                   {/* MOBILE VIEW — compact editorial list */}
-                  <div className="lg:hidden px-4 py-3.5">
+                  <div className="p2-history-mobile-row lg:hidden px-4 py-3.5">
                     <div className="flex items-start gap-2.5">
                       {!isViewOnly && (
                         <label className="mt-0.5 flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center text-slate-500">
@@ -1625,7 +1625,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     </div>
 
                     {isExpanded && (
-                      <div id={`history-mobile-detail-${item.id}`} className="mt-3 ml-6 rounded-r-xl border-l-2 border-slate-200 bg-slate-50/70 pl-3 pr-3 py-3">
+                      <div id={`history-mobile-detail-${item.id}`} className="p2-history-mobile-detail mt-3 ml-6 rounded-r-xl border-l-2 border-slate-200 bg-slate-50/70 pl-3 pr-3 py-3">
                         <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-x-3 gap-y-2 text-xs leading-5">
                           <span className="text-slate-400">ID Santri</span>
                           <span className="font-mono text-slate-600">{item.idSantri}</span>
@@ -1694,7 +1694,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                   {/* DESKTOP VIEW ROW (hidden sm:flex) */}
                   <div
-                    className="hidden lg:flex items-center gap-2.5 px-4 py-3 cursor-pointer"
+                    className="p2-history-desktop-row hidden lg:flex items-center gap-2.5 px-4 py-3 cursor-pointer"
                     onClick={() => toggleRow(item.id)}
                   >
                     {/* Row Select Checkbox (For Ustadz/Admin) */}
@@ -1785,7 +1785,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                   {/* Expanded Detail - accordion */}
                   {isExpanded && (
-                    <div id={`history-desktop-detail-${item.id}`} className="hidden lg:block px-2.5 sm:px-4 pb-3 pt-2 bg-slate-50/70 border-t border-slate-200/80 rounded-b-lg space-y-2 text-xs">
+                    <div id={`history-desktop-detail-${item.id}`} className="p2-history-desktop-detail hidden lg:block px-2.5 sm:px-4 pb-3 pt-2 bg-slate-50/70 border-t border-slate-200/80 rounded-b-lg space-y-2 text-xs">
                       {/* Grid cards for detail */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {/* Detail Identitas & Materi Card */}
