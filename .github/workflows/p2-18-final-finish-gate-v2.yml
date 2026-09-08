@@ -90,6 +90,6 @@ jobs:
           git add src/App.tsx
           git diff --cached --quiet && { echo "No App change to commit"; exit 1; }
           git commit -m "perf: code-split P2.18 feature routes"
+          git fetch origin p2-18-final-finish-gate
+          git rebase origin/p2-18-final-finish-gate
           git push origin HEAD:p2-18-final-finish-gate
-
-# Triggered after Final Design Contract v2 approval.
