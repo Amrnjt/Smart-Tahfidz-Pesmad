@@ -559,10 +559,10 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
       </section>
 
       {recordToDelete && (
-        <div className="fixed inset-0 z-50 bg-slate-950/50 flex items-center justify-center p-4">
+        <div className="ui-dialog-overlay">
           <div
             ref={deleteDialogRef}
-            className="w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white border border-slate-200 shadow-xl p-5 space-y-4"
+            className="ui-dialog-panel max-w-sm p-5 space-y-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby="pantauan-delete-title"
@@ -582,7 +582,7 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
                 dan tidak dapat dipulihkan dari halaman ini.
               </p>
             </div>
-            <div className="flex flex-wrap justify-end gap-2 border-t border-slate-200 pt-4">
+            <div className="ui-dialog-footer">
               <button
                 type="button"
                 onClick={() => setRecordToDelete(null)}

@@ -816,14 +816,14 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
       {santriToEdit && (
         <div
           ref={editSantriDialogRef}
-          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4"
+          className="ui-dialog-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Edit data santri"
           tabIndex={-1}
         >
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain p-6 sm:p-7 border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="ui-dialog-panel max-w-md p-5 sm:p-6 space-y-5">
+            <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
               <h4 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
                 <Edit3 className="w-5 h-5 text-emerald-700" />
                 Edit Data Santri ({santriToEdit.idSantri})
@@ -831,7 +831,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
               <button
                 onClick={() => setSantriToEdit(null)}
                 aria-label="Tutup dialog edit santri"
-                className="text-slate-400 hover:text-slate-600 text-lg cursor-pointer"
+                className="ui-dialog-close cursor-pointer text-lg"
               >
                 ✕
               </button>
@@ -910,18 +910,18 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="ui-dialog-footer">
                 <button
                   type="button"
                   onClick={() => setSantriToEdit(null)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition disabled:opacity-50"
+                  className="ui-control w-full sm:w-auto px-5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
                   <span>{isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
@@ -936,14 +936,14 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
       {userToEdit && (
         <div
           ref={editUserDialogRef}
-          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4"
+          className="ui-dialog-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Edit akun pengguna"
           tabIndex={-1}
         >
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain p-6 sm:p-7 border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="ui-dialog-panel max-w-md p-5 sm:p-6 space-y-5">
+            <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
               <h4 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
                 <Edit3 className="w-5 h-5 text-emerald-700" />
                 Setting Role & Edit Akun Pengguna
@@ -951,7 +951,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
               <button
                 onClick={() => setUserToEdit(null)}
                 aria-label="Tutup dialog edit akun"
-                className="text-slate-400 hover:text-slate-600 text-lg cursor-pointer"
+                className="ui-dialog-close cursor-pointer text-lg"
               >
                 ✕
               </button>
@@ -1058,18 +1058,18 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="ui-dialog-footer">
                 <button
                   type="button"
                   onClick={() => setUserToEdit(null)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition disabled:opacity-50"
+                  className="ui-control w-full sm:w-auto px-5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
                 >
                   <Save className="w-4 h-4" />
                   <span>{isSaving ? 'Menyimpan...' : 'Simpan Perubahan Role & Akun'}</span>
@@ -1084,13 +1084,13 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
       {santriToDelete && (
         <div
           ref={deleteSantriDialogRef}
-          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4"
+          className="ui-dialog-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Konfirmasi hapus santri"
           tabIndex={-1}
         >
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain p-6 sm:p-7 border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+          <div className="ui-dialog-panel max-w-md p-5 sm:p-6 space-y-5">
             <div className="flex items-center gap-3 text-rose-600 pb-2 border-b border-slate-100">
               <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle className="w-5 h-5 text-rose-600" />
@@ -1134,12 +1134,12 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
               </label>
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <div className="ui-dialog-footer">
               <button
                 type="button"
                 onClick={() => setSantriToDelete(null)}
                 disabled={isDeleting}
-                className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer transition disabled:opacity-50"
+                className="ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors disabled:opacity-50"
               >
                 Batal
               </button>
@@ -1148,7 +1148,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                 id="btn-confirm-delete-santri"
                 onClick={handleDeleteSantri}
                 disabled={isDeleting}
-                className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition disabled:opacity-50"
+                className="ui-control w-full sm:w-auto px-5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-sm font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
               >
                 <Trash2 className="w-4 h-4" />
                 <span>{isDeleting ? 'Menghapus...' : 'Ya, Hapus Santri'}</span>
@@ -1162,13 +1162,13 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
       {userToDelete && (
         <div
           ref={deleteUserDialogRef}
-          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4"
+          className="ui-dialog-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Konfirmasi hapus akun pengguna"
           tabIndex={-1}
         >
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain p-6 sm:p-7 border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+          <div className="ui-dialog-panel max-w-md p-5 sm:p-6 space-y-5">
             <div className="flex items-center gap-3 text-rose-600 pb-2 border-b border-slate-100">
               <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle className="w-5 h-5 text-rose-600" />
@@ -1194,12 +1194,12 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+            <div className="ui-dialog-footer">
               <button
                 type="button"
                 onClick={() => setUserToDelete(null)}
                 disabled={isDeleting}
-                className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer transition disabled:opacity-50"
+                className="ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors disabled:opacity-50"
               >
                 Batal
               </button>
@@ -1221,14 +1221,14 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
       {showAddModal && (
         <div
           ref={addSantriDialogRef}
-          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4"
+          className="ui-dialog-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Tambah data santri"
           tabIndex={-1}
         >
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain p-6 sm:p-7 border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="ui-dialog-panel max-w-md p-5 sm:p-6 space-y-5">
+            <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
               <h4 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
                 <UserPlus className="w-5 h-5 text-emerald-700" />
                 Tambah Data Santri Baru
@@ -1236,7 +1236,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
               <button
                 onClick={() => setShowAddModal(false)}
                 aria-label="Tutup dialog tambah santri"
-                className="text-slate-400 hover:text-slate-600 text-lg cursor-pointer"
+                className="ui-dialog-close cursor-pointer text-lg"
               >
                 ✕
               </button>
@@ -1347,18 +1347,18 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                 Sistem otomatis membuatkan akun login <b>Wali</b> (<code className="font-mono bg-white px-1 rounded">wali_idsantri</code>) dan akun login <b>Santri</b> (<code className="font-mono bg-white px-1 rounded">idsantri</code>) untuk diakses di rumah.
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="ui-dialog-footer">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition disabled:opacity-50"
+                  className="ui-control w-full sm:w-auto px-5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
                 >
                   {isSaving ? 'Menyimpan...' : 'Simpan Data Santri'}
                 </button>
@@ -1372,14 +1372,14 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
       {showAddUserModal && (
         <div
           ref={addUserDialogRef}
-          className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4"
+          className="ui-dialog-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Tambah akun pengguna"
           tabIndex={-1}
         >
-          <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain p-6 sm:p-7 border border-slate-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div className="ui-dialog-panel max-w-md p-5 sm:p-6 space-y-5">
+            <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
               <h4 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
                 <Shield className="w-5 h-5 text-emerald-700" />
                 Tambah Akun Pengguna Baru
@@ -1387,7 +1387,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
               <button
                 onClick={() => setShowAddUserModal(false)}
                 aria-label="Tutup dialog tambah akun"
-                className="text-slate-400 hover:text-slate-600 text-lg cursor-pointer"
+                className="ui-dialog-close cursor-pointer text-lg"
               >
                 ✕
               </button>
@@ -1432,10 +1432,10 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                     onChange={(e) => setNewUserRole(e.target.value as UserRole)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
                   >
-                    <option value="Superadmin">👑 Superadmin</option>
-                    <option value="Ustadz">🛡️ Ustadz</option>
-                    <option value="Wali">👥 Wali Santri</option>
-                    <option value="Santri">📖 Santri (View-Only)</option>
+                    <option value="Superadmin">Superadmin</option>
+                    <option value="Ustadz">Ustadz</option>
+                    <option value="Wali">Wali Santri</option>
+                    <option value="Santri">Santri (View-Only)</option>
                   </select>
                 </div>
 
@@ -1484,18 +1484,18 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <div className="ui-dialog-footer">
                 <button
                   type="button"
                   onClick={() => setShowAddUserModal(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer"
+                  className="ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition disabled:opacity-50"
+                  className="ui-control w-full sm:w-auto px-5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50"
                 >
                   {isSaving ? 'Menyimpan...' : 'Simpan Akun Pengguna'}
                 </button>
