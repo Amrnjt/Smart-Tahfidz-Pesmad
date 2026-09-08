@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, ActiveTab } from './types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas } from './types';
 import { storageService } from './services/storageService';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
@@ -19,6 +19,7 @@ import { KelasManagement } from './components/KelasManagement';
 import { NotificationToastContainer } from './components/NotificationToastContainer';
 import { Snackbar, SnackbarState, NotifyFn } from './components/Snackbar';
 import { useSetoranNotifications } from './hooks/useSetoranNotifications';
+import { useActiveTabNavigation } from './hooks/useActiveTabNavigation';
 import { LayoutDashboard, CirclePlus as PlusCircle, History, BookOpen, Users, Cloud, School } from 'lucide-react';
 
 export default function App() {
@@ -29,7 +30,7 @@ export default function App() {
       return null;
     }
   });
-  const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
+  const [activeTab, setActiveTab] = useActiveTabNavigation(currentUser);
   const [santriList, setSantriList] = useState<Santri[]>(() => {
     try { return storageService.getSantriList(); } catch { return []; }
   });
