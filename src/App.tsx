@@ -4,6 +4,7 @@ import { storageService } from './services/storageService';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
 import { SetorActionSheet } from './components/SetorActionSheet';
+import { SetoranFormNav } from './components/SetoranFormNav';
 import { LoginView } from './components/LoginModal';
 import { UstadzDashboard } from './components/UstadzDashboard';
 import { WaliDashboard } from './components/WaliDashboard';
@@ -328,6 +329,13 @@ export default function App() {
                   setActiveTab={setActiveTab}
                 />
               )
+            )}
+
+            {isSetorActive && isUstadz && (
+              <SetoranFormNav
+                activeTab={activeTab}
+                onBack={() => setActiveTab('dashboard')}
+              />
             )}
 
             {activeTab === 'ziyadah' && isUstadz && (
