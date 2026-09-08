@@ -26,6 +26,14 @@ function normalizeRole(role: unknown): UserRole {
   return 'Ustadz';
 }
 
+function trustedRole(role: unknown): UserRole | null {
+  const value = String(role || '').trim();
+  if (value === 'Superadmin' || value === 'Ustadz' || value === 'Wali' || value === 'Santri') {
+    return value;
+  }
+  return null;
+}
+
 function stripCredentialFields(user: User): User {
   const { password: _password, ...safeUser } = user;
   return safeUser;
@@ -105,11 +113,13 @@ export const authService = {
 
       const token = await firebaseUser.getIdTokenResult();
       const cached = storageService.getSession();
-      const role = normalizeRole(token.claims.role || cached?.role);
-      const username = String(token.claims.username || cached?.username || '').trim().toLowerCase();
-      const idSantri = String(token.claims.idSantri || cached?.idSantri || '').trim();
+      const role = trustedRole(token.claims.role);
+      const username = String(token.claims.username || '').trim().toLowerCase();
+      const idSantri = String(token.claims.idSantri || '').trim();
 
-      if (!username) {
+      // Never promote a Firebase identity from cached application data. Role and
+      // username must be present in the signed ID token created by the server.
+      if (!role || !username) {
         await firebaseSignOut(auth);
         storageService.setSession(null);
         return null;
