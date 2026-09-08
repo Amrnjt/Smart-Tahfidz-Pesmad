@@ -1,6 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ActiveTab, Santri } from '../types';
-import { storageService } from '../services/storageService';
 import {
   BookPlus,
   RotateCw,
@@ -9,8 +8,6 @@ import {
   X,
   ChevronRight,
   GraduationCap,
-  ToggleLeft,
-  ToggleRight,
   Eye
 } from 'lucide-react';
 import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
@@ -32,35 +29,8 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
   santriList = [],
   onNotify
 }) => {
-  const [isProgramLiburanActive, setIsProgramLiburanActive] = useState(false);
-  const [isTogglingLiburan, setIsTogglingLiburan] = useState(false);
   const [showMonitorModal, setShowMonitorModal] = useState(false);
   const dialogRef = useAccessibleDialog(isOpen, onClose);
-
-  useEffect(() => {
-    if (isOpen) {
-      const config = storageService.getAppConfig();
-      setIsProgramLiburanActive(config.programLiburanActive);
-    }
-  }, [isOpen]);
-
-  const handleToggleLiburan = async (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setIsTogglingLiburan(true);
-    const nextState = !isProgramLiburanActive;
-
-    try {
-      await storageService.setProgramLiburanActive(nextState, 'Ustadz / Admin');
-      setIsProgramLiburanActive(nextState);
-      onNotify('success', nextState ? 'Program Pantauan Liburan aktif dan tersimpan di Cloud.' : 'Program Pantauan Liburan dinonaktifkan dan tersimpan di Cloud.');
-    } catch (err) {
-      console.error('Failed to toggle program liburan:', err);
-      onNotify('error', 'Status Program Pantauan Liburan gagal diperbarui di Cloud.');
-    } finally {
-      setIsTogglingLiburan(false);
-    }
-  };
-
 
   if (!isOpen) return null;
 
@@ -126,7 +96,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
           <div className="min-w-0">
             <h2 id="setor-action-sheet-title" className="text-sm font-bold text-slate-900 leading-5">Input Setoran Santri</h2>
             <p id="setor-action-sheet-description" className="text-xs text-slate-500 leading-4">
-              Pilih jenis setoran yang akan diinput
+              Pilih jenis setoran untuk langsung mulai mengisi
             </p>
           </div>
           <button
@@ -139,103 +109,80 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
           </button>
         </div>
 
-        <section
-          aria-labelledby="setor-liburan-title"
-          className="mt-3 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 id="setor-liburan-title" className="text-sm font-semibold text-slate-900">
-              Pantauan Liburan
+        <section aria-labelledby="setor-primary-actions-title" className="py-3">
+          <div className="mb-2 px-0.5">
+            <h3 id="setor-primary-actions-title" className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+              Jenis setoran
             </h3>
-            <span
-              className={`rounded-md border px-2 py-1 text-xs font-semibold ${isProgramLiburanActive ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-700'}`}
-            >
-              {isProgramLiburanActive ? 'Aktif' : 'Nonaktif'}
-            </span>
           </div>
-          <p className="text-sm leading-5 text-slate-600">
-            {isProgramLiburanActive
-              ? 'Wali dapat mengisi wirid dan shalat ananda.'
-              : 'Pengisian Wali ditutup. Rekap tetap tersedia.'}
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setShowMonitorModal(true)}
-              aria-haspopup="dialog"
-              aria-expanded={showMonitorModal}
-              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100"
-              title="Lihat Rekap Liburan"
-            >
-              <Eye className="h-4 w-4" aria-hidden="true" />
-              Lihat rekap
-            </button>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={isProgramLiburanActive}
-              aria-label={isProgramLiburanActive ? 'Nonaktifkan Program Pantauan Liburan' : 'Aktifkan Program Pantauan Liburan'}
-              aria-busy={isTogglingLiburan}
-              onClick={handleToggleLiburan}
-              disabled={isTogglingLiburan}
-              className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100 disabled:cursor-wait disabled:opacity-60"
-            >
-              {isProgramLiburanActive ? (
-                <ToggleRight className="h-6 w-6 shrink-0 text-emerald-700" aria-hidden="true" />
-              ) : (
-                <ToggleLeft className="h-6 w-6 shrink-0 text-slate-600" aria-hidden="true" />
-              )}
-              {isTogglingLiburan ? 'Menyimpan...' : isProgramLiburanActive ? 'Nonaktifkan' : 'Aktifkan'}
-            </button>
+
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
+            {actions.map((act) => {
+              const Icon = act.icon;
+
+              return (
+                <button
+                  type="button"
+                  key={act.tab}
+                  onClick={() => {
+                    onSelect(act.tab);
+                    onClose();
+                  }}
+                  className="w-full min-h-[58px] px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-2.5 text-left cursor-pointer group md:min-h-[72px] md:p-3"
+                >
+                  <div
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${act.iconBg}`}
+                  >
+                    <Icon className="w-[19px] h-[19px]" />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                      <span className="text-sm font-bold text-slate-900 truncate">
+                        {act.title}
+                      </span>
+                      <span
+                        className={`text-xs leading-4 font-semibold px-1.5 rounded-md border whitespace-nowrap flex-shrink-0 ${act.badgeColor}`}
+                      >
+                        {act.badge}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 leading-4">
+                      {act.subtitle}
+                    </p>
+                  </div>
+
+                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 flex-shrink-0" />
+                </button>
+              );
+            })}
           </div>
-          {isTogglingLiburan && (
-            <p role="status" className="text-sm text-slate-600">
-              Menyimpan status ke Cloud...
-            </p>
-          )}
         </section>
 
-        <div className="grid grid-cols-1 gap-2 py-3 md:grid-cols-2">
-          {actions.map((act) => {
-            const Icon = act.icon;
+        <section aria-labelledby="setor-supporting-actions-title" className="border-t border-slate-100 py-3">
+          <div className="mb-2 px-0.5">
+            <h3 id="setor-supporting-actions-title" className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
+              Fitur pendukung
+            </h3>
+          </div>
 
-            return (
-              <button
-                type="button"
-                key={act.tab}
-                onClick={() => {
-                  onSelect(act.tab);
-                  onClose();
-                }}
-                className="w-full min-h-[54px] px-2.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-2.5 text-left cursor-pointer group md:min-h-[68px] md:p-3"
-              >
-                <div
-                  className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${act.iconBg}`}
-                >
-                  <Icon className="w-[18px] h-[18px]" />
-                </div>
-
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                    <span className="text-sm font-bold text-slate-900 truncate">
-                      {act.title}
-                    </span>
-                    <span
-                      className={`text-xs leading-4 font-semibold px-1.5 rounded-md border whitespace-nowrap flex-shrink-0 ${act.badgeColor}`}
-                    >
-                      {act.badge}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500 leading-4">
-                    {act.subtitle}
-                  </p>
-                </div>
-
-                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-slate-500 flex-shrink-0" />
-              </button>
-            );
-          })}
-        </div>
+          <button
+            type="button"
+            onClick={() => setShowMonitorModal(true)}
+            aria-haspopup="dialog"
+            aria-expanded={showMonitorModal}
+            className="group flex min-h-12 w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:border-slate-300 hover:bg-slate-100"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-700 border border-slate-200">
+              <Eye className="h-4 w-4" aria-hidden="true" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block text-sm font-semibold text-slate-800">Kelola Pantauan Liburan</span>
+              <span className="mt-0.5 block text-xs text-slate-500">Aktif/nonaktifkan program dan lihat rekap Wali</span>
+            </span>
+            <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+          </button>
+        </section>
 
         <div className="pt-1.5 border-t border-slate-100 flex items-center gap-2">
           <button
