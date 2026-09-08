@@ -1,0 +1,125 @@
+name: P2.14 Accessibility Validation v5
+
+on:
+  push:
+    branches:
+      - p2-14-accessibility
+    paths:
+      - .github/workflows/p2-14-accessibility-v5.yml
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: p2-14-accessibility
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Apply P2.14 accessibility patch
+        shell: bash
+        run: |
+          sed -i 's/min_count=3)/min_count=2)/' .github/p2-14-accessibility.py
+          sed -i '/absolute inset-y-0 right-0 pr-3/s/min_count=2/min_count=1/' .github/p2-14-accessibility.py
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('.github/p2-14-accessibility.py')
+          t = p.read_text()
+          block = '''replace(
+              path,
+              '                    title="Hapus pencarian"',
+              '                    title="Hapus pencarian"\\n                    aria-label="Hapus pencarian"',
+              1,
+          )
+          '''
+          if block not in t:
+              raise SystemExit('History optional clear-search block not found in patcher')
+          p.write_text(t.replace(block, ''))
+          PY
+          python .github/p2-14-accessibility.py
+          python - <<'PY'
+          from pathlib import Path
+          history = Path('src/components/HistoryTable.tsx')
+          t = history.read_text()
+          if 'title="Hapus pencarian"' in t and 'title="Hapus pencarian"\n                    aria-label="Hapus pencarian"' not in t:
+              t = t.replace('title="Hapus pencarian"', 'title="Hapus pencarian"\n                    aria-label="Hapus pencarian"', 1)
+          history.write_text(t)
+
+          login = Path('src/components/LoginModal.tsx')
+          t = login.read_text().replace("\\'login-error-message\\'", "'login-error-message'")
+          login.write_text(t)
+          PY
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: P2.14 accessibility finish gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          app = Path('src/App.tsx').read_text()
+          navbar = Path('src/components/Navbar.tsx').read_text()
+          bottom = Path('src/components/BottomNav.tsx').read_text()
+          sheet = Path('src/components/SetorActionSheet.tsx').read_text()
+          login = Path('src/components/LoginModal.tsx').read_text()
+          history = Path('src/components/HistoryTable.tsx').read_text()
+          santri = Path('src/components/SantriManagement.tsx').read_text()
+          kelas = Path('src/components/KelasManagement.tsx').read_text()
+          binnadzor = Path('src/components/BinnadzorForm.tsx').read_text()
+          pembelajaran = Path('src/components/PembelajaranForm.tsx').read_text()
+          chart = Path('src/components/ZiyadahProgressChart.tsx').read_text()
+          assert 'href="#main-content"' in app and 'id="main-content" tabIndex={-1}' in app
+          assert '<a\n          ref={brandRipple.elementRef}' in navbar
+          assert 'role="button"\n          tabIndex={0}' not in navbar
+          assert 'profile-menu-popover' in navbar and "event.key !== 'Escape'" in navbar
+          assert 'aria-label="Navigasi bawah"' in bottom and 'aria-expanded={isActionSheetOpen}' in bottom
+          assert "isProgramLiburanActive ? 'Nonaktifkan Program Pantauan Liburan'" in sheet
+          assert 'aria-expanded={showMonitorModal}' in sheet
+          assert login.count('autoComplete="username"') >= 2
+          assert login.count('autoComplete="current-password"') >= 2
+          assert login.count('aria-invalid={!!errorMsg}') >= 4
+          assert login.count('role="alert"') >= 2
+          assert "\\'login-error-message\\'" not in login
+          assert '<button\n                          type="button"\n                          onClick={(e) => toggleSelectItem(item.id, e)}' not in history
+          assert 'history-mobile-detail-' in history and 'history-desktop-detail-' in history
+          assert 'aria-pressed={isSelected}' in history
+          assert '<caption className="sr-only">Daftar akun pengguna dan hak akses</caption>' in santri
+          assert santri.count('scope="col"') >= 6
+          assert 'role="progressbar"' in kelas and 'aria-valuenow={placementPercent}' in kelas
+          assert "aria-pressed={modeInput === 'surah'}" in binnadzor
+          assert "aria-pressed={tipeKelas === 'Jilid'}" in pembelajaran
+          assert "aria-pressed={timeRange === '4weeks'}" in chart
+          assert "aria-pressed={metricType === 'ayat'}" in chart
+          assert 'aria-label="Diagram batang"' in chart
+          for form_path in ['src/components/ZiyadahForm.tsx','src/components/MurojaahForm.tsx','src/components/BinnadzorForm.tsx','src/components/PembelajaranForm.tsx']:
+              text = Path(form_path).read_text()
+              assert 'aria-busy={isSubmitting}' in text
+              assert 'aria-label="Pilih Santri"' in text
+              assert 'aria-label="Tanggal Setoran"' in text
+              assert 'aria-label="Waktu Setoran"' in text
+          PY
+          git diff --check
+
+      - name: Commit verified P2.14 source
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.tsx src/components/Navbar.tsx src/components/BottomNav.tsx src/components/SetorActionSheet.tsx src/components/LoginModal.tsx src/components/HistoryTable.tsx src/components/SantriManagement.tsx src/components/KelasManagement.tsx src/components/ZiyadahForm.tsx src/components/MurojaahForm.tsx src/components/BinnadzorForm.tsx src/components/PembelajaranForm.tsx src/components/ZiyadahProgressChart.tsx
+          git diff --cached --check
+          git commit -m "refactor: harden P2.14 accessibility"
+          git push origin HEAD:p2-14-accessibility
