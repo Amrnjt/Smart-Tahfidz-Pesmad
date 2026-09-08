@@ -166,6 +166,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   const sangatBaikPercent = activities.length > 0 ? Math.round((sangatBaikCount / activities.length) * 100) : null;
   const latestActivities = activities.slice(0, 6);
   const recentAttention = attentionActivities.slice(0, 4);
+  const latestTodayActivity = todayActivities[0] ?? null;
 
   const dailyBreakdown: { label: ActivityCategory; value: number }[] = [
     { label: 'Ziyadah', value: todayActivities.filter(record => record.category === 'Ziyadah').length },
@@ -173,6 +174,11 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
     { label: 'Binnadzor', value: todayActivities.filter(record => record.category === 'Binnadzor').length },
     { label: 'Pembelajaran', value: todayActivities.filter(record => record.category === 'Pembelajaran').length }
   ];
+
+  const dailyBreakdownWithShare = dailyBreakdown.map(item => ({
+    ...item,
+    share: todayActivities.length > 0 ? Math.round((item.value / todayActivities.length) * 100) : 0
+  }));
 
   const categoryTargetTabs: Record<ActivityCategory, ActiveTab> = {
     Ziyadah: 'ziyadah',
@@ -186,8 +192,23 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
       <section aria-label="Pusat kerja Ustadz" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="relative isolate overflow-hidden rounded-2xl border border-emerald-800 bg-emerald-950 text-white shadow-[0_18px_48px_-32px_rgba(6,78,59,0.8)] lg:col-span-3">
           <div aria-hidden="true" className="pointer-events-none absolute -right-10 top-12 hidden h-60 w-48 rounded-t-[999px] border border-emerald-700/50 lg:block" />
-          <div aria-hidden="true" className="pointer-events-none absolute right-5 top-20 hidden h-48 w-36 rounded-t-[999px] border border-emerald-800 bg-emerald-900/35 lg:flex lg:items-center lg:justify-center">
-            <BookOpen className="h-10 w-10 text-emerald-500/45" />
+          <div aria-hidden="true" className="pointer-events-none absolute right-5 top-20 hidden w-44 rounded-2xl border border-emerald-800 bg-emerald-900/55 p-4 lg:block">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-300">Terakhir hari ini</span>
+              <BookOpen className="h-4 w-4 text-emerald-400" />
+            </div>
+            {latestTodayActivity ? (
+              <>
+                <p className="mt-4 truncate text-sm font-bold text-white">{latestTodayActivity.namaSantri}</p>
+                <p className="mt-1 line-clamp-2 text-xs leading-5 text-emerald-200">{latestTodayActivity.category} · {latestTodayActivity.material}</p>
+                <p className="mt-3 text-xs font-semibold text-emerald-300">{formatTanggalWaktu(latestTodayActivity.timestamp)}</p>
+              </>
+            ) : (
+              <>
+                <p className="mt-4 text-sm font-bold text-white">Belum ada setoran</p>
+                <p className="mt-1 text-xs leading-5 text-emerald-200">Aktivitas pertama hari ini akan muncul di sini.</p>
+              </>
+            )}
           </div>
           <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -right-8 h-40 w-40 rounded-full border border-emerald-800/70" />
 
@@ -244,7 +265,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
               <button
                 type="button"
                 onClick={onOpenSetorMenu}
-                className="ui-control press-feedback inline-flex items-center justify-center gap-2 bg-emerald-300 px-4 text-sm font-bold text-emerald-950 shadow-sm transition-[background-color,transform] hover:bg-emerald-200"
+                className="ui-control press-feedback inline-flex items-center justify-center gap-2 bg-emerald-300 px-4 text-sm font-bold text-emerald-950 shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:bg-emerald-200 hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-100"
               >
                 <PlusCircle className="h-4 w-4" aria-hidden="true" />
                 Mulai Setor
@@ -269,7 +290,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           </div>
 
           <div className="relative z-10 grid grid-cols-2 gap-px border-t border-emerald-800 bg-emerald-800 sm:grid-cols-4">
-            {dailyBreakdown.map((item) => {
+            {dailyBreakdownWithShare.map((item) => {
               const style = categoryStyles[item.label];
               const Icon = style.icon;
               return (
@@ -287,6 +308,9 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                     </span>
                     <strong className="mt-1.5 block text-xl font-bold tabular-nums text-white">{item.value}</strong>
                     <span className={`mt-0.5 block text-xs ${style.onDarkText}`}>setoran hari ini</span>
+                    <span className="mt-2 block h-1 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
+                      <span className="block h-full rounded-full bg-white/70 transition-[width] duration-300" style={{ width: `${item.share}%` }} />
+                    </span>
                   </span>
                   <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/10">
                     <ChevronRight className="h-4 w-4 text-white/70 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
@@ -400,7 +424,13 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
               const style = categoryStyles[record.category];
               const Icon = style.icon;
               return (
-                <div key={`${record.category}-${record.id}`} className="group grid gap-2 px-4 py-3.5 transition-colors hover:bg-slate-50 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_auto] sm:items-center sm:gap-4 sm:px-5">
+                <button
+                  type="button"
+                  key={`${record.category}-${record.id}`}
+                  onClick={() => setActiveTab('riwayat')}
+                  className="group grid w-full gap-2 px-4 py-3.5 text-left transition-[background-color,transform] duration-200 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_auto] sm:items-center sm:gap-4 sm:px-5"
+                  aria-label={`${record.namaSantri}, ${record.category}, ${record.nilai}. Buka riwayat`}
+                >
                   <div className="flex min-w-0 items-center gap-3">
                     <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 ${style.text}`}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
@@ -411,11 +441,14 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                     </div>
                   </div>
                   <p className="truncate pl-12 text-sm text-slate-600 sm:pl-0">{record.material}</p>
-                  <div className="flex items-center justify-between gap-3 pl-12 sm:block sm:pl-0 sm:text-right">
-                    <span className={`text-xs font-bold ${getNilaiTextClass(record.nilai)}`}>{record.nilai}</span>
-                    <span className="ui-meta whitespace-nowrap sm:mt-1 sm:block">{formatTanggalWaktu(record.timestamp)}</span>
+                  <div className="flex items-center justify-between gap-3 pl-12 sm:flex sm:items-center sm:justify-end sm:pl-0 sm:text-right">
+                    <span>
+                      <span className={`text-xs font-bold ${getNilaiTextClass(record.nilai)}`}>{record.nilai}</span>
+                      <span className="ui-meta whitespace-nowrap sm:mt-1 sm:block">{formatTanggalWaktu(record.timestamp)}</span>
+                    </span>
+                    <ChevronRight className="hidden h-4 w-4 flex-shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 sm:block" aria-hidden="true" />
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
