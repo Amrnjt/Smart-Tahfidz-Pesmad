@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { User, Santri, PantauanLiburanRecord, ShalatJamaahStatus, SHALAT_STATUS_OPTIONS } from '../types';
 import { storageService } from '../services/storageService';
 import { Sparkles, Calendar, BookOpen, CircleCheck as CheckCircle2, CircleAlert as AlertCircle, Check, Trash2, Edit3, Save, RotateCcw, Clock, Lock } from 'lucide-react';
-import { formatTanggalIndo } from '../utils/dateFormatter';
+import { formatTanggalIndo, getTodayInputFormat } from '../utils/dateFormatter';
 
 interface PantauanLiburanWaliSectionProps {
   currentUser: User;
@@ -25,7 +25,7 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
   isActive,
   onDataChanged
 }) => {
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getTodayInputFormat();
 
   // Form State
   const [selectedTanggal, setSelectedTanggal] = useState(todayStr);
@@ -33,17 +33,19 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
   const [wiridMulk, setWiridMulk] = useState(false);
   const [wiridInsyirah, setWiridInsyirah] = useState(false);
 
-  const [shalatSubuh, setShalatSubuh] = useState<ShalatJamaahStatus>('Jama\'ah');
-  const [shalatDzuhur, setShalatDzuhur] = useState<ShalatJamaahStatus>('Jama\'ah');
-  const [shalatAshar, setShalatAshar] = useState<ShalatJamaahStatus>('Jama\'ah');
-  const [shalatMaghrib, setShalatMaghrib] = useState<ShalatJamaahStatus>('Jama\'ah');
-  const [shalatIsya, setShalatIsya] = useState<ShalatJamaahStatus>('Jama\'ah');
+  const [shalatSubuh, setShalatSubuh] = useState<ShalatJamaahStatus | ''>('');
+  const [shalatDzuhur, setShalatDzuhur] = useState<ShalatJamaahStatus | ''>('');
+  const [shalatAshar, setShalatAshar] = useState<ShalatJamaahStatus | ''>('');
+  const [shalatMaghrib, setShalatMaghrib] = useState<ShalatJamaahStatus | ''>('');
+  const [shalatIsya, setShalatIsya] = useState<ShalatJamaahStatus | ''>('');
 
   const [catatanWali, setCatatanWali] = useState('');
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Local state of records for target santri
   const [records, setRecords] = useState<PantauanLiburanRecord[]>([]);
@@ -72,7 +74,7 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
       setShalatIsya(existing.shalatIsya);
       setCatatanWali(existing.catatanWali || '');
       setEditingRecordId(existing.id);
-    } else if (editingRecordId) {
+    } else {
       resetForm();
     }
   }, [selectedTanggal, records]);
@@ -81,12 +83,13 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
     setWiridWaqiah(false);
     setWiridMulk(false);
     setWiridInsyirah(false);
-    setShalatSubuh('Jama\'ah');
-    setShalatDzuhur('Jama\'ah');
-    setShalatAshar('Jama\'ah');
-    setShalatMaghrib('Jama\'ah');
-    setShalatIsya('Jama\'ah');
+    setShalatSubuh('');
+    setShalatDzuhur('');
+    setShalatAshar('');
+    setShalatMaghrib('');
+    setShalatIsya('');
     setCatatanWali('');
+    setValidationError(null);
     setEditingRecordId(null);
   };
 
@@ -110,6 +113,7 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
     await storageService.deletePantauanLiburan(id);
     loadRecords();
     if (editingRecordId === id) resetForm();
+    setToastType('success');
     setToastMessage('Catatan amaliyah liburan berhasil dihapus.');
     setTimeout(() => setToastMessage(null), 3000);
     if (onDataChanged) onDataChanged();
@@ -117,6 +121,13 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!shalatSubuh || !shalatDzuhur || !shalatAshar || !shalatMaghrib || !shalatIsya) {
+      setValidationError('Pilih status untuk seluruh 5 waktu shalat sebelum menyimpan laporan.');
+      return;
+    }
+
+    setValidationError(null);
     setIsSubmitting(true);
 
     try {
@@ -139,12 +150,14 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
       });
 
       loadRecords();
-      setToastMessage(`Laporan amaliyah ${formatTanggalIndo(selectedTanggal)} berhasil disimpan!`);
+      setToastType('success');
+      setToastMessage(`Laporan amaliyah ${formatTanggalIndo(selectedTanggal)} berhasil disimpan ke Cloud.`);
       setTimeout(() => setToastMessage(null), 3500);
       if (onDataChanged) onDataChanged();
     } catch (err) {
       console.error(err);
-      setToastMessage('Gagal menyimpan laporan. Silakan coba kembali.');
+      setToastType('error');
+      setToastMessage('Gagal menyimpan ke Cloud. Data belum terkonfirmasi. Periksa koneksi lalu coba kembali.');
     } finally {
       setIsSubmitting(false);
     }
@@ -190,8 +203,20 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
     <div className="bg-white rounded-3xl p-5 sm:p-7 border border-emerald-200 shadow-sm space-y-6">
       {/* Toast */}
       {toastMessage && (
-        <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold flex items-center gap-2 animate-in fade-in">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+        <div
+          className={`p-3.5 rounded-2xl border text-xs font-semibold flex items-center gap-2 animate-in fade-in ${
+            toastType === 'error'
+              ? 'bg-rose-50 border-rose-200 text-rose-900'
+              : 'bg-emerald-50 border-emerald-200 text-emerald-900'
+          }`}
+          role={toastType === 'error' ? 'alert' : 'status'}
+          aria-live="polite"
+        >
+          {toastType === 'error' ? (
+            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+          ) : (
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+          )}
           <span>{toastMessage}</span>
         </div>
       )}
@@ -363,7 +388,7 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
               <span className="w-2 h-2 rounded-full bg-emerald-600" />
               2. Keaktifan Shalat 5 Waktu Berjama'ah
             </h4>
-            <span className="text-[11px] text-slate-500">Pilih status: Jama'ah / Berhalangan / Sakit</span>
+            <span className="text-[11px] text-slate-500">Pilih satu status untuk setiap waktu shalat</span>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-2.5">
@@ -381,6 +406,7 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
                 else if (waktu.key === 'shalatAshar') setShalatAshar(status);
                 else if (waktu.key === 'shalatMaghrib') setShalatMaghrib(status);
                 else setShalatIsya(status);
+                setValidationError(null);
               };
 
               return (
@@ -391,11 +417,12 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
                       <span>{waktu.label}</span>
                     </span>
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                      currentVal === 'Jama\'ah' ? 'bg-emerald-100 text-emerald-800'
+                      !currentVal ? 'bg-slate-100 text-slate-600'
+                      : currentVal === 'Jama\'ah' ? 'bg-emerald-100 text-emerald-800'
                       : currentVal === 'Berhalangan' ? 'bg-amber-100 text-amber-800'
                       : 'bg-rose-100 text-rose-800'
                     }`}>
-                      {currentVal}
+                      {currentVal || 'Belum dipilih'}
                     </span>
                   </div>
 
@@ -407,6 +434,7 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
                         <button
                           type="button"
                           key={opt.value}
+                          aria-pressed={isSelected}
                           onClick={() => setVal(opt.value)}
                           className={`py-1.5 px-1 rounded-lg text-[10px] font-bold transition flex flex-col items-center justify-center cursor-pointer ${
                             isSelected
@@ -428,6 +456,17 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
               );
             })}
           </div>
+
+          {validationError && (
+            <div
+              id="shalat-status-error"
+              role="alert"
+              className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-[11px] font-semibold text-rose-800"
+            >
+              <AlertCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" />
+              <span>{validationError}</span>
+            </div>
+          )}
         </div>
 
         {/* Section 3: Catatan Wali Santri */}
@@ -463,7 +502,7 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
             className="px-5 py-2.5 bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white rounded-xl text-xs font-bold shadow-xs transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
           >
             <Save className="w-4 h-4" />
-            <span>{isSubmitting ? 'Menyimpan...' : editingRecordId ? 'Perbarui Laporan' : 'Simpan Laporan Hari Ini'}</span>
+            <span>{isSubmitting ? 'Menyimpan...' : editingRecordId ? 'Perbarui Laporan' : 'Simpan Laporan'}</span>
           </button>
         </div>
       </form>
@@ -475,7 +514,7 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
             <Clock className="w-4 h-4 text-emerald-700" />
             Riwayat Mutaba'ah Liburan Ananda ({records.length} Hari Dicatat)
           </h4>
-          <span className="text-[11px] text-slate-500">Tersimpan di Cloud Firestore</span>
+          <span className="text-[11px] text-slate-500">Riwayat laporan tersimpan</span>
         </div>
 
         {records.length === 0 ? (

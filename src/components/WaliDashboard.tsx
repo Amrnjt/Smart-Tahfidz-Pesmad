@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, ActiveTab } from '../types';
 import { ZiyadahProgressChart } from './ZiyadahProgressChart';
-import { BookOpen, RotateCw, BookOpenCheck, Award, Target, Calendar, CircleCheck as CheckCircle2, ChevronRight, Sparkles, GraduationCap } from 'lucide-react';
+import { BookOpen, RotateCw, BookOpenCheck, Award, Calendar, CircleCheck as CheckCircle2, ChevronRight, Sparkles, GraduationCap } from 'lucide-react';
 import { PesmadLogo } from './PesmadLogo';
 import { formatTanggalWaktu } from '../utils/dateFormatter';
 import { SantriWaliDashboardSkeleton } from './SkeletonLoading';
@@ -38,12 +38,25 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
     return <SantriWaliDashboardSkeleton role="Wali" />;
   }
 
-  const targetSantri = santriList.find(s => s.idSantri === currentUser.idSantri) || {
-    idSantri: currentUser.idSantri || 'STR001',
-    namaSantri: currentUser.nama.replace('Wali ', ''),
-    kelas: 'Tahfidz',
-    targetHafalan: 'Juz 30 (37 Surah)'
-  };
+  const targetSantri = santriList.find(s => s.idSantri === currentUser.idSantri);
+
+  if (!targetSantri) {
+    return (
+      <div
+        className="bg-white rounded-2xl border border-emerald-200 p-5 sm:p-6 shadow-xs"
+        role="status"
+        aria-live="polite"
+      >
+        <h2 className="text-base font-extrabold text-slate-900">Profil santri belum terhubung</h2>
+        <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">
+          Akun wali ini belum terhubung ke profil santri yang tersedia. Hubungi admin untuk memeriksa relasi ID santri sebelum melihat perkembangan.
+        </p>
+        <p className="mt-3 text-xs font-semibold text-emerald-800">
+          ID terhubung: {currentUser.idSantri || 'Tidak tersedia'}
+        </p>
+      </div>
+    );
+  }
 
   const santriZiyadah = ziyadahRecords.filter(r => r.idSantri === targetSantri.idSantri);
   const santriMurojaah = murojaahRecords.filter(r => r.idSantri === targetSantri.idSantri);
@@ -55,7 +68,14 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   const lastBinnadzor = santriBinnadzor[0];
   const lastPembelajaran = santriPembelajaran[0];
 
-  const estimatedProgressPercent = Math.min(100, Math.max(35, santriZiyadah.length * 8));
+  const latestRatedRecord = [
+    ...santriZiyadah,
+    ...santriMurojaah,
+    ...santriBinnadzor,
+    ...santriPembelajaran
+  ]
+    .filter(record => Boolean(record.nilai))
+    .sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''))[0];
 
   const fadeDelay = (index: number) => ({ animationDelay: `${100 + index * 80}ms` });
 
@@ -92,7 +112,7 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
                 {targetSantri.namaSantri}
               </h2>
               <p className="text-xs sm:text-sm text-emerald-200/90 mt-1">
-                Kelas: <span className="font-semibold text-white">{targetSantri.kelas}</span> • ID Santri: <span className="font-mono text-amber-300 font-semibold">{targetSantri.idSantri}</span> • <span className="text-emerald-300">Jl. Budi Utomo No. 190 Kepohbaru Bojonegoro</span>
+                Kelas: <span className="font-semibold text-white">{targetSantri.kelas || 'Belum ditetapkan'}</span> • ID Santri: <span className="font-mono text-amber-300 font-semibold">{targetSantri.idSantri}</span> • <span className="text-emerald-300">Jl. Budi Utomo No. 190 Kepohbaru Bojonegoro</span>
               </p>
             </div>
           </div>
@@ -102,29 +122,11 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
               Target Kelulusan
             </span>
             <p className="text-sm font-extrabold text-amber-300 mt-0.5">
-              {targetSantri.targetHafalan}
+              {targetSantri.targetHafalan || 'Belum ditetapkan'}
             </p>
           </div>
         </div>
 
-        {/* Progres Bar */}
-        <div className="mt-6 pt-5 border-t border-emerald-700/60">
-          <div className="flex justify-between items-center text-xs font-semibold mb-2">
-            <span className="flex items-center gap-1.5">
-              <Target className="w-4 h-4 text-amber-300" />
-              Progres Capaian Hafalan Al-Qur'an
-            </span>
-            <span className="text-amber-300 font-bold">
-              <AnimatedCounter value={estimatedProgressPercent} suffix="%" /> Selesai
-            </span>
-          </div>
-          <div className="w-full h-3.5 bg-emerald-950/70 rounded-full overflow-hidden p-0.5 border border-emerald-600/40">
-            <div
-              className="h-full bg-gradient-to-r from-amber-400 via-emerald-400 to-teal-300 rounded-full transition-all duration-700 shadow-sm"
-              style={{ width: `${estimatedProgressPercent}%` }}
-            ></div>
-          </div>
-        </div>
       </div>
 
       {/* Ringkasan 4 Card */}
@@ -188,11 +190,13 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
             <Award className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500">Kualitas Hafalan</p>
+            <p className="text-xs font-semibold text-slate-500">Penilaian Terakhir</p>
             <h3 className="text-sm sm:text-lg font-extrabold text-emerald-700 mt-0.5">
-              🟢 Sangat Baik
+              {latestRatedRecord?.nilai || 'Belum ada'}
             </h3>
-            <span className="text-[10px] text-slate-500 font-medium">Tajwid & makhraj</span>
+            <span className="text-[10px] text-slate-500 font-medium">
+              {latestRatedRecord ? 'Berdasarkan setoran terbaru' : 'Belum ada setoran dinilai'}
+            </span>
           </div>
         </div>
       </div>

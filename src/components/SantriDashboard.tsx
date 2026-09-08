@@ -1,7 +1,7 @@
 import React from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, ActiveTab } from '../types';
 import { ZiyadahProgressChart } from './ZiyadahProgressChart';
-import { BookOpen, RotateCw, BookOpenCheck, Award, Target, Sparkles, BookMarked, Calendar, GraduationCap } from 'lucide-react';
+import { BookOpen, RotateCw, BookOpenCheck, Award, Sparkles, BookMarked, Calendar, GraduationCap } from 'lucide-react';
 import { PesmadLogo } from './PesmadLogo';
 import { formatTanggalWaktu } from '../utils/dateFormatter';
 import { SantriWaliDashboardSkeleton } from './SkeletonLoading';
@@ -36,12 +36,25 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
     return <SantriWaliDashboardSkeleton role="Santri" />;
   }
 
-  const currentSantri = santriList.find(s => s.idSantri === currentUser.idSantri) || {
-    idSantri: currentUser.idSantri || currentUser.username,
-    namaSantri: currentUser.nama,
-    kelas: 'Tahfidz',
-    targetHafalan: 'Juz 30 (37 Surah)'
-  };
+  const currentSantri = santriList.find(s => s.idSantri === currentUser.idSantri);
+
+  if (!currentSantri) {
+    return (
+      <div
+        className="bg-white rounded-2xl border border-emerald-200 p-5 sm:p-6 shadow-xs"
+        role="status"
+        aria-live="polite"
+      >
+        <h2 className="text-base font-extrabold text-slate-900">Profil santri belum terhubung</h2>
+        <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">
+          Akun ini belum terhubung ke profil santri yang tersedia. Hubungi admin untuk memeriksa relasi ID santri sebelum melihat data hafalan.
+        </p>
+        <p className="mt-3 text-xs font-semibold text-emerald-800">
+          ID terhubung: {currentUser.idSantri || currentUser.username || 'Tidak tersedia'}
+        </p>
+      </div>
+    );
+  }
 
   const santriZiyadah = ziyadahRecords.filter(r => r.idSantri === currentSantri.idSantri);
   const santriMurojaah = murojaahRecords.filter(r => r.idSantri === currentSantri.idSantri);
@@ -53,7 +66,14 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   const lastBinnadzor = santriBinnadzor[0];
   const lastPembelajaran = santriPembelajaran[0];
 
-  const estimatedProgressPercent = Math.min(100, Math.max(30, santriZiyadah.length * 9));
+  const latestRatedRecord = [
+    ...santriZiyadah,
+    ...santriMurojaah,
+    ...santriBinnadzor,
+    ...santriPembelajaran
+  ]
+    .filter(record => Boolean(record.nilai))
+    .sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''))[0];
 
   const fadeDelay = (index: number) => ({ animationDelay: `${100 + index * 80}ms` });
 
@@ -90,7 +110,7 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
                 Ahlan wa Sahlan, {currentSantri.namaSantri}!
               </h2>
               <p className="text-xs sm:text-sm text-emerald-200/90 mt-1">
-                Kelas: <span className="font-semibold text-white">{currentSantri.kelas}</span> • NIS/ID: <span className="font-mono text-amber-300 font-semibold">{currentSantri.idSantri}</span>
+                Kelas: <span className="font-semibold text-white">{currentSantri.kelas || 'Belum ditetapkan'}</span> • NIS/ID: <span className="font-mono text-amber-300 font-semibold">{currentSantri.idSantri}</span>
               </p>
             </div>
           </div>
@@ -100,29 +120,11 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
               Target Hafalan Kamu
             </span>
             <p className="text-sm font-extrabold text-amber-300 mt-0.5">
-              {currentSantri.targetHafalan}
+              {currentSantri.targetHafalan || 'Belum ditetapkan'}
             </p>
           </div>
         </div>
 
-        {/* Progres Bar */}
-        <div className="mt-6 pt-5 border-t border-teal-700/60">
-          <div className="flex justify-between items-center text-xs font-semibold mb-2">
-            <span className="flex items-center gap-1.5">
-              <Target className="w-4 h-4 text-amber-300" />
-              Progres Capaian Setoran Hafalan
-            </span>
-            <span className="text-amber-300 font-bold">
-              <AnimatedCounter value={estimatedProgressPercent} suffix="%" /> Menuju Target
-            </span>
-          </div>
-          <div className="w-full h-3.5 bg-emerald-950/80 rounded-full overflow-hidden p-0.5 border border-emerald-600/40">
-            <div
-              className="h-full bg-gradient-to-r from-amber-400 via-teal-300 to-cyan-300 rounded-full transition-all duration-700 shadow-sm"
-              style={{ width: `${estimatedProgressPercent}%` }}
-            ></div>
-          </div>
-        </div>
       </div>
 
       {/* 4 Metric Cards */}
@@ -186,11 +188,13 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
             <Award className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-500">Predikat Terakhir</p>
+            <p className="text-xs font-semibold text-slate-500">Penilaian Terakhir</p>
             <h3 className="text-xs sm:text-sm font-extrabold text-emerald-700 mt-0.5 truncate">
-              {lastZiyadah?.nilai ? `🟢 ${lastZiyadah.nilai}` : lastBinnadzor?.nilai ? `🟢 ${lastBinnadzor.nilai}` : '🟢 Aktif'}
+              {latestRatedRecord?.nilai || 'Belum ada'}
             </h3>
-            <span className="text-[10px] text-slate-500 font-medium">Semangat terus!</span>
+            <span className="text-[10px] text-slate-500 font-medium">
+              {latestRatedRecord ? 'Berdasarkan setoran terbaru' : 'Belum ada setoran dinilai'}
+            </span>
           </div>
         </div>
       </div>

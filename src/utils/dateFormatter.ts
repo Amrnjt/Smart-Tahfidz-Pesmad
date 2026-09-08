@@ -8,6 +8,29 @@ const NAMA_BULAN_PENDEK = [
   'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
 ];
 
+export const APP_TIME_ZONE = 'Asia/Jakarta';
+
+function getAppTimeParts(date: Date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: APP_TIME_ZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(date);
+
+  const value = (type: string) => parts.find(part => part.type === type)?.value || '';
+  return {
+    year: value('year'),
+    month: value('month'),
+    day: value('day'),
+    hour: value('hour'),
+    minute: value('minute')
+  };
+}
+
 export function parseDateSafe(dateInput?: string | Date): Date {
   if (!dateInput) return new Date();
   if (dateInput instanceof Date) return isNaN(dateInput.getTime()) ? new Date() : dateInput;
@@ -46,17 +69,21 @@ export function formatTanggalRingkas(dateInput?: string | Date): string {
   return `${tgl} ${bln} ${thn}`;
 }
 
-export function getTodayInputFormat(): string {
-  const d = new Date();
-  const year = d.getFullYear();
-  const month = (d.getMonth() + 1).toString().padStart(2, '0');
-  const day = d.getDate().toString().padStart(2, '0');
+export function getTodayInputFormat(date: Date = new Date()): string {
+  const { year, month, day } = getAppTimeParts(date);
   return `${year}-${month}-${day}`;
 }
 
-export function getCurrentTimeInputFormat(): string {
-  const d = new Date();
-  const hours = d.getHours().toString().padStart(2, '0');
-  const minutes = d.getMinutes().toString().padStart(2, '0');
-  return `${hours}:${minutes}`;
+export function getCurrentTimeInputFormat(date: Date = new Date()): string {
+  const { hour, minute } = getAppTimeParts(date);
+  return `${hour}:${minute}`;
+}
+
+export function addDaysToDateInput(dateInput: string, days: number): string {
+  const [year, month, day] = dateInput.split('-').map(Number);
+  const shifted = new Date(Date.UTC(year, month - 1, day + days));
+  const nextYear = shifted.getUTCFullYear();
+  const nextMonth = (shifted.getUTCMonth() + 1).toString().padStart(2, '0');
+  const nextDay = shifted.getUTCDate().toString().padStart(2, '0');
+  return `${nextYear}-${nextMonth}-${nextDay}`;
 }

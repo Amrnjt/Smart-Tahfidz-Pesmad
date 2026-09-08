@@ -13,7 +13,7 @@
 /* === Entry transitions === */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(16px); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 .fade-in-up {
   opacity: 0;
@@ -28,7 +28,7 @@
 }
 .scroll-reveal.is-visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: none;
 }
 
 /* === Ripple === */
@@ -60,7 +60,7 @@
 /* === Snackbar === */
 @keyframes snackbar-in {
   from { opacity: 0; transform: translateY(100%); }
-  to { opacity: 1; transform: translateY(0); }
+  to { opacity: 1; transform: none; }
 }
 @keyframes snackbar-out {
   from { opacity: 1; transform: translateY(0); }
@@ -82,6 +82,14 @@
 
 /* Decorative elements are static by default. */
 .float-slow { animation: none; }
+
+/* === Overlay layer contract ===
+   BottomNav intentionally stays at z-40. Full-screen dialogs and sheets must
+   render above it, including when nested in an animated page section. */
+.fixed.inset-0.z-50,
+.fixed.inset-0[class~="z-[60]"] {
+  z-index: 70 !important;
+}
 
 /* === HistoryTable mobile hardening ===
    The component intentionally keeps dense controls on small screens. Remove

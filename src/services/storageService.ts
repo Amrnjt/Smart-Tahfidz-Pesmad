@@ -1,6 +1,7 @@
 import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas, PantauanLiburanRecord, AppConfig } from '../types';
 import { INITIAL_USERS, INITIAL_SANTRI, INITIAL_ZIYADAH, INITIAL_MUROJAAH, INITIAL_BINNADZOR, INITIAL_PEMBELAJARAN } from '../data/sampleDatabase';
 import { getClassGroup } from '../utils/classUtils';
+import { getTodayInputFormat, getCurrentTimeInputFormat } from '../utils/dateFormatter';
 
 function normalizeKelas(kelas: string): string {
   const g = getClassGroup(kelas);
@@ -562,9 +563,7 @@ export const storageService = {
     
     let timestamp = record.timestamp;
     if (!timestamp) {
-      const now = new Date();
-      const pad = (n: number) => n.toString().padStart(2, '0');
-      timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      timestamp = `${getTodayInputFormat()} ${getCurrentTimeInputFormat()}`;
     }
     const uniqueId = `ZYD-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     
@@ -585,6 +584,7 @@ export const storageService = {
       await setDoc(doc(db, COLLECTIONS.ZIYADAH, newRecord.id), cleanRecord);
     } catch (e) {
       console.error('Failed to save Ziyadah to Firestore:', e);
+      throw e;
     }
 
     return newRecord;
@@ -596,9 +596,7 @@ export const storageService = {
     
     let timestamp = record.timestamp;
     if (!timestamp) {
-      const now = new Date();
-      const pad = (n: number) => n.toString().padStart(2, '0');
-      timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      timestamp = `${getTodayInputFormat()} ${getCurrentTimeInputFormat()}`;
     }
     const uniqueId = `MRJ-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     
@@ -619,6 +617,7 @@ export const storageService = {
       await setDoc(doc(db, COLLECTIONS.MUROJAAH, newRecord.id), cleanRecord);
     } catch (e) {
       console.error('Failed to save Murojaah to Firestore:', e);
+      throw e;
     }
 
     return newRecord;
@@ -630,9 +629,7 @@ export const storageService = {
     
     let timestamp = record.timestamp;
     if (!timestamp) {
-      const now = new Date();
-      const pad = (n: number) => n.toString().padStart(2, '0');
-      timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      timestamp = `${getTodayInputFormat()} ${getCurrentTimeInputFormat()}`;
     }
     const uniqueId = `BND-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     
@@ -653,6 +650,7 @@ export const storageService = {
       await setDoc(doc(db, COLLECTIONS.BINNADZOR, newRecord.id), cleanRecord);
     } catch (e) {
       console.error('Failed to save Binnadzor to Firestore:', e);
+      throw e;
     }
 
     return newRecord;
@@ -664,9 +662,7 @@ export const storageService = {
     
     let timestamp = record.timestamp;
     if (!timestamp) {
-      const now = new Date();
-      const pad = (n: number) => n.toString().padStart(2, '0');
-      timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      timestamp = `${getTodayInputFormat()} ${getCurrentTimeInputFormat()}`;
     }
     const uniqueId = `PBL-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     
@@ -687,6 +683,7 @@ export const storageService = {
       await setDoc(doc(db, COLLECTIONS.PEMBELAJARAN, newRecord.id), cleanRecord);
     } catch (e) {
       console.error('Failed to save Pembelajaran to Firestore:', e);
+      throw e;
     }
 
     return newRecord;
@@ -897,6 +894,7 @@ export const storageService = {
           await setDoc(doc(db, COLLECTIONS.ZIYADAH, id), cleanForFirestore(target), { merge: true });
         } catch (e) {
           console.error('Failed to update Ziyadah in Firestore:', e);
+          throw e;
         }
       }
     } else if (type === 'Murojaah') {
@@ -908,6 +906,7 @@ export const storageService = {
           await setDoc(doc(db, COLLECTIONS.MUROJAAH, id), cleanForFirestore(target), { merge: true });
         } catch (e) {
           console.error('Failed to update Murojaah in Firestore:', e);
+          throw e;
         }
       }
     } else if (type === 'Pembelajaran') {
@@ -919,6 +918,7 @@ export const storageService = {
           await setDoc(doc(db, COLLECTIONS.PEMBELAJARAN, id), cleanForFirestore(target), { merge: true });
         } catch (e) {
           console.error('Failed to update Pembelajaran in Firestore:', e);
+          throw e;
         }
       }
     } else {
@@ -930,6 +930,7 @@ export const storageService = {
           await setDoc(doc(db, COLLECTIONS.BINNADZOR, id), cleanForFirestore(target), { merge: true });
         } catch (e) {
           console.error('Failed to update Binnadzor in Firestore:', e);
+          throw e;
         }
       }
     }
@@ -949,6 +950,8 @@ export const storageService = {
       await setDoc(doc(db, COLLECTIONS.APP_CONFIG, 'global_settings'), cleanForFirestore(updated));
     } catch (err) {
       console.error('Failed to update app config in Firestore:', err);
+      localStorage.setItem(STORAGE_KEYS.APP_CONFIG, JSON.stringify(prev));
+      throw err;
     }
     return updated;
   },
@@ -959,9 +962,7 @@ export const storageService = {
     
     let timestamp = record.timestamp;
     if (!timestamp) {
-      const now = new Date();
-      const pad = (n: number) => n.toString().padStart(2, '0');
-      timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      timestamp = `${getTodayInputFormat()} ${getCurrentTimeInputFormat()}`;
     }
     
     const id = record.id || `LBR-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
@@ -988,6 +989,7 @@ export const storageService = {
       await setDoc(doc(db, COLLECTIONS.PANTAUAN_LIBURAN, newRecord.id), cleanForFirestore(newRecord));
     } catch (e) {
       console.error('Failed to save Pantauan Liburan to Firestore:', e);
+      throw e;
     }
 
     return newRecord;
@@ -1067,6 +1069,7 @@ export const storageService = {
       await setDoc(doc(db, COLLECTIONS.USERS, santriUser.id), cleanSantriUser);
     } catch (e) {
       console.error('Failed to sync new Santri to Firestore:', e);
+      throw e;
     }
 
     return santri;
@@ -1087,6 +1090,7 @@ export const storageService = {
         await setDoc(doc(db, COLLECTIONS.SANTRI, idSantri), cleanForFirestore(target), { merge: true });
       } catch (e) {
         console.error('Failed to update Santri in Firestore:', e);
+        throw e;
       }
     }
     return true;
@@ -1184,6 +1188,7 @@ export const storageService = {
       await setDoc(doc(db, COLLECTIONS.USERS, ensuredUser.id), cleanForFirestore(ensuredUser));
     } catch (e) {
       console.error('Failed to save User to Firestore:', e);
+      throw e;
     }
 
     return ensuredUser;
@@ -1216,6 +1221,7 @@ export const storageService = {
         await setDoc(doc(db, COLLECTIONS.USERS, id), cleanForFirestore(target), { merge: true });
       } catch (e) {
         console.error('Failed to update User in Firestore:', e);
+        throw e;
       }
     }
 
@@ -1281,6 +1287,7 @@ export const storageService = {
             await setDoc(doc(db, COLLECTIONS.KELAS, k.id), cleanForFirestore(k), { merge: true });
           } catch (e) {
             console.error('Failed to update other class:', e);
+            throw e;
           }
         }
       }
@@ -1297,6 +1304,7 @@ export const storageService = {
       await setDoc(doc(db, COLLECTIONS.KELAS, kelas.id), cleanForFirestore(kelas));
     } catch (e) {
       console.error('Failed to save Kelas to Firestore:', e);
+      throw e;
     }
 
     // 2. Synchronize santri.kelas property
@@ -1311,6 +1319,7 @@ export const storageService = {
             await setDoc(doc(db, COLLECTIONS.SANTRI, s.idSantri), cleanForFirestore(s), { merge: true });
           } catch (e) {
             console.error('Failed to sync santri.kelas:', e);
+            throw e;
           }
         }
       }
@@ -1339,6 +1348,7 @@ export const storageService = {
               await setDoc(doc(db, COLLECTIONS.KELAS, k.id), cleanForFirestore(k), { merge: true });
             } catch (e) {
               console.error('Failed to update other class:', e);
+              throw e;
             }
           }
         }
@@ -1353,6 +1363,7 @@ export const storageService = {
         await setDoc(doc(db, COLLECTIONS.KELAS, id), cleanForFirestore(target), { merge: true });
       } catch (e) {
         console.error('Failed to update Kelas in Firestore:', e);
+        throw e;
       }
     }
 
@@ -1370,6 +1381,7 @@ export const storageService = {
             await setDoc(doc(db, COLLECTIONS.SANTRI, s.idSantri), cleanForFirestore(s), { merge: true });
           } catch (e) {
             console.error('Failed to sync santri.kelas:', e);
+            throw e;
           }
         }
       } else if (oldSantriIds.has(s.idSantri)) {
@@ -1380,6 +1392,7 @@ export const storageService = {
           await setDoc(doc(db, COLLECTIONS.SANTRI, s.idSantri), cleanForFirestore(s), { merge: true });
         } catch (e) {
           console.error('Failed to reset santri.kelas:', e);
+          throw e;
         }
       }
     }

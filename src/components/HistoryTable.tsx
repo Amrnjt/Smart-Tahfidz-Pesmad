@@ -31,7 +31,7 @@ import {
   CheckSquare,
   Square
 } from 'lucide-react';
-import { formatTanggalLengkap, formatTanggalRingkas, parseDateSafe } from '../utils/dateFormatter';
+import { addDaysToDateInput, formatTanggalLengkap, formatTanggalRingkas, getTodayInputFormat, parseDateSafe } from '../utils/dateFormatter';
 import { TableSkeleton } from './SkeletonLoading';
 import { UnduhLaporanModal } from './UnduhLaporanModal';
 import { getClassGroup } from '../utils/classUtils';
@@ -323,8 +323,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   // Default to current month on initial load only (not on every monthKeys change)
   useEffect(() => {
     if (hasSetDefaultMonth || monthKeys.length === 0) return;
-    const now = new Date();
-    const currentKey = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    const currentKey = getTodayInputFormat().slice(0, 7);
     if (monthKeys.includes(currentKey)) {
       setActiveMonthKey(currentKey);
     } else {
@@ -378,13 +377,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
   const applyDatePreset = (preset: 'hari_ini' | '7_hari' | '30_hari' | 'bulan_ini' | 'semua') => {
     setActiveDatePreset(preset);
-    const now = new Date();
-    const formatYMD = (d: Date) => {
-      const yr = d.getFullYear();
-      const mo = (d.getMonth() + 1).toString().padStart(2, '0');
-      const day = d.getDate().toString().padStart(2, '0');
-      return `${yr}-${mo}-${day}`;
-    };
+    const todayStr = getTodayInputFormat();
 
     if (preset === 'semua') {
       setDateFilterMode('all');
@@ -396,32 +389,26 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     setDateFilterMode('range');
 
     if (preset === 'hari_ini') {
-      const todayStr = formatYMD(now);
       setCustomStartDate(todayStr);
       setCustomEndDate(todayStr);
       return;
     }
 
     if (preset === '7_hari') {
-      const past = new Date();
-      past.setDate(now.getDate() - 6);
-      setCustomStartDate(formatYMD(past));
-      setCustomEndDate(formatYMD(now));
+      setCustomStartDate(addDaysToDateInput(todayStr, -6));
+      setCustomEndDate(todayStr);
       return;
     }
 
     if (preset === '30_hari') {
-      const past = new Date();
-      past.setDate(now.getDate() - 29);
-      setCustomStartDate(formatYMD(past));
-      setCustomEndDate(formatYMD(now));
+      setCustomStartDate(addDaysToDateInput(todayStr, -29));
+      setCustomEndDate(todayStr);
       return;
     }
 
     if (preset === 'bulan_ini') {
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      setCustomStartDate(formatYMD(startOfMonth));
-      setCustomEndDate(formatYMD(now));
+      setCustomStartDate(`${todayStr.slice(0, 7)}-01`);
+      setCustomEndDate(todayStr);
       return;
     }
   };
@@ -519,8 +506,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     setCustomStartDate('');
     setCustomEndDate('');
     setActiveDatePreset('');
-    const now = new Date();
-    const currentKey = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+    const currentKey = getTodayInputFormat().slice(0, 7);
     if (monthKeys.includes(currentKey)) {
       setActiveMonthKey(currentKey);
     } else if (monthKeys.length > 0) {

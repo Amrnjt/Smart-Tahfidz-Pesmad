@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, ActiveTab, Kelas } from '../types';
 import { Users, CalendarCheck, BookOpen, RotateCw, CirclePlus as PlusCircle, BookOpenCheck, ArrowRight, Award, Sparkles, GraduationCap, TrendingUp, ChartBar as BarChart3 } from 'lucide-react';
 import { getClassGroup, isNonTahfidzClass } from '../utils/classUtils';
+import { getTodayInputFormat } from '../utils/dateFormatter';
 import { HafalanStatsChart } from './HafalanStatsChart';
 import { TrenHafalanBulananChart } from './TrenHafalanBulananChart';
 import { PesmadLogo } from './PesmadLogo';
@@ -46,7 +47,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
     return <DashboardSkeleton />;
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getTodayInputFormat();
   const todayZiyadah = ziyadahRecords.filter(r => r.timestamp.startsWith(today));
   const todayMurojaah = murojaahRecords.filter(r => r.timestamp.startsWith(today));
   const todayBinnadzor = binnadzorRecords.filter(r => r.timestamp.startsWith(today));
