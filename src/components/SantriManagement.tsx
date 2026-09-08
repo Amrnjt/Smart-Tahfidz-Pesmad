@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { Santri, User, UserRole } from '../types';
 import { storageService } from '../services/storageService';
-import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, CreditCard as Edit3, UserCheck, Save, Sparkles, Phone, Copy, Share2, ToggleLeft, ToggleRight, Eye, Crown, Lock } from 'lucide-react';
+import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, CreditCard as Edit3, UserCheck, Save, Sparkles, Phone, Copy, Share2, Crown, Lock } from 'lucide-react';
 import { getClassGroup } from '../utils/classUtils';
-import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
 
 interface SantriManagementProps {
   santriList: Santri[];
@@ -279,28 +278,6 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     (u.idSantri && u.idSantri.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const [appConfig, setAppConfig] = useState(storageService.getAppConfig());
-  const [isTogglingLiburan, setIsTogglingLiburan] = useState(false);
-  const [showMonitorModal, setShowMonitorModal] = useState(false);
-  const holidayRecordsCount = storageService.getPantauanLiburanRecords().length;
-
-  const handleToggleLiburan = async () => {
-    setIsTogglingLiburan(true);
-    const nextState = !appConfig.programLiburanActive;
-    try {
-      const updated = await storageService.setProgramLiburanActive(nextState, 'Ustadz / Admin');
-      setAppConfig(updated);
-      showToast('success', nextState
-        ? 'Program Pantauan Liburan Santri BERHASIL DIAKTIFKAN! Dasbor Wali kini dapat menginput mutaba\'ah liburan.'
-        : 'Program Pantauan Liburan Santri TELAH DINONAKTIFKAN. Dasbor Wali terkunci.');
-    } catch (err) {
-      console.error(err);
-      showToast('error', 'Gagal mengubah status program liburan.');
-    } finally {
-      setIsTogglingLiburan(false);
-    }
-  };
-
   const getWaliCredentialText = (santri: Santri) => {
     const waliUsername = `wali_${santri.idSantri.toLowerCase()}`;
     const userAcc = usersList.find(u => u.role === 'Wali' && (u.idSantri === santri.idSantri || u.username.toLowerCase() === waliUsername));
@@ -408,10 +385,10 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
         <div>
           <h3 className="font-extrabold text-slate-800 text-base sm:text-lg flex items-center gap-2">
             <Shield className="w-5 h-5 text-emerald-700" />
-            Manajemen Data Santri & Akun Pengguna
+            Santri & Akun
           </h3>
           <p className="text-xs text-slate-500">
-            Pengelolaan data santri, target kelulusan, dan hak akses akun (Ustadz, Wali, Santri)
+            Kelola identitas santri, data wali, target hafalan, kredensial, dan hak akses pengguna.
           </p>
         </div>
 
@@ -439,85 +416,6 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
             <Key className="w-3.5 h-3.5" />
             <span>Akun Pengguna ({usersList.length})</span>
           </button>
-        </div>
-      </div>
-
-      {/* Remote Pengendali Program Pantauan Liburan Santri (Desktop & Mobile) */}
-      <div className={`p-4 sm:p-5 rounded-2xl border transition-all ${
-        appConfig.programLiburanActive
-          ? 'bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900 text-white border-emerald-700 shadow-sm'
-          : 'bg-slate-50 text-slate-800 border-slate-200/90'
-      }`}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-start gap-3.5">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 text-2xl shadow-xs ${
-              appConfig.programLiburanActive ? 'bg-emerald-700/80 text-white' : 'bg-slate-200 text-slate-700'
-            }`}>
-              🌴
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h4 className="font-extrabold text-sm sm:text-base leading-tight">
-                  Remote Pengendali: Program Pantauan Liburan Santri
-                </h4>
-                <span className={`text-[11px] font-black px-2.5 py-0.5 rounded-full border ${
-                  appConfig.programLiburanActive
-                    ? 'bg-emerald-500/30 text-emerald-200 border-emerald-400/40 animate-pulse'
-                    : 'bg-slate-200 text-slate-600 border-slate-300'
-                }`}>
-                  {appConfig.programLiburanActive ? '🟢 PROGRAM LIBURAN AKTIF' : '⚪ PROGRAM NONAKTIF'}
-                </span>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
-                  appConfig.programLiburanActive ? 'bg-white/15 text-emerald-100' : 'bg-slate-200/80 text-slate-600'
-                }`}>
-                  Admin/Ustadz: Khusus Remote & Pantauan
-                </span>
-              </div>
-              <p className={`text-xs max-w-2xl leading-relaxed ${
-                appConfig.programLiburanActive ? 'text-emerald-100' : 'text-slate-500'
-              }`}>
-                {appConfig.programLiburanActive
-                  ? 'Program sedang dibuka. Dasbor Wali Santri kini dapat menginput mutaba\'ah harian (Wirid Yaumiyyah al-Waqi\'ah, al-Mulk, al-Insyirah & Shalat 5 Waktu Berjama\'ah). Ustadz dapat memantau seluruh rekap laporan yang masuk.'
-                  : 'Program sedang ditutup. Fitur mutaba\'ah liburan di dasbor wali tidak berfungsi/terkunci. Aktifkan sakelar saat santri memasuki masa liburan semester/hari raya.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 self-start md:self-center flex-shrink-0">
-            <button
-              onClick={() => setShowMonitorModal(true)}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer shadow-xs ${
-                appConfig.programLiburanActive
-                  ? 'bg-white text-emerald-900 hover:bg-emerald-50'
-                  : 'bg-slate-200 hover:bg-slate-300 text-slate-800'
-              }`}
-            >
-              <Eye className="w-4 h-4 text-emerald-700" />
-              <span>Pantau Rekap ({holidayRecordsCount} Laporan)</span>
-            </button>
-
-            <button
-              onClick={handleToggleLiburan}
-              disabled={isTogglingLiburan}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center gap-2 cursor-pointer shadow-sm ${
-                appConfig.programLiburanActive
-                  ? 'bg-rose-600 hover:bg-rose-500 text-white'
-                  : 'bg-emerald-700 hover:bg-emerald-600 text-white'
-              }`}
-            >
-              {appConfig.programLiburanActive ? (
-                <>
-                  <ToggleRight className="w-5 h-5 stroke-[2.5]" />
-                  <span>Matikan Program</span>
-                </>
-              ) : (
-                <>
-                  <ToggleLeft className="w-5 h-5 stroke-[2.5]" />
-                  <span>Nyalakan Program</span>
-                </>
-              )}
-            </button>
-          </div>
         </div>
       </div>
 
@@ -1496,17 +1394,6 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
         </div>
       )}
 
-      {/* Modal Rekapitulasi Program Pantauan Liburan Santri (Ustadz View-Only) */}
-      {showMonitorModal && (
-        <PantauanLiburanMonitorModal
-          isOpen={showMonitorModal}
-          onClose={() => {
-            setShowMonitorModal(false);
-            setAppConfig(storageService.getAppConfig());
-          }}
-          santriList={santriList}
-        />
-      )}
     </div>
   );
 };
