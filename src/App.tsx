@@ -3,6 +3,7 @@ import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Pembelaja
 import { storageService } from './services/storageService';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
+import { SetorActionSheet } from './components/SetorActionSheet';
 import { LoginView } from './components/LoginModal';
 import { UstadzDashboard } from './components/UstadzDashboard';
 import { WaliDashboard } from './components/WaliDashboard';
@@ -18,7 +19,7 @@ import { KelasManagement } from './components/KelasManagement';
 import { NotificationToastContainer } from './components/NotificationToastContainer';
 import { Snackbar, SnackbarState } from './components/Snackbar';
 import { useSetoranNotifications } from './hooks/useSetoranNotifications';
-import { LayoutDashboard, CirclePlus as PlusCircle, RotateCw, BookOpenCheck, History, BookOpen, Users, Cloud, GraduationCap, Award } from 'lucide-react';
+import { LayoutDashboard, CirclePlus as PlusCircle, History, BookOpen, Users, Cloud, GraduationCap } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -54,6 +55,7 @@ export default function App() {
   const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [snack, setSnack] = useState<SnackbarState | null>(null);
+  const [isSetorMenuOpen, setIsSetorMenuOpen] = useState(false);
 
   const refreshData = () => {
     setSantriList(storageService.getSantriList());
@@ -125,6 +127,7 @@ export default function App() {
   const isWali = userRoleStr === 'wali' || userRoleStr.includes('wali');
   const isSantri = userRoleStr === 'santri';
   const isUstadz = !isWali && !isSantri;
+  const isSetorActive = ['ziyadah', 'murojaah', 'binnadzor', 'pembelajaran'].includes(activeTab);
 
   // Delayed notification system for Wali Santri role
   const { toasts, dismissToast } = useSetoranNotifications(
@@ -167,129 +170,98 @@ export default function App() {
         ) : (
           <div className="space-y-5 min-w-0">
             
-            {/* Desktop Navigation Tab Bar with Soft Glassmorphism */}
-            <nav className="hidden md:flex bg-white/85 backdrop-blur-md rounded-2xl p-1.5 shadow-xs border border-slate-200/80 gap-1.5">
+            {/* Primary Navigation: same mental model across tablet and desktop */}
+            <nav
+              className={`hidden md:grid bg-white/85 backdrop-blur-md rounded-2xl p-1.5 shadow-xs border border-slate-200/80 gap-1.5 ${
+                isUstadz ? 'grid-cols-6' : 'grid-cols-3'
+              }`}
+              aria-label="Navigasi utama"
+            >
               <button
                 onClick={() => setActiveTab('dashboard')}
-                className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                aria-current={activeTab === 'dashboard' ? 'page' : undefined}
+                className={`press-feedback min-w-0 py-2.5 px-2 lg:px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer ${
                   activeTab === 'dashboard'
                     ? 'bg-emerald-800 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                <LayoutDashboard className="w-4 h-4" />
-                <span>
-                  {isUstadz && 'Dashboard'}
-                  {isWali && 'Pantauan Hafalan Anak'}
-                  {isSantri && 'Hafalan Saya'}
-                </span>
+                <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">Beranda</span>
               </button>
-
-              {isUstadz && (
-                <>
-                  <button
-                    onClick={() => setActiveTab('ziyadah')}
-                    className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-                      activeTab === 'ziyadah'
-                        ? 'bg-emerald-800 text-white shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <PlusCircle className="w-4 h-4" />
-                    <span>Input Ziyadah</span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('murojaah')}
-                    className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-                      activeTab === 'murojaah'
-                        ? 'bg-amber-800 text-white shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <RotateCw className="w-4 h-4" />
-                    <span>Input Muroja'ah</span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('binnadzor')}
-                    className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-                      activeTab === 'binnadzor'
-                        ? 'bg-indigo-800 text-white shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <BookOpenCheck className="w-4 h-4" />
-                    <span>Input Binnadzor</span>
-                  </button>
-
-                  <button
-                    onClick={() => setActiveTab('pembelajaran')}
-                    className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-                      activeTab === 'pembelajaran'
-                        ? 'bg-amber-800 text-white shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <GraduationCap className="w-4 h-4" />
-                    <span>Input Pembelajaran</span>
-                  </button>
-                </>
-              )}
-
-              {isUstadz && (
-                <button
-                  onClick={() => setActiveTab('kelas')}
-                  className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-                    activeTab === 'kelas'
-                      ? 'bg-emerald-800 text-white shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  <GraduationCap className="w-4 h-4" />
-                  <span>Kelas</span>
-                </button>
-              )}
 
               <button
                 onClick={() => setActiveTab('riwayat')}
-                className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                aria-current={activeTab === 'riwayat' ? 'page' : undefined}
+                className={`press-feedback min-w-0 py-2.5 px-2 lg:px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer ${
                   activeTab === 'riwayat'
                     ? 'bg-emerald-800 text-white shadow-xs'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                <History className="w-4 h-4" />
-                <span>
-                  Riwayat Setoran
-                </span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('mushaf')}
-                className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
-                  activeTab === 'mushaf'
-                    ? 'bg-emerald-800 text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                <BookOpen className="w-4 h-4" />
-                <span>Mushaf Al-Qur'an 30 Juz</span>
+                <History className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">Riwayat</span>
               </button>
 
               {isUstadz && (
                 <button
+                  onClick={() => setIsSetorMenuOpen(true)}
+                  aria-haspopup="dialog"
+                  aria-expanded={isSetorMenuOpen}
+                  aria-current={isSetorActive ? 'page' : undefined}
+                  className={`press-feedback min-w-0 py-2.5 px-2 lg:px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer ${
+                    isSetorActive
+                      ? 'bg-emerald-800 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-800'
+                  }`}
+                >
+                  <PlusCircle className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">Setor</span>
+                </button>
+              )}
+
+              {isUstadz && (
+                <button
+                  onClick={() => setActiveTab('kelas')}
+                  aria-current={activeTab === 'kelas' ? 'page' : undefined}
+                  className={`press-feedback min-w-0 py-2.5 px-2 lg:px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer ${
+                    activeTab === 'kelas'
+                      ? 'bg-emerald-800 text-white shadow-xs'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
+                >
+                  <GraduationCap className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">Kelas</span>
+                </button>
+              )}
+
+              {isUstadz && (
+                <button
                   onClick={() => setActiveTab('santri')}
-                  className={`press-feedback flex-1 py-2.5 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+                  aria-current={activeTab === 'santri' ? 'page' : undefined}
+                  className={`press-feedback min-w-0 py-2.5 px-2 lg:px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer ${
                     activeTab === 'santri'
                       ? 'bg-emerald-800 text-white shadow-xs'
                       : 'text-slate-600 hover:bg-slate-100'
                   }`}
                 >
-                  <Users className="w-4 h-4" />
-                  <span>Santri & Kelola Akun</span>
+                  <Users className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">Santri</span>
                 </button>
               )}
+
+              <button
+                onClick={() => setActiveTab('mushaf')}
+                aria-current={activeTab === 'mushaf' ? 'page' : undefined}
+                className={`press-feedback min-w-0 py-2.5 px-2 lg:px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer ${
+                  activeTab === 'mushaf'
+                    ? 'bg-emerald-800 text-white shadow-xs'
+                    : 'text-slate-600 hover:bg-slate-100'
+                }`}
+              >
+                <BookOpen className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">Mushaf</span>
+              </button>
             </nav>
 
             {/* Content per Tab */}
@@ -432,6 +404,16 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Tablet/Desktop Setor entry point reuses the compact mobile action sheet */}
+      {currentUser && isUstadz && (
+        <SetorActionSheet
+          isOpen={isSetorMenuOpen}
+          onClose={() => setIsSetorMenuOpen(false)}
+          onSelect={(tab) => setActiveTab(tab)}
+          santriList={santriList}
+        />
+      )}
 
       {/* Mobile Bottom Navigation */}
       <BottomNav
