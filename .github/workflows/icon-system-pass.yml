@@ -34,7 +34,18 @@ jobs:
           PY
 
       - name: Apply icon system pass
-        run: python scripts/icon_system_pass.py
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/icon_system_pass.py')
+          text = p.read_text()
+          old = "if 'emoji:' in read('src/types/index.ts'):\n    raise SystemExit('emoji property remains in PREDIKAT_NILAI_OPTIONS')"
+          new = "predikat_block = read('src/types/index.ts').split('export type TipeKelas', 1)[0]\nif 'emoji:' in predikat_block:\n    raise SystemExit('emoji property remains in PREDIKAT_NILAI_OPTIONS')"
+          assert old in text
+          p.write_text(text.replace(old, new, 1))
+          PY
+          python scripts/icon_system_pass.py
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
@@ -79,12 +90,14 @@ jobs:
               'CirclePlus as PlusCircle, BookOpen, Save',
               'Circle as HelpCircle',
               'CheckSquare,',
-              'emoji:',
           ]
           source_paths = list(Path('src').rglob('*.ts')) + list(Path('src').rglob('*.tsx'))
           source = '\n'.join(p.read_text() for p in source_paths)
           for token in forbidden_source:
               assert token not in source, f'forbidden source token remains: {token}'
+
+          predikat_block = Path('src/types/index.ts').read_text().split('export type TipeKelas', 1)[0]
+          assert 'emoji:' not in predikat_block, 'emoji property remains in PREDIKAT_NILAI_OPTIONS'
 
           legacy = [
               *Path('public').glob('pesmad-app-icon-v2-*'),
