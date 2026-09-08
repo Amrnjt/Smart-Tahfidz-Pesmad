@@ -116,3 +116,5 @@ jobs:
           git diff --cached --quiet && { echo "No source changes to commit"; exit 1; }
           git commit -m "refactor: complete P2.15 anti-slop taste pass"
           git push origin HEAD:p2-15-anti-slop-taste
+
+# Final deterministic rerun after replacing generic gradient regex with explicit JSX-safe mappings.
