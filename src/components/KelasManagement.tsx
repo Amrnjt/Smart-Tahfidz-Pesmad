@@ -295,7 +295,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-3 text-xs"><span className="font-semibold text-slate-700">Kelengkapan penempatan</span><span className="font-bold text-emerald-800">{placementPercent}%</span></div>
-          <div className="h-2.5 overflow-hidden rounded-full bg-slate-200" aria-label={`Kelengkapan penempatan ${placementPercent}%`}>
+          <div className="h-2.5 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label="Kelengkapan penempatan santri" aria-valuemin={0} aria-valuemax={100} aria-valuenow={placementPercent}>
             <div className="h-full rounded-full bg-emerald-700 transition-[width] duration-500" style={{ width: `${placementPercent}%` }} />
           </div>
           {totalSantri > 0 && belumBerkelas === 0 && (
@@ -324,8 +324,11 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
 
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
+                type="button"
                 onClick={() => setShowUnassignedList(!showUnassignedList)}
-                className="min-h-10 px-3 rounded-xl bg-white hover:bg-amber-100/60 border border-amber-300 text-amber-900 text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                aria-expanded={showUnassignedList}
+                aria-controls="unassigned-santri-list"
+                className="min-h-11 px-3 rounded-xl bg-white hover:bg-amber-100/60 border border-amber-300 text-amber-900 text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <span>{showUnassignedList ? 'Tutup Daftar' : 'Lihat Siapa Saja'}</span>
                 {showUnassignedList ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
@@ -333,7 +336,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
 
               <button
                 onClick={() => handleOpenAdd(unassignedSantriList.map(s => s.idSantri))}
-                className="min-h-10 px-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                className="min-h-11 px-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Buat kelas baru</span>
@@ -343,7 +346,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
 
           {/* Collapsible Unassigned Santri Grid */}
           {showUnassignedList && (
-            <div className="pt-3 border-t border-amber-200/80">
+            <div id="unassigned-santri-list" className="pt-3 border-t border-amber-200/80">
               <p className="text-xs font-bold text-amber-900 mb-2">Daftar Santri yang Belum Memiliki Kelas:</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                 {unassignedSantriList.map(s => (
@@ -421,14 +424,16 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                 <div className="pt-3 mt-auto border-t border-slate-200/60 flex items-center gap-2">
                   <button
                     onClick={() => handleOpenEdit(kls)}
-                    className="min-h-10 flex-1 px-3 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    className="min-h-11 flex-1 px-3 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                     <span>Edit / Tambah Santri</span>
                   </button>
                   <button
+                    type="button"
                     onClick={() => setKelasToDelete(kls)}
-                    className="min-h-10 px-3 rounded-lg bg-white hover:bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
+                    aria-label={`Hapus kelas ${kls.namaKelas}`}
+                    className="min-h-11 px-3 rounded-lg bg-white hover:bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -464,6 +469,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                 <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Nama Kelas</label>
                 <input
                   type="text"
+                  aria-label="Nama Kelas"
                   value={newNamaKelas}
                   onChange={(e) => setNewNamaKelas(e.target.value)}
                   placeholder="contoh: Kelas Tahfidz - Angkatan 2024"
@@ -475,6 +481,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Tipe Kelas</label>
                 <select
+                  aria-label="Tipe Kelas"
                   value={newTipeKelas}
                   onChange={(e) => setNewTipeKelas(e.target.value as TipeKelas)}
                   className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -488,6 +495,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Musyrif / Pembimbing</label>
                 <select
+                  aria-label="Musyrif atau Pembimbing"
                   value={newMusyrifId}
                   onChange={(e) => setNewMusyrifId(e.target.value)}
                   className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -542,7 +550,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                       <button
                         type="button"
                         onClick={clearSelectionForAdd}
-                        className="min-h-10 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+                        className="min-h-11 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
                       >
                         Batal
                       </button>
@@ -741,7 +749,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                       <button
                         type="button"
                         onClick={selectAllUnassignedForEdit}
-                        className="min-h-10 px-3 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
+                        className="min-h-11 px-3 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
                       >
                         <UserCheck className="w-3 h-3" />
                         <span>+ Masukkan Belum Ada Kelas</span>
@@ -751,7 +759,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                       <button
                         type="button"
                         onClick={clearSelectionForEdit}
-                        className="min-h-10 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
+                        className="min-h-11 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
                       >
                         Kosongkan
                       </button>

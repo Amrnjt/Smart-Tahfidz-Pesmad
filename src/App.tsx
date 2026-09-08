@@ -178,6 +178,13 @@ export default function App() {
         }}
       />
 
+      <a
+        href="#main-content"
+        className="fixed left-3 top-3 z-[90] -translate-y-24 rounded-lg bg-white px-4 py-2 text-sm font-bold text-emerald-950 shadow-lg transition-transform focus:translate-y-0"
+      >
+        Lewati ke konten utama
+      </a>
+
       {/* Top Navbar */}
       <Navbar
         currentUser={currentUser}
@@ -189,7 +196,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main className="max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-5 pb-24 sm:pb-8 flex-1 space-y-5 relative z-10 min-w-0">
+      <main id="main-content" tabIndex={-1} className="max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-5 pb-24 sm:pb-8 flex-1 space-y-5 relative z-10 min-w-0">
         
         {/* If Not Logged In, Show Login View */}
         {!currentUser ? (

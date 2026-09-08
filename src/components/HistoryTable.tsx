@@ -610,7 +610,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     }
   };
 
-  const toggleSelectItem = (id: string, e: React.MouseEvent) => {
+  const toggleSelectItem = (id: string, e: React.SyntheticEvent) => {
     e.stopPropagation();
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -745,7 +745,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           <div className="sm:hidden flex items-center gap-1.5 flex-shrink-0">
             <button
               onClick={() => setShowReportModal(true)}
-              className="h-8 px-2 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+              className="min-h-11 px-3 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
               aria-label="Unduh laporan PDF"
             >
               <FileText className="w-3.5 h-3.5" />
@@ -753,7 +753,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
             </button>
             <button
               onClick={exportToCSV}
-              className="h-8 px-2 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
+              className="min-h-11 px-3 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
               aria-label="Unduh riwayat CSV"
             >
               <Download className="w-3.5 h-3.5" />
@@ -778,7 +778,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               {searchQuery && (
                 <button
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1.5 w-5 h-5 inline-flex items-center justify-center text-slate-400 hover:text-slate-700 cursor-pointer"
+                  className="absolute right-0 top-0 min-h-11 min-w-11 inline-flex items-center justify-center text-slate-400 hover:text-slate-700 cursor-pointer"
                   aria-label="Hapus pencarian"
                 >
                   <X className="w-3.5 h-3.5" />
@@ -832,7 +832,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   <button
                     type="button"
                     onClick={resetSecondaryFilters}
-                    className="h-7 px-2 inline-flex items-center gap-1 rounded-md text-xs font-semibold text-slate-600 hover:bg-white hover:text-rose-700 transition cursor-pointer"
+                    className="min-h-11 px-3 inline-flex items-center gap-1 rounded-md text-xs font-semibold text-slate-600 hover:bg-white hover:text-rose-700 transition cursor-pointer"
                   >
                     <RotateCcw className="w-3 h-3" />
                     Reset
@@ -878,7 +878,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   <button
                     type="button"
                     onClick={() => setDateFilterMode('bulan')}
-                    className={`h-8 rounded-md text-xs font-bold transition cursor-pointer ${
+                    aria-pressed={dateFilterMode === 'bulan'}
+                    className={`min-h-11 rounded-md text-xs font-bold transition cursor-pointer ${
                       dateFilterMode === 'bulan' ? 'bg-white text-emerald-900 shadow-xs' : 'text-slate-600'
                     }`}
                   >
@@ -890,7 +891,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                       setDateFilterMode('range');
                       if (!customStartDate && !customEndDate) applyDatePreset('bulan_ini');
                     }}
-                    className={`h-8 rounded-md text-xs font-bold transition cursor-pointer ${
+                    aria-pressed={dateFilterMode === 'range'}
+                    className={`min-h-11 rounded-md text-xs font-bold transition cursor-pointer ${
                       dateFilterMode === 'range' ? 'bg-white text-emerald-900 shadow-xs' : 'text-slate-600'
                     }`}
                   >
@@ -899,7 +901,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   <button
                     type="button"
                     onClick={() => setDateFilterMode('all')}
-                    className={`h-8 rounded-md text-xs font-bold transition cursor-pointer ${
+                    aria-pressed={dateFilterMode === 'all'}
+                    className={`min-h-11 rounded-md text-xs font-bold transition cursor-pointer ${
                       dateFilterMode === 'all' ? 'bg-white text-emerald-900 shadow-xs' : 'text-slate-600'
                     }`}
                   >
@@ -918,7 +921,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                             key={mk}
                             type="button"
                             onClick={() => setActiveMonthKey(mk)}
-                            className={`h-8 px-2.5 rounded-lg text-xs font-semibold whitespace-nowrap border transition cursor-pointer ${
+                            aria-pressed={activeMonthKey === mk}
+                            className={`min-h-11 px-3 rounded-lg text-xs font-semibold whitespace-nowrap border transition cursor-pointer ${
                               activeMonthKey === mk
                                 ? 'bg-emerald-800 text-white border-emerald-800'
                                 : 'bg-white text-slate-600 border-slate-200'
@@ -972,7 +976,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                           key={preset}
                           type="button"
                           onClick={() => applyDatePreset(preset as 'hari_ini' | '7_hari' | '30_hari' | 'bulan_ini')}
-                          className={`h-8 rounded-lg border text-xs font-semibold transition cursor-pointer ${
+                          aria-pressed={activeDatePreset === preset}
+                          className={`min-h-11 rounded-lg border text-xs font-semibold transition cursor-pointer ${
                             activeDatePreset === preset
                               ? 'bg-emerald-800 text-white border-emerald-800'
                               : 'bg-white text-slate-600 border-slate-200'
@@ -1030,6 +1035,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Cari santri, surah, catatan..."
+                aria-label="Cari riwayat setoran"
                 className="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
               {searchQuery && (
@@ -1037,12 +1043,14 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   onClick={() => setSearchQuery('')}
                   className="absolute right-2 top-2 text-slate-400 hover:text-slate-600 cursor-pointer"
                   title="Hapus pencarian"
+                    aria-label="Hapus pencarian"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
             </div>
             <select
+              aria-label="Filter kategori setoran"
               value={kategoriFilter}
               onChange={(e) => setKategoriFilter(e.target.value as KategoriFilter)}
               className="py-1 px-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer min-w-[130px]"
@@ -1055,6 +1063,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               <option value="Istimewa">Kelas Istimewa</option>
             </select>
             <select
+              aria-label="Filter nilai setoran"
               value={nilaiFilter}
               onChange={(e) => setNilaiFilter(e.target.value)}
               className="py-1 px-2 bg-slate-50 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer min-w-[120px]"
@@ -1276,7 +1285,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
             return (
               <button
                 key={cat.id}
+                type="button"
                 onClick={() => setKategoriFilter(cat.id)}
+                aria-pressed={isSelected}
                 className={`group flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border transition-colors cursor-pointer flex-shrink-0 ${
                   isSelected ? cat.activeColor : cat.inactiveColor
                 }`}
@@ -1513,25 +1524,22 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   <div className="sm:hidden px-4 py-3.5">
                     <div className="flex items-start gap-2.5">
                       {!isViewOnly && (
-                        <button
-                          type="button"
-                          onClick={(e) => toggleSelectItem(item.id, e)}
-                          className="mt-0.5 flex-shrink-0 text-slate-400"
-                          title="Pilih rekaman ini"
-                          aria-label="Pilih rekaman ini"
-                        >
+                        <label className="mt-0.5 flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center text-slate-500">
                           <input
                             type="checkbox"
                             checked={isSelected}
-                            onChange={() => {}}
+                            onChange={(e) => toggleSelectItem(item.id, e)}
+                            aria-label={`Pilih rekaman ${item.type} untuk ${item.namaSantri}`}
                             className="w-4 h-4 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
                           />
-                        </button>
+                        </label>
                       )}
 
                       <button
                         type="button"
                         onClick={() => toggleRow(item.id)}
+                        aria-expanded={isExpanded}
+                        aria-controls={`history-mobile-detail-${item.id}`}
                         className="min-w-0 flex-1 text-left"
                       >
                         {/* Primary line: identity + score */}
@@ -1604,7 +1612,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     </div>
 
                     {isExpanded && (
-                      <div className="mt-3 ml-6 rounded-r-xl border-l-2 border-slate-200 bg-slate-50/70 pl-3 pr-3 py-3">
+                      <div id={`history-mobile-detail-${item.id}`} className="mt-3 ml-6 rounded-r-xl border-l-2 border-slate-200 bg-slate-50/70 pl-3 pr-3 py-3">
                         <div className="grid grid-cols-[72px,1fr] gap-x-3 gap-y-2 text-xs leading-5">
                           <span className="text-slate-400">ID Santri</span>
                           <span className="font-mono text-slate-600">{item.idSantri}</span>
@@ -1632,7 +1640,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 onClick={(e) => e.stopPropagation()}
-                                className="inline-flex min-h-9 items-center gap-1.5 px-3 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-800"
+                                className="inline-flex min-h-11 items-center gap-1.5 px-3 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-800"
                                 title="Kirim WhatsApp"
                               >
                                 <MessageCircle className="w-3 h-3" />
@@ -1646,7 +1654,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                                 e.stopPropagation();
                                 openEditModal(item);
                               }}
-                              className="inline-flex min-h-9 items-center gap-1.5 px-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700"
+                              className="inline-flex min-h-11 items-center gap-1.5 px-3 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-700"
                               title="Edit"
                             >
                               <Pencil className="w-3 h-3" />
@@ -1659,7 +1667,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                                 e.stopPropagation();
                                 handleDelete(item, e);
                               }}
-                              className="inline-flex min-h-9 items-center gap-1.5 px-3 rounded-lg border border-rose-200 bg-rose-50 text-xs font-semibold text-rose-700"
+                              className="inline-flex min-h-11 items-center gap-1.5 px-3 rounded-lg border border-rose-200 bg-rose-50 text-xs font-semibold text-rose-700"
                               title="Hapus"
                             >
                               <Trash2 className="w-3 h-3" />
@@ -1678,24 +1686,28 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   >
                     {/* Row Select Checkbox (For Ustadz/Admin) */}
                     {!isViewOnly && (
-                      <div
-                        className="flex-shrink-0 text-slate-400 hover:text-emerald-700 cursor-pointer p-0.5"
-                        onClick={(e) => toggleSelectItem(item.id, e)}
-                        title="Pilih rekaman ini"
-                      >
+                      <label className="flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center text-slate-500" onClick={(e) => e.stopPropagation()}>
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={() => {}}
-                          className="w-3.5 h-3.5 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
+                          onChange={(e) => toggleSelectItem(item.id, e)}
+                          aria-label={`Pilih rekaman ${item.type} untuk ${item.namaSantri}`}
+                          className="w-4 h-4 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
                         />
-                      </div>
+                      </label>
                     )}
 
-                    {/* Expand icon */}
-                    <div className="flex-shrink-0 text-slate-400">
+                    {/* Expand control */}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); toggleRow(item.id); }}
+                      aria-expanded={isExpanded}
+                      aria-controls={`history-desktop-detail-${item.id}`}
+                      aria-label={`${isExpanded ? 'Tutup' : 'Buka'} detail rekaman ${item.type} untuk ${item.namaSantri}`}
+                      className="flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
+                    >
                       {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </div>
+                    </button>
 
                     {/* Date */}
                     <div className="flex-shrink-0 w-[132px] sm:w-[170px]">
@@ -1749,7 +1761,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                       <button
                         type="button"
                         onClick={(e) => handleDelete(item, e)}
-                        className="flex-shrink-0 p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-100/70 rounded-lg transition-colors cursor-pointer"
+                        className="flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-100/70 rounded-lg transition-colors cursor-pointer"
                         title={`Hapus rekaman ${item.type} untuk ${item.namaSantri}`}
                         aria-label="Hapus rekaman"
                       >
@@ -1760,7 +1772,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                   {/* Expanded Detail - accordion */}
                   {isExpanded && (
-                    <div className="px-2.5 sm:px-4 pb-3 pt-2 bg-slate-50/70 border-t border-slate-200/80 rounded-b-lg space-y-2 text-xs">
+                    <div id={`history-desktop-detail-${item.id}`} className="px-2.5 sm:px-4 pb-3 pt-2 bg-slate-50/70 border-t border-slate-200/80 rounded-b-lg space-y-2 text-xs">
                       {/* Grid cards for detail */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {/* Detail Identitas & Materi Card */}

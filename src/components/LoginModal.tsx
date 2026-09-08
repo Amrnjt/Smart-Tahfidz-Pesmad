@@ -162,7 +162,7 @@ const DesktopLogin: React.FC<FormState> = ({
           <p className="text-sm text-slate-500 mt-1">Silakan masuk menggunakan kredensial yang telah didaftarkan.</p>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-4">
+        <form onSubmit={onSubmit} className="space-y-4" aria-busy={isLoading}>
           <div>
             <label htmlFor="login-username-input" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
               Username / ID Santri / NIS
@@ -174,6 +174,9 @@ const DesktopLogin: React.FC<FormState> = ({
               <input
                 id="login-username-input"
                 type="text"
+                autoComplete="username"
+                aria-invalid={!!errorMsg}
+                aria-describedby={errorMsg ? 'login-error-message' : undefined}
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -194,6 +197,9 @@ const DesktopLogin: React.FC<FormState> = ({
               <input
                 id="login-password-input"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                aria-invalid={!!errorMsg}
+                aria-describedby={errorMsg ? 'login-error-message' : undefined}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -204,7 +210,7 @@ const DesktopLogin: React.FC<FormState> = ({
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? 'Sembunyikan password' : 'Lihat password'}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                className="absolute inset-y-0 right-0 min-h-11 min-w-11 flex items-center justify-center text-slate-400 hover:text-slate-600 cursor-pointer"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -231,7 +237,7 @@ const DesktopLogin: React.FC<FormState> = ({
           </div>
 
           {errorMsg && (
-            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5">
+            <div id="login-error-message" role="alert" aria-live="assertive" className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5">
               <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
               <p className="font-semibold leading-snug">{errorMsg}</p>
             </div>
@@ -312,7 +318,7 @@ const MobileLogin: React.FC<FormState> = ({
         <p className="text-xs text-slate-500 mt-1 font-medium">Gunakan kredensial yang telah didaftarkan.</p>
       </div>
 
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form onSubmit={onSubmit} className="space-y-4" aria-busy={isLoading}>
         <div>
           <label htmlFor="login-username-input" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
             Username / ID Santri / NIS
@@ -324,6 +330,9 @@ const MobileLogin: React.FC<FormState> = ({
             <input
               id="login-username-input"
               type="text"
+                autoComplete="username"
+                aria-invalid={!!errorMsg}
+                aria-describedby={errorMsg ? 'login-error-message' : undefined}
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -344,6 +353,9 @@ const MobileLogin: React.FC<FormState> = ({
             <input
               id="login-password-input"
               type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                aria-invalid={!!errorMsg}
+                aria-describedby={errorMsg ? 'login-error-message' : undefined}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -381,7 +393,7 @@ const MobileLogin: React.FC<FormState> = ({
         </div>
 
         {errorMsg && (
-          <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5">
+            <div id="login-error-message" role="alert" aria-live="assertive" className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
             <p className="font-semibold leading-snug">{errorMsg}</p>
           </div>

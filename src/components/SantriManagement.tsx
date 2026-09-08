@@ -386,7 +386,9 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
         {/* Sub Tab Switcher */}
         <div className="grid grid-cols-2 bg-slate-100 p-1 rounded-xl border border-slate-200 w-full lg:w-auto">
           <button
+            type="button"
             onClick={() => setActiveSubTab('santri')}
+            aria-pressed={activeSubTab === 'santri'}
             className={`ui-control px-3 rounded-lg text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-2 ${
               activeSubTab === 'santri'
                 ? 'bg-white text-emerald-900 border border-slate-200'
@@ -397,7 +399,9 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
             <span>Data Santri ({santriList.length})</span>
           </button>
           <button
+            type="button"
             onClick={() => setActiveSubTab('users')}
+            aria-pressed={activeSubTab === 'users'}
             className={`ui-control px-3 rounded-lg text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-2 ${
               activeSubTab === 'users'
                 ? 'bg-white text-emerald-900 border border-slate-200'
@@ -420,6 +424,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={activeSubTab === 'santri' ? 'Cari nama, ID, kelas...' : 'Cari user, nama, role, NIS...'}
+            aria-label={activeSubTab === 'santri' ? 'Cari data santri' : 'Cari akun pengguna'}
             className="ui-control w-full pl-10 pr-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 placeholder-slate-400"
           />
         </div>
@@ -651,22 +656,22 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                     </dl>
 
                     {isSuperadmin ? (
-                      <div className="min-h-10 rounded-lg border border-amber-200 bg-amber-50 px-3 flex items-center gap-2 text-xs font-semibold text-amber-900">
+                      <div className="min-h-11 rounded-lg border border-amber-200 bg-amber-50 px-3 flex items-center gap-2 text-xs font-semibold text-amber-900">
                         <Shield className="w-4 h-4" />
                         Akun terproteksi
                       </div>
                     ) : (
                       <div className="grid grid-cols-2 gap-2">
-                        <button type="button" onClick={() => handleCopyUserCredentials(u)} className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 flex items-center justify-center gap-1.5">
+                        <button type="button" onClick={() => handleCopyUserCredentials(u)} className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 flex items-center justify-center gap-1.5">
                           <Copy className="w-3.5 h-3.5" /> Salin
                         </button>
-                        <button type="button" onClick={() => handleShareUserCredentials(u)} className="min-h-10 rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800 flex items-center justify-center gap-1.5">
+                        <button type="button" onClick={() => handleShareUserCredentials(u)} className="min-h-11 rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800 flex items-center justify-center gap-1.5">
                           <Share2 className="w-3.5 h-3.5" /> Bagikan
                         </button>
-                        <button type="button" onClick={() => handleOpenEditUser(u)} className="min-h-10 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 flex items-center justify-center gap-1.5">
+                        <button type="button" onClick={() => handleOpenEditUser(u)} className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 flex items-center justify-center gap-1.5">
                           <Edit3 className="w-3.5 h-3.5" /> Edit
                         </button>
-                        <button type="button" onClick={() => setUserToDelete(u)} className="min-h-10 rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 flex items-center justify-center gap-1.5">
+                        <button type="button" onClick={() => setUserToDelete(u)} className="min-h-11 rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 flex items-center justify-center gap-1.5">
                           <Trash2 className="w-3.5 h-3.5" /> Hapus
                         </button>
                       </div>
@@ -679,14 +684,15 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
 
           <div className="hidden sm:block overflow-x-auto border border-slate-200 rounded-2xl bg-white">
             <table className="w-full text-left text-xs">
+              <caption className="sr-only">Daftar akun pengguna dan hak akses</caption>
               <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">
                 <tr>
-                  <th className="py-3 px-3.5">Nama Pengguna</th>
-                  <th className="py-3 px-3.5">Username Login</th>
-                  <th className="py-3 px-3.5">Password</th>
-                  <th className="py-3 px-3.5">Role Hak Akses</th>
-                  <th className="py-3 px-3.5">Kaitan ID Santri</th>
-                  <th className="py-3 px-3.5 text-center">Aksi / Setting Role</th>
+                  <th scope="col" className="py-3 px-3.5">Nama Pengguna</th>
+                  <th scope="col" className="py-3 px-3.5">Username Login</th>
+                  <th scope="col" className="py-3 px-3.5">Password</th>
+                  <th scope="col" className="py-3 px-3.5">Role Hak Akses</th>
+                  <th scope="col" className="py-3 px-3.5">Kaitan ID Santri</th>
+                  <th scope="col" className="py-3 px-3.5 text-center">Aksi / Setting Role</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
@@ -793,8 +799,10 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                                 <span>Edit</span>
                               </button>
                               <button
+                                type="button"
                                 onClick={() => setUserToDelete(u)}
-                                className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
+                                aria-label={`Hapus akun ${u.nama}`}
+                                className="min-h-11 min-w-11 inline-flex items-center justify-center text-rose-500 hover:bg-rose-50 rounded-lg transition cursor-pointer"
                                 title="Hapus Akun"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />

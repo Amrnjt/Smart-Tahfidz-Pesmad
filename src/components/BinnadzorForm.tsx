@@ -166,7 +166,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
         </div>
 
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5" aria-busy={isSubmitting}>
           {/* Disclaimer Info */}
           <div className="bg-indigo-50/70 border border-indigo-200/70 rounded-xl p-3 flex items-start gap-2.5 text-xs text-indigo-900">
             <BookOpen className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
@@ -189,6 +189,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                 Pilih Santri <span className="text-rose-500">*</span>
               </label>
               <select
+                aria-label="Pilih Santri"
                 value={idSantri}
                 onChange={(e) => setIdSantri(e.target.value)}
                 required
@@ -215,6 +216,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               </label>
               <input
                 type="date"
+                aria-label="Tanggal Setoran"
                 value={tanggalSetor}
                 onChange={(e) => setTanggalSetor(e.target.value)}
                 required
@@ -232,6 +234,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               </label>
               <input
                 type="time"
+                aria-label="Waktu Setoran"
                 value={waktuSetor}
                 onChange={(e) => setWaktuSetor(e.target.value)}
                 required
@@ -254,6 +257,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               <button
                 type="button"
                 onClick={() => setModeInput('surah')}
+                aria-pressed={modeInput === 'surah'}
                 className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors min-h-11 flex items-center justify-center gap-2 border cursor-pointer ${
                   modeInput === 'surah'
                     ? 'bg-indigo-700 text-white border-indigo-800'
@@ -266,6 +270,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               <button
                 type="button"
                 onClick={() => setModeInput('halaman')}
+                aria-pressed={modeInput === 'halaman'}
                 className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors min-h-11 flex items-center justify-center gap-2 border cursor-pointer ${
                   modeInput === 'halaman'
                     ? 'bg-indigo-700 text-white border-indigo-800'
@@ -278,6 +283,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               <button
                 type="button"
                 onClick={() => setModeInput('juz')}
+                aria-pressed={modeInput === 'juz'}
                 className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors min-h-11 flex items-center justify-center gap-2 border cursor-pointer ${
                   modeInput === 'juz'
                     ? 'bg-indigo-700 text-white border-indigo-800'
@@ -298,7 +304,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                   Surah Al-Qur'an <span className="text-rose-500">*</span>
                 </label>
                 <select
-                  value={surahName}
+                  aria-label="Surah Binnadzor"
+                value={surahName}
                   onChange={(e) => handleSurahChange(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-700"
                 >
@@ -319,7 +326,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                     type="number"
                     min={1}
                     max={selectedSurah.numberOfAyahs}
-                    value={ayatAwal}
+                    aria-label="Ayat Awal Binnadzor"
+                value={ayatAwal}
                     onChange={(e) => setAyatAwal(Number(e.target.value))}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-medium focus:ring-2 focus:ring-indigo-700"
                   />
@@ -332,7 +340,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                     type="number"
                     min={ayatAwal}
                     max={selectedSurah.numberOfAyahs}
-                    value={ayatAkhir}
+                    aria-label="Ayat Akhir Binnadzor"
+                value={ayatAkhir}
                     onChange={(e) => setAyatAkhir(Number(e.target.value))}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-medium focus:ring-2 focus:ring-indigo-700"
                   />
@@ -352,7 +361,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                     type="number"
                     min={1}
                     max={604}
-                    value={halamanAwal}
+                    aria-label="Halaman Awal Binnadzor"
+                value={halamanAwal}
                     onChange={(e) => setHalamanAwal(Number(e.target.value))}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-medium focus:ring-2 focus:ring-indigo-700"
                   />
@@ -365,7 +375,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                     type="number"
                     min={halamanAwal}
                     max={604}
-                    value={halamanAkhir}
+                    aria-label="Halaman Akhir Binnadzor"
+                value={halamanAkhir}
                     onChange={(e) => setHalamanAkhir(Number(e.target.value))}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-medium focus:ring-2 focus:ring-indigo-700"
                   />
@@ -384,7 +395,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                   Pilih Juz Al-Qur'an (1 - 30) <span className="text-rose-500">*</span>
                 </label>
                 <select
-                  value={juzNumber}
+                  aria-label="Juz Binnadzor"
+                value={juzNumber}
                   onChange={(e) => setJuzNumber(Number(e.target.value))}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-medium text-slate-800 focus:ring-2 focus:ring-indigo-700"
                 >
@@ -409,6 +421,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                   type="button"
                   key={opt.value}
                   onClick={() => setNilai(opt.value)}
+                  aria-pressed={nilai === opt.value}
                   className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition flex flex-col items-center justify-center gap-1 cursor-pointer ${
                     nilai === opt.value
                       ? 'bg-indigo-700 text-white border-indigo-800'
@@ -446,7 +459,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                     setKefasihan('Baik');
                     setKelancaran('Baik');
                   }}
-                  className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 transition cursor-pointer"
+                  className="min-h-11 text-xs font-bold px-3 py-1 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 transition cursor-pointer"
                 >
                   Semua Baik
                 </button>
@@ -458,7 +471,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                     setKefasihan('Sangat Baik');
                     setKelancaran('Sangat Baik');
                   }}
-                  className="text-xs font-bold px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-200 hover:bg-teal-200 transition cursor-pointer"
+                  className="min-h-11 text-xs font-bold px-3 py-1 rounded-md bg-teal-100 text-teal-800 border border-teal-200 hover:bg-teal-200 transition cursor-pointer"
                 >
                   Sangat Baik
                 </button>
@@ -470,7 +483,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                     setKefasihan('Mutqin');
                     setKelancaran('Mutqin');
                   }}
-                  className="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200 hover:bg-indigo-200 transition cursor-pointer"
+                  className="min-h-11 text-xs font-bold px-3 py-1 rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200 hover:bg-indigo-200 transition cursor-pointer"
                 >
                   Mutqin
                 </button>
@@ -494,7 +507,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                       key={level}
                       type="button"
                       onClick={() => setHukumTajwid(level)}
-                      className={`py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      aria-pressed={hukumTajwid === level}
+                      className={`min-h-11 py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                         hukumTajwid === level
                           ? 'bg-indigo-700 text-white shadow-2xs'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -521,7 +535,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                       key={level}
                       type="button"
                       onClick={() => setMakhrojHuruf(level)}
-                      className={`py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      aria-pressed={makhrojHuruf === level}
+                      className={`min-h-11 py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                         makhrojHuruf === level
                           ? 'bg-indigo-700 text-white shadow-2xs'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -548,7 +563,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                       key={level}
                       type="button"
                       onClick={() => setKefasihan(level)}
-                      className={`py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      aria-pressed={kefasihan === level}
+                      className={`min-h-11 py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                         kefasihan === level
                           ? 'bg-indigo-700 text-white shadow-2xs'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -575,7 +591,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                       key={level}
                       type="button"
                       onClick={() => setKelancaran(level)}
-                      className={`py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      aria-pressed={kelancaran === level}
+                      className={`min-h-11 py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                         kelancaran === level
                           ? 'bg-indigo-700 text-white shadow-2xs'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -614,7 +631,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
 
             <textarea
               rows={3}
-              value={catatan}
+              aria-label="Catatan Binnadzor"
+                value={catatan}
               onChange={(e) => setCatatan(e.target.value)}
               placeholder="Contoh: Bacaan tartil, makhraj huruf 'ain dan ghain sudah tepat, perlu diperhatikan mad shilah..."
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-700 text-sm font-medium text-slate-800"

@@ -125,13 +125,14 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
         <div className="flex items-start justify-between gap-3 pb-2 border-b border-slate-100">
           <div className="min-w-0">
             <h2 id="setor-action-sheet-title" className="text-sm font-bold text-slate-900 leading-5">Input Setoran Santri</h2>
-            <p id="setor-action-sheet-description" className="text-[11px] text-slate-500 leading-4">
+            <p id="setor-action-sheet-description" className="text-xs text-slate-500 leading-4">
               Pilih jenis setoran yang akan diinput
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="w-8 h-8 -mr-1 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer flex-shrink-0"
+            className="min-h-11 min-w-11 -mr-1 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer flex-shrink-0"
             aria-label="Tutup"
           >
             <X className="w-4 h-4" />
@@ -161,6 +162,8 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
             <button
               type="button"
               onClick={() => setShowMonitorModal(true)}
+              aria-haspopup="dialog"
+              aria-expanded={showMonitorModal}
               className="inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-100"
               title="Lihat Rekap Liburan"
             >
@@ -171,7 +174,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
               type="button"
               role="switch"
               aria-checked={isProgramLiburanActive}
-              aria-label="Aktifkan Program Pantauan Liburan"
+              aria-label={isProgramLiburanActive ? 'Nonaktifkan Program Pantauan Liburan' : 'Aktifkan Program Pantauan Liburan'}
               aria-busy={isTogglingLiburan}
               onClick={handleToggleLiburan}
               disabled={isTogglingLiburan}
@@ -198,6 +201,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
 
             return (
               <button
+                type="button"
                 key={act.tab}
                 onClick={() => {
                   onSelect(act.tab);
@@ -213,16 +217,16 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-[13px] font-bold text-slate-900 truncate">
+                    <span className="text-sm font-bold text-slate-900 truncate">
                       {act.title}
                     </span>
                     <span
-                      className={`text-[9px] leading-4 font-semibold px-1.5 rounded-md border whitespace-nowrap flex-shrink-0 ${act.badgeColor}`}
+                      className={`text-xs leading-4 font-semibold px-1.5 rounded-md border whitespace-nowrap flex-shrink-0 ${act.badgeColor}`}
                     >
                       {act.badge}
                     </span>
                   </div>
-                  <p className="text-[10px] text-slate-500 leading-4 truncate">
+                  <p className="text-xs text-slate-500 leading-4 truncate">
                     {act.subtitle}
                   </p>
                 </div>
@@ -235,19 +239,21 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
 
         <div className="pt-1.5 border-t border-slate-100 flex items-center gap-2">
           <button
+            type="button"
             onClick={() => {
               onSelect('mushaf');
               onClose();
             }}
-            className="h-9 flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-50 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
+            className="min-h-11 flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-50 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
           >
             <BookOpen className="w-4 h-4" />
             <span>Mushaf Digital</span>
           </button>
 
           <button
+            type="button"
             onClick={onClose}
-            className="h-9 px-4 rounded-lg bg-slate-100 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition cursor-pointer"
+            className="min-h-11 px-4 rounded-lg bg-slate-100 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition cursor-pointer"
           >
             Tutup
           </button>

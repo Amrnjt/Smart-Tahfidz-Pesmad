@@ -115,7 +115,7 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
             </p>
           </div>
         ) : (
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5" aria-busy={isSubmitting}>
           {/* Santri & Tanggal Setoran */}
           <div className="space-y-1">
             <h4 className="text-sm font-bold text-slate-900">Identitas & waktu</h4>
@@ -128,6 +128,7 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
               </label>
               <select
                 required
+                aria-label="Pilih Santri"
                 value={idSantri}
                 onChange={(e) => setIdSantri(e.target.value)}
                 className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -154,6 +155,7 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
               <input
                 type="date"
                 required
+                aria-label="Tanggal Setoran"
                 value={tanggalSetor}
                 onChange={(e) => setTanggalSetor(e.target.value)}
                 className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -171,6 +173,7 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
               <input
                 type="time"
                 required
+                aria-label="Waktu Setoran"
                 value={waktuSetor}
                 onChange={(e) => setWaktuSetor(e.target.value)}
                 className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -190,7 +193,8 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
             </label>
             <select
               required
-              value={surahName}
+              aria-label="Pilih Surah"
+                value={surahName}
               onChange={(e) => handleSurahChange(e.target.value)}
               className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
             >
@@ -224,6 +228,7 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
                 min="1"
                 max={selectedSurah.numberOfAyahs}
                 required
+                aria-label="Ayat Awal"
                 value={ayatAwal}
                 onChange={(e) => setAyatAwal(Number(e.target.value))}
                 className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -239,6 +244,7 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
                 min={ayatAwal}
                 max={selectedSurah.numberOfAyahs}
                 required
+                aria-label="Ayat Akhir"
                 value={ayatAkhir}
                 onChange={(e) => setAyatAkhir(Number(e.target.value))}
                 className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -250,6 +256,7 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
                 Nilai Kelancaran <span className="text-rose-500">*</span>
               </label>
               <select
+                aria-label="Nilai Kelancaran"
                 value={nilai}
                 onChange={(e) => setNilai(e.target.value as PredikatNilai)}
                 className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
@@ -268,7 +275,8 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
             </label>
             <textarea
               rows={3}
-              value={catatan}
+              aria-label="Catatan Evaluasi atau Rekomendasi"
+                value={catatan}
               onChange={(e) => setCatatan(e.target.value)}
               placeholder="Contoh: Sangat lancar, mutqin tanpa bantuan. Pertahankan!"
               className="w-full min-h-28 py-3 px-3.5 bg-white border border-slate-300 rounded-xl text-sm leading-6 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
