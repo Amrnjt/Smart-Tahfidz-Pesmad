@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'src/release-polish.css'
+      - 'src/responsive-accessibility.css'
       - 'src/App.tsx'
       - 'src/components/Navbar.tsx'
       - 'src/components/DesktopPrimaryNav.tsx'
@@ -62,12 +63,27 @@ jobs:
             exit 1
           fi
 
+      - name: Verify responsive accessibility contract
+        run: |
+          grep -q "import './responsive-accessibility.css'" src/main.tsx
+          grep -q "padding-bottom: calc(7rem + var(--safe-bottom))" src/responsive-accessibility.css
+          grep -q 'font-size: 16px !important' src/responsive-accessibility.css
+          grep -q '@media (max-width: 389px)' src/responsive-accessibility.css
+          grep -q '@media (min-width: 768px) and (max-height: 520px)' src/responsive-accessibility.css
+          grep -q '@media (max-height: 560px)' src/responsive-accessibility.css
+          grep -q 'scroll-margin-top' src/responsive-accessibility.css
+          grep -q 'prefers-reduced-motion: reduce' src/responsive-accessibility.css
+          grep -q 'forced-colors: active' src/responsive-accessibility.css
+
       - name: Enforce P3 performance budget
         run: |
-          size=$(wc -c < src/release-polish.css)
-          echo "release-polish.css bytes: $size"
-          test "$size" -le 24000
-          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/release-polish.css; then
-            echo 'P3 release polish contains an expensive global effect.'
+          release_size=$(wc -c < src/release-polish.css)
+          responsive_size=$(wc -c < src/responsive-accessibility.css)
+          echo "release-polish.css bytes: $release_size"
+          echo "responsive-accessibility.css bytes: $responsive_size"
+          test "$release_size" -le 24000
+          test "$responsive_size" -le 14000
+          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/release-polish.css src/responsive-accessibility.css; then
+            echo 'P3 polish contains an expensive global effect.'
             exit 1
           fi
