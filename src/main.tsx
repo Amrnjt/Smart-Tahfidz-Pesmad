@@ -8,6 +8,7 @@ import './design-foundation.css';
 import './app-shell.css';
 import './dashboard-experience.css';
 import './input-workflow.css';
+import './history-experience.css';
 
 // P0.3: Firestore is the commit gate; LocalStorage remains cache only.
 installCloudCommitGate();
