@@ -17,7 +17,7 @@
 .p3-chrome-stack {
   position: sticky;
   top: 0;
-  z-index: 70;
+  z-index: 60;
   isolation: isolate;
   width: 100%;
 }
@@ -55,6 +55,14 @@
 
 .p3-page-content {
   min-height: min(62vh, 48rem);
+}
+
+/* Prevent the browser's default whole-document crossfade.
+ * Page content and active navigation already have explicit named transitions. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
 }
 
 /* Management screens: make the page intro feel like the same product shell as P2. */
@@ -199,7 +207,7 @@
 
 @media (max-width: 767px) {
   .p3-chrome-stack {
-    z-index: 70;
+    z-index: 60;
   }
 }
 

@@ -109,7 +109,7 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
         {mySantriList.length === 0 ? (
           <div className="text-center py-10 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200 text-slate-500 space-y-3">
             <RotateCw className="w-8 h-8 mx-auto text-slate-400" />
-            <h4 className="text-sm font-bold text-slate-700">Belum Ada Data Santri</h4>
+            <h4 className="text-sm font-bold text-slate-700">Belum ada santri</h4>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
               Silakan daftarkan data santri terlebih dahulu di menu <b>Kelola Santri & Akun</b> sebelum menginput setoran Muroja'ah.
             </p>
