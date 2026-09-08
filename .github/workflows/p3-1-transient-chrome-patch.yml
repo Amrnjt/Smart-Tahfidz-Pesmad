@@ -1,0 +1,35 @@
+name: P3.1 Transient Chrome Patch
+
+on:
+  push:
+    branches:
+      - polish/p3-1-chrome-state-cleanup
+    paths:
+      - '.github/workflows/p3-1-transient-chrome-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: polish/p3-1-chrome-state-cleanup
+
+      - name: Apply P3.1 chrome patch
+        run: node scripts/p3-1-chrome-patch.mjs
+
+      - name: Commit P3.1 chrome changes
+        run: |
+          if git diff --quiet -- src/App.tsx src/components/Navbar.tsx; then
+            echo "No chrome patch needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.tsx src/components/Navbar.tsx
+          git commit -m "P3.1: keep primary navigation in persistent chrome"
+          git push origin HEAD:polish/p3-1-chrome-state-cleanup
