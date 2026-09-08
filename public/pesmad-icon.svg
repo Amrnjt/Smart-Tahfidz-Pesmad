@@ -1,17 +1,40 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
-  <title id="title">Pesmad Smart Tahfidz</title>
-  <desc id="desc">Ikon aplikasi Pesantren Madrasah Darul Fikri</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#065f46"/>
-      <stop offset="100%" stop-color="#0f766e"/>
-    </linearGradient>
+    <style>
+      .gold-stroke { stroke: #C8A86B; stroke-width: 14; stroke-linejoin: round; stroke-linecap: round; fill: none; }
+    </style>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <circle cx="256" cy="256" r="154" fill="#ffffff" fill-opacity="0.96"/>
-  <path d="M160 196c0-17.673 14.327-32 32-32h128c17.673 0 32 14.327 32 32v152H160V196Z" fill="#ecfdf5" stroke="#065f46" stroke-width="18"/>
-  <path d="M206 244h100M206 286h100" stroke="#0f766e" stroke-width="18" stroke-linecap="round"/>
-  <path d="M256 164v184" stroke="#065f46" stroke-width="14" stroke-linecap="round"/>
-  <path d="M140 348h232" stroke="#065f46" stroke-width="18" stroke-linecap="round"/>
-  <circle cx="256" cy="126" r="22" fill="#f59e0b"/>
+  <g fill="#C8A86B">
+    <circle cx="250" cy="18" r="4.5" /><circle cx="250" cy="30" r="3" />
+    <circle cx="250" cy="482" r="4.5" /><circle cx="250" cy="470" r="3" />
+    <circle cx="18" cy="250" r="4.5" /><circle cx="30" cy="250" r="3" /><circle cx="40" cy="250" r="2" />
+    <circle cx="482" cy="250" r="4.5" /><circle cx="470" cy="250" r="3" /><circle cx="460" cy="250" r="2" />
+    <circle cx="95" cy="85" r="4" /><circle cx="85" cy="95" r="3" />
+    <circle cx="405" cy="85" r="4" /><circle cx="415" cy="95" r="3" />
+    <circle cx="95" cy="415" r="4" /><circle cx="85" cy="405" r="3" />
+    <circle cx="405" cy="415" r="4" /><circle cx="415" cy="405" r="3" />
+  </g>
+  <rect x="95" y="95" width="310" height="310" rx="6" class="gold-stroke" transform="rotate(45 250 250)" />
+  <rect x="95" y="95" width="310" height="310" rx="6" class="gold-stroke" />
+  <g stroke="#C8A86B" stroke-width="12" fill="none" stroke-linejoin="round" stroke-linecap="round">
+    <path d="M 158 158 C 175 118 210 95 250 95 C 290 95 325 118 342 158" />
+    <path d="M 195 160 C 190 125 218 105 250 105 C 282 105 310 125 305 160" stroke-width="8" />
+    <path d="M 342 158 C 382 175 405 210 405 250 C 405 290 382 325 342 342" />
+    <path d="M 342 342 C 325 382 290 405 250 405 C 210 405 175 382 158 342" />
+    <path d="M 158 342 C 118 325 95 290 95 250 C 95 210 118 175 158 158" />
+    <path d="M 215 152 C 228 135 240 128 250 128 C 260 128 272 135 285 152" stroke-width="9" />
+    <path d="M 348 215 C 365 228 372 240 372 250 C 372 260 365 272 348 285" stroke-width="9" />
+    <path d="M 285 348 C 272 365 260 372 250 372 C 240 372 228 365 215 348" stroke-width="9" />
+    <path d="M 152 285 C 135 272 128 260 128 250 C 128 240 135 228 152 215" stroke-width="9" />
+  </g>
+  <path d="M 250 142 C 263 142 274 153 274 167 C 274 181 263 192 250 192 C 238 192 228 183 226 172 C 230 176 236 179 243 179 C 253 179 261 171 261 161 C 261 154 256 148 249 145 C 249.4 144 249.7 142 250 142 Z" fill="#6A4E3E" />
+  <g transform="translate(0, 30)">
+    <path d="M 250 258 C 200 236 145 240 102 268 L 90 300 C 142 274 200 270 245 292 L 250 294 L 255 292 C 300 270 358 274 410 300 L 398 268 C 355 240 300 236 250 258 Z" fill="#6A4E3E" stroke="#6A4E3E" stroke-width="5" stroke-linejoin="round" />
+    <path d="M 90 300 C 142 274 200 270 245 292 L 250 298 L 255 292 C 300 270 358 274 410 300 L 404 314 C 354 286 298 282 255 304 L 250 306 L 245 304 C 202 282 146 286 96 314 Z" fill="#6A4E3E" />
+    <path d="M 245 186 C 198 174 150 178 114 205 L 108 266 C 148 240 196 236 244 256 Z" fill="#FFFFFF" stroke="#6A4E3E" stroke-width="8.5" stroke-linejoin="round" />
+    <path d="M 235 198 C 198 188 158 192 128 214 L 124 254 C 154 235 194 232 234 248 Z" fill="#FFFFFF" stroke="#6A4E3E" stroke-width="3" stroke-linejoin="round" />
+    <path d="M 255 186 C 302 174 350 178 386 205 L 392 266 C 352 240 304 236 256 256 Z" fill="#FFFFFF" stroke="#6A4E3E" stroke-width="8.5" stroke-linejoin="round" />
+    <path d="M 265 198 C 302 188 342 192 372 214 L 376 254 C 346 235 306 232 266 248 Z" fill="#FFFFFF" stroke="#6A4E3E" stroke-width="3" stroke-linejoin="round" />
+    <path d="M 245 186 L 255 186 L 255 258 L 245 258 Z" fill="#6A4E3E" />
+  </g>
 </svg>
