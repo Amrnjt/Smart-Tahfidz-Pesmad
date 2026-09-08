@@ -29,11 +29,15 @@ jobs:
           npm install --no-package-lock --ignore-scripts
           npm run build
           git diff --check
-          if grep -q '\[class~=' src/index.css; then
-            echo 'Unexpected utility-token selector remains in src/index.css'
-            grep -n '\[class~=' src/index.css
-            exit 1
-          fi
+          python3 - <<'PY'
+          from pathlib import Path
+          css = Path('src/index.css').read_text(encoding='utf-8')
+          token_lines = [line.strip() for line in css.splitlines() if '[class~=' in line]
+          allowed = ['.fixed.inset-0[class~="z-[60]"] {']
+          if token_lines != allowed:
+              raise SystemExit(f'Unexpected utility-token selectors remain: {token_lines}')
+          print('Only the intentional P0 overlay selector remains')
+          PY
 
       - name: Commit verified change
         run: |
