@@ -1,13 +1,229 @@
 @import "tailwindcss";
 
-/* === Design Tokens === */
+/* === Pesmad Design Contract ===
+   P2.1 establishes semantic primitives without forcing a mass component rewrite.
+   Components should migrate toward these tokens progressively during P2.2–P2.18. */
 :root {
+  /* Typography */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+  --text-meta-size: 0.75rem;
+  --text-meta-line: 1rem;
+  --text-secondary-size: 0.8125rem;
+  --text-secondary-line: 1.125rem;
+  --text-body-size: 0.875rem;
+  --text-body-line: 1.25rem;
+  --text-section-size: 1rem;
+  --text-section-line: 1.5rem;
+  --text-page-size: 1.375rem;
+  --text-page-line: 1.75rem;
+
+  /* Neutral surfaces and content */
+  --surface-page: #f8fafc;
+  --surface-primary: #ffffff;
+  --surface-secondary: #f8fafc;
+  --surface-muted: #f1f5f9;
+  --surface-inverse: #064e3b;
+
+  --content-primary: #0f172a;
+  --content-secondary: #475569;
+  --content-tertiary: #64748b;
+  --content-disabled: #94a3b8;
+  --content-inverse: #ffffff;
+
+  --stroke-primary: #e2e8f0;
+  --stroke-strong: #cbd5e1;
+
+  /* Pesmad brand */
+  --brand-subtle: #ecfdf5;
+  --brand-soft: #d1fae5;
+  --brand-primary: #047857;
+  --brand-strong: #065f46;
+  --brand-deep: #064e3b;
+
+  /* Tahfidz categories */
+  --category-ziyadah: #047857;
+  --category-murojaah: #0f766e;
+  --category-binnadzor: #4f46e5;
+  --category-pembelajaran: #b45309;
+
+  /* Semantic state */
+  --status-success: #047857;
+  --status-success-subtle: #ecfdf5;
+  --status-warning: #b45309;
+  --status-warning-subtle: #fffbeb;
+  --status-error: #be123c;
+  --status-error-subtle: #fff1f2;
+  --status-info: #0369a1;
+  --status-info-subtle: #f0f9ff;
+  --status-neutral: #475569;
+  --status-neutral-subtle: #f1f5f9;
+
+  /* Spacing rhythm */
+  --space-4: 0.25rem;
+  --space-8: 0.5rem;
+  --space-12: 0.75rem;
+  --space-16: 1rem;
+  --space-24: 1.5rem;
+  --space-32: 2rem;
+  --space-40: 2.5rem;
+  --space-48: 3rem;
+
+  /* Radius hierarchy */
+  --radius-small: 0.5rem;
+  --radius-control: 0.625rem;
+  --radius-surface: 0.75rem;
+  --radius-major: 1rem;
+
+  /* Elevation */
+  --shadow-floating: 0 8px 24px rgba(15, 23, 42, 0.10);
+  --shadow-overlay: 0 16px 40px rgba(15, 23, 42, 0.16);
+
+  /* Focus */
+  --focus-ring: #10b981;
+  --focus-offset: #ffffff;
+
+  /* Motion */
   --duration-fast: 150ms;
   --duration-normal: 300ms;
   --duration-slow: 500ms;
   --duration-chart: 800ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --text-meta-size: 0.75rem;
+    --text-meta-line: 1rem;
+    --text-secondary-size: 0.875rem;
+    --text-secondary-line: 1.25rem;
+    --text-body-size: 0.9375rem;
+    --text-body-line: 1.375rem;
+    --text-section-size: 1.125rem;
+    --text-section-line: 1.625rem;
+    --text-page-size: 1.625rem;
+    --text-page-line: 2rem;
+  }
+}
+
+/* === Base visual contract === */
+html {
+  font-family: var(--font-sans);
+  background: var(--surface-page);
+  color: var(--content-primary);
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  background: var(--surface-page);
+  color: var(--content-primary);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+:where(a, button, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+:where(button, input, select, textarea):disabled,
+[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* === Semantic typography helpers === */
+.ui-page-title {
+  color: var(--content-primary);
+  font-size: var(--text-page-size);
+  line-height: var(--text-page-line);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.ui-section-title {
+  color: var(--content-primary);
+  font-size: var(--text-section-size);
+  line-height: var(--text-section-line);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.ui-body {
+  color: var(--content-primary);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-line);
+}
+
+.ui-secondary {
+  color: var(--content-secondary);
+  font-size: var(--text-secondary-size);
+  line-height: var(--text-secondary-line);
+}
+
+.ui-meta {
+  color: var(--content-tertiary);
+  font-size: var(--text-meta-size);
+  line-height: var(--text-meta-line);
+}
+
+/* === Semantic surface helpers === */
+.ui-surface {
+  background: var(--surface-primary);
+  border: 1px solid var(--stroke-primary);
+  border-radius: var(--radius-surface);
+}
+
+.ui-panel {
+  background: var(--surface-primary);
+  border: 1px solid var(--stroke-primary);
+  border-radius: var(--radius-major);
+}
+
+.ui-elevated {
+  box-shadow: var(--shadow-floating);
+}
+
+.ui-control {
+  min-height: 44px;
+  border-radius: var(--radius-control);
+}
+
+/* === Semantic state helpers ===
+   These classes style state containers; state meaning must still include text
+   and/or an icon so color is never the only signal. */
+.ui-state-success {
+  color: var(--status-success);
+  background: var(--status-success-subtle);
+  border-color: color-mix(in srgb, var(--status-success) 25%, white);
+}
+
+.ui-state-warning {
+  color: var(--status-warning);
+  background: var(--status-warning-subtle);
+  border-color: color-mix(in srgb, var(--status-warning) 25%, white);
+}
+
+.ui-state-error {
+  color: var(--status-error);
+  background: var(--status-error-subtle);
+  border-color: color-mix(in srgb, var(--status-error) 25%, white);
+}
+
+.ui-state-info {
+  color: var(--status-info);
+  background: var(--status-info-subtle);
+  border-color: color-mix(in srgb, var(--status-info) 25%, white);
 }
 
 /* === Entry transitions === */
