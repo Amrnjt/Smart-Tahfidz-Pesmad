@@ -1,0 +1,52 @@
+name: P0 Role Enforcement Gate
+
+on:
+  push:
+    branches:
+      - security/p0-5-role-enforcement
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Reject public Firestore rules
+        run: |
+          if grep -Eq "allow[[:space:]]+(read|write|read, write|read,write)[^;]*if[[:space:]]+true" firestore.rules; then
+            echo "Public Firestore allow rule detected."
+            exit 1
+          fi
+
+      - name: Require server-only credential collection
+        run: |
+          grep -q "match /auth_credentials" firestore.rules
+          grep -q "allow read, write: if false" firestore.rules
+
+      - name: Require ownership-scoped client queries
+        run: |
+          grep -q "where('idSantri', '==', targetSantriId)" src/services/roleScopedSync.ts
+          grep -q "sanitizeNonStaffCache" src/services/roleScopedSync.ts
+          grep -q "isStaffRole" src/services/roleScopedSync.ts
