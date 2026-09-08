@@ -124,6 +124,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
   const [catatan, setCatatan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Switch santri
   const handleSantriChange = (newSantriId: string) => {
@@ -153,6 +154,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
     e.preventDefault();
     if (!idSantri) return;
 
+    setFormError(null);
+    setShowSuccessToast(false);
     setIsSubmitting(true);
     try {
       const customTimestamp = `${tanggalSetor} ${waktuSetor || '00:00'}`;
@@ -186,10 +189,12 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
       setShowSuccessToast(true);
 
       setTimeout(() => {
+        setShowSuccessToast(false);
         onSuccess();
       }, 900);
     } catch (err) {
       console.error(err);
+      setFormError('Pembelajaran belum tersimpan ke Cloud. Periksa koneksi lalu coba lagi.');
       setIsSubmitting(false);
     }
   };
@@ -198,39 +203,47 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
     setTanggalSetor(getTodayInputFormat());
     setWaktuSetor(getCurrentTimeInputFormat());
     setNilai('Baik');
+    setHukumTajwid('Baik');
+    setMakhrojHuruf('Baik');
+    setKefasihan('Baik');
+    setKelancaran('Baik');
     setStatusKenaikan('Lanjut Halaman');
     setCatatan('');
     setKendalaSantri('');
     setRekomendasiTindakLanjut('');
+    setShowSuccessToast(false);
+    setFormError(null);
   };
 
   return (
-    <div className="max-w-3xl mx-auto pb-10">
-      {/* Toast Notifikasi Sukses */}
-      {showSuccessToast && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-emerald-700 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-2.5 font-bold text-sm">
-          <CheckCircle className="w-5 h-5 text-emerald-200" />
-          <span>Alhamdulillah! Data Pembelajaran berhasil disimpan.</span>
-        </div>
-      )}
-
-      <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
-        {/* Header Form */}
-        <div className="bg-gradient-to-r from-emerald-800 via-teal-800 to-indigo-900 px-6 py-6 text-white">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-xs flex items-center justify-center border border-white/20 shadow-inner">
-              <GraduationCap className="w-6 h-6 text-emerald-300" />
-            </div>
-            <div>
-              <h2 className="text-xl font-black tracking-tight">Form Pembelajaran Non-Tahfidz</h2>
-              <p className="text-xs text-emerald-100/90 font-medium">
-                Pencatatan materi Jilid Ummi Dewasa, Binnadzor & Kelas Pendampingan Istimewa
-              </p>
-            </div>
+    <div className="max-w-3xl mx-auto">
+      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-5">
+        {/* Form Header */}
+        <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+          <div className="w-11 h-11 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0">
+            <GraduationCap className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-lg sm:text-xl font-bold text-slate-800">Setoran Pembelajaran</h3>
+            <p className="text-xs sm:text-sm text-slate-500">Jilid Ummi Dewasa dan Kelas Istimewa dengan evaluasi progres materi.</p>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        {showSuccessToast && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs font-semibold flex items-center gap-2" role="status">
+            <CheckCircle className="w-4 h-4 text-amber-700 flex-shrink-0" />
+            <span>Pembelajaran berhasil disimpan ke Cloud.</span>
+          </div>
+        )}
+
+        {formError && (
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-semibold flex items-start gap-2" role="alert">
+            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+            <span>{formError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* 1. Pemilihan Tipe Kelas Non-Tahfidz */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
@@ -287,46 +300,62 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
             </div>
           </div>
 
-          {/* 2. Pilih Santri & Tanggal */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+          {/* 2. Pilih Santri, Tanggal & Waktu */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
                 Pilih Santri <span className="text-rose-500">*</span>
               </label>
               <select
                 value={idSantri}
                 onChange={(e) => handleSantriChange(e.target.value)}
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm font-semibold text-slate-800"
+                className="w-full py-3 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
+                <option value="">-- Pilih Nama Santri --</option>
                 {filteredSantriList.map((santri) => (
                   <option key={santri.idSantri} value={santri.idSantri}>
-                    {santri.namaSantri} ({santri.nis || santri.idSantri}) - {santri.kelas || 'Belum ada kelas'}
+                    {santri.namaSantri} ({santri.kelas || 'Belum ada kelas'})
                   </option>
                 ))}
               </select>
               {currentSantri?.kelas && (
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Kelas Santri saat ini: <span className="font-semibold text-slate-800">{currentSantri.kelas}</span>
+                <p className="text-[11px] text-amber-800 font-semibold mt-1">
+                  Kelas: {currentSantri.kelas}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-emerald-600" />
-                Tanggal <span className="text-rose-500">*</span>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-amber-700" />
+                <span>Tanggal Setoran <span className="text-rose-500">*</span></span>
               </label>
               <input
                 type="date"
                 value={tanggalSetor}
                 onChange={(e) => setTanggalSetor(e.target.value)}
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm font-medium text-slate-800"
+                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
-              <p className="text-[10px] text-slate-500 mt-1">
+              <span className="text-[11px] text-amber-800 font-semibold mt-1 block truncate">
                 {formatTanggalLengkap(tanggalSetor)}
-              </p>
+              </span>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-amber-700" />
+                <span>Waktu / Jam <span className="text-rose-500">*</span></span>
+              </label>
+              <input
+                type="time"
+                value={waktuSetor}
+                onChange={(e) => setWaktuSetor(e.target.value)}
+                required
+                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+              />
+              <span className="text-[11px] text-slate-500 mt-1 block">WIB (Waktu Indonesia Barat)</span>
             </div>
           </div>
 
@@ -564,7 +593,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
           </div>
 
           {/* 5. Evaluasi 4 Aspek Kualitas (Tajwid, Makhroj, Fashohah, Kelancaran) */}
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-50 to-emerald-50/40 border border-slate-200 shadow-2xs space-y-3">
+          <div className="p-4 rounded-2xl bg-amber-50/40 border border-slate-200 shadow-2xs space-y-3">
             <div className="flex items-center justify-between border-b border-slate-200 pb-2">
               <div>
                 <h4 className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
@@ -738,7 +767,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
             <button
               type="button"
               onClick={handleReset}
-              className="px-4 py-2.5 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs font-bold hover:bg-slate-50 transition flex items-center gap-1.5 cursor-pointer"
+              disabled={isSubmitting}
+              className="px-3 py-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <RotateCcw className="w-4 h-4" />
               <span>Reset Form</span>
@@ -747,10 +777,10 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || !idSantri}
-              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white text-xs font-bold transition shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-amber-700 hover:bg-amber-800 active:bg-amber-950 text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <Save className="w-4 h-4" />
-              <span>{isSubmitting ? 'Menyimpan...' : 'Simpan Pembelajaran'}</span>
+              {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+              <span>{isSubmitting ? 'Menyimpan...' : 'Simpan'}</span>
             </button>
           </div>
         </form>

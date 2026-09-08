@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, Kelas, AspekKualitas, ASPEK_KUALITAS_OPTIONS } from '../types';
 import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
-import { BookOpenCheck, CircleCheck as CheckCircle, Save, RotateCcw, Calendar, Clock, BookOpen, Layers, Bookmark, Sparkles, Check } from 'lucide-react';
+import { BookOpenCheck, CircleCheck as CheckCircle, Save, RotateCcw, Calendar, Clock, BookOpen, Layers, Bookmark, Sparkles, Check, AlertCircle } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 
 interface BinnadzorFormProps {
@@ -64,6 +64,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
   const [catatan, setCatatan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const selectedSurah = SURAH_LIST.find(s => s.nameLatin === surahName) || SURAH_LIST[0];
 
@@ -92,6 +93,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
     e.preventDefault();
     if (!idSantri) return;
 
+    setFormError(null);
+    setShowSuccessToast(false);
     setIsSubmitting(true);
     try {
       const customTimestamp = `${tanggalSetor} ${waktuSetor || '00:00'}`;
@@ -122,10 +125,12 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
       setShowSuccessToast(true);
 
       setTimeout(() => {
+        setShowSuccessToast(false);
         onSuccess();
       }, 900);
     } catch (err) {
       console.error(err);
+      setFormError('Binnadzor belum tersimpan ke Cloud. Periksa koneksi lalu coba lagi.');
       setIsSubmitting(false);
     }
   };
@@ -133,6 +138,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
   const handleReset = () => {
     setTanggalSetor(getTodayInputFormat());
     setWaktuSetor(getCurrentTimeInputFormat());
+    setModeInput('surah');
     setSurahName(SURAH_LIST[0].nameLatin);
     setAyatAwal(1);
     setAyatAkhir(7);
@@ -140,46 +146,47 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
     setHalamanAkhir(1);
     setJuzNumber(1);
     setNilai('Sangat Baik');
+    setHukumTajwid('Baik');
+    setMakhrojHuruf('Baik');
+    setKefasihan('Baik');
+    setKelancaran('Sangat Baik');
     setCatatan('');
+    setShowSuccessToast(false);
+    setFormError(null);
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5">
-      {/* Toast Notifikasi Sukses */}
-      {showSuccessToast && (
-        <div className="bg-indigo-600 text-white p-4 rounded-2xl shadow-lg flex items-center gap-3 animate-bounce">
-          <CheckCircle className="w-6 h-6 flex-shrink-0" />
-          <div>
-            <p className="font-bold text-sm">Alhamdulillah! Setoran Binnadzor Berhasil Disimpan</p>
-            <p className="text-xs text-indigo-100">Data telah tercatat dan tersinkronisasi ke Cloud Database.</p>
+    <div className="max-w-3xl mx-auto">
+      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-5">
+        {/* Form Header */}
+        <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
+          <div className="w-11 h-11 rounded-2xl bg-indigo-100 text-indigo-800 flex items-center justify-center flex-shrink-0">
+            <BookOpenCheck className="w-6 h-6" />
           </div>
-        </div>
-      )}
-
-      {/* Card Form */}
-      <div className="bg-white rounded-2xl shadow-xs border border-slate-200/90 overflow-hidden">
-        {/* Header Form */}
-        <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 p-5 text-white">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-indigo-700/60 border border-indigo-500/50 text-indigo-200">
-              <BookOpenCheck className="w-6 h-6" />
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-lg sm:text-xl font-bold text-slate-800">Setoran Binnadzor</h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Melihat Mushaf</span>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold tracking-tight text-white">Input Setoran Binnadzor</h2>
-                <span className="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full bg-indigo-700/80 text-indigo-200 border border-indigo-500/40">
-                  Melihat Mushaf
-                </span>
-              </div>
-              <p className="text-xs text-indigo-200/90 mt-0.5">
-                Setoran membaca al-Qur'an secara tartil, fashohah, dan makhorijul huruf
-              </p>
-            </div>
+            <p className="text-xs sm:text-sm text-slate-500">Bacaan tartil dengan penilaian tajwid, makhraj, fashohah, dan kelancaran.</p>
           </div>
         </div>
 
-        {/* Form Isi */}
-        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-5">
+        {showSuccessToast && (
+          <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-xl text-indigo-800 text-xs font-semibold flex items-center gap-2" role="status">
+            <CheckCircle className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+            <span>Binnadzor berhasil disimpan ke Cloud.</span>
+          </div>
+        )}
+
+        {formError && (
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs font-semibold flex items-start gap-2" role="alert">
+            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
+            <span>{formError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Disclaimer Info */}
           <div className="bg-indigo-50/70 border border-indigo-200/70 rounded-xl p-3 flex items-start gap-2.5 text-xs text-indigo-900">
             <BookOpen className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
@@ -191,61 +198,62 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
             </div>
           </div>
 
-          {/* 1. Pilih Santri */}
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Pilih Santri <span className="text-rose-500">*</span>
-            </label>
-            <select
-              value={idSantri}
-              onChange={(e) => setIdSantri(e.target.value)}
-              required
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-700 text-sm font-medium text-slate-800"
-            >
-              <option value="" disabled>-- Pilih Santri --</option>
-              {mySantriList.map((s) => (
-                <option key={s.idSantri} value={s.idSantri}>
-                  {s.idSantri} - {s.namaSantri} (Kelas: {s.kelas})
-                </option>
-              ))}
-            </select>
-            {myKelas && (
-              <p className="text-[11px] text-slate-500 mt-1">
-                Menampilkan santri binaan kelas: <span className="font-semibold text-indigo-800">{myKelas.namaKelas}</span>
-              </p>
-            )}
-          </div>
-
-          {/* 2. Tanggal & Waktu Setor */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Santri, Tanggal & Waktu */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-indigo-600" />
-                Tanggal Setor <span className="text-rose-500">*</span>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+                Pilih Santri <span className="text-rose-500">*</span>
+              </label>
+              <select
+                value={idSantri}
+                onChange={(e) => setIdSantri(e.target.value)}
+                required
+                className="w-full py-3 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">-- Pilih Nama Santri --</option>
+                {mySantriList.map((s) => (
+                  <option key={s.idSantri} value={s.idSantri}>
+                    {s.namaSantri} ({s.kelas})
+                  </option>
+                ))}
+              </select>
+              {myKelas && (
+                <p className="text-[11px] text-indigo-700 font-semibold mt-1">
+                  Kelas: {myKelas.namaKelas} • {mySantriList.length} santri
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5 text-indigo-700" />
+                <span>Tanggal Setoran <span className="text-rose-500">*</span></span>
               </label>
               <input
                 type="date"
                 value={tanggalSetor}
                 onChange={(e) => setTanggalSetor(e.target.value)}
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-700 text-sm font-medium text-slate-800"
+                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
-              <p className="text-[10px] text-slate-500 mt-1">
+              <span className="text-[11px] text-indigo-700 font-semibold mt-1 block truncate">
                 {formatTanggalLengkap(tanggalSetor)}
-              </p>
+              </span>
             </div>
+
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-indigo-600" />
-                Waktu Setor <span className="text-rose-500">*</span>
+              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5 text-indigo-700" />
+                <span>Waktu / Jam <span className="text-rose-500">*</span></span>
               </label>
               <input
                 type="time"
                 value={waktuSetor}
                 onChange={(e) => setWaktuSetor(e.target.value)}
                 required
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-700 text-sm font-medium text-slate-800"
+                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
+              <span className="text-[11px] text-slate-500 mt-1 block">WIB (Waktu Indonesia Barat)</span>
             </div>
           </div>
 
@@ -427,7 +435,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
           </div>
 
           {/* 4.5. Fokus Penilaian 4 Aspek Kualitas Binnadzor */}
-          <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50/70 via-slate-50 to-teal-50/50 border border-indigo-100/90 shadow-2xs space-y-3.5">
+          <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/90 shadow-2xs space-y-3.5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-indigo-100/80 pb-2.5">
               <div>
                 <h4 className="text-xs font-black text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
@@ -631,7 +639,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               type="button"
               onClick={handleReset}
               disabled={isSubmitting}
-              className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer"
+              className="px-3 py-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset</span>
@@ -639,10 +647,10 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-6 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 text-white text-xs font-bold shadow-xs transition flex items-center gap-2 cursor-pointer disabled:opacity-50"
+              className="px-5 py-2.5 rounded-xl bg-indigo-700 hover:bg-indigo-800 active:bg-indigo-950 text-white text-xs font-bold transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <Save className="w-4 h-4" />
-              <span>{isSubmitting ? 'Menyimpan...' : 'Simpan Setoran Binnadzor'}</span>
+              {isSubmitting ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
+              <span>{isSubmitting ? 'Menyimpan...' : 'Simpan'}</span>
             </button>
           </div>
         </form>
