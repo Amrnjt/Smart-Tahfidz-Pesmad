@@ -479,6 +479,21 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     });
   }, [combinedItems, dateFilterMode, activeMonthKey, customStartDate, customEndDate, kategoriFilter, searchQuery, nilaiFilter]);
 
+  // Batch selections must never outlive the currently visible result set.
+  // This prevents a filtered-out record from remaining silently selected.
+  useEffect(() => {
+    const visibleIds = new Set(displayedItems.map(item => item.id));
+    setSelectedIds(prev => {
+      const next = new Set(Array.from(prev).filter(id => visibleIds.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [displayedItems]);
+
+  const visibleSelectedCount = useMemo(
+    () => displayedItems.reduce((count, item) => count + (selectedIds.has(item.id) ? 1 : 0), 0),
+    [displayedItems, selectedIds]
+  );
+
   // Active period text for footer and export
   const activePeriodLabel = useMemo(() => {
     if (dateFilterMode === 'bulan') {
@@ -583,10 +598,10 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   };
 
   const confirmBatchDelete = async () => {
-    if (selectedIds.size === 0) return;
+    if (visibleSelectedCount === 0) return;
     setIsBatchDeleting(true);
     try {
-      const itemsToDel = combinedItems.filter(i => selectedIds.has(i.id)).map(i => ({ type: i.type, id: i.id }));
+      const itemsToDel = displayedItems.filter(i => selectedIds.has(i.id)).map(i => ({ type: i.type, id: i.id }));
       await storageService.deleteRecordsBatch(itemsToDel);
       onDataChanged();
       onNotify('success', `${itemsToDel.length} data rekaman histori berhasil dihapus dari Cloud.`);
@@ -601,7 +616,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   };
 
   const toggleSelectAll = () => {
-    if (selectedIds.size === displayedItems.length && displayedItems.length > 0) {
+    if (visibleSelectedCount === displayedItems.length && displayedItems.length > 0) {
       setSelectedIds(new Set());
     } else {
       setSelectedIds(new Set(displayedItems.map(i => i.id)));
@@ -1327,13 +1342,13 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       )}
 
       {/* Batch Selection Action Bar */}
-      {!isViewOnly && selectedIds.size > 0 && (
+      {!isViewOnly && visibleSelectedCount > 0 && (
         <>
           {/* Mobile: compact sticky selection toolbar */}
           <div className="lg:hidden sticky top-0 z-20 -mx-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded-lg flex items-center gap-1.5 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1">
             <div className="min-w-0 flex-1 flex items-center gap-1.5">
               <span className="w-5 h-5 rounded-md bg-slate-900 text-white inline-flex items-center justify-center text-xs font-bold flex-shrink-0">
-                {selectedIds.size}
+                {visibleSelectedCount}
               </span>
               <span className="font-semibold text-slate-700 truncate">terpilih</span>
             </div>
@@ -1343,7 +1358,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               onClick={toggleSelectAll}
               className="min-h-11 px-3 rounded-md bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition cursor-pointer whitespace-nowrap"
             >
-              {selectedIds.size === displayedItems.length ? 'Lepas Semua' : 'Pilih Semua'}
+              {visibleSelectedCount === displayedItems.length ? 'Lepas Semua' : 'Pilih Semua'}
             </button>
 
             <button
@@ -1360,7 +1375,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               type="button"
               onClick={() => setIsBatchDeleteModalOpen(true)}
               className="min-h-11 px-3 inline-flex items-center gap-1.5 rounded-md bg-rose-600 hover:bg-rose-700 text-white font-semibold transition cursor-pointer"
-              aria-label={`Hapus ${selectedIds.size} rekaman terpilih`}
+              aria-label={`Hapus ${visibleSelectedCount} rekaman terpilih`}
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Hapus</span>
@@ -1371,7 +1386,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           <div className="hidden lg:flex bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 items-center justify-between gap-2 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1">
             <div className="flex items-center gap-2 text-rose-900 font-bold">
               <span className="bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-extrabold">
-                {selectedIds.size}
+                {visibleSelectedCount}
               </span>
               <span>rekaman histori dipilih</span>
             </div>
@@ -1387,7 +1402,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                 className="min-h-11 px-3 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>Hapus {selectedIds.size} Rekaman Terpilih</span>
+                <span>Hapus {visibleSelectedCount} Rekaman Terpilih</span>
               </button>
             </div>
           </div>
@@ -1411,13 +1426,13 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               <label className="flex items-center gap-1.5 cursor-pointer font-semibold select-none">
                 <input
                   type="checkbox"
-                  checked={selectedIds.size > 0 && selectedIds.size === displayedItems.length}
+                  checked={visibleSelectedCount > 0 && visibleSelectedCount === displayedItems.length}
                   onChange={toggleSelectAll}
                   className="w-3.5 h-3.5 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
                 />
-                <span>{selectedIds.size > 0 ? `${selectedIds.size} dipilih` : `Pilih semua ${displayedItems.length}`}</span>
+                <span>{visibleSelectedCount > 0 ? `${visibleSelectedCount} dipilih` : `Pilih semua ${displayedItems.length}`}</span>
               </label>
-              {selectedIds.size === 0 && (
+              {visibleSelectedCount === 0 && (
                 <span className="text-xs text-slate-400">ketuk kotak untuk memilih</span>
               )}
             </div>
@@ -1428,15 +1443,15 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                 <label className="flex items-center gap-1.5 cursor-pointer font-semibold select-none hover:text-slate-900">
                   <input
                     type="checkbox"
-                    checked={selectedIds.size > 0 && selectedIds.size === displayedItems.length}
+                    checked={visibleSelectedCount > 0 && visibleSelectedCount === displayedItems.length}
                     onChange={toggleSelectAll}
                     className="w-3.5 h-3.5 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
                   />
                   <span>Pilih Semua ({displayedItems.length})</span>
                 </label>
-                {selectedIds.size > 0 && (
+                {visibleSelectedCount > 0 && (
                   <span className="text-xs text-rose-700 font-bold">
-                    ({selectedIds.size} terpilih)
+                    ({visibleSelectedCount} terpilih)
                   </span>
                 )}
               </div>
@@ -2237,10 +2252,10 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                 </div>
                 <div>
                   <h3 id="batch-delete-dialog-title" className="font-extrabold text-base leading-tight">
-                    Hapus Masal Histori ({selectedIds.size})
+                    Hapus Masal Histori ({visibleSelectedCount})
                   </h3>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Hapus {selectedIds.size} rekaman yang dipilih
+                    Hapus {visibleSelectedCount} rekaman yang dipilih
                   </p>
                 </div>
               </div>
@@ -2256,7 +2271,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
             <div className="ui-dialog-body space-y-4">
               <p className="text-xs text-slate-600 leading-relaxed">
-                Anda memilih untuk menghapus <b>{selectedIds.size} rekaman histori</b> secara bersamaan. Rekaman yang dipilih mencakup setoran santri aktif.
+                Anda memilih untuk menghapus <b>{visibleSelectedCount} rekaman histori</b> secara bersamaan. Rekaman yang dipilih mencakup setoran santri aktif.
               </p>
 
               <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2.5 text-sm text-rose-800">
@@ -2284,12 +2299,12 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   {isBatchDeleting ? (
                     <>
                       <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Menghapus {selectedIds.size} data...</span>
+                      <span>Menghapus {visibleSelectedCount} data...</span>
                     </>
                   ) : (
                     <>
                       <Trash2 className="w-4 h-4" />
-                      <span>Ya, Hapus {selectedIds.size} Rekaman</span>
+                      <span>Ya, Hapus {visibleSelectedCount} Rekaman</span>
                     </>
                   )}
                 </button>
