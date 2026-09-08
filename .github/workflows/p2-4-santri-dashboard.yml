@@ -1,0 +1,44 @@
+name: P2.4 Santri Dashboard Validation
+
+on:
+  push:
+    branches: [p2-4-santri-dashboard]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install --no-package-lock --ignore-scripts
+      - name: TypeScript check
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: P2.4 finish gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          file=src/components/SantriDashboard.tsx
+          grep -q 'Profil santri belum terhubung' "$file"
+          grep -q 'Fokus belajar berikutnya' "$file"
+          grep -q 'Feedback terbaru' "$file"
+          grep -q 'Aktivitas terbaru saya' "$file"
+          grep -q 'Tren Ziyadah saya' "$file"
+          grep -q 'Lanjutkan belajar di Mushaf' "$file"
+          grep -q 'sort((a, b) => b.timestamp.localeCompare(a.timestamp))' "$file"
+          grep -q "setActiveTab('mushaf')" "$file"
+          grep -q "setActiveTab('riwayat')" "$file"
+          grep -q "text: 'text-teal-800'" "$file"
+          grep -q 'ZiyadahProgressChart' "$file"
+          ! grep -q 'Sparkles' "$file"
+          ! grep -q 'bg-gradient' "$file"
+          ! grep -q 'backdrop-blur' "$file"
+          ! grep -q 'text-\[9px\]' "$file"
+          ! grep -q 'text-\[10px\]' "$file"
+          ! grep -q 'AnimatedCounter' "$file"
+          ! grep -q 'useRipple' "$file"
+          git diff --check
