@@ -40,13 +40,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     ];
 
     return (
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 px-1.5 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
+      <nav aria-label="Navigasi bawah" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 px-1.5 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
         <div className="flex justify-around items-center max-w-md mx-auto">
           {nonUstadzItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
               <button
+                type="button"
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
                 aria-current={isActive ? 'page' : undefined}
@@ -93,6 +94,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* 3. Central FAB: + Setor */}
           <div className="flex flex-col items-center justify-center relative -top-3 px-0.5">
             <button
+              type="button"
               ref={fabRipple.elementRef}
               onClick={(e) => {
                 fabRipple.createRipple(e);
@@ -104,6 +106,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                   : 'bg-emerald-800 hover:bg-emerald-700'
               }`}
               aria-label="Tambah Setoran Baru"
+              aria-haspopup="dialog"
+              aria-expanded={isActionSheetOpen}
               title="Tambah Setoran Baru"
             >
               <Plus className="w-5 h-5 stroke-[2.5]" />
@@ -155,6 +159,7 @@ const NavButton: React.FC<NavButtonProps> = ({ label, icon: Icon, isActive, onCl
 
   return (
     <button
+      type="button"
       ref={ripple.elementRef}
       onClick={(e) => {
         ripple.createRipple(e);

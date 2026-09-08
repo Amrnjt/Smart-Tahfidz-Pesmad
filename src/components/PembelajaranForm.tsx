@@ -223,7 +223,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
         </div>
 
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-5" aria-busy={isSubmitting}>
           {/* 1. Pemilihan Tipe Kelas Non-Tahfidz */}
           <div className="space-y-1">
             <h4 className="text-sm font-bold text-slate-900">Program pembelajaran</h4>
@@ -239,6 +239,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
               <button
                 type="button"
                 onClick={() => setTipeKelas('Jilid')}
+                aria-pressed={tipeKelas === 'Jilid'}
                 className={`p-3.5 rounded-2xl border text-left transition-colors cursor-pointer flex items-start gap-3 min-h-24 ${
                   tipeKelas === 'Jilid'
                     ? 'bg-emerald-50/80 border-emerald-600'
@@ -260,6 +261,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
               <button
                 type="button"
                 onClick={() => setTipeKelas('Kelas Istimewa')}
+                aria-pressed={tipeKelas === 'Kelas Istimewa'}
                 className={`p-3.5 rounded-2xl border text-left transition-colors cursor-pointer flex items-start gap-3 min-h-24 ${
                   tipeKelas === 'Kelas Istimewa'
                     ? 'bg-indigo-50/80 border-indigo-600'
@@ -295,6 +297,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                 Pilih Santri <span className="text-rose-500">*</span>
               </label>
               <select
+                aria-label="Pilih Santri"
                 value={idSantri}
                 onChange={(e) => handleSantriChange(e.target.value)}
                 required
@@ -321,6 +324,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
               </label>
               <input
                 type="date"
+                aria-label="Tanggal Setoran"
                 value={tanggalSetor}
                 onChange={(e) => setTanggalSetor(e.target.value)}
                 required
@@ -338,6 +342,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
               </label>
               <input
                 type="time"
+                aria-label="Waktu Setoran"
                 value={waktuSetor}
                 onChange={(e) => setWaktuSetor(e.target.value)}
                 required
@@ -372,7 +377,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                         setHalamanUmmi(1);
                         setPokokBahasanUmmi(j.pokokBahasan[0] || '');
                       }}
-                      className={`py-2 px-3 rounded-xl text-xs font-bold transition border cursor-pointer ${
+                      aria-pressed={jilidUmmiIndex === idx}
+                      className={`min-h-11 py-2 px-3 rounded-xl text-xs font-bold transition border cursor-pointer ${
                         jilidUmmiIndex === idx
                           ? 'bg-emerald-700 text-white border-emerald-800'
                           : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -394,7 +400,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                     type="number"
                     min={1}
                     max={KURIKULUM_JILID_UMMI_DEWASA[jilidUmmiIndex]?.totalHalaman || 40}
-                    value={halamanUmmi}
+                    aria-label="Halaman Jilid Ummi"
+                value={halamanUmmi}
                     onChange={(e) => setHalamanUmmi(Number(e.target.value))}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-medium focus:ring-2 focus:ring-emerald-600"
                   />
@@ -405,7 +412,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                     Pokok Bahasan / Kompetensi
                   </label>
                   <select
-                    value={pokokBahasanUmmi}
+                    aria-label="Pokok Bahasan atau Kompetensi"
+                value={pokokBahasanUmmi}
                     onChange={(e) => setPokokBahasanUmmi(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-medium focus:ring-2 focus:ring-emerald-600"
                   >
@@ -448,7 +456,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                         setTahapIstimewaIndex(idx);
                         setHalamanIstimewa(1);
                       }}
-                      className={`p-2.5 rounded-xl text-left text-xs font-bold transition border cursor-pointer ${
+                      aria-pressed={tahapIstimewaIndex === idx}
+                      className={`min-h-11 p-2.5 rounded-xl text-left text-xs font-bold transition border cursor-pointer ${
                         tahapIstimewaIndex === idx
                           ? 'bg-indigo-700 text-white border-indigo-800'
                           : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
@@ -473,7 +482,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                     type="number"
                     min={1}
                     max={KURIKULUM_KELAS_ISTIMEWA[tahapIstimewaIndex]?.totalHalaman || 30}
-                    value={halamanIstimewa}
+                    aria-label="Halaman atau Lembar Modul"
+                value={halamanIstimewa}
                     onChange={(e) => setHalamanIstimewa(Number(e.target.value))}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-medium focus:ring-2 focus:ring-indigo-600"
                   />
@@ -507,7 +517,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                 </div>
                 <input
                   type="text"
-                  value={kendalaSantri}
+                  aria-label="Catatan Observasi Kendala Santri"
+                value={kendalaSantri}
                   onChange={(e) => setKendalaSantri(e.target.value)}
                   placeholder="Misal: Kesulitan membedakan huruf Jim, Ha, dan Kha saat disambung..."
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-medium focus:ring-2 focus:ring-indigo-600"
@@ -521,7 +532,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                 </label>
                 <input
                   type="text"
-                  value={rekomendasiTindakLanjut}
+                  aria-label="Rekomendasi Tindak Lanjut Guru atau Ustadz"
+                value={rekomendasiTindakLanjut}
                   onChange={(e) => setRekomendasiTindakLanjut(e.target.value)}
                   placeholder="Misal: Berikan latihan kartu peraga 10 menit sebelum kelas dimulai..."
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-medium focus:ring-2 focus:ring-indigo-600"
@@ -542,6 +554,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                     type="button"
                     key={opt.value}
                     onClick={() => setNilai(opt.value)}
+                    aria-pressed={nilai === opt.value}
                     className={`py-2 px-2.5 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       nilai === opt.value
                         ? 'bg-slate-900 text-white border-slate-900'
@@ -566,6 +579,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                     type="button"
                     key={st.value}
                     onClick={() => setStatusKenaikan(st.value)}
+                    aria-pressed={statusKenaikan === st.value}
                     className={`py-2 px-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer text-center ${
                       statusKenaikan === st.value
                         ? 'bg-emerald-700 text-white border-emerald-800'
@@ -601,7 +615,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                     setKefasihan('Baik');
                     setKelancaran('Baik');
                   }}
-                  className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 transition cursor-pointer"
+                  className="min-h-11 text-xs font-bold px-3 py-1 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 transition cursor-pointer"
                 >
                   Semua Baik
                 </button>
@@ -613,7 +627,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                     setKefasihan('Sangat Baik');
                     setKelancaran('Sangat Baik');
                   }}
-                  className="text-xs font-bold px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-200 hover:bg-teal-200 transition cursor-pointer"
+                  className="min-h-11 text-xs font-bold px-3 py-1 rounded-md bg-teal-100 text-teal-800 border border-teal-200 hover:bg-teal-200 transition cursor-pointer"
                 >
                   Sangat Baik
                 </button>
@@ -635,7 +649,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                       key={l}
                       type="button"
                       onClick={() => setHukumTajwid(l)}
-                      className={`py-1 text-xs font-bold rounded-lg transition ${
+                      aria-pressed={hukumTajwid === l}
+                      className={`min-h-11 py-1 text-xs font-bold rounded-lg transition ${
                         hukumTajwid === l ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -659,7 +674,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                       key={l}
                       type="button"
                       onClick={() => setMakhrojHuruf(l)}
-                      className={`py-1 text-xs font-bold rounded-lg transition ${
+                      aria-pressed={makhrojHuruf === l}
+                      className={`min-h-11 py-1 text-xs font-bold rounded-lg transition ${
                         makhrojHuruf === l ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -683,7 +699,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                       key={l}
                       type="button"
                       onClick={() => setKefasihan(l)}
-                      className={`py-1 text-xs font-bold rounded-lg transition ${
+                      aria-pressed={kefasihan === l}
+                      className={`min-h-11 py-1 text-xs font-bold rounded-lg transition ${
                         kefasihan === l ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -707,7 +724,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                       key={l}
                       type="button"
                       onClick={() => setKelancaran(l)}
-                      className={`py-1 text-xs font-bold rounded-lg transition ${
+                      aria-pressed={kelancaran === l}
+                      className={`min-h-11 py-1 text-xs font-bold rounded-lg transition ${
                         kelancaran === l ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -743,7 +761,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
 
             <textarea
               rows={3}
-              value={catatan}
+              aria-label="Catatan Pembelajaran"
+                value={catatan}
               onChange={(e) => setCatatan(e.target.value)}
               placeholder="Tulis catatan evaluasi detail santri untuk materi hari ini..."
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm font-medium text-slate-800"

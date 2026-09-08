@@ -21,10 +21,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   onRefresh,
   isRefreshing = false
 }) => {
-  const brandRipple = useRipple<HTMLDivElement>();
+  const brandRipple = useRipple<HTMLAnchorElement>();
   const syncRipple = useRipple<HTMLButtonElement>({ disabled: isRefreshing });
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const profileTriggerRef = useRef<HTMLButtonElement>(null);
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -39,6 +40,20 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
+  }, [showProfileMenu]);
+
+  useEffect(() => {
+    if (!showProfileMenu) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      event.preventDefault();
+      setShowProfileMenu(false);
+      window.requestAnimationFrame(() => profileTriggerRef.current?.focus());
+    };
+
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
   }, [showProfileMenu]);
 
   // Compute initials from user name
@@ -90,14 +105,16 @@ export const Navbar: React.FC<NavbarProps> = ({
     <header id="main-header" className="sticky top-0 z-40 bg-emerald-950 text-white border-b border-emerald-900 select-none">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 min-h-16 flex items-center justify-between gap-3">
         {/* Brand / Logo Section */}
-        <div
+        <a
           ref={brandRipple.elementRef}
           id="brand-logo-link"
+          href="#main-content"
           className="ripple-container flex min-h-11 items-center gap-3 cursor-pointer flex-1 min-w-0 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-emerald-950"
-          onClick={(e) => { brandRipple.createRipple(e); if (currentUser) setActiveTab('dashboard'); }}
-          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { brandRipple.createRipple(e); if (currentUser) setActiveTab('dashboard'); } }}
-          role="button"
-          tabIndex={0}
+          onClick={(e) => {
+            brandRipple.createRipple(e);
+            if (currentUser) setActiveTab('dashboard');
+          }}
+          aria-current={currentUser && activeTab === 'dashboard' ? 'page' : undefined}
           aria-label="Beranda Tahfidz Pesantren Madrasah Darul Fikri"
         >
           <div className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center flex-shrink-0">
@@ -118,7 +135,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <span className="truncate">Jl. Budi Utomo No. 190 Kepohbaru</span>
             </p>
           </div>
-        </div>
+        </a>
 
         {/* Right Section: Sync + User Profile Dropdown */}
         <div className="flex items-center space-x-1.5 sm:space-x-2 flex-shrink-0">
@@ -127,6 +144,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Quick Sync Button */}
               {onRefresh && (
                 <button
+                  type="button"
                   ref={syncRipple.elementRef}
                   onClick={(e) => { syncRipple.createRipple(e); if (!isRefreshing) onRefresh(); }}
                   disabled={isRefreshing}
@@ -134,7 +152,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     isRefreshing ? 'opacity-70 cursor-not-allowed' : 'hover:bg-emerald-800 hover:text-white transition-colors'
                   }`}
                   title="Sinkronkan & Muat Ulang Data Firestore"
-                  aria-label="Sinkronkan Data"
+                  aria-label={isRefreshing ? 'Sedang menyinkronkan data' : 'Sinkronkan data'}
+                  aria-busy={isRefreshing}
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin text-emerald-300' : ''}`} />
                   <span className="hidden xl:inline text-xs">
@@ -146,9 +165,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* User Profile Pill / Dropdown Trigger */}
               <div className="relative">
                 <button
+                  type="button"
+                  ref={profileTriggerRef}
                   onClick={() => setShowProfileMenu(prev => !prev)}
                   className="min-h-11 flex items-center gap-2 py-1 pl-1.5 pr-2.5 rounded-xl bg-emerald-900 hover:bg-emerald-800 border border-emerald-800 text-white transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
                   aria-expanded={showProfileMenu}
+                  aria-controls="profile-menu-popover"
+                  aria-haspopup="true"
                   aria-label="Menu Pengguna"
                 >
                   {/* User Avatar Circle */}
@@ -169,7 +192,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
                 {/* Profile Popover Dropdown */}
                 {showProfileMenu && (
-                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-slate-200 text-slate-800 py-2 z-50">
+                  <div id="profile-menu-popover" role="region" aria-label="Opsi akun pengguna" className="absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-lg border border-slate-200 text-slate-800 py-2 z-50">
                     {/* Header in dropdown */}
                     <div className="px-4 py-2.5 border-b border-slate-100">
                       <div className="flex items-center gap-2.5">
@@ -193,6 +216,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {/* Quick Menu Options */}
                     <div className="p-1.5 space-y-0.5 text-sm font-medium">
                       <button
+                        type="button"
                         onClick={() => {
                           setActiveTab('mushaf');
                           setShowProfileMenu(false);
@@ -220,6 +244,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     {/* Logout Option */}
                     <div className="p-1.5 border-t border-slate-100">
                       <button
+                        type="button"
                         onClick={() => {
                           setShowProfileMenu(false);
                           onLogout();
@@ -236,6 +261,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               {/* Direct Logout Button on Desktop */}
               <button
+                type="button"
                 onClick={onLogout}
                 className="hidden md:flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-emerald-900 hover:bg-rose-900 text-emerald-100 hover:text-rose-100 border border-emerald-800 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
                 title="Keluar Akun"

@@ -283,7 +283,9 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
           <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
             <button
               onClick={() => setTimeRange('4weeks')}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+              type="button"
+              aria-pressed={timeRange === '4weeks'}
+              className={`min-h-11 px-3 py-1 rounded-lg transition cursor-pointer ${
                 timeRange === '4weeks'
                   ? 'bg-white text-emerald-800 shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900'
@@ -293,7 +295,9 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
             </button>
             <button
               onClick={() => setTimeRange('8weeks')}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+              type="button"
+              aria-pressed={timeRange === '8weeks'}
+              className={`min-h-11 px-3 py-1 rounded-lg transition cursor-pointer ${
                 timeRange === '8weeks'
                   ? 'bg-white text-emerald-800 shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900'
@@ -303,7 +307,9 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
             </button>
             <button
               onClick={() => setTimeRange('all')}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+              type="button"
+              aria-pressed={timeRange === 'all'}
+              className={`min-h-11 px-3 py-1 rounded-lg transition cursor-pointer ${
                 timeRange === 'all'
                   ? 'bg-white text-emerald-800 shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900'
@@ -317,7 +323,9 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
           <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
             <button
               onClick={() => setMetricType('ayat')}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+              type="button"
+              aria-pressed={metricType === 'ayat'}
+              className={`min-h-11 px-3 py-1 rounded-lg transition cursor-pointer ${
                 metricType === 'ayat'
                   ? 'bg-emerald-800 text-white shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900'
@@ -328,7 +336,9 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
             </button>
             <button
               onClick={() => setMetricType('setoran')}
-              className={`px-2.5 py-1 rounded-lg transition cursor-pointer ${
+              type="button"
+              aria-pressed={metricType === 'setoran'}
+              className={`min-h-11 px-3 py-1 rounded-lg transition cursor-pointer ${
                 metricType === 'setoran'
                   ? 'bg-teal-800 text-white shadow-xs font-bold'
                   : 'text-slate-600 hover:text-slate-900'
@@ -343,7 +353,10 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
           <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
             <button
               onClick={() => setChartType('bar')}
-              className={`p-1.5 rounded-lg transition cursor-pointer ${
+              type="button"
+              aria-pressed={chartType === 'bar'}
+              aria-label="Diagram batang"
+              className={`min-h-11 min-w-11 p-1.5 rounded-lg transition cursor-pointer ${
                 chartType === 'bar'
                   ? 'bg-white text-emerald-800 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
@@ -354,7 +367,10 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
             </button>
             <button
               onClick={() => setChartType('area')}
-              className={`p-1.5 rounded-lg transition cursor-pointer ${
+              type="button"
+              aria-pressed={chartType === 'area'}
+              aria-label="Grafik area"
+              className={`min-h-11 min-w-11 p-1.5 rounded-lg transition cursor-pointer ${
                 chartType === 'area'
                   ? 'bg-white text-teal-800 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
