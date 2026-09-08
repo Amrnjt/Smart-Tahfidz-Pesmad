@@ -1,0 +1,35 @@
+name: P3.1 Transient Finalize
+
+on:
+  push:
+    branches:
+      - polish/p3-1-chrome-state-cleanup
+    paths:
+      - '.github/workflows/p3-1-transient-finalize.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: polish/p3-1-chrome-state-cleanup
+
+      - name: Apply P3.1 finalizer
+        run: node scripts/p3-1-finalize.mjs
+
+      - name: Commit final P3.1 changes
+        run: |
+          if git diff --quiet -- src/release-polish.css src/components/ZiyadahForm.tsx src/components/MurojaahForm.tsx src/components/SantriManagement.tsx; then
+            echo "No finalizer changes needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/release-polish.css src/components/ZiyadahForm.tsx src/components/MurojaahForm.tsx src/components/SantriManagement.tsx
+          git commit -m "P3.1: finalize chrome layering and empty-state copy"
+          git push origin HEAD:polish/p3-1-chrome-state-cleanup
