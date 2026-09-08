@@ -121,7 +121,7 @@ export function useSetoranNotifications(
       try {
         const notif = new Notification(title, {
           body,
-          icon: '/vite.svg',
+          icon: '/pesmad-icon.svg',
           tag: data.id,
           requireInteraction: false,
         });
