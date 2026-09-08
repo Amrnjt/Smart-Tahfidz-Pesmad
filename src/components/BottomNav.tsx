@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, ActiveTab, Santri } from '../types';
-import { LayoutDashboard, History, Users, GraduationCap, Plus, BookOpen } from 'lucide-react';
+import { LayoutDashboard, History, Users, School, Plus, BookOpen } from 'lucide-react';
 import { useRipple } from '../hooks/useRipple';
 import { SetorActionSheet } from './SetorActionSheet';
 import type { NotifyFn } from './Snackbar';
@@ -120,7 +120,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           {/* 4. Kelas */}
           <NavButton
             label="Kelas"
-            icon={GraduationCap}
+            icon={School}
             isActive={activeTab === 'kelas'}
             onClick={() => setActiveTab('kelas')}
           />

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, Santri, PantauanLiburanRecord, ShalatJamaahStatus, SHALAT_STATUS_OPTIONS } from '../types';
 import { storageService } from '../services/storageService';
-import { CircleAlert as AlertCircle, Check, Trash2, Edit3, Save, Clock, Lock } from 'lucide-react';
+import { CircleAlert as AlertCircle, Check, Trash2, SquarePen, Save, Clock, Lock } from 'lucide-react';
 import { formatTanggalIndo, getTodayInputFormat } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
@@ -490,7 +490,7 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
                         className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50"
                         title="Edit laporan ini"
                       >
-                        <Edit3 className="h-4 w-4" aria-hidden="true" />
+                        <SquarePen className="h-4 w-4" aria-hidden="true" />
                         Edit
                       </button>
                       <button

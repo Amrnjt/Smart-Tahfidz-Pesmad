@@ -12,6 +12,7 @@ import {
 import {
   ArrowRight,
   BookOpen,
+  BookPlus,
   BookOpenCheck,
   Clock3,
   GraduationCap,
@@ -61,7 +62,7 @@ const categoryMeta: Record<ActivityCategory, {
     label: 'Ziyadah',
     text: 'text-emerald-800',
     surface: 'bg-emerald-50',
-    icon: BookOpen
+    icon: BookPlus
   },
   "Muroja'ah": {
     label: "Muroja'ah",

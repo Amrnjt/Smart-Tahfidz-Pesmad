@@ -377,3 +377,26 @@ P2.18 must validate in this order:
 10. readiness for actual browser/device Final Polish
 
 Passing static/build checks does not equal passing browser/device visual QA. Final visual inspection remains a separate explicit phase.
+
+
+## Iconography Contract
+
+Smart Tahfidz uses Lucide as the single UI icon vocabulary. Icons communicate task, category, navigation, or state; they are not decorative filler. One concept must keep one stable glyph across roles and breakpoints.
+
+Canonical product icons:
+- Ziyadah: `BookPlus` — new memorisation / new setoran category.
+- Muroja'ah: `RotateCw` — repetition/review.
+- Binnadzor: `BookOpenCheck` — reading from the mushaf with evaluation.
+- Pembelajaran: `GraduationCap` — learning/evaluation outside the tahfidz categories.
+- Kelas: `School` — class management/navigation, intentionally distinct from Pembelajaran.
+- Mushaf: `BookOpen`.
+- Edit: `SquarePen`; Save: `Save`; Delete: `Trash2`; Search: `Search`; Add generic item: `Plus`/`CirclePlus` only when the meaning is the action itself.
+
+Rules:
+- Do not use an action icon as a category identity; for example a generic plus must not stand for Ziyadah.
+- Do not alias an unrelated glyph merely to preserve an old component name.
+- Status icons must be paired with wording when the state matters; color alone is never sufficient.
+- Use approximately 16–20px icons for ordinary controls and navigation. A primary mobile action may be slightly heavier, but should remain within the Lucide family.
+- Decorative icons should be `aria-hidden`; icon-only controls require an accessible name.
+- Brand marks are not Lucide icons. The Pesmad logo stays visually static by default; interaction belongs to its parent control.
+- Emoji are not UI iconography and must not be used as status/category decoration.

@@ -31,7 +31,7 @@ export const PesmadLogo: React.FC<PesmadLogoProps> = ({
         src={pesmadSvg}
         alt={alt}
         referrerPolicy="no-referrer"
-        className="w-full h-full object-contain filter drop-shadow-sm transition-transform duration-200 hover:scale-105"
+        className="w-full h-full object-contain"
       />
     </div>
   );

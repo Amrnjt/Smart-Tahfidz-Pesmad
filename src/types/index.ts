@@ -2,11 +2,11 @@ export type UserRole = 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri';
 
 export type PredikatNilai = 'Mengulang' | 'Kurang' | 'Baik' | 'Sangat Baik';
 
-export const PREDIKAT_NILAI_OPTIONS: { value: PredikatNilai; label: string; arab: string; emoji: string }[] = [
-  { value: 'Mengulang', label: 'Mengulang (I\'adah)', arab: 'I\'adah', emoji: '🔴' },
-  { value: 'Kurang', label: 'Kurang (Naqish)', arab: 'Naqish', emoji: '🟠' },
-  { value: 'Baik', label: 'Baik (Jayyid)', arab: 'Jayyid', emoji: '🟡' },
-  { value: 'Sangat Baik', label: 'Sangat Baik (Jayyid Jiddan)', arab: 'Jayyid Jiddan', emoji: '🟢' },
+export const PREDIKAT_NILAI_OPTIONS: { value: PredikatNilai; label: string; arab: string }[] = [
+  { value: 'Mengulang', label: 'Mengulang (I\'adah)', arab: 'I\'adah' },
+  { value: 'Kurang', label: 'Kurang (Naqish)', arab: 'Naqish' },
+  { value: 'Baik', label: 'Baik (Jayyid)', arab: 'Jayyid' },
+  { value: 'Sangat Baik', label: 'Sangat Baik (Jayyid Jiddan)', arab: 'Jayyid Jiddan' },
 ];
 
 export type TipeKelas =

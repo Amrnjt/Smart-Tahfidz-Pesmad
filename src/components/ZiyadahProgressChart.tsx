@@ -12,7 +12,7 @@ import {
   Tooltip,
   Legend
 } from 'recharts';
-import { TrendingUp, ChartBar as BarChart3, Calendar, Layers, BookOpen, Award, CircleCheck as CheckCircle2, Circle as HelpCircle, Clock } from 'lucide-react';
+import { TrendingUp, ChartBar as BarChart3, Calendar, Layers, BookOpen, Award, CircleCheck as CheckCircle2, Clock } from 'lucide-react';
 
 interface ZiyadahProgressChartProps {
   ziyadahRecords: ZiyadahRecord[];
