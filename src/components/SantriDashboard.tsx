@@ -1,13 +1,29 @@
 import React from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, ActiveTab } from '../types';
+import {
+  User,
+  Santri,
+  ZiyadahRecord,
+  MurojaahRecord,
+  BinnadzorRecord,
+  PembelajaranRecord,
+  ActiveTab,
+  PredikatNilai
+} from '../types';
+import {
+  ArrowRight,
+  BookOpen,
+  BookOpenCheck,
+  GraduationCap,
+  MessageSquareText,
+  RotateCw,
+  Target,
+  UserRound
+} from 'lucide-react';
 import { ZiyadahProgressChart } from './ZiyadahProgressChart';
-import { BookOpen, RotateCw, BookOpenCheck, Award, Sparkles, BookMarked, Calendar, GraduationCap } from 'lucide-react';
 import { PesmadLogo } from './PesmadLogo';
 import { formatTanggalWaktu } from '../utils/dateFormatter';
 import { SantriWaliDashboardSkeleton } from './SkeletonLoading';
-import { AnimatedCounter } from './AnimatedCounter';
 import { ScrollReveal } from './ScrollReveal';
-import { useRipple } from '../hooks/useRipple';
 
 interface SantriDashboardProps {
   currentUser: User;
@@ -20,6 +36,36 @@ interface SantriDashboardProps {
   isLoading?: boolean;
 }
 
+type ActivityCategory = 'Ziyadah' | "Muroja'ah" | 'Binnadzor' | 'Pembelajaran';
+
+interface SantriActivity {
+  id: string;
+  timestamp: string;
+  category: ActivityCategory;
+  material: string;
+  nilai: PredikatNilai;
+  catatan: string;
+  inputBy: string;
+}
+
+const categoryMeta: Record<ActivityCategory, {
+  text: string;
+  surface: string;
+  icon: React.ComponentType<{ className?: string }>;
+}> = {
+  Ziyadah: { text: 'text-emerald-800', surface: 'bg-emerald-50', icon: BookOpen },
+  "Muroja'ah": { text: 'text-teal-800', surface: 'bg-teal-50', icon: RotateCw },
+  Binnadzor: { text: 'text-indigo-800', surface: 'bg-indigo-50', icon: BookOpenCheck },
+  Pembelajaran: { text: 'text-amber-800', surface: 'bg-amber-50', icon: GraduationCap }
+};
+
+const scoreTone: Record<PredikatNilai, string> = {
+  'Sangat Baik': 'text-emerald-700',
+  Baik: 'text-emerald-700',
+  Kurang: 'text-amber-700',
+  Mengulang: 'text-rose-700'
+};
+
 export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   currentUser,
   santriList,
@@ -30,356 +76,300 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   setActiveTab,
   isLoading = false
 }) => {
-  const mushafRipple = useRipple<HTMLButtonElement>();
-
   if (isLoading) {
     return <SantriWaliDashboardSkeleton role="Santri" />;
   }
 
-  const currentSantri = santriList.find(s => s.idSantri === currentUser.idSantri);
+  const currentSantri = santriList.find(santri => santri.idSantri === currentUser.idSantri);
 
   if (!currentSantri) {
     return (
-      <div
-        className="bg-white rounded-2xl border border-emerald-200 p-5 sm:p-6 shadow-xs"
-        role="status"
-        aria-live="polite"
-      >
-        <h2 className="text-base font-extrabold text-slate-900">Profil santri belum terhubung</h2>
-        <p className="mt-1.5 text-sm text-slate-600 leading-relaxed">
-          Akun ini belum terhubung ke profil santri yang tersedia. Hubungi admin untuk memeriksa relasi ID santri sebelum melihat data hafalan.
-        </p>
-        <p className="mt-3 text-xs font-semibold text-emerald-800">
-          ID terhubung: {currentUser.idSantri || currentUser.username || 'Tidak tersedia'}
-        </p>
+      <div className="ui-panel p-5 sm:p-6" role="status" aria-live="polite">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-800">
+            <UserRound className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="ui-section-title">Profil santri belum terhubung</h1>
+            <p className="ui-secondary mt-1.5 max-w-2xl">
+              Akun ini belum terhubung ke profil santri yang tersedia. Hubungi admin untuk memeriksa relasi ID santri sebelum melihat data hafalan.
+            </p>
+            <p className="ui-meta mt-3 font-semibold text-emerald-800">
+              ID terhubung: {currentUser.idSantri || currentUser.username || 'Tidak tersedia'}
+            </p>
+          </div>
+        </div>
       </div>
     );
   }
 
-  const santriZiyadah = ziyadahRecords.filter(r => r.idSantri === currentSantri.idSantri);
-  const santriMurojaah = murojaahRecords.filter(r => r.idSantri === currentSantri.idSantri);
-  const santriBinnadzor = binnadzorRecords.filter(r => r.idSantri === currentSantri.idSantri);
-  const santriPembelajaran = pembelajaranRecords.filter(r => r.idSantri === currentSantri.idSantri);
+  const santriZiyadah = ziyadahRecords.filter(record => record.idSantri === currentSantri.idSantri);
+  const santriMurojaah = murojaahRecords.filter(record => record.idSantri === currentSantri.idSantri);
+  const santriBinnadzor = binnadzorRecords.filter(record => record.idSantri === currentSantri.idSantri);
+  const santriPembelajaran = pembelajaranRecords.filter(record => record.idSantri === currentSantri.idSantri);
 
-  const lastZiyadah = santriZiyadah[0];
-  const lastMurojaah = santriMurojaah[0];
-  const lastBinnadzor = santriBinnadzor[0];
-  const lastPembelajaran = santriPembelajaran[0];
+  const activities: SantriActivity[] = [
+    ...santriZiyadah.map(record => ({
+      id: record.id,
+      timestamp: record.timestamp,
+      category: 'Ziyadah' as const,
+      material: `${record.surah} · Ayat ${record.ayatAwal}-${record.ayatAkhir}`,
+      nilai: record.nilai,
+      catatan: record.catatan?.trim() || '',
+      inputBy: record.inputBy
+    })),
+    ...santriMurojaah.map(record => ({
+      id: record.id,
+      timestamp: record.timestamp,
+      category: "Muroja'ah" as const,
+      material: record.surahAtauJuz,
+      nilai: record.nilai,
+      catatan: record.catatan?.trim() || '',
+      inputBy: record.inputBy
+    })),
+    ...santriBinnadzor.map(record => ({
+      id: record.id,
+      timestamp: record.timestamp,
+      category: 'Binnadzor' as const,
+      material: record.surahAtauHalaman || record.materi || 'Materi Binnadzor',
+      nilai: record.nilai,
+      catatan: record.catatan?.trim() || '',
+      inputBy: record.inputBy
+    })),
+    ...santriPembelajaran.map(record => ({
+      id: record.id,
+      timestamp: record.timestamp,
+      category: 'Pembelajaran' as const,
+      material: record.materiPokok || record.materi || record.jilidAtauKategori || record.namaKelas || 'Pembelajaran',
+      nilai: record.nilai,
+      catatan: (record.catatanBimbingan || record.catatan || '').trim(),
+      inputBy: record.inputBy
+    }))
+  ].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
-  const latestRatedRecord = [
-    ...santriZiyadah,
-    ...santriMurojaah,
-    ...santriBinnadzor,
-    ...santriPembelajaran
-  ]
-    .filter(record => Boolean(record.nilai))
-    .sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''))[0];
+  const latestActivity = activities[0];
+  const latestFeedback = activities.find(activity => Boolean(activity.catatan));
+  const recentActivities = activities.slice(0, 5);
+  const totalRecords = activities.length;
+  const latestCategory = latestActivity ? categoryMeta[latestActivity.category] : null;
+  const LatestIcon = latestCategory?.icon || BookOpen;
 
-  const fadeDelay = (index: number) => ({ animationDelay: `${100 + index * 80}ms` });
+  const categoryRowsSource: { category: ActivityCategory; count: number }[] = [
+    { category: 'Ziyadah', count: santriZiyadah.length },
+    { category: "Muroja'ah", count: santriMurojaah.length },
+    { category: 'Binnadzor', count: santriBinnadzor.length },
+    { category: 'Pembelajaran', count: santriPembelajaran.length }
+  ];
+  const categoryRows = categoryRowsSource.filter(row => row.count > 0 || row.category !== 'Pembelajaran');
 
   return (
-    <div className="space-y-6">
-      {/* Banner Profil Santri - Hero Card */}
-      <div className="hero-animated-bg bg-gradient-to-r from-emerald-900 via-teal-900 to-cyan-950 rounded-3xl p-6 sm:p-7 text-white shadow-md relative overflow-hidden fade-in-up" style={fadeDelay(0)}>
-        {/* Decorative Islamic pattern */}
-        <div className="absolute top-0 right-0 w-48 h-48 opacity-[0.04] pointer-events-none float-slow">
-          <svg viewBox="0 0 100 100" fill="none" className="w-full h-full">
-            <circle cx="50" cy="50" r="40" stroke="white" strokeWidth="0.5" />
-            <circle cx="50" cy="50" r="30" stroke="white" strokeWidth="0.5" />
-            <circle cx="50" cy="50" r="20" stroke="white" strokeWidth="0.5" />
-            <path d="M50 10 L60 40 L90 50 L60 60 L50 90 L40 60 L10 50 L40 40 Z" stroke="white" strokeWidth="0.5" fill="none" />
-          </svg>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 relative z-10">
+    <div className="w-full min-w-0 space-y-6">
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="relative overflow-hidden rounded-2xl bg-emerald-950 p-5 text-white sm:p-6 lg:col-span-3 lg:p-7">
+          <div className="absolute inset-y-0 left-0 w-1 bg-emerald-400" aria-hidden="true" />
           <div className="flex items-start gap-4">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white p-1.5 flex items-center justify-center border-2 border-emerald-400/80 shadow-lg flex-shrink-0">
-              <PesmadLogo size="lg" className="w-full h-full" />
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white p-1.5 sm:h-14 sm:w-14">
+              <PesmadLogo size="lg" className="h-full w-full" />
             </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-cyan-800/80 border border-cyan-500/50 text-cyan-200">
-                  Akses Santri • MTsN 3 Bojonegoro
-                </span>
-                <span className="text-xs text-emerald-200 flex items-center gap-1">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                  Pesantren Madrasah Darul Fikri
-                </span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-extrabold mt-1.5 tracking-tight">
-                Ahlan wa Sahlan, {currentSantri.namaSantri}!
-              </h2>
-              <p className="text-xs sm:text-sm text-emerald-200/90 mt-1">
-                Kelas: <span className="font-semibold text-white">{currentSantri.kelas || 'Belum ditetapkan'}</span> • NIS/ID: <span className="font-mono text-amber-300 font-semibold">{currentSantri.idSantri}</span>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-emerald-200">Ruang Belajar · Pesmad</p>
+              <h1 className="mt-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{currentSantri.namaSantri}</h1>
+              <p className="mt-1 text-sm leading-relaxed text-emerald-100/90">
+                {currentSantri.kelas || 'Kelas belum ditetapkan'} · ID {currentSantri.idSantri}
               </p>
             </div>
           </div>
 
-          <div className="bg-white/10 backdrop-blur-md px-4 py-3 rounded-2xl border border-white/20 text-center self-start sm:self-auto">
-            <span className="text-[10px] font-semibold text-emerald-200 uppercase tracking-wider">
-              Target Hafalan Kamu
-            </span>
-            <p className="text-sm font-extrabold text-amber-300 mt-0.5">
-              {currentSantri.targetHafalan || 'Belum ditetapkan'}
-            </p>
-          </div>
-        </div>
-
-      </div>
-
-      {/* 4 Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3 sm:gap-4 fade-in-up" style={fadeDelay(1)}>
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center flex-shrink-0">
-            <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500">Ziyadah Saya</p>
-            <h3 className="text-lg sm:text-2xl font-extrabold text-slate-800 mt-0.5">
-              <AnimatedCounter value={santriZiyadah.length} /> Kali
-            </h3>
-            <span className="text-[10px] text-emerald-700 font-medium">Hafalan ayat baru</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3 sm:gap-4 fade-in-up" style={fadeDelay(2)}>
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-teal-100 text-teal-800 flex items-center justify-center flex-shrink-0">
-            <RotateCw className="w-5 h-5 sm:w-6 sm:h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500">Muroja'ah Saya</p>
-            <h3 className="text-lg sm:text-2xl font-extrabold text-slate-800 mt-0.5">
-              <AnimatedCounter value={santriMurojaah.length} /> Kali
-            </h3>
-            <span className="text-[10px] text-teal-700 font-medium">Pengulangan hafalan</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3 sm:gap-4 fade-in-up" style={fadeDelay(3)}>
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-indigo-100 text-indigo-800 flex items-center justify-center flex-shrink-0">
-            <BookOpenCheck className="w-5 h-5 sm:w-6 sm:h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500">Binnadzor Saya</p>
-            <h3 className="text-lg sm:text-2xl font-extrabold text-indigo-900 mt-0.5">
-              <AnimatedCounter value={santriBinnadzor.length} /> Kali
-            </h3>
-            <span className="text-[10px] text-indigo-700 font-medium">Membaca mushaf</span>
-          </div>
-        </div>
-
-        {santriPembelajaran.length > 0 && (
-          <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3 sm:gap-4 fade-in-up" style={fadeDelay(3.5)}>
-            <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0">
-              <GraduationCap className="w-5 h-5 sm:w-6 sm:h-6" />
+          <div className="mt-6 grid grid-cols-1 gap-4 border-t border-white/15 pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-emerald-200">
+                <Target className="h-4 w-4" aria-hidden="true" />
+                <span className="text-xs font-semibold uppercase tracking-[0.06em]">Target hafalan saya</span>
+              </div>
+              <p className="mt-1 text-base font-bold text-white sm:text-lg">
+                {currentSantri.targetHafalan || 'Belum ditetapkan'}
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-emerald-200/90">
+                Gunakan data setoran terakhir sebagai acuan belajar berikutnya.
+              </p>
             </div>
+
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setActiveTab('riwayat')}
+                className="ui-control press-feedback inline-flex items-center justify-center gap-2 border border-white/20 bg-white/10 px-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/15"
+              >
+                Riwayat saya
+                <ArrowRight className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('mushaf')}
+                className="ui-control press-feedback inline-flex items-center justify-center gap-2 bg-white px-3.5 text-sm font-bold text-emerald-950 transition-colors hover:bg-emerald-50"
+              >
+                <BookOpen className="h-4 w-4" />
+                Buka Mushaf
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="ui-panel p-5 sm:p-6 lg:col-span-2">
+          <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-4">
             <div>
-              <p className="text-xs font-semibold text-slate-500">Pembelajaran Saya</p>
-              <h3 className="text-lg sm:text-2xl font-extrabold text-amber-900 mt-0.5">
-                <AnimatedCounter value={santriPembelajaran.length} /> Kali
-              </h3>
-              <span className="text-[10px] text-amber-700 font-medium">Ummi / Istimewa</span>
+              <p className="ui-meta font-semibold uppercase tracking-[0.06em]">Setoran terakhir</p>
+              <h2 className="ui-section-title mt-1">Fokus belajar berikutnya</h2>
+            </div>
+            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${latestCategory?.surface || 'bg-slate-100'} ${latestCategory?.text || 'text-slate-600'}`}>
+              <LatestIcon className="h-5 w-5" aria-hidden="true" />
             </div>
           </div>
-        )}
 
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center gap-3 sm:gap-4 fade-in-up" style={fadeDelay(4)}>
-          <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-cyan-100 text-cyan-800 flex items-center justify-center flex-shrink-0">
-            <Award className="w-5 h-5 sm:w-6 sm:h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500">Penilaian Terakhir</p>
-            <h3 className="text-xs sm:text-sm font-extrabold text-emerald-700 mt-0.5 truncate">
-              {latestRatedRecord?.nilai || 'Belum ada'}
-            </h3>
-            <span className="text-[10px] text-slate-500 font-medium">
-              {latestRatedRecord ? 'Berdasarkan setoran terbaru' : 'Belum ada setoran dinilai'}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      {/* Visualisasi Grafik */}
-      <ScrollReveal>
-        <ZiyadahProgressChart
-          ziyadahRecords={santriZiyadah}
-          santriName={currentSantri.namaSantri}
-          isSantriView={true}
-        />
-      </ScrollReveal>
-
-      {/* Detail Setoran Terakhir */}
-      <ScrollReveal delay={100}>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Ziyadah Terakhir */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-emerald-700" />
-                <h4 className="font-bold text-slate-800 text-sm">Ziyadah Terakhir</h4>
+          {latestActivity ? (
+            <div className="pt-4">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <p className={`text-sm font-bold ${latestCategory?.text}`}>{latestActivity.category}</p>
+                <p className="ui-meta">{formatTanggalWaktu(latestActivity.timestamp)}</p>
               </div>
-              <span className="text-[11px] text-emerald-800 font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
-                <Calendar className="w-3 h-3 text-emerald-600" />
-                {lastZiyadah ? formatTanggalWaktu(lastZiyadah.timestamp) : '-'}
-              </span>
+              <p className="mt-2 text-base font-bold leading-snug text-slate-950 sm:text-lg">{latestActivity.material}</p>
+              <div className="mt-5 border-t border-slate-100 pt-4">
+                <p className="ui-meta font-semibold">Penilaian</p>
+                <p className={`mt-1 text-lg font-bold ${scoreTone[latestActivity.nilai]}`}>{latestActivity.nilai}</p>
+              </div>
             </div>
-
-            {lastZiyadah ? (
-              <div className="p-4 rounded-xl bg-emerald-50/70 border border-emerald-200/70 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-extrabold text-emerald-950">
-                    {lastZiyadah.surah} (Ayat {lastZiyadah.ayatAwal} - {lastZiyadah.ayatAkhir})
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900 font-bold text-[10px]">
-                    {lastZiyadah.nilai}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-700 italic">"{lastZiyadah.catatan}"</p>
-                <div className="text-[10px] text-emerald-800 font-medium pt-1">
-                  Disimak oleh: {lastZiyadah.inputBy}
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400 py-3 text-center">Belum ada catatan Ziyadah.</p>
-            )}
-          </div>
-
-          {/* Muroja'ah Terakhir */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <RotateCw className="w-4 h-4 text-teal-700" />
-                <h4 className="font-bold text-slate-800 text-sm">Muroja'ah Terakhir</h4>
-              </div>
-              <span className="text-[11px] text-teal-800 font-semibold flex items-center gap-1 bg-teal-50 px-2 py-0.5 rounded-md border border-teal-200/60">
-                <Calendar className="w-3 h-3 text-teal-600" />
-                {lastMurojaah ? formatTanggalWaktu(lastMurojaah.timestamp) : '-'}
-              </span>
-            </div>
-
-            {lastMurojaah ? (
-              <div className="p-4 rounded-xl bg-teal-50/70 border border-teal-200/70 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-extrabold text-teal-950">
-                    {lastMurojaah.surahAtauJuz}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-teal-200 text-teal-900 font-bold text-[10px]">
-                    {lastMurojaah.nilai}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-700 italic">"{lastMurojaah.catatan}"</p>
-                <div className="text-[10px] text-teal-800 font-medium pt-1">
-                  Disimak oleh: {lastMurojaah.inputBy}
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400 py-3 text-center">Belum ada catatan Muroja'ah.</p>
-            )}
-          </div>
-
-          {/* Binnadzor Terakhir */}
-          <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <BookOpenCheck className="w-4 h-4 text-indigo-700" />
-                <h4 className="font-bold text-slate-800 text-sm">Binnadzor Terakhir</h4>
-              </div>
-              <span className="text-[11px] text-indigo-800 font-semibold flex items-center gap-1 bg-indigo-50 px-2 py-0.5 rounded-md border border-indigo-200/60">
-                <Calendar className="w-3 h-3 text-indigo-600" />
-                {lastBinnadzor ? formatTanggalWaktu(lastBinnadzor.timestamp) : '-'}
-              </span>
-            </div>
-
-            {lastBinnadzor ? (
-              <div className="p-4 rounded-xl bg-indigo-50/70 border border-indigo-200/70 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-extrabold text-indigo-950">
-                    {lastBinnadzor.surahAtauHalaman || lastBinnadzor.materi}
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-indigo-200 text-indigo-900 font-bold text-[10px]">
-                    {lastBinnadzor.nilai}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-700 italic">"{lastBinnadzor.catatan}"</p>
-                <div className="text-[10px] text-indigo-800 font-medium pt-1">
-                  Disimak oleh: {lastBinnadzor.inputBy}
-                </div>
-              </div>
-            ) : (
-              <p className="text-xs text-slate-400 py-3 text-center">Belum ada catatan Binnadzor.</p>
-            )}
-          </div>
-
-          {/* Pembelajaran Terakhir */}
-          {lastPembelajaran && (
-            <div className="bg-white rounded-2xl p-5 border border-slate-200/90 shadow-xs space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-2">
-                  <GraduationCap className="w-4 h-4 text-amber-700" />
-                  <h4 className="font-bold text-slate-800 text-sm">Pembelajaran Terakhir</h4>
-                </div>
-                <span className="text-[11px] text-amber-800 font-semibold flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/60">
-                  <Calendar className="w-3 h-3 text-amber-600" />
-                  {formatTanggalWaktu(lastPembelajaran.timestamp)}
-                </span>
-              </div>
-
-              <div className="p-4 rounded-xl bg-amber-50/70 border border-amber-200/70 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-extrabold text-amber-950">
-                    {lastPembelajaran.materi} (Hal. {lastPembelajaran.halaman})
-                  </span>
-                  <span className="px-2.5 py-0.5 rounded-full bg-amber-200 text-amber-900 font-bold text-[10px]">
-                    {lastPembelajaran.nilai}
-                  </span>
-                </div>
-                {lastPembelajaran.statusKenaikan && (
-                  <div className="text-[11px] font-bold text-emerald-700">
-                    Status: {lastPembelajaran.statusKenaikan}
-                  </div>
-                )}
-                <p className="text-xs text-slate-700 italic">"{lastPembelajaran.catatan}"</p>
-                <div className="text-[10px] text-amber-800 font-medium pt-1">
-                  Disimak oleh: {lastPembelajaran.inputBy}
-                </div>
-              </div>
+          ) : (
+            <div className="py-8 text-center">
+              <BookOpen className="mx-auto h-6 w-6 text-slate-400" aria-hidden="true" />
+              <p className="mt-2 text-sm font-bold text-slate-700">Belum ada setoran tercatat.</p>
+              <p className="ui-meta mt-1">Setoran pertama akan muncul di sini setelah tersimpan.</p>
             </div>
           )}
         </div>
-      </ScrollReveal>
+      </section>
 
-      {/* CTA Mushaf */}
-      <ScrollReveal delay={100}>
-        <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-800 via-teal-800 to-cyan-900 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-5 shadow-sm">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <BookMarked className="w-5 h-5 text-amber-300" />
-              <h4 className="font-extrabold text-base sm:text-lg">Mau muroja'ah atau menghafal surah berikutnya?</h4>
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="ui-panel p-5 sm:p-6 lg:col-span-3">
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-800">
+              <MessageSquareText className="h-5 w-5" aria-hidden="true" />
             </div>
-            <p className="text-xs text-emerald-100 max-w-xl leading-relaxed">
-              Buka Mushaf Al-Qur'an 30 Juz lengkap dengan teks Arab resmi Kemenag, transliterasi Latin, terjemahan bahasa Indonesia, dan audio murattal per ayat.
-            </p>
+            <div className="min-w-0 flex-1">
+              <p className="ui-meta font-semibold uppercase tracking-[0.06em]">Feedback terbaru</p>
+              {latestFeedback ? (
+                <>
+                  <p className="mt-2 text-base font-semibold leading-relaxed text-slate-900">“{latestFeedback.catatan}”</p>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <span className="text-sm font-semibold text-slate-700">{latestFeedback.inputBy}</span>
+                    <span className="ui-meta">{latestFeedback.category}</span>
+                    <span className="ui-meta">{formatTanggalWaktu(latestFeedback.timestamp)}</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <p className="mt-2 text-sm font-semibold text-slate-700">Belum ada feedback tertulis dari Ustadz.</p>
+                  <p className="ui-secondary mt-1">Catatan setoran akan ditampilkan di sini ketika tersedia.</p>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div className="ui-panel p-5 sm:p-6 lg:col-span-2">
+          <p className="ui-meta font-semibold uppercase tracking-[0.06em]">Aktivitas saya</p>
+          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">{totalRecords} setoran</h2>
+          <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-slate-100 pt-4">
+            {categoryRows.map(row => {
+              const meta = categoryMeta[row.category];
+              return (
+                <div key={row.category} className="min-w-0">
+                  <p className={`text-xs font-bold ${meta.text}`}>{row.category}</p>
+                  <p className="mt-0.5 text-lg font-bold tabular-nums text-slate-950">{row.count}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <ScrollReveal delay={40} className="ui-panel p-5 sm:p-6">
+        <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="ui-section-title">Aktivitas terbaru saya</h2>
+            <p className="ui-secondary mt-0.5">Lima catatan terbaru dari seluruh jenis setoran.</p>
           </div>
           <button
-            ref={mushafRipple.elementRef}
-            onClick={(e) => { mushafRipple.createRipple(e); setActiveTab('mushaf'); }}
-            className="ripple-container press-feedback px-6 py-3 rounded-2xl bg-white text-emerald-950 font-extrabold text-xs shadow-md hover:bg-emerald-50 transition flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap self-start sm:self-auto"
+            type="button"
+            onClick={() => setActiveTab('riwayat')}
+            className="ui-control press-feedback self-start px-2 text-sm font-semibold text-emerald-800 hover:text-emerald-950 sm:self-auto"
           >
-            <BookOpen className="w-4 h-4 text-emerald-700" />
-            <span>Buka Mushaf 30 Juz</span>
+            Buka riwayat lengkap
           </button>
+        </div>
+
+        {recentActivities.length === 0 ? (
+          <div className="py-8 text-center">
+            <BookOpen className="mx-auto h-6 w-6 text-slate-400" aria-hidden="true" />
+            <p className="mt-2 text-sm font-bold text-slate-700">Belum ada aktivitas setoran.</p>
+            <p className="ui-meta mt-1">Aktivitas terbaru akan tampil setelah setoran tersimpan.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {recentActivities.map(activity => {
+              const meta = categoryMeta[activity.category];
+              const Icon = meta.icon;
+              return (
+                <div key={`${activity.category}-${activity.id}`} className="flex items-start gap-3 py-4">
+                  <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg ${meta.surface} ${meta.text}`}>
+                    <Icon className="h-4 w-4" aria-hidden="true" />
+                  </div>
+                  <div className="min-w-0 flex-1 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <p className={`text-sm font-bold ${meta.text}`}>{activity.category}</p>
+                        <span className="ui-meta">{formatTanggalWaktu(activity.timestamp)}</span>
+                      </div>
+                      <p className="mt-1 truncate text-sm text-slate-700">{activity.material}</p>
+                    </div>
+                    <p className={`mt-1 text-sm font-bold sm:mt-0 ${scoreTone[activity.nilai]}`}>{activity.nilai}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </ScrollReveal>
+
+      <ScrollReveal delay={60}>
+        <div className="space-y-3">
+          <div className="px-1">
+            <h2 className="ui-section-title">Tren Ziyadah saya</h2>
+            <p className="ui-secondary mt-0.5">Grafik menggunakan setoran Ziyadah aktual yang tercatat.</p>
+          </div>
+          <ZiyadahProgressChart
+            ziyadahRecords={santriZiyadah}
+            santriName={currentSantri.namaSantri}
+            isSantriView={true}
+          />
         </div>
       </ScrollReveal>
 
-      {/* Motivational Hadith */}
-      <ScrollReveal delay={100}>
-        <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-4 text-center space-y-1">
-          <p className="font-amiri text-base text-emerald-950 font-bold">
-            خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ
-          </p>
-          <p className="text-xs text-emerald-800 font-medium">
-            "Sebaik-baik kalian adalah orang yang belajar Al-Qur'an dan mengajarkannya." (HR. Bukhari)
-          </p>
+      <ScrollReveal delay={80}>
+        <div className="ui-panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div className="min-w-0">
+            <h2 className="ui-section-title">Lanjutkan belajar di Mushaf</h2>
+            <p className="ui-secondary mt-1 max-w-2xl">
+              Gunakan Mushaf digital untuk membaca, mengulang, atau menyiapkan hafalan berikutnya sesuai arahan Ustadz.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveTab('mushaf')}
+            className="ui-control press-feedback inline-flex flex-shrink-0 items-center justify-center gap-2 bg-emerald-800 px-4 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
+          >
+            <BookOpen className="h-4 w-4" />
+            Buka Mushaf 30 Juz
+          </button>
         </div>
       </ScrollReveal>
     </div>
