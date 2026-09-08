@@ -290,6 +290,7 @@ export default function App() {
                   kelasList={kelasList}
                   setActiveTab={setActiveTab}
                   onSelectSantriForZiyadah={handleSelectSantriForZiyadah}
+                  onOpenSetorMenu={() => setIsSetorMenuOpen(true)}
                   isLoading={isLoadingData}
                 />
               ) : isWali ? (
