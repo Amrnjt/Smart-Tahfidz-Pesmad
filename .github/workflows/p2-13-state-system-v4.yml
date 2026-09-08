@@ -1,0 +1,102 @@
+name: P2.13 State System Validation v4
+
+on:
+  push:
+    branches:
+      - p2-13-state-system
+    paths:
+      - .github/workflows/p2-13-state-system-v4.yml
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: p2-13-state-system
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Apply proven P2.13 transform
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          workflow = Path('.github/workflows/p2-13-state-system-v2.yml').read_text().splitlines()
+          start = next(i for i, line in enumerate(workflow) if line.strip() == "python - <<'PY'") + 1
+          end = next(i for i in range(start, len(workflow)) if workflow[i].strip() == 'PY')
+          code_lines = []
+          for line in workflow[start:end]:
+              code_lines.append(line[10:] if line.startswith('          ') else line)
+          code = '\n'.join(code_lines)
+          exec(compile(code, 'p2-13-transform.py', 'exec'))
+          PY
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: P2.13 finish gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          app = Path('src/App.tsx').read_text()
+          snack = Path('src/components/Snackbar.tsx').read_text()
+          toast = Path('src/components/NotificationToastContainer.tsx').read_text()
+          css = Path('src/index.css').read_text()
+          targets = [
+              Path('src/components/UstadzDashboard.tsx').read_text(),
+              Path('src/components/WaliDashboard.tsx').read_text(),
+              Path('src/components/SantriDashboard.tsx').read_text(),
+              Path('src/components/HistoryTable.tsx').read_text(),
+          ]
+          assert 'isLoadingData' not in app
+          assert "syncState === 'syncing'" in app
+          assert 'Cloud tidak terjangkau • cache lokal tetap tersedia' in app
+          assert 'status koneksi belum diverifikasi' in app
+          assert 'Sinkronisasi Real-Time Multi-Device' not in app
+          assert "role={snack.type === 'error' ? 'alert' : 'status'}" in snack
+          assert 'Math.max(duration, 7000)' in snack
+          assert 'min-h-11 min-w-11' in snack
+          assert 'Diterima 10 menit yang lalu' not in toast
+          assert 'formatTanggalLengkap(toast.data.timestamp)' in toast
+          assert 'aria-live="polite"' in toast
+          assert 'bg-gradient' not in toast
+          assert 'text-[11px]' not in toast
+          assert '.ui-state-neutral' in css
+          assert '.ui-state-surface' in css
+          assert not Path('src/components/SkeletonLoading.tsx').exists()
+          for text in targets:
+              assert 'SkeletonLoading' not in text
+              assert 'isLoading?: boolean' not in text
+              assert 'if (isLoading)' not in text
+          PY
+          if git grep -n "SkeletonLoading" -- src; then
+            exit 1
+          fi
+          git diff --check
+
+      - name: Commit verified P2.13 source
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "No source changes to commit"
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A src
+          git commit -m "refactor: unify P2.13 application state system"
+          git push origin HEAD:p2-13-state-system
