@@ -84,7 +84,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   }
 
   const today = getTodayInputFormat();
-  const santriById = new Map(santriList.map(santri => [santri.idSantri, santri]));
+  const santriById = new Map<string, Santri>(santriList.map(santri => [santri.idSantri, santri]));
   const resolveName = (idSantri: string, fallback?: string) => fallback || santriById.get(idSantri)?.namaSantri || idSantri;
 
   const activities: DashboardActivity[] = [
