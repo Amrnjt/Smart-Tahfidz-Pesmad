@@ -12,7 +12,7 @@ import {
   Tooltip,
   Legend
 } from 'recharts';
-import { TrendingUp, ChartBar as BarChart3, Calendar, Layers, Sparkles, BookOpen, Award, CircleCheck as CheckCircle2, Circle as HelpCircle, Clock } from 'lucide-react';
+import { TrendingUp, ChartBar as BarChart3, Calendar, Layers, BookOpen, Award, CircleCheck as CheckCircle2, Circle as HelpCircle, Clock } from 'lucide-react';
 
 interface ZiyadahProgressChartProps {
   ziyadahRecords: ZiyadahRecord[];
@@ -191,7 +191,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
     if (active && payload && payload.length) {
       const data: WeeklyDataPoint = payload[0].payload;
       return (
-        <div className="bg-slate-900/95 text-white p-3.5 rounded-2xl shadow-xl border border-slate-700/80 backdrop-blur-md max-w-xs text-xs space-y-2">
+        <div className="bg-slate-950 text-white p-3.5 rounded-xl shadow-lg border border-slate-800 max-w-xs text-xs space-y-2">
           <div className="border-b border-slate-700 pb-1.5 flex items-center justify-between">
             <span className="font-bold text-emerald-400 flex items-center gap-1.5">
               <Calendar className="w-3.5 h-3.5" />
@@ -201,29 +201,29 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
 
           <div className="grid grid-cols-2 gap-2 pt-0.5">
             <div className="bg-slate-800/80 p-2 rounded-xl border border-slate-700/50">
-              <span className="text-[10px] text-slate-400 block">Total Ayat</span>
+              <span className="text-xs text-slate-400 block">Total Ayat</span>
               <span className="text-base font-extrabold text-amber-300">
-                {data.totalAyat} <span className="text-[11px] font-medium text-slate-300">Ayat</span>
+                {data.totalAyat} <span className="text-xs font-medium text-slate-300">Ayat</span>
               </span>
             </div>
             <div className="bg-slate-800/80 p-2 rounded-xl border border-slate-700/50">
-              <span className="text-[10px] text-slate-400 block">Frekuensi Setoran</span>
+              <span className="text-xs text-slate-400 block">Frekuensi Setoran</span>
               <span className="text-base font-extrabold text-teal-300">
-                {data.totalSetoran} <span className="text-[11px] font-medium text-slate-300">Kali</span>
+                {data.totalSetoran} <span className="text-xs font-medium text-slate-300">Kali</span>
               </span>
             </div>
           </div>
 
           {data.surahList.length > 0 ? (
             <div className="pt-1">
-              <span className="text-[10px] text-slate-400 font-semibold block mb-1">
+              <span className="text-xs text-slate-400 font-semibold block mb-1">
                 Surah yang disetor pekan ini:
               </span>
               <div className="flex flex-wrap gap-1">
                 {data.surahList.map((s, idx) => (
                   <span
                     key={idx}
-                    className="px-2 py-0.5 rounded-md bg-emerald-950 text-emerald-200 border border-emerald-700/50 text-[10px] font-medium"
+                    className="px-2 py-0.5 rounded-md bg-emerald-950 text-emerald-200 border border-emerald-700/50 text-xs font-medium"
                   >
                     {s}
                   </span>
@@ -231,13 +231,13 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
               </div>
             </div>
           ) : (
-            <p className="text-[11px] text-slate-400 italic pt-0.5">
+            <p className="text-xs text-slate-400 italic pt-0.5">
               Tidak ada setoran hafalan baru pada pekan ini.
             </p>
           )}
 
           {data.totalSetoran > 0 && (
-            <div className="text-[10px] text-slate-300 pt-1 border-t border-slate-800 flex items-center justify-between">
+            <div className="text-xs text-slate-300 pt-1 border-t border-slate-800 flex items-center justify-between">
               <span>Sangat Baik: <b className="text-emerald-400">{data.sangatBaikCount}</b></span>
               <span>Baik: <b className="text-teal-400">{data.baikCount}</b></span>
               {data.kurangCount > 0 && <span>Kurang: <b className="text-amber-400">{data.kurangCount}</b></span>}
@@ -253,7 +253,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
   const hasData = ziyadahRecords.length > 0;
 
   return (
-    <div className="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 shadow-xs space-y-5">
+    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/90 shadow-xs space-y-5">
       {/* Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div>
@@ -264,7 +264,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
             <div>
               <h3 className="font-extrabold text-slate-900 text-base sm:text-lg flex items-center gap-1.5">
                 <span>Grafik Progres Hafalan Ziyadah</span>
-                <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
                   Per Pekan
                 </span>
               </h3>
@@ -386,7 +386,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
       {/* 4 Summary Mini Metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="bg-emerald-50/70 border border-emerald-200/60 p-3 rounded-2xl">
-          <span className="text-[11px] font-semibold text-emerald-800 block">Total Ayat Ziyadah</span>
+          <span className="text-xs font-semibold text-emerald-800 block">Total Ayat Ziyadah</span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="text-lg sm:text-xl font-extrabold text-emerald-950">{stats.totalAyat}</span>
             <span className="text-xs font-medium text-emerald-700">Ayat</span>
@@ -394,7 +394,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
         </div>
 
         <div className="bg-teal-50/70 border border-teal-200/60 p-3 rounded-2xl">
-          <span className="text-[11px] font-semibold text-teal-800 block">Rata-rata / Pekan Aktif</span>
+          <span className="text-xs font-semibold text-teal-800 block">Rata-rata / Pekan Aktif</span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="text-lg sm:text-xl font-extrabold text-teal-950">{stats.avgAyatPerActiveWeek}</span>
             <span className="text-xs font-medium text-teal-700">Ayat / mgg</span>
@@ -402,7 +402,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
         </div>
 
         <div className="bg-amber-50/70 border border-amber-200/60 p-3 rounded-2xl">
-          <span className="text-[11px] font-semibold text-amber-800 block">Rekor Terbaik Pekanan</span>
+          <span className="text-xs font-semibold text-amber-800 block">Rekor Terbaik Pekanan</span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="text-lg sm:text-xl font-extrabold text-amber-950">{stats.maxAyatInAWeek}</span>
             <span className="text-xs font-medium text-amber-700">Ayat</span>
@@ -410,7 +410,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
         </div>
 
         <div className="bg-sky-50/70 border border-sky-200/60 p-3 rounded-2xl">
-          <span className="text-[11px] font-semibold text-sky-800 block">Total Kali Setoran</span>
+          <span className="text-xs font-semibold text-sky-800 block">Total Kali Setoran</span>
           <div className="flex items-baseline gap-1 mt-0.5">
             <span className="text-lg sm:text-xl font-extrabold text-sky-950">{stats.totalSetoran}</span>
             <span className="text-xs font-medium text-sky-700">Kali</span>
@@ -518,7 +518,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
             <p className="text-xs font-semibold text-slate-600">
               Belum ada riwayat setoran Ziyadah yang tercatat.
             </p>
-            <p className="text-[11px] text-slate-400 max-w-sm">
+            <p className="text-xs text-slate-400 max-w-sm">
               Grafik progres mingguan akan otomatis terisi setelah Ustadz mencatatkan setoran ayat baru pertama kali.
             </p>
           </div>
@@ -538,7 +538,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
           </div>
         </div>
 
-        <span className="text-[11px] text-emerald-800 font-semibold bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/80 self-start sm:self-auto">
+        <span className="text-xs text-emerald-800 font-semibold bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/80 self-start sm:self-auto">
           Tersinkronisasi Real-Time
         </span>
       </div>

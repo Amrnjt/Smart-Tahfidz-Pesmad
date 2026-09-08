@@ -106,7 +106,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
       <div
-        className="fixed inset-0 bg-slate-950/50 backdrop-blur-[1px] animate-in fade-in"
+        className="fixed inset-0 bg-slate-950/55 animate-in fade-in"
         onClick={onClose}
         aria-hidden="true"
       />

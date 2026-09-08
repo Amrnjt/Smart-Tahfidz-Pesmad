@@ -21,7 +21,6 @@ import {
   Calendar,
   Filter,
   GraduationCap,
-  Sparkles,
   BookOpen,
   Award,
   ArrowUpRight,
@@ -329,12 +328,12 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
     : null;
 
   return (
-    <div className="bg-white/95 backdrop-blur-md rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-slate-200/90 shadow-xs space-y-5 w-full min-w-0 max-w-full">
+    <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/90 shadow-xs space-y-5 w-full min-w-0 max-w-full">
       {/* Header & Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4 w-full min-w-0">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="p-2 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white flex-shrink-0 shadow-xs">
+            <span className="p-2 rounded-xl bg-emerald-700 text-white flex-shrink-0 shadow-xs">
               <TrendingUp className="w-5 h-5" />
             </span>
             <div>
@@ -342,9 +341,6 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                 <h3 className="font-extrabold text-slate-800 text-base sm:text-lg tracking-tight">
                   Tren Hafalan Santri Setiap Bulan
                 </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200/60">
-                  Recharts Analytics
-                </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                 {selectedSantriObj
@@ -503,9 +499,9 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
       {/* KPI Highlight Bento Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full min-w-0">
         {/* Card 1: Total Ayat Dihafal */}
-        <div className="bg-gradient-to-br from-emerald-50/70 to-teal-50/70 p-3.5 sm:p-4 rounded-2xl border border-emerald-200/70 shadow-2xs">
+        <div className="bg-emerald-50 p-3.5 sm:p-4 rounded-2xl border border-emerald-200/70 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-semibold text-emerald-800">
+            <span className="text-xs sm:text-xs font-semibold text-emerald-800">
               Total Ayat Dihafal
             </span>
             <span className="p-1 rounded-lg bg-emerald-200/60 text-emerald-900">
@@ -515,15 +511,15 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
           <h4 className="text-xl sm:text-2xl font-black text-emerald-950 mt-1">
             <AnimatedCounter value={stats.totalAyatPeriod} /> <span className="text-xs sm:text-sm font-bold text-emerald-800">Ayat</span>
           </h4>
-          <p className="text-[10px] sm:text-[11px] text-emerald-700/90 mt-0.5">
+          <p className="text-xs sm:text-xs text-emerald-700/90 mt-0.5">
             Dari {stats.totalSesiPeriod} sesi Ziyadah ({timeRangeMonths} bulan)
           </p>
         </div>
 
         {/* Card 2: Rata-Rata Bulanan */}
-        <div className="bg-gradient-to-br from-teal-50/70 to-cyan-50/70 p-3.5 sm:p-4 rounded-2xl border border-teal-200/70 shadow-2xs">
+        <div className="bg-teal-50 p-3.5 sm:p-4 rounded-2xl border border-teal-200/70 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-semibold text-teal-800">
+            <span className="text-xs sm:text-xs font-semibold text-teal-800">
               Rata-rata Bulanan
             </span>
             <span className="p-1 rounded-lg bg-teal-200/60 text-teal-900">
@@ -533,33 +529,33 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
           <h4 className="text-xl sm:text-2xl font-black text-teal-950 mt-1">
             <AnimatedCounter value={stats.avgAyatPerMonth} /> <span className="text-xs sm:text-sm font-bold text-teal-800">Ayat/Bln</span>
           </h4>
-          <p className="text-[10px] sm:text-[11px] text-teal-700/90 mt-0.5">
+          <p className="text-xs sm:text-xs text-teal-700/90 mt-0.5">
             Target standar: ~30-50 ayat/bln
           </p>
         </div>
 
         {/* Card 3: Bulan Puncak */}
-        <div className="bg-gradient-to-br from-amber-50/70 to-orange-50/70 p-3.5 sm:p-4 rounded-2xl border border-amber-200/70 shadow-2xs">
+        <div className="bg-amber-50 p-3.5 sm:p-4 rounded-2xl border border-amber-200/70 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-semibold text-amber-800">
+            <span className="text-xs sm:text-xs font-semibold text-amber-800">
               Bulan Terproduktif
             </span>
             <span className="p-1 rounded-lg bg-amber-200/60 text-amber-900">
-              <Sparkles className="w-3.5 h-3.5" />
+              <Award className="w-3.5 h-3.5" />
             </span>
           </div>
           <h4 className="text-base sm:text-lg font-black text-amber-950 mt-1 truncate">
             {stats.peakMonth ? stats.peakMonth.fullBulan : '-'}
           </h4>
-          <p className="text-[10px] sm:text-[11px] text-amber-800 font-semibold mt-0.5">
+          <p className="text-xs sm:text-xs text-amber-800 font-semibold mt-0.5">
             Capaian: {stats.peakMonth ? `${stats.peakMonth.totalAyat} Ayat` : '0 Ayat'}
           </p>
         </div>
 
         {/* Card 4: MoM Growth */}
-        <div className="bg-gradient-to-br from-slate-50 to-indigo-50/60 p-3.5 sm:p-4 rounded-2xl border border-indigo-100 shadow-2xs">
+        <div className="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-indigo-100 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] sm:text-xs font-semibold text-slate-700">
+            <span className="text-xs sm:text-xs font-semibold text-slate-700">
               Tren vs Bulan Lalu
             </span>
             <span className={`p-1 rounded-lg ${
@@ -588,9 +584,9 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
             }`}>
               {stats.momDirection === 'up' ? `+${stats.momGrowthPercent}%` : `${stats.momGrowthPercent}%`}
             </h4>
-            <span className="text-[10px] font-semibold text-slate-500">MoM</span>
+            <span className="text-xs font-semibold text-slate-500">MoM</span>
           </div>
-          <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 truncate">
+          <p className="text-xs sm:text-xs text-slate-500 mt-0.5 truncate">
             Periode {stats.currentMonthName}
           </p>
         </div>
@@ -665,11 +661,11 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                     key={item.idSantri}
                     className={`rounded-2xl p-3.5 sm:p-4 border transition-all ${
                       isTop1
-                        ? 'bg-gradient-to-r from-amber-500/10 via-amber-50/50 to-white border-amber-300 shadow-xs ring-1 ring-amber-200/50'
+                        ? 'bg-amber-50 border-amber-300 shadow-xs ring-1 ring-amber-200/50'
                         : isTop2
-                        ? 'bg-gradient-to-r from-slate-200/40 via-slate-50/60 to-white border-slate-300 shadow-2xs'
+                        ? 'bg-slate-50 border-slate-300 shadow-2xs'
                         : isTop3
-                        ? 'bg-gradient-to-r from-orange-200/30 via-amber-50/40 to-white border-amber-200 shadow-2xs'
+                        ? 'bg-orange-50 border-amber-200 shadow-2xs'
                         : 'bg-white border-slate-200/80 hover:border-slate-300'
                     }`}
                   >
@@ -680,11 +676,11 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                         <div
                           className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center font-extrabold text-sm flex-shrink-0 ${
                             isTop1
-                              ? 'bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-sm'
+                              ? 'bg-amber-400 text-white shadow-sm'
                               : isTop2
-                              ? 'bg-gradient-to-br from-slate-300 to-slate-500 text-white shadow-xs'
+                              ? 'bg-slate-300 text-white shadow-xs'
                               : isTop3
-                              ? 'bg-gradient-to-br from-amber-600 to-amber-800 text-white shadow-xs'
+                              ? 'bg-amber-600 text-white shadow-xs'
                               : 'bg-slate-100 text-slate-700 border border-slate-200'
                           }`}
                         >
@@ -698,12 +694,12 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                               {item.namaSantri}
                             </h5>
                             {item.kelas && (
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 flex-shrink-0">
+                              <span className="text-xs font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 flex-shrink-0">
                                 {item.kelas}
                               </span>
                             )}
                           </div>
-                          <span className="text-[10px] font-mono text-slate-400 block mt-0.5">
+                          <span className="text-xs font-mono text-slate-400 block mt-0.5">
                             ID: {item.idSantri}
                           </span>
                         </div>
@@ -711,7 +707,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
 
                       {/* Right: Total Ayat Periode Highlight */}
                       <div className="flex items-center sm:flex-col sm:items-end justify-between sm:justify-center bg-emerald-50/80 sm:bg-transparent p-2 sm:p-0 rounded-xl border border-emerald-100 sm:border-0 flex-shrink-0">
-                        <span className="text-[10px] font-semibold text-emerald-800 sm:text-slate-500">
+                        <span className="text-xs font-semibold text-emerald-800 sm:text-slate-500">
                           Total Periode ({timeRangeMonths} Bln)
                         </span>
                         <div className="text-base sm:text-lg font-black text-emerald-800 leading-none">
@@ -727,17 +723,17 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                         <div
                           className={`h-full rounded-full transition-all duration-500 ${
                             isTop1
-                              ? 'bg-gradient-to-r from-amber-500 to-emerald-600'
+                              ? 'bg-amber-500'
                               : isTop2
-                              ? 'bg-gradient-to-r from-slate-400 to-teal-600'
-                              : 'bg-gradient-to-r from-emerald-500 to-teal-500'
+                              ? 'bg-slate-400'
+                              : 'bg-emerald-500'
                           }`}
                           style={{ width: `${pct}%` }}
                         />
                       </div>
 
                       {/* Chips row - fully responsive without hidden info */}
-                      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1.5 text-[11px] text-slate-600 font-medium pt-0.5">
+                      <div className="flex flex-col xs:flex-row xs:items-center justify-between gap-1.5 text-xs text-slate-600 font-medium pt-0.5">
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 font-bold border border-sky-200/60">
                             <Calendar className="w-3 h-3 text-sky-600 flex-shrink-0" />
@@ -748,7 +744,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                             <span>{item.totalSesi} Sesi Ziyadah</span>
                           </span>
                         </div>
-                        <span className="inline-flex items-center self-start xs:self-auto text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                        <span className="inline-flex items-center self-start xs:self-auto text-xs text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
                           {pct}% dari peringkat #1
                         </span>
                       </div>
@@ -802,7 +798,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                       verticalAlign="bottom"
                       height={32}
                       formatter={(val) => (
-                        <span className="text-[11px] text-slate-600 font-medium">
+                        <span className="text-xs text-slate-600 font-medium">
                           {val === 'totalAyatPeriode' ? `Total Hafalan (${timeRangeMonths} Bln)` : 'Hafalan Bulan Ini'}
                         </span>
                       )}
@@ -824,7 +820,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-              <p className="text-center text-[11px] text-slate-500 font-medium pt-1">
+              <p className="text-center text-xs text-slate-500 font-medium pt-1">
                 💡 Sentuh bilah grafik untuk detail, atau pilih tab <b>"Daftar Peringkat"</b> untuk tampilan kartu santri yang lengkap.
               </p>
             </div>
@@ -842,7 +838,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
               </h4>
             </div>
 
-            <span className="text-[11px] text-slate-500 font-medium">
+            <span className="text-xs text-slate-500 font-medium">
               Periode {timeRangeMonths} bulan terakhir
             </span>
           </div>
@@ -891,7 +887,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                   verticalAlign="bottom"
                   height={32}
                   formatter={() => (
-                    <span className="text-[11px] text-slate-600 font-medium">
+                    <span className="text-xs text-slate-600 font-medium">
                       {metricMode === 'ayat' ? 'Ayat Hafalan Baru' : metricMode === 'kumulatif' ? 'Pertumbuhan Kumulatif' : 'Kelancaran (%)'}
                     </span>
                   )}
@@ -959,7 +955,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                   verticalAlign="bottom"
                   height={32}
                   formatter={() => (
-                    <span className="text-[11px] text-slate-600 font-medium">
+                    <span className="text-xs text-slate-600 font-medium">
                       {metricMode === 'ayat' ? 'Laju Ayat Baru' : metricMode === 'kumulatif' ? 'Akumulasi Ayat' : 'Kelancaran (%)'}
                     </span>
                   )}
@@ -1042,7 +1038,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                   verticalAlign="bottom"
                   height={32}
                   formatter={() => (
-                    <span className="text-[11px] text-slate-600 font-medium">
+                    <span className="text-xs text-slate-600 font-medium">
                       {metricMode === 'ayat' ? 'Ayat Hafalan Baru' : metricMode === 'kumulatif' ? 'Pertumbuhan Akumulasi' : 'Tingkat Kelancaran'}
                     </span>
                   )}

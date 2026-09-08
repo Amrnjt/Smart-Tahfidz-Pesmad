@@ -168,15 +168,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-emerald-200 selection:text-emerald-950 pb-28 sm:pb-32 md:pb-12 relative w-full max-w-full">
-      
-      {/* Soft Ambient mint and teal atmospheric gradient behind glass panels */}
-      <div
-        aria-hidden="true"
-        className="fixed inset-0 pointer-events-none z-0 opacity-60"
-        style={{
-          background: 'radial-gradient(1100px circle at 50% -120px, rgba(16, 185, 129, 0.07), rgba(20, 184, 166, 0.035) 45%, transparent 75%), radial-gradient(800px circle at 95% 450px, rgba(20, 184, 166, 0.025), transparent 60%)'
-        }}
-      />
 
       <a
         href="#main-content"

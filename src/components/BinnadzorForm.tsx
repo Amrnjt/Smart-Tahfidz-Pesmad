@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, Kelas, AspekKualitas, ASPEK_KUALITAS_OPTIONS } from '../types';
 import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
-import { BookOpenCheck, Save, RotateCcw, Calendar, Clock, BookOpen, Layers, Bookmark, Sparkles, Check } from 'lucide-react';
+import { BookOpenCheck, Save, RotateCcw, Calendar, Clock, BookOpen, Layers, Bookmark, Check } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
 
@@ -159,7 +159,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className="ui-section-title text-slate-900">Setoran Binnadzor</h3>
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Melihat Mushaf</span>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">Melihat Mushaf</span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500">Bacaan tartil dengan penilaian tajwid, makhraj, fashohah, dan kelancaran.</p>
           </div>
@@ -428,7 +428,6 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
-                  <span className="text-base">{opt.emoji}</span>
                   <span className="text-center">{opt.label}</span>
                 </button>
               ))}
@@ -436,11 +435,11 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
           </div>
 
           {/* 4.5. Fokus Penilaian 4 Aspek Kualitas Binnadzor */}
-          <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/90 shadow-2xs space-y-3.5">
+          <div className="p-4 rounded-2xl bg-indigo-50 border border-indigo-200 space-y-3.5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-indigo-100/80 pb-2.5">
               <div>
-                <h4 className="text-xs font-black text-indigo-950 uppercase tracking-wider flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                <h4 className="text-xs font-semibold text-indigo-950 flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-indigo-600" />
                   <span>Fokus Kualitas Bacaan Binnadzor</span>
                 </h4>
                 <p className="text-xs text-slate-500 mt-0.5">
@@ -493,10 +492,10 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
             {/* The 4 Aspect Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* 1. Hukum Tajwid */}
-              <div className="bg-white/90 p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1.5">
+              <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800">1. Hukum Tajwid</span>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200">
                     {hukumTajwid}
                   </span>
                 </div>
@@ -510,7 +509,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                       aria-pressed={hukumTajwid === level}
                       className={`min-h-11 py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                         hukumTajwid === level
-                          ? 'bg-indigo-700 text-white shadow-2xs'
+                          ? 'bg-indigo-700 text-white'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -521,10 +520,10 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               </div>
 
               {/* 2. Makhroj Huruf */}
-              <div className="bg-white/90 p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1.5">
+              <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800">2. Makharijul Huruf</span>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200">
                     {makhrojHuruf}
                   </span>
                 </div>
@@ -538,7 +537,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                       aria-pressed={makhrojHuruf === level}
                       className={`min-h-11 py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                         makhrojHuruf === level
-                          ? 'bg-indigo-700 text-white shadow-2xs'
+                          ? 'bg-indigo-700 text-white'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -549,10 +548,10 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               </div>
 
               {/* 3. Kefasihan (Fashohah) */}
-              <div className="bg-white/90 p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1.5">
+              <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800">3. Kefasihan (Fashohah)</span>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200">
                     {kefasihan}
                   </span>
                 </div>
@@ -566,7 +565,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                       aria-pressed={kefasihan === level}
                       className={`min-h-11 py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                         kefasihan === level
-                          ? 'bg-indigo-700 text-white shadow-2xs'
+                          ? 'bg-indigo-700 text-white'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -577,10 +576,10 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               </div>
 
               {/* 4. Kelancaran & Tartil */}
-              <div className="bg-white/90 p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1.5">
+              <div className="bg-white p-3 rounded-xl border border-slate-200 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800">4. Kelancaran & Tartil</span>
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200">
                     {kelancaran}
                   </span>
                 </div>
@@ -594,7 +593,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                       aria-pressed={kelancaran === level}
                       className={`min-h-11 py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                         kelancaran === level
-                          ? 'bg-indigo-700 text-white shadow-2xs'
+                          ? 'bg-indigo-700 text-white'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >

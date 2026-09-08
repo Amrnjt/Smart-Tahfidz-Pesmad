@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User } from '../types';
 import { storageService } from '../services/storageService';
-import { UserCheck, Lock, AlertCircle, ArrowRight, Eye, EyeOff, ShieldCheck, BookOpenCheck, MoonStar, Sparkles } from 'lucide-react';
+import { UserCheck, Lock, AlertCircle, ArrowRight, Eye, EyeOff, ShieldCheck, BookOpenCheck, MoonStar, CircleCheck } from 'lucide-react';
 import { PesmadLogo } from './PesmadLogo';
 import type { NotifyFn } from './Snackbar';
 
@@ -99,12 +99,9 @@ const DesktopLogin: React.FC<FormState> = ({
   errorMsg, isLoading, onSubmit, onForgotPassword,
 }) => (
   <div className="max-w-5xl mx-auto my-4 sm:my-10 px-1 sm:px-4">
-    <div className="grid lg:grid-cols-2 bg-white rounded-3xl shadow-2xl shadow-emerald-950/10 border border-slate-200/80 overflow-hidden">
+    <div className="grid lg:grid-cols-2 bg-white rounded-2xl shadow-lg shadow-slate-950/10 border border-slate-200/80 overflow-hidden">
       {/* ===== Left: Branding / Visual Panel ===== */}
-      <div className="relative flex flex-col justify-between p-10 text-white bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-950 overflow-hidden">
-        <div className="pointer-events-none absolute -top-16 -right-16 w-64 h-64 rounded-full bg-emerald-400/10 blur-3xl" aria-hidden="true"></div>
-        <div className="pointer-events-none absolute -bottom-20 -left-10 w-72 h-72 rounded-full bg-teal-300/10 blur-3xl" aria-hidden="true"></div>
-
+      <div className="relative flex flex-col justify-between p-10 text-white bg-emerald-950 overflow-hidden">
         <div className="relative z-10 flex items-center gap-3">
           <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center p-2 border-2 border-emerald-400/70 shadow-lg">
             <PesmadLogo size="lg" className="w-full h-full" />
@@ -116,7 +113,7 @@ const DesktopLogin: React.FC<FormState> = ({
         </div>
 
         <div className="relative z-10 space-y-5 py-8">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 text-emerald-200 border border-emerald-700/50 text-[11px] font-bold">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-900 text-emerald-100 border border-emerald-800 text-xs font-semibold">
             <MoonStar className="w-3.5 h-3.5" />
             Portal Sistem Mutaba&apos;ah
           </span>
@@ -137,7 +134,7 @@ const DesktopLogin: React.FC<FormState> = ({
             </li>
             <li className="flex items-center gap-3 text-sm text-emerald-50">
               <span className="w-8 h-8 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0">
-                <Sparkles className="w-4 h-4" />
+                <CircleCheck className="w-4 h-4" />
               </span>
               Penilaian &amp; evaluasi kualitas hafalan
             </li>
@@ -150,7 +147,7 @@ const DesktopLogin: React.FC<FormState> = ({
           </ul>
         </div>
 
-        <p className="relative z-10 text-[11px] text-emerald-200/80 border-t border-emerald-700/40 pt-4">
+        <p className="relative z-10 text-xs text-emerald-200/80 border-t border-emerald-700/40 pt-4">
           MTsN 3 Bojonegoro &bull; Jl. Budi Utomo No. 190 Kepohbaru Bojonegoro
         </p>
       </div>
@@ -164,7 +161,7 @@ const DesktopLogin: React.FC<FormState> = ({
 
         <form onSubmit={onSubmit} className="space-y-4" aria-busy={isLoading}>
           <div>
-            <label htmlFor="login-username-input" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label htmlFor="login-username-input" className="block text-sm font-semibold text-slate-800 mb-1.5">
               Username / ID Santri / NIS
             </label>
             <div className="relative">
@@ -187,7 +184,7 @@ const DesktopLogin: React.FC<FormState> = ({
           </div>
 
           <div>
-            <label htmlFor="login-password-input" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label htmlFor="login-password-input" className="block text-sm font-semibold text-slate-800 mb-1.5">
               Password / PIN
             </label>
             <div className="relative">
@@ -247,7 +244,7 @@ const DesktopLogin: React.FC<FormState> = ({
             type="submit"
             id="btn-submit-login"
             disabled={isLoading}
-            className="w-full py-3.5 bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white rounded-xl font-bold text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full py-3.5 bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white rounded-xl font-bold text-sm shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <>
@@ -262,13 +259,13 @@ const DesktopLogin: React.FC<FormState> = ({
             )}
           </button>
 
-          <div className="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl text-[11px] text-slate-500">
+          <div className="flex items-center gap-2.5 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-500">
             <ShieldCheck className="w-4 h-4 text-emerald-700 flex-shrink-0" />
             <span>Koneksi aman. Jangan bagikan PIN/kata sandi Anda kepada siapa pun.</span>
           </div>
         </form>
 
-        <p className="text-center text-[11px] text-slate-400 font-medium mt-6 pt-4 border-t border-slate-100">
+        <p className="text-center text-xs text-slate-400 font-medium mt-6 pt-4 border-t border-slate-100">
           &copy; Tahfidz al-Qur&apos;an Pesantren Madrasah Darul Fikri
         </p>
       </div>
@@ -284,21 +281,16 @@ const MobileLogin: React.FC<FormState> = ({
   showPassword, setShowPassword, rememberMe, setRememberMe,
   errorMsg, isLoading, onSubmit, onForgotPassword,
 }) => (
-  <div className="-mx-3 -my-5 min-h-[calc(100vh-3.5rem)] flex flex-col bg-gradient-to-b from-emerald-900 via-emerald-800 to-teal-950 relative overflow-hidden">
-    {/* Decorative ambient glows */}
-    <div className="pointer-events-none absolute -top-24 -right-16 w-72 h-72 rounded-full bg-emerald-400/15 blur-3xl" aria-hidden="true"></div>
-    <div className="pointer-events-none absolute top-40 -left-20 w-64 h-64 rounded-full bg-teal-300/10 blur-3xl" aria-hidden="true"></div>
-
+  <div className="-mx-3 -my-5 min-h-[calc(100vh-3.5rem)] flex flex-col bg-emerald-950 relative overflow-hidden">
     {/* ===== Hero ===== */}
     <div className="relative z-10 flex flex-col items-center text-center px-6 pt-12 pb-9 text-white">
       <div className="relative mb-5">
-        <div className="absolute inset-0 rounded-3xl bg-emerald-300/30 blur-xl" aria-hidden="true"></div>
-        <div className="relative w-20 h-20 bg-white rounded-3xl flex items-center justify-center p-3 border-2 border-emerald-300/70 shadow-2xl shadow-emerald-950/40">
+        <div className="relative w-20 h-20 bg-white rounded-2xl flex items-center justify-center p-3 border border-emerald-300 shadow-lg shadow-emerald-950/20">
           <PesmadLogo size="lg" className="w-full h-full" />
         </div>
       </div>
 
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/50 text-emerald-100 border border-emerald-600/40 text-[11px] font-bold mb-4 backdrop-blur-sm">
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-900 text-emerald-100 border border-emerald-800 text-xs font-semibold mb-4">
         <MoonStar className="w-3.5 h-3.5" />
         Portal Sistem Mutaba&apos;ah
       </span>
@@ -320,7 +312,7 @@ const MobileLogin: React.FC<FormState> = ({
 
       <form onSubmit={onSubmit} className="space-y-4" aria-busy={isLoading}>
         <div>
-          <label htmlFor="login-username-input" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+          <label htmlFor="login-username-input" className="block text-sm font-semibold text-slate-800 mb-1.5">
             Username / ID Santri / NIS
           </label>
           <div className="relative">
@@ -343,7 +335,7 @@ const MobileLogin: React.FC<FormState> = ({
         </div>
 
         <div>
-          <label htmlFor="login-password-input" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+          <label htmlFor="login-password-input" className="block text-sm font-semibold text-slate-800 mb-1.5">
             Password / PIN
           </label>
           <div className="relative">
@@ -418,13 +410,13 @@ const MobileLogin: React.FC<FormState> = ({
           )}
         </button>
 
-        <div className="flex items-center gap-2.5 p-3 bg-emerald-50 border border-emerald-100 rounded-2xl text-[11px] text-emerald-800">
+        <div className="flex items-center gap-2.5 p-3 bg-emerald-50 border border-emerald-100 rounded-2xl text-xs text-emerald-800">
           <ShieldCheck className="w-4 h-4 text-emerald-700 flex-shrink-0" />
           <span>Koneksi aman. Jangan bagikan PIN/kata sandi Anda kepada siapa pun.</span>
         </div>
       </form>
 
-      <p className="text-center text-[11px] text-slate-400 font-medium mt-6">
+      <p className="text-center text-xs text-slate-400 font-medium mt-6">
         &copy; Tahfidz al-Qur&apos;an Pesantren Madrasah Darul Fikri
       </p>
     </div>
