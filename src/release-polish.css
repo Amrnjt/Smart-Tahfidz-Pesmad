@@ -1,0 +1,190 @@
+/* P3.0 — Legacy Surface Convergence
+ * Final visual convergence for screens not fully covered by P2.
+ * No data, auth, storage, or workflow semantics live here.
+ */
+
+.p3-management-page,
+.p3-mushaf-page {
+  --p3-line: rgba(148, 163, 184, 0.24);
+  --p3-soft: rgba(248, 250, 252, 0.9);
+  --p3-brand-soft: rgba(236, 253, 245, 0.78);
+}
+
+/* Management screens: make the page intro feel like the same product shell as P2. */
+.p3-management-page > div:first-child {
+  position: relative;
+  overflow: hidden;
+  padding: 1rem 1rem 1.05rem !important;
+  border: 1px solid var(--p3-line) !important;
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(16, 185, 129, 0.09), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.96));
+  box-shadow: 0 20px 52px -46px rgba(15, 23, 42, 0.5);
+}
+
+.p3-management-page > div:first-child::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: linear-gradient(180deg, #10b981, #0f766e);
+}
+
+.p3-management-page > div:first-child h3 svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  padding: 0.12rem;
+  border-radius: 0.45rem;
+  background: rgba(209, 250, 229, 0.8);
+}
+
+.p3-management-page > section,
+.p3-management-page > article,
+.p3-management-page [id^='santri-card-'] {
+  border-color: rgba(203, 213, 225, 0.78) !important;
+  box-shadow: 0 16px 40px -38px rgba(15, 23, 42, 0.42);
+}
+
+.p3-management-page [id^='santri-card-'] {
+  content-visibility: auto;
+  contain-intrinsic-size: 280px;
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.p3-management-page article {
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.p3-management-page table thead {
+  background: rgba(248, 250, 252, 0.96);
+}
+
+.p3-management-page table tbody tr {
+  transition: background-color 160ms ease;
+}
+
+/* Mushaf: editorial reading surface, still compatible with built-in night mode. */
+.p3-mushaf-page > header {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.5rem !important;
+  border-color: rgba(203, 213, 225, 0.74) !important;
+  box-shadow: 0 24px 60px -50px rgba(15, 23, 42, 0.52);
+}
+
+.p3-mushaf-page:not(.night-mode-active) > header {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(16, 185, 129, 0.1), transparent 30%),
+    linear-gradient(180deg, #ffffff, #f8fafc) !important;
+}
+
+.p3-mushaf-page > header::before {
+  content: '';
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  width: 3rem;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #059669, #14b8a6);
+}
+
+.p3-mushaf-page details {
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.p3-mushaf-page details[open] {
+  box-shadow: 0 14px 30px -28px rgba(15, 23, 42, 0.5);
+}
+
+.p3-mushaf-page article[aria-label^='Ayat '] {
+  content-visibility: auto;
+  contain-intrinsic-size: 340px;
+  transition:
+    background-color 220ms ease,
+    border-color 220ms ease,
+    box-shadow 220ms ease,
+    transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.p3-mushaf-page:not(.night-mode-active) article[aria-label^='Ayat ']:focus-within {
+  background: rgba(248, 250, 252, 0.72);
+  box-shadow: inset 3px 0 0 rgba(5, 150, 105, 0.32);
+}
+
+.p3-mushaf-page.night-mode-active > header {
+  border-color: rgba(71, 85, 105, 0.8) !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(16, 185, 129, 0.08), transparent 34%),
+    #0f172a !important;
+}
+
+.p3-mushaf-page.night-mode-active article[aria-label^='Ayat ']:focus-within {
+  box-shadow: inset 3px 0 0 rgba(52, 211, 153, 0.42);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .p3-management-page [id^='santri-card-']:hover,
+  .p3-management-page article:hover {
+    transform: translateY(-2px);
+    border-color: rgba(16, 185, 129, 0.3) !important;
+    box-shadow: 0 22px 46px -38px rgba(15, 23, 42, 0.52);
+  }
+
+  .p3-mushaf-page:not(.night-mode-active) article[aria-label^='Ayat ']:hover {
+    background: rgba(248, 250, 252, 0.72);
+  }
+}
+
+@media (max-width: 639px) {
+  .p3-management-page > div:first-child {
+    padding: 0.9rem !important;
+    border-radius: 1rem;
+  }
+
+  .p3-mushaf-page > header {
+    border-radius: 1.15rem !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p3-management-page *,
+  .p3-management-page *::before,
+  .p3-management-page *::after,
+  .p3-mushaf-page *,
+  .p3-mushaf-page *::before,
+  .p3-mushaf-page *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .p3-management-page > div:first-child,
+  .p3-management-page > section,
+  .p3-management-page article,
+  .p3-mushaf-page > header,
+  .p3-mushaf-page article[aria-label^='Ayat '] {
+    background: Canvas !important;
+    color: CanvasText !important;
+    border-color: CanvasText !important;
+    box-shadow: none !important;
+  }
+
+  .p3-management-page > div:first-child::before,
+  .p3-mushaf-page > header::before {
+    background: Highlight !important;
+  }
+}
