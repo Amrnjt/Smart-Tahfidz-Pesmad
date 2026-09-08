@@ -1,0 +1,48 @@
+name: P2.1 Design Contract Validation
+
+on:
+  push:
+    branches: [p2-1-design-contract]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install --no-package-lock --ignore-scripts
+      - name: TypeScript check
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Validate P2.1 contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q -- '--surface-page:' src/index.css
+          grep -q -- '--brand-primary:' src/index.css
+          grep -q -- '--category-ziyadah:' src/index.css
+          grep -q -- '--category-murojaah:' src/index.css
+          grep -q -- '--category-binnadzor:' src/index.css
+          grep -q -- '--category-pembelajaran:' src/index.css
+          grep -q -- '--status-success:' src/index.css
+          grep -q -- '--status-warning:' src/index.css
+          grep -q -- '--status-error:' src/index.css
+          grep -q -- '--focus-ring:' src/index.css
+          grep -q ':focus-visible' src/index.css
+          grep -q 'min-height: 44px' src/index.css
+          grep -q 'prefers-reduced-motion' src/index.css
+          grep -q '.fixed.inset-0.z-50' src/index.css
+          grep -q '.fixed.inset-0\[class~="z-\[60\]"\]' src/index.css
+          grep -q 'safe-area-inset-bottom' src/index.css
+          test -f DESIGN_CONTRACT.md
+          grep -q 'Pesmad Institutional Modern' DESIGN_CONTRACT.md
+          grep -q 'Data Truth P0' DESIGN_CONTRACT.md
+          grep -q 'Navigation Architecture P1' DESIGN_CONTRACT.md
+      - name: Diff check
+        run: git diff --check
