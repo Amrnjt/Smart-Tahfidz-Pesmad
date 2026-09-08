@@ -2,14 +2,12 @@ import React from 'react';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
 import type { ActiveTab } from '../types';
 
-type SetoranTab = Extract<ActiveTab, 'ziyadah' | 'murojaah' | 'binnadzor' | 'pembelajaran'>;
-
 interface SetoranFormNavProps {
-  activeTab: SetoranTab;
+  activeTab: ActiveTab;
   onBack: () => void;
 }
 
-const labels: Record<SetoranTab, string> = {
+const labels: Partial<Record<ActiveTab, string>> = {
   ziyadah: 'Ziyadah',
   murojaah: "Muroja'ah",
   binnadzor: 'Binnadzor',
@@ -17,6 +15,8 @@ const labels: Record<SetoranTab, string> = {
 };
 
 export const SetoranFormNav: React.FC<SetoranFormNavProps> = ({ activeTab, onBack }) => {
+  const label = labels[activeTab] || 'Setoran';
+
   return (
     <nav
       aria-label="Navigasi form setoran"
@@ -32,10 +32,10 @@ export const SetoranFormNav: React.FC<SetoranFormNavProps> = ({ activeTab, onBac
         <span>Kembali ke Beranda</span>
       </button>
 
-      <div className="flex min-h-11 items-center gap-1.5 rounded-xl bg-slate-100 px-3 text-xs font-semibold text-slate-600" aria-label={`Setor, ${labels[activeTab]}`}>
+      <div className="flex min-h-11 items-center gap-1.5 rounded-xl bg-slate-100 px-3 text-xs font-semibold text-slate-600" aria-label={`Setor, ${label}`}>
         <span>Setor</span>
         <ChevronRight className="h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
-        <strong className="text-slate-900">{labels[activeTab]}</strong>
+        <strong className="text-slate-900">{label}</strong>
       </div>
     </nav>
   );
