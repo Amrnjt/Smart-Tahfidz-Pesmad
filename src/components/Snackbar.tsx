@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
 
 export type SnackbarKind = 'success' | 'error' | 'info';
 
@@ -24,6 +24,12 @@ interface SnackbarProps {
   duration?: number;
 }
 
+const toneByType: Record<SnackbarKind, { state: string; icon: string }> = {
+  success: { state: 'ui-state-success', icon: 'text-emerald-700' },
+  error: { state: 'ui-state-error', icon: 'text-rose-700' },
+  info: { state: 'ui-state-info', icon: 'text-sky-700' }
+};
+
 export const Snackbar: React.FC<SnackbarProps> = ({ snack, onDismiss, duration = 4000 }) => {
   const [isExiting, setIsExiting] = useState(false);
 
@@ -37,45 +43,42 @@ export const Snackbar: React.FC<SnackbarProps> = ({ snack, onDismiss, duration =
 
   useEffect(() => {
     if (!snack) return;
-    const timer = setTimeout(dismiss, duration);
+    const effectiveDuration = snack.type === 'error' || snack.actionLabel ? Math.max(duration, 7000) : duration;
+    const timer = setTimeout(dismiss, effectiveDuration);
     return () => clearTimeout(timer);
   }, [snack, duration, dismiss]);
 
   if (!snack) return null;
 
+  const tone = toneByType[snack.type];
+  const Icon = snack.type === 'success' ? CheckCircle2 : snack.type === 'error' ? AlertCircle : Info;
+
   return (
-    <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-2rem)] max-w-md">
+    <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-2rem)] max-w-lg pointer-events-none">
       <div
-        className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl shadow-xl border ${
-          snack.type === 'success'
-            ? 'bg-emerald-800 text-white border-emerald-700'
-            : snack.type === 'error'
-            ? 'bg-rose-800 text-white border-rose-700'
-            : 'bg-slate-800 text-white border-slate-700'
-        } ${isExiting ? 'snackbar-exit' : 'snackbar-enter'}`}
+        role={snack.type === 'error' ? 'alert' : 'status'}
+        aria-live={snack.type === 'error' ? 'assertive' : 'polite'}
+        aria-atomic="true"
+        className={`ui-state-surface pointer-events-auto flex items-center gap-3 px-3 py-2 rounded-xl shadow-lg ${tone.state} ${isExiting ? 'snackbar-exit' : 'snackbar-enter'}`}
       >
-        {snack.type === 'success' ? (
-          <CheckCircle2 className="w-5 h-5 text-emerald-200 flex-shrink-0" />
-        ) : snack.type === 'error' ? (
-          <AlertCircle className="w-5 h-5 text-rose-200 flex-shrink-0" />
-        ) : (
-          <Info className="w-5 h-5 text-slate-200 flex-shrink-0" />
-        )}
-        <span className="text-sm font-semibold flex-1">{snack.message}</span>
+        <Icon className={`w-5 h-5 flex-shrink-0 ${tone.icon}`} aria-hidden="true" />
+        <span className="text-sm font-medium leading-5 flex-1">{snack.message}</span>
         {snack.actionLabel && snack.onAction && (
           <button
+            type="button"
             onClick={() => { snack.onAction?.(); dismiss(); }}
-            className="text-xs font-bold text-amber-300 hover:text-amber-200 transition cursor-pointer px-2 py-1 rounded-lg hover:bg-white/10"
+            className="min-h-11 px-3 rounded-lg border border-current/20 bg-white/70 text-sm font-semibold hover:bg-white transition-colors cursor-pointer flex-shrink-0"
           >
             {snack.actionLabel}
           </button>
         )}
         <button
+          type="button"
           onClick={dismiss}
-          className="text-white/60 hover:text-white transition cursor-pointer p-0.5"
-          aria-label="Tutup"
+          className="min-h-11 min-w-11 inline-flex items-center justify-center rounded-lg hover:bg-white/70 transition-colors cursor-pointer flex-shrink-0"
+          aria-label="Tutup pemberitahuan"
         >
-          <X className="w-4 h-4" />
+          <X className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
     </div>

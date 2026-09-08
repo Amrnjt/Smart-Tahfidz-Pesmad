@@ -22,7 +22,6 @@ import {
 import { ZiyadahProgressChart } from './ZiyadahProgressChart';
 import { PesmadLogo } from './PesmadLogo';
 import { formatTanggalWaktu } from '../utils/dateFormatter';
-import { SantriWaliDashboardSkeleton } from './SkeletonLoading';
 import { ScrollReveal } from './ScrollReveal';
 
 interface SantriDashboardProps {
@@ -33,7 +32,6 @@ interface SantriDashboardProps {
   binnadzorRecords?: BinnadzorRecord[];
   pembelajaranRecords?: PembelajaranRecord[];
   setActiveTab: (tab: ActiveTab) => void;
-  isLoading?: boolean;
 }
 
 type ActivityCategory = 'Ziyadah' | "Muroja'ah" | 'Binnadzor' | 'Pembelajaran';
@@ -73,12 +71,8 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   murojaahRecords,
   binnadzorRecords = [],
   pembelajaranRecords = [],
-  setActiveTab,
-  isLoading = false
+  setActiveTab
 }) => {
-  if (isLoading) {
-    return <SantriWaliDashboardSkeleton role="Santri" />;
-  }
 
   const currentSantri = santriList.find(santri => santri.idSantri === currentUser.idSantri);
 

@@ -29,7 +29,6 @@ import { getClassGroup, isNonTahfidzClass } from '../utils/classUtils';
 import { formatTanggalWaktu, getTodayInputFormat } from '../utils/dateFormatter';
 import { HafalanStatsChart } from './HafalanStatsChart';
 import { TrenHafalanBulananChart } from './TrenHafalanBulananChart';
-import { DashboardSkeleton } from './SkeletonLoading';
 import { ScrollReveal } from './ScrollReveal';
 import { PesmadLogo } from './PesmadLogo';
 
@@ -44,7 +43,6 @@ interface UstadzDashboardProps {
   setActiveTab: (tab: ActiveTab) => void;
   onSelectSantriForZiyadah?: (idSantri: string) => void;
   onOpenSetorMenu: () => void;
-  isLoading?: boolean;
 }
 
 type ActivityCategory = 'Ziyadah' | "Muroja'ah" | 'Binnadzor' | 'Pembelajaran';
@@ -113,14 +111,10 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   kelasList,
   setActiveTab,
   onSelectSantriForZiyadah,
-  onOpenSetorMenu,
-  isLoading = false
+  onOpenSetorMenu
 }) => {
   const [chartView, setChartView] = useState<'tren_hafalan' | 'aktivitas'>('tren_hafalan');
 
-  if (isLoading) {
-    return <DashboardSkeleton />;
-  }
 
   const today = getTodayInputFormat();
   const santriById = new Map<string, Santri>(santriList.map(santri => [santri.idSantri, santri]));
