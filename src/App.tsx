@@ -3,6 +3,7 @@ import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Pembelaja
 import { storageService } from './services/storageService';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
+import { DesktopPrimaryNav } from './components/DesktopPrimaryNav';
 import { SetorActionSheet } from './components/SetorActionSheet';
 import { SetoranFormNav } from './components/SetoranFormNav';
 import { LoginView } from './components/LoginModal';
@@ -21,7 +22,7 @@ import { NotificationToastContainer } from './components/NotificationToastContai
 import { Snackbar, SnackbarState, NotifyFn } from './components/Snackbar';
 import { useSetoranNotifications } from './hooks/useSetoranNotifications';
 import { useActiveTabNavigation } from './hooks/useActiveTabNavigation';
-import { LayoutDashboard, CirclePlus as PlusCircle, History, BookOpen, Users, Cloud, School } from 'lucide-react';
+import { Cloud } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -150,7 +151,7 @@ export default function App() {
       ? 'Cloud Firestore • sinkronisasi terakhir berhasil'
       : syncState === 'error'
       ? 'Cloud tidak terjangkau • cache lokal tetap tersedia'
-      : 'Cloud Firestore • status koneksi belum diverifikasi';
+      : 'Cloud belum diperiksa • gunakan Cloud Sync untuk memverifikasi';
   const syncStatusTone =
     syncState === 'success'
       ? 'ui-state-success'
@@ -178,15 +179,27 @@ export default function App() {
         Lewati ke konten utama
       </a>
 
-      {/* Top Navbar */}
-      <Navbar
-        currentUser={currentUser}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onLogout={handleLogout}
-        onRefresh={handleManualRefresh}
-        isRefreshing={isSyncing}
-      />
+      {/* Persistent app chrome: stays outside page View Transitions. */}
+      <div className="p3-chrome-stack" data-app-chrome="persistent">
+        <Navbar
+          currentUser={currentUser}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onLogout={handleLogout}
+          onRefresh={handleManualRefresh}
+          isRefreshing={isSyncing}
+        />
+
+        {currentUser && (
+          <DesktopPrimaryNav
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            isUstadz={isUstadz}
+            isSetorMenuOpen={isSetorMenuOpen}
+            onOpenSetorMenu={() => setIsSetorMenuOpen(true)}
+          />
+        )}
+      </div>
 
       {/* Main Container */}
       <main id="main-content" tabIndex={-1} className="max-w-7xl w-full mx-auto ui-page-gutter py-4 sm:py-5 flex-1 space-y-5 relative min-w-0">
@@ -198,100 +211,8 @@ export default function App() {
             onNotify={notify}
           />
         ) : (
-          <div className="space-y-5 min-w-0">
+          <div className="p3-page-content space-y-5 min-w-0">
             
-            {/* Primary Navigation: same mental model across tablet and desktop */}
-            <nav
-              className="hidden md:flex items-stretch gap-1 border-b border-slate-200 bg-white px-1"
-              aria-label="Navigasi utama"
-            >
-              <button
-                onClick={() => setActiveTab('dashboard')}
-                aria-current={activeTab === 'dashboard' ? 'page' : undefined}
-                className={`press-feedback min-h-11 min-w-0 px-3 lg:px-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset ${
-                  activeTab === 'dashboard'
-                    ? 'border-emerald-700 bg-emerald-50/60 text-emerald-900'
-                    : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
-                }`}
-              >
-                <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">Beranda</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('riwayat')}
-                aria-current={activeTab === 'riwayat' ? 'page' : undefined}
-                className={`press-feedback min-h-11 min-w-0 px-3 lg:px-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset ${
-                  activeTab === 'riwayat'
-                    ? 'border-emerald-700 bg-emerald-50/60 text-emerald-900'
-                    : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
-                }`}
-              >
-                <History className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">Riwayat</span>
-              </button>
-
-              {isUstadz && (
-                <button
-                  onClick={() => setIsSetorMenuOpen(true)}
-                  aria-haspopup="dialog"
-                  aria-expanded={isSetorMenuOpen}
-                  aria-current={isSetorActive ? 'page' : undefined}
-                  className={`press-feedback min-h-11 min-w-0 px-3 lg:px-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset ${
-                    isSetorActive
-                      ? 'border-emerald-700 bg-emerald-50/60 text-emerald-900'
-                      : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
-                  }`}
-                >
-                  <PlusCircle className="w-4 h-4 flex-shrink-0" />
-                  <span className="truncate">Setor</span>
-                </button>
-              )}
-
-              {isUstadz && (
-                <button
-                  onClick={() => setActiveTab('kelas')}
-                  aria-current={activeTab === 'kelas' ? 'page' : undefined}
-                  className={`press-feedback min-h-11 min-w-0 px-3 lg:px-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset ${
-                    activeTab === 'kelas'
-                      ? 'border-emerald-700 bg-emerald-50/60 text-emerald-900'
-                      : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
-                  }`}
-                >
-                  <School className="w-4 h-4 flex-shrink-0" />
-                  <span className="truncate">Kelas</span>
-                </button>
-              )}
-
-              {isUstadz && (
-                <button
-                  onClick={() => setActiveTab('santri')}
-                  aria-current={activeTab === 'santri' ? 'page' : undefined}
-                  className={`press-feedback min-h-11 min-w-0 px-3 lg:px-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset ${
-                    activeTab === 'santri'
-                      ? 'border-emerald-700 bg-emerald-50/60 text-emerald-900'
-                      : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
-                  }`}
-                >
-                  <Users className="w-4 h-4 flex-shrink-0" />
-                  <span className="truncate">Santri</span>
-                </button>
-              )}
-
-              <button
-                onClick={() => setActiveTab('mushaf')}
-                aria-current={activeTab === 'mushaf' ? 'page' : undefined}
-                className={`press-feedback min-h-11 min-w-0 px-3 lg:px-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset ${
-                  activeTab === 'mushaf'
-                    ? 'border-emerald-700 bg-emerald-50/60 text-emerald-900'
-                    : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
-                }`}
-              >
-                <BookOpen className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">Mushaf</span>
-              </button>
-            </nav>
-
             {/* Content per Tab */}
             {activeTab === 'dashboard' && (
               isUstadz ? (
