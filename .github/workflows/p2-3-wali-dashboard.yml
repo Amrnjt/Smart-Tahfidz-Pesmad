@@ -1,0 +1,43 @@
+name: P2.3 Wali Dashboard Validation
+
+on:
+  push:
+    branches: [p2-3-wali-dashboard]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install --no-package-lock --ignore-scripts
+      - name: TypeScript check
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: P2.3 finish gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          file=src/components/WaliDashboard.tsx
+          grep -q 'Profil santri belum terhubung' "$file"
+          grep -q 'Setoran terbaru' "$file"
+          grep -q 'Catatan Ustadz' "$file"
+          grep -q 'Perkembangan aktual' "$file"
+          grep -q 'Tren Ziyadah' "$file"
+          grep -q 'Riwayat terakhir per kategori' "$file"
+          grep -q 'sort((a, b) => b.timestamp.localeCompare(a.timestamp))' "$file"
+          grep -q 'PantauanLiburanWaliSection' "$file"
+          grep -q 'ZiyadahProgressChart' "$file"
+          grep -q "setActiveTab('mushaf')" "$file"
+          grep -q "setActiveTab('riwayat')" "$file"
+          grep -q "Muroja'ah.*text-teal-800" "$file" || grep -q "text: 'text-teal-800'" "$file"
+          ! grep -q 'Sparkles' "$file"
+          ! grep -q 'bg-gradient' "$file"
+          ! grep -q 'text-\[9px\]' "$file"
+          ! grep -q 'text-\[10px\]' "$file"
+          ! grep -q 'AnimatedCounter' "$file"
+          git diff --check
