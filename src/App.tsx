@@ -442,6 +442,8 @@ export default function App() {
         currentUser={currentUser}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        santriList={santriList}
+        onNotify={notify}
       />
 
       {/* In-app notification toasts for Wali Santri */}

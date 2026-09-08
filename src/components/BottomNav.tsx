@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { User, ActiveTab } from '../types';
+import { User, ActiveTab, Santri } from '../types';
 import { LayoutDashboard, History, Users, GraduationCap, Plus, BookOpen } from 'lucide-react';
 import { useRipple } from '../hooks/useRipple';
 import { SetorActionSheet } from './SetorActionSheet';
-import { storageService } from '../services/storageService';
+import type { NotifyFn } from './Snackbar';
 
 interface BottomNavProps {
   currentUser: User | null;
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
+  santriList: Santri[];
+  onNotify: NotifyFn;
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({
   currentUser,
   activeTab,
-  setActiveTab
+  setActiveTab,
+  santriList,
+  onNotify
 }) => {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const fabRipple = useRipple<HTMLButtonElement>();
@@ -131,7 +135,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         isOpen={isActionSheetOpen}
         onClose={() => setIsActionSheetOpen(false)}
         onSelect={(tab) => setActiveTab(tab)}
-        santriList={storageService.getSantriList()}
+        santriList={santriList}
+        onNotify={onNotify}
       />
     </>
   );
