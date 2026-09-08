@@ -5,13 +5,16 @@ on:
     branches: [main]
     paths:
       - 'src/design-foundation.css'
+      - 'src/app-shell.css'
       - 'src/design-system/**'
+      - 'src/components/Navbar.tsx'
+      - 'src/components/BottomNav.tsx'
       - 'src/main.tsx'
       - 'P2_DESIGN_FOUNDATION.md'
       - '.github/workflows/p2-design-foundation.yml'
   push:
     branches:
-      - design/p2-0-foundation
+      - 'design/p2-*'
 
 jobs:
   validate:
@@ -39,10 +42,12 @@ jobs:
           grep -q 'prefers-reduced-motion: reduce' src/design-foundation.css
           grep -q 'min-height: 44px' src/design-foundation.css
           grep -q 'forced-colors: active' src/design-foundation.css
+          grep -q 'prefers-reduced-motion: reduce' src/app-shell.css
+          grep -q 'forced-colors: active' src/app-shell.css
 
       - name: Reject expensive global effects
         run: |
-          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/design-foundation.css; then
-            echo 'P2 foundation contains an expensive global visual effect.'
+          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/design-foundation.css src/app-shell.css; then
+            echo 'P2 visual system contains an expensive global effect.'
             exit 1
           fi

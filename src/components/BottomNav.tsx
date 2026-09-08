@@ -34,50 +34,34 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   const isSetorActive = activeTab === 'ziyadah' || activeTab === 'murojaah' || activeTab === 'binnadzor' || activeTab === 'pembelajaran';
   const isManageActive = activeTab === 'kelas' || activeTab === 'santri';
 
-  // Wali & Santri view-only bottom nav
   if (!isUstadz) {
-    const nonUstadzItems = [
+    const items = [
       { id: 'dashboard' as ActiveTab, label: isWali ? 'Anak Saya' : 'Hafalan', icon: LayoutDashboard },
       { id: 'riwayat' as ActiveTab, label: 'Riwayat', icon: History },
-      { id: 'mushaf' as ActiveTab, label: 'Mushaf 30 Juz', icon: BookOpen }
+      { id: 'mushaf' as ActiveTab, label: 'Mushaf', icon: BookOpen }
     ];
 
     return (
-      <nav aria-label="Navigasi bawah" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 ui-bottom-nav pt-1.5">
-        <div className="flex justify-around items-center max-w-md mx-auto">
-          {nonUstadzItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeTab === item.id;
-            return (
-              <button
-                type="button"
-                key={item.id}
-                onClick={() => setActiveTab(item.id)}
-                aria-current={isActive ? 'page' : undefined}
-                className={`press-feedback min-h-14 flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-                  isActive ? 'text-emerald-900 font-semibold' : 'text-slate-500 font-medium'
-                }`}
-              >
-                <div className={`p-1.5 rounded-lg transition-colors ${isActive ? 'bg-emerald-50 text-emerald-800' : 'text-slate-500'}`}>
-                  <Icon className="w-5 h-5" />
-                </div>
-                <span className="text-xs tracking-tight mt-0.5">{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+      <div className="p2-bottom-shell md:hidden">
+        <nav aria-label="Navigasi bawah" className="p2-bottom-dock p2-bottom-dock-compact">
+          {items.map(item => (
+            <NavButton
+              key={item.id}
+              label={item.label}
+              icon={item.icon}
+              isActive={activeTab === item.id}
+              onClick={() => setActiveTab(item.id)}
+            />
+          ))}
+        </nav>
+      </div>
     );
   }
 
-  // Ustadz: primary navigation mirrors desktop while grouping management on mobile.
   return (
     <>
-      <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 ui-bottom-nav pt-1.5"
-        aria-label="Navigasi Bawah"
-      >
-        <div className="max-w-md mx-auto grid grid-cols-5 items-center">
+      <div className="p2-bottom-shell md:hidden">
+        <nav className="p2-bottom-dock p2-bottom-dock-ustadz" aria-label="Navigasi bawah">
           <NavButton
             label="Beranda"
             icon={LayoutDashboard}
@@ -92,29 +76,23 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             onClick={() => setActiveTab('riwayat')}
           />
 
-          <div className="flex flex-col items-center justify-center relative -top-3 px-0.5">
+          <div className="p2-setor-slot">
             <button
               type="button"
               ref={fabRipple.elementRef}
-              onClick={(e) => {
-                fabRipple.createRipple(e);
+              onClick={(event) => {
+                fabRipple.createRipple(event);
                 setIsActionSheetOpen(true);
               }}
-              className={`ripple-container relative w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
-                isSetorActive
-                  ? 'bg-emerald-950'
-                  : 'bg-emerald-800 hover:bg-emerald-700'
-              }`}
+              className={`ripple-container p2-setor-fab ${isSetorActive ? 'is-active' : ''}`}
               aria-label="Tambah Setoran Baru"
               aria-haspopup="dialog"
               aria-expanded={isActionSheetOpen}
               title="Tambah Setoran Baru"
             >
-              <Plus className="w-5 h-5 stroke-[2.5]" />
+              <Plus className="ui-icon-md stroke-[2.4]" />
             </button>
-            <span className={`text-xs tracking-tight font-semibold mt-1 ${isSetorActive ? 'text-emerald-800' : 'text-slate-600'}`}>
-              Setor
-            </span>
+            <span className={`p2-setor-label ${isSetorActive ? 'is-active' : ''}`}>Setor</span>
           </div>
 
           <NavButton
@@ -130,8 +108,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             isActive={activeTab === 'mushaf'}
             onClick={() => setActiveTab('mushaf')}
           />
-        </div>
-      </nav>
+        </nav>
+      </div>
 
       <SetorActionSheet
         isOpen={isActionSheetOpen}
@@ -164,20 +142,18 @@ const NavButton: React.FC<NavButtonProps> = ({ label, icon: Icon, isActive, onCl
     <button
       type="button"
       ref={ripple.elementRef}
-      onClick={(e) => {
-        ripple.createRipple(e);
+      onClick={(event) => {
+        ripple.createRipple(event);
         onClick();
       }}
-      className={`ripple-container press-feedback min-h-14 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-colors cursor-pointer min-w-0 w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
-        isActive ? 'text-emerald-900 font-semibold' : 'text-slate-500 font-medium hover:text-slate-700'
-      }`}
+      className={`ripple-container p2-bottom-item ${isActive ? 'is-active' : ''}`}
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
     >
-      <div className={`p-1.5 rounded-lg transition-colors ${isActive ? 'bg-emerald-50 text-emerald-800' : 'text-slate-500'}`}>
-        <Icon className="w-5 h-5" />
-      </div>
-      <span className="text-xs tracking-tight mt-0.5 truncate w-full text-center">{label}</span>
+      <span className="p2-bottom-icon-wrap">
+        <Icon className="ui-icon-md" />
+      </span>
+      <span className="p2-bottom-label">{label}</span>
     </button>
   );
 };
