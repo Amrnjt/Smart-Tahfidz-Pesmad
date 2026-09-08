@@ -54,7 +54,7 @@ export const Snackbar: React.FC<SnackbarProps> = ({ snack, onDismiss, duration =
   const Icon = snack.type === 'success' ? CheckCircle2 : snack.type === 'error' ? AlertCircle : Info;
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-2rem)] max-w-lg pointer-events-none">
+    <div className="fixed ui-feedback-bottom left-1/2 -translate-x-1/2 z-[70] w-[calc(100%-2rem)] max-w-lg pointer-events-none">
       <div
         role={snack.type === 'error' ? 'alert' : 'status'}
         aria-live={snack.type === 'error' ? 'assertive' : 'polite'}

@@ -102,8 +102,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   const currentRoleStyle = roleBadgeConfig[normalizedRole] || roleBadgeConfig.Ustadz;
 
   return (
-    <header id="main-header" className="sticky top-0 z-40 bg-emerald-950 text-white border-b border-emerald-900 select-none">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 min-h-16 flex items-center justify-between gap-3">
+    <header id="main-header" className="ui-safe-top sticky top-0 z-40 bg-emerald-950 text-white border-b border-emerald-900 select-none">
+      <div className="max-w-7xl mx-auto ui-page-gutter min-h-16 flex items-center justify-between gap-3">
         {/* Brand / Logo Section */}
         <a
           ref={brandRipple.elementRef}

@@ -271,7 +271,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                   <HeartHandshake className="w-4 h-4" />
                 </div>
                 <div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
                     <h4 className="text-sm font-bold text-slate-900">Kelas Istimewa</h4>
                     <span className="text-xs font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-200">
                       Pendampingan
@@ -290,7 +290,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
             <h4 className="text-sm font-bold text-slate-900">Identitas & waktu</h4>
             <p className="text-xs text-slate-500">Pilih santri serta waktu pencatatan pembelajaran.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="ui-form-identity">
             <div>
               <label className="block text-sm font-semibold text-slate-800 mb-2">
                 Pilih Santri <span className="text-rose-500">*</span>

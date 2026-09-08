@@ -330,7 +330,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
   return (
     <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200/90 shadow-xs space-y-5 w-full min-w-0 max-w-full">
       {/* Header & Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4 w-full min-w-0">
+      <div className="flex flex-col justify-between gap-4 border-b border-slate-100 pb-4 w-full min-w-0">
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="p-2 rounded-xl bg-emerald-700 text-white flex-shrink-0 shadow-xs">
@@ -352,10 +352,10 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
         </div>
 
         {/* Filter Controls Row */}
-        <div className="flex flex-wrap items-center gap-2 max-w-full">
+        <div className="ui-chart-filters">
           {/* Kelas Filter */}
           {kelasList.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 max-w-[150px] sm:max-w-none">
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 min-w-0">
               <GraduationCap className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
               <select
                 value={selectedKelas}
@@ -363,7 +363,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                   setSelectedKelas(e.target.value);
                   setSelectedSantri('ALL');
                 }}
-                className="bg-transparent font-medium focus:outline-hidden cursor-pointer w-full truncate"
+                className="bg-transparent font-medium focus:outline-hidden cursor-pointer min-w-0 w-full truncate"
               >
                 <option value="ALL">Semua Kelas</option>
                 {kelasList.map((k) => (
@@ -374,12 +374,12 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
           )}
 
           {/* Santri Filter */}
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 max-w-[190px] sm:max-w-none">
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 min-w-0">
             <Filter className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
             <select
               value={selectedSantri}
               onChange={(e) => setSelectedSantri(e.target.value)}
-              className="bg-transparent font-semibold text-emerald-950 focus:outline-hidden cursor-pointer w-full truncate"
+              className="bg-transparent font-semibold text-emerald-950 focus:outline-hidden cursor-pointer min-w-0 w-full truncate"
             >
               <option value="ALL">Semua Santri ({santriFilteredByKelas.length})</option>
               {santriFilteredByKelas.map((s) => (
@@ -409,7 +409,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
             <button
               onClick={() => setVisualType('area')}
               title="Area Chart (Kurva Halus)"
-              className={`p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              className={`min-h-11 min-w-11 p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 visualType === 'area'
                   ? 'bg-white text-emerald-800 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
@@ -420,7 +420,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
             <button
               onClick={() => setVisualType('bar')}
               title="Bar Chart (Diagram Batang)"
-              className={`p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              className={`min-h-11 min-w-11 p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 visualType === 'bar'
                   ? 'bg-white text-emerald-800 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
@@ -431,7 +431,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
             <button
               onClick={() => setVisualType('line')}
               title="Line Chart (Garis Titik)"
-              className={`p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+              className={`min-h-11 min-w-11 p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                 visualType === 'line'
                   ? 'bg-white text-emerald-800 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
@@ -444,7 +444,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
       </div>
 
       {/* Metric Mode Sub-Tabs */}
-      <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 scrollbar-none">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-2 [&>button]:min-h-11 [&>button]:whitespace-normal">
         <button
           onClick={() => setMetricMode('ayat')}
           className={`px-3 sm:px-4 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${

@@ -113,7 +113,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
 
       <div
         ref={dialogRef}
-        className="relative z-10 w-full max-w-lg max-h-[88dvh] overflow-y-auto overscroll-contain bg-white rounded-t-2xl border-t border-slate-200 px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] animate-in slide-in-from-bottom-5 duration-200"
+        className="relative z-10 w-full max-w-lg max-h-[88dvh] overflow-y-auto overscroll-contain bg-white rounded-t-2xl border-t border-slate-200 ui-sheet-insets pt-2 animate-in slide-in-from-bottom-5 duration-200"
         role="dialog"
         aria-modal="true"
         aria-labelledby="setor-action-sheet-title"
@@ -216,7 +216,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-1.5 min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                     <span className="text-sm font-bold text-slate-900 truncate">
                       {act.title}
                     </span>
@@ -226,7 +226,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
                       {act.badge}
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 leading-4 truncate">
+                  <p className="text-xs text-slate-500 leading-4">
                     {act.subtitle}
                   </p>
                 </div>

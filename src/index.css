@@ -442,3 +442,74 @@ textarea {
   }
   .hero-animated-bg { animation: none !important; }
 }
+
+/* Responsive geometry: 640px fields, 768px navigation, 1024px dense data. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --page-gutter: 1rem;
+  --bottom-clearance: calc(6rem + var(--safe-bottom));
+  --dialog-gap: 0.75rem;
+}
+.ui-app-shell { min-height: 100dvh; padding-bottom: var(--bottom-clearance); }
+.ui-page-gutter {
+  padding-left: max(var(--page-gutter), var(--safe-left));
+  padding-right: max(var(--page-gutter), var(--safe-right));
+}
+.ui-safe-top { padding-top: var(--safe-top); }
+.ui-bottom-nav {
+  padding-left: max(0.375rem, var(--safe-left));
+  padding-right: max(0.375rem, var(--safe-right));
+  padding-bottom: calc(0.5rem + var(--safe-bottom));
+}
+.ui-feedback-bottom {
+  bottom: var(--bottom-clearance);
+  max-width: min(32rem, calc(100% - 2 * max(1rem, var(--safe-left), var(--safe-right))));
+}
+.ui-notification-position {
+  top: calc(1rem + var(--safe-top));
+  right: max(1rem, var(--safe-right));
+  width: min(24rem, calc(100% - max(1rem, var(--safe-left)) - max(1rem, var(--safe-right))));
+}
+.ui-sheet-insets {
+  padding-left: max(1rem, var(--safe-left));
+  padding-right: max(1rem, var(--safe-right));
+  padding-bottom: max(0.75rem, var(--safe-bottom));
+}
+.ui-dialog-overlay {
+  padding: calc(var(--dialog-gap) + var(--safe-top))
+    max(var(--dialog-gap), var(--safe-right))
+    calc(var(--dialog-gap) + var(--safe-bottom))
+    max(var(--dialog-gap), var(--safe-left));
+}
+.ui-dialog-panel, .ui-dialog-frame {
+  min-width: 0;
+  max-height: calc(100dvh - 2 * var(--dialog-gap) - var(--safe-top) - var(--safe-bottom));
+  overflow-wrap: anywhere;
+}
+.ui-form-identity { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.ui-form-identity > * { min-width: 0; }
+.ui-chart-filters { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.5rem; }
+.ui-chart-filters > * { min-width: 0; }
+.ui-chart-filters select { min-width: 0; width: 100%; min-height: 44px; }
+input, select, textarea { min-width: 0; max-width: 100%; }
+@media (max-width: 767px) {
+  /* Keep iOS from zooming the viewport when an editable field receives focus. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea { font-size: 1rem; }
+}
+@media (min-width: 640px) {
+  :root { --page-gutter: 1.5rem; --dialog-gap: 1rem; }
+  .ui-form-identity { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ui-form-identity > :first-child { grid-column: 1 / -1; }
+  .ui-chart-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 768px) {
+  :root { --bottom-clearance: calc(1.5rem + var(--safe-bottom)); }
+}
+@media (min-width: 1024px) {
+  .ui-form-identity { grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)); }
+  .ui-form-identity > :first-child { grid-column: auto; }
+  .ui-chart-filters { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; align-items: center; }
+}

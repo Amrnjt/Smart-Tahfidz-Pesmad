@@ -167,7 +167,7 @@ export default function App() {
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-emerald-200 selection:text-emerald-950 pb-28 sm:pb-32 md:pb-12 relative w-full max-w-full">
+    <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-emerald-200 selection:text-emerald-950 ui-app-shell relative w-full max-w-full">
 
       <a
         href="#main-content"
@@ -187,7 +187,7 @@ export default function App() {
       />
 
       {/* Main Container */}
-      <main id="main-content" tabIndex={-1} className="max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-5 pb-24 sm:pb-8 flex-1 space-y-5 relative z-10 min-w-0">
+      <main id="main-content" tabIndex={-1} className="max-w-7xl w-full mx-auto ui-page-gutter py-4 sm:py-5 flex-1 space-y-5 relative min-w-0">
         
         {/* If Not Logged In, Show Login View */}
         {!currentUser ? (

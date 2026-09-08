@@ -123,7 +123,7 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
             <h4 className="text-sm font-bold text-slate-900">Identitas & waktu</h4>
             <p className="text-xs text-slate-500">Pilih santri serta waktu setoran yang benar.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="ui-form-identity">
             <div className="md:col-span-1">
               <label className="block text-sm font-semibold text-slate-800 mb-2">
                 Pilih Santri <span className="text-rose-500">*</span>
@@ -209,7 +209,7 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
           </div>
 
           {/* Surah Info Card */}
-          <div className="p-3.5 bg-emerald-50/60 rounded-xl border border-emerald-200/60 flex items-center justify-between text-xs text-emerald-900">
+          <div className="p-3.5 bg-emerald-50/60 rounded-xl border border-emerald-200/60 flex flex-wrap items-center justify-between gap-2 text-xs text-emerald-900">
             <div className="flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-emerald-700" />
               <span>

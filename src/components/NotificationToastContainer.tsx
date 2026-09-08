@@ -21,7 +21,7 @@ export const NotificationToastContainer: React.FC<NotificationToastContainerProp
 
   return (
     <div
-      className="fixed top-4 right-4 z-[60] flex flex-col gap-3 max-w-sm w-[calc(100%-2rem)] sm:w-96"
+      className="ui-notification-position fixed z-[60] flex flex-col gap-3 max-w-sm w-[calc(100%-2rem)] sm:w-96"
       aria-live="polite"
       aria-relevant="additions"
     >
@@ -69,7 +69,7 @@ export const NotificationToastContainer: React.FC<NotificationToastContainerProp
                 {toast.data.type}
               </div>
 
-              <dl className="grid grid-cols-[64px,1fr] gap-x-3 gap-y-2 text-sm">
+              <dl className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 gap-y-2 text-sm">
                 <dt className="text-slate-500">Materi</dt>
                 <dd className="font-semibold text-slate-800 break-words">{toast.data.materi}</dd>
                 <dt className="text-slate-500">Nilai</dt>

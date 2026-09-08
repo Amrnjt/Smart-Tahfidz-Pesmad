@@ -727,13 +727,13 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   };
 
   return (
-    <div className="bg-white rounded-xl p-2.5 sm:p-4 border border-slate-200/90  flex flex-col md:max-h-[calc(100vh-140px)]">
+    <div className="bg-white rounded-xl p-2.5 sm:p-4 border border-slate-200/90  flex flex-col lg:max-h-[calc(100dvh-140px)]">
       {/* Header & Filter Controls */}
       <div className="pb-2 border-b border-slate-100 flex-shrink-0 space-y-2">
-        <div className="flex items-center justify-between gap-2">
-          <div className="min-w-0">
-            <h3 className="font-bold text-slate-900 text-base sm:text-lg flex items-center gap-2 min-w-0">
-              <span className="truncate">Riwayat Setoran Hafalan</span>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="min-w-0 w-full lg:w-auto">
+            <h3 className="font-bold text-slate-900 text-base sm:text-lg flex flex-wrap items-center gap-2 min-w-0">
+              <span className="break-words">Riwayat Setoran Hafalan</span>
               {isViewOnly && (
                 <span className="text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200 flex-shrink-0">View-Only</span>
               )}
@@ -741,7 +741,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           </div>
 
           {/* Export is intentionally secondary on mobile */}
-          <div className="sm:hidden flex items-center gap-1.5 flex-shrink-0">
+          <div className="lg:hidden flex items-center gap-1.5 flex-shrink-0">
             <button
               onClick={() => setShowReportModal(true)}
               className="min-h-11 px-3 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
@@ -762,7 +762,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         </div>
 
         {/* Mobile: search is primary, secondary filters collapse behind one control */}
-        <div className="sm:hidden space-y-2">
+        <div className="lg:hidden space-y-2">
           <div className="flex items-center gap-2">
             <div className="relative min-w-0 flex-1">
               <Search className="w-4 h-4 absolute left-2.5 top-2 text-slate-400" />
@@ -1008,7 +1008,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         </div>
 
         {/* Desktop/tablet controls remain directly available */}
-        <div className="hidden sm:flex sm:flex-wrap sm:items-center sm:justify-between gap-2">
+        <div className="hidden lg:flex sm:flex-wrap sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowReportModal(true)}
@@ -1077,7 +1077,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       </div>
 
       {/* Date Filter Toolbar & Mode Switcher */}
-      <div className="hidden sm:block flex-shrink-0 pt-2 pb-1.5 space-y-1.5 border-b border-slate-100">
+      <div className="hidden lg:block flex-shrink-0 pt-2 pb-1.5 space-y-1.5 border-b border-slate-100">
         <div className="flex flex-wrap items-center justify-between gap-2">
           {/* Mode Selector Tabs */}
           <div className="inline-flex items-center p-0.5 bg-slate-100 rounded-lg text-xs font-bold text-slate-600 max-w-full overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
@@ -1123,7 +1123,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
           {/* Quick indicator of current active period */}
           <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-            <span className="hidden sm:inline">Periode Aktif:</span>
+            <span className="hidden lg:inline">Periode Aktif:</span>
             <span className="font-bold text-slate-800 px-2.5 py-1 bg-slate-100 rounded-lg border border-slate-200">
               {activePeriodLabel}
             </span>
@@ -1211,7 +1211,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
               {/* Quick Presets */}
               <div className="flex flex-wrap items-center gap-1.5">
-                <span className="text-xs font-bold text-slate-500 mr-1 hidden sm:inline">Preset Cepat:</span>
+                <span className="text-xs font-bold text-slate-500 mr-1 hidden lg:inline">Preset Cepat:</span>
                 <button
                   onClick={() => applyDatePreset('hari_ini')}
                   className={`px-2 py-0.5 rounded-md text-xs font-bold transition cursor-pointer border ${
@@ -1272,9 +1272,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       </div>
 
       {/* Kategori Setoran Filter Chips */}
-      <div className="hidden sm:block flex-shrink-0 pt-1.5 pb-1.5 overflow-x-auto" style={{ scrollbarWidth: 'thin' }}>
+      <div className="hidden lg:block flex-shrink-0 pt-1.5 pb-1.5 overflow-x-auto" style={{ scrollbarWidth: 'thin' }}>
         <div className="flex items-center gap-1.5 min-w-min pb-0.5">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1 hidden sm:inline flex-shrink-0">
+          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mr-1 hidden lg:inline flex-shrink-0">
             Kategori:
           </span>
           {KATEGORI_OPTIONS.map((cat) => {
@@ -1308,7 +1308,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
       {/* Desktop filter summary — avoid repeating each state as another chip row */}
       {isFilterActive && (
-        <div className="hidden sm:flex items-center justify-between gap-2 px-2.5 py-1.5 bg-emerald-50/80 border border-emerald-200 rounded-lg text-xs text-emerald-950 mb-2 flex-shrink-0">
+        <div className="hidden lg:flex items-center justify-between gap-2 px-2.5 py-1.5 bg-emerald-50/80 border border-emerald-200 rounded-lg text-xs text-emerald-950 mb-2 flex-shrink-0">
           <span className="font-semibold flex items-center gap-1.5 min-w-0">
             <SlidersHorizontal className="w-3.5 h-3.5 flex-shrink-0" />
             <span className="truncate">
@@ -1331,7 +1331,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       {!isViewOnly && selectedIds.size > 0 && (
         <>
           {/* Mobile: compact sticky selection toolbar */}
-          <div className="sm:hidden sticky top-0 z-20 -mx-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded-lg flex items-center gap-1.5 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1">
+          <div className="lg:hidden sticky top-0 z-20 -mx-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded-lg flex items-center gap-1.5 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1">
             <div className="min-w-0 flex-1 flex items-center gap-1.5">
               <span className="w-5 h-5 rounded-md bg-slate-900 text-white inline-flex items-center justify-center text-xs font-bold flex-shrink-0">
                 {selectedIds.size}
@@ -1369,7 +1369,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           </div>
 
           {/* Desktop: retain full batch action bar */}
-          <div className="hidden sm:flex bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 items-center justify-between gap-2 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1">
+          <div className="hidden lg:flex bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 items-center justify-between gap-2 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1">
             <div className="flex items-center gap-2 text-rose-900 font-bold">
               <span className="bg-rose-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-extrabold">
                 {selectedIds.size}
@@ -1400,15 +1400,15 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           <h2 className="ui-section-title">Arsip setoran</h2>
           <p className="ui-secondary mt-0.5">{displayedItems.length} rekaman · {activePeriodLabel}</p>
         </div>
-        <span className="ui-meta hidden sm:inline">Klik baris untuk melihat detail</span>
+        <span className="ui-meta hidden lg:inline">Klik baris untuk melihat detail</span>
       </div>
 
       {/* Scrollable Content Area - responsive height */}
-      <div className="flex-1 md:overflow-y-auto min-h-0 rounded-2xl border border-slate-200 bg-white overflow-hidden">
+      <div className="flex-1 lg:overflow-y-auto min-h-0 rounded-2xl border border-slate-200 bg-white overflow-hidden">
         {!isViewOnly && displayedItems.length > 0 && (
           <>
             {/* Mobile: one-line selection trigger */}
-            <div className="sm:hidden sticky top-0 z-10 bg-white px-4 py-2.5 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
+            <div className="lg:hidden sticky top-0 z-10 bg-white px-4 py-2.5 border-b border-slate-200 flex items-center justify-between text-xs text-slate-600">
               <label className="flex items-center gap-1.5 cursor-pointer font-semibold select-none">
                 <input
                   type="checkbox"
@@ -1424,7 +1424,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
             </div>
 
             {/* Desktop */}
-            <div className="hidden sm:flex sticky top-0 z-10 bg-slate-50 px-4 py-2 border-b border-slate-200 items-center justify-between text-xs text-slate-600">
+            <div className="hidden lg:flex sticky top-0 z-10 bg-slate-50 px-4 py-2 border-b border-slate-200 items-center justify-between text-xs text-slate-600">
               <div className="flex items-center gap-2">
                 <label className="flex items-center gap-1.5 cursor-pointer font-semibold select-none hover:text-slate-900">
                   <input
@@ -1451,7 +1451,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         {displayedItems.length === 0 ? (
           <>
             {/* Mobile compact empty state */}
-            <div className="sm:hidden flex flex-col items-center justify-center py-10 px-5 text-center">
+            <div className="lg:hidden flex flex-col items-center justify-center py-10 px-5 text-center">
               <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center mb-2.5">
                 <Inbox className="w-4 h-4 text-slate-400" />
               </div>
@@ -1475,7 +1475,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
             </div>
 
             {/* Desktop empty state */}
-            <div className="hidden sm:flex flex-col items-center justify-center py-8 px-4 text-center text-slate-400">
+            <div className="hidden lg:flex flex-col items-center justify-center py-8 px-4 text-center text-slate-400">
               <Inbox className="w-10 h-10 mb-2 text-slate-300" />
               <p className="text-sm font-semibold text-slate-600">Tidak ada data setoran yang cocok</p>
               <p className="text-xs text-slate-400 mt-1 max-w-sm">
@@ -1520,7 +1520,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               return (
                 <div key={item.id} className={`transition-colors ${isSelected ? 'bg-emerald-50/40' : 'bg-white hover:bg-slate-50/70'}`}>
                   {/* MOBILE VIEW — compact editorial list */}
-                  <div className="sm:hidden px-4 py-3.5">
+                  <div className="lg:hidden px-4 py-3.5">
                     <div className="flex items-start gap-2.5">
                       {!isViewOnly && (
                         <label className="mt-0.5 flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center text-slate-500">
@@ -1542,10 +1542,10 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                         className="min-w-0 flex-1 text-left"
                       >
                         {/* Primary line: identity + score */}
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1">
+                        <div className="flex flex-col items-start gap-2">
+                          <div className="min-w-0 w-full">
                             <div className="flex items-baseline gap-1.5 min-w-0">
-                              <h4 className="truncate text-sm font-bold leading-4.5 text-slate-900">
+                              <h4 className="break-words text-sm font-bold leading-5 text-slate-900">
                                 {item.namaSantri}
                               </h4>
                               {kelasGroup && (
@@ -1559,7 +1559,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                             </div>
 
                             {/* Material gets its own readable line */}
-                            <p className="mt-1.5 truncate text-sm font-medium leading-5 text-slate-700">
+                            <p className="mt-1.5 break-words text-sm font-medium leading-5 text-slate-700">
                               {item.materi}
                             </p>
                           </div>
@@ -1575,7 +1575,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                         </div>
 
                         {/* Quiet metadata line — color is functional, not decorative */}
-                        <div className="mt-2 flex items-center gap-1.5 min-w-0 text-xs leading-4 text-slate-500">
+                        <div className="mt-2 flex flex-wrap items-center gap-1.5 min-w-0 text-xs leading-4 text-slate-500">
                           <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${mobileTypeMeta.dot}`} />
                           <span className={`font-semibold flex-shrink-0 ${mobileTypeMeta.text}`}>
                             {mobileTypeMeta.label}
@@ -1612,7 +1612,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                     {isExpanded && (
                       <div id={`history-mobile-detail-${item.id}`} className="mt-3 ml-6 rounded-r-xl border-l-2 border-slate-200 bg-slate-50/70 pl-3 pr-3 py-3">
-                        <div className="grid grid-cols-[72px,1fr] gap-x-3 gap-y-2 text-xs leading-5">
+                        <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-x-3 gap-y-2 text-xs leading-5">
                           <span className="text-slate-400">ID Santri</span>
                           <span className="font-mono text-slate-600">{item.idSantri}</span>
 
@@ -1680,7 +1680,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                   {/* DESKTOP VIEW ROW (hidden sm:flex) */}
                   <div
-                    className="hidden sm:flex items-center gap-2.5 px-4 py-3 cursor-pointer"
+                    className="hidden lg:flex items-center gap-2.5 px-4 py-3 cursor-pointer"
                     onClick={() => toggleRow(item.id)}
                   >
                     {/* Row Select Checkbox (For Ustadz/Admin) */}
@@ -1771,7 +1771,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                   {/* Expanded Detail - accordion */}
                   {isExpanded && (
-                    <div id={`history-desktop-detail-${item.id}`} className="px-2.5 sm:px-4 pb-3 pt-2 bg-slate-50/70 border-t border-slate-200/80 rounded-b-lg space-y-2 text-xs">
+                    <div id={`history-desktop-detail-${item.id}`} className="hidden lg:block px-2.5 sm:px-4 pb-3 pt-2 bg-slate-50/70 border-t border-slate-200/80 rounded-b-lg space-y-2 text-xs">
                       {/* Grid cards for detail */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {/* Detail Identitas & Materi Card */}
@@ -1953,7 +1953,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           {kategoriFilter !== 'ALL' && <> &bull; Kategori <b className="text-slate-700">{kategoriFilter}</b></>})
           {' '}dari total {combinedItems.length} data rekaman
         </span>
-        <span className="text-xs text-emerald-800 font-semibold hidden sm:inline">Data Mutaba'ah Terverifikasi</span>
+        <span className="text-xs text-emerald-800 font-semibold hidden lg:inline">Data Mutaba'ah Terverifikasi</span>
       </div>
 
       {/* Edit Record Modal */}

@@ -620,7 +620,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
             </div>
           </div>
 
-          <div className="sm:hidden space-y-3">
+          <div className="lg:hidden space-y-3">
             {filteredUsers.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
                 Tidak ada akun yang sesuai pencarian.
@@ -648,7 +648,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                       </span>
                     </div>
 
-                    <dl className="grid grid-cols-[84px,1fr] gap-x-3 gap-y-2 text-xs">
+                    <dl className="grid grid-cols-[84px_minmax(0,1fr)] gap-x-3 gap-y-2 text-xs">
                       <dt className="text-slate-500">Username</dt>
                       <dd className="font-mono text-slate-700 break-all">{isSuperadmin ? 'Dirahasiakan' : u.username}</dd>
                       <dt className="text-slate-500">Password</dt>
@@ -682,7 +682,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
             )}
           </div>
 
-          <div className="hidden sm:block overflow-x-auto border border-slate-200 rounded-2xl bg-white">
+          <div className="hidden lg:block overflow-x-auto border border-slate-200 rounded-2xl bg-white">
             <table className="w-full text-left text-xs">
               <caption className="sr-only">Daftar akun pengguna dan hak akses</caption>
               <thead className="bg-slate-50 text-slate-600 font-semibold border-b border-slate-200">

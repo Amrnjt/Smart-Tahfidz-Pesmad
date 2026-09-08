@@ -215,13 +215,13 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
   return (
     <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-200/80 shadow-xs space-y-4 sm:space-y-5 w-full min-w-0 max-w-full">
       {/* Header & Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 border-b border-slate-100 pb-3.5 sm:pb-4 w-full min-w-0">
+      <div className="flex flex-col justify-between gap-3 sm:gap-4 border-b border-slate-100 pb-3.5 sm:pb-4 w-full min-w-0">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-lg bg-emerald-100 text-emerald-800 flex-shrink-0">
               <TrendingUp className="w-4 h-4" />
             </span>
-            <h3 className="font-bold text-slate-800 text-sm sm:text-base truncate">
+            <h3 className="font-bold text-slate-800 text-sm sm:text-base">
               Grafik Tren Perkembangan Setoran
             </h3>
           </div>
@@ -231,15 +231,15 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
         </div>
 
         {/* Filter Controls with soft glass look */}
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 max-w-full">
+        <div className="ui-chart-filters">
           {/* Kelas Filter */}
           {kelasList.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 max-w-[150px] sm:max-w-none">
+            <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 min-w-0">
               <GraduationCap className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
               <select
                 value={selectedKelasFilter}
                 onChange={(e) => { setSelectedKelasFilter(e.target.value); setSelectedSantriFilter('ALL'); }}
-                className="bg-transparent font-medium focus:outline-hidden cursor-pointer w-full truncate"
+                className="bg-transparent font-medium focus:outline-hidden cursor-pointer min-w-0 w-full truncate"
               >
                 <option value="ALL">Semua Kelas</option>
                 {kelasList.map((k) => (
@@ -250,12 +250,12 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
           )}
 
           {/* Santri Filter */}
-          <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 max-w-[170px] sm:max-w-none">
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 min-w-0">
             <Filter className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
             <select
               value={selectedSantriFilter}
               onChange={(e) => setSelectedSantriFilter(e.target.value)}
-              className="bg-transparent font-medium focus:outline-hidden cursor-pointer w-full truncate"
+              className="bg-transparent font-medium focus:outline-hidden cursor-pointer min-w-0 w-full truncate"
             >
               <option value="ALL">Semua Santri ({kelasFilteredSantri.length})</option>
               {kelasFilteredSantri.map((s) => (
@@ -285,7 +285,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
             <button
               onClick={() => setChartType('bar')}
               title="Grafik Batang (Bar Chart)"
-              className={`p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer press-feedback ${
+              className={`min-h-11 min-w-11 p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer press-feedback ${
                 chartType === 'bar'
                   ? 'bg-white text-emerald-800 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
@@ -296,7 +296,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
             <button
               onClick={() => setChartType('area')}
               title="Grafik Area / Garis (Area Chart)"
-              className={`p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer press-feedback ${
+              className={`min-h-11 min-w-11 p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer press-feedback ${
                 chartType === 'area'
                   ? 'bg-white text-emerald-800 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
@@ -313,7 +313,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
         
         {/* Monthly Trend Chart (2 cols on large screen, 1 col on mobile) */}
         <div className="lg:col-span-2 space-y-3 min-w-0 w-full max-w-full">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 min-w-0">
+          <div className="flex flex-col justify-between gap-2 min-w-0">
             <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 min-w-0">
               <span className="truncate">Aktivitas Setoran Bulanan</span>
               <span className="text-xs font-normal text-slate-400 truncate">

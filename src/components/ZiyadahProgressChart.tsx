@@ -262,7 +262,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
               <TrendingUp className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="font-extrabold text-slate-900 text-base sm:text-lg flex items-center gap-1.5">
+              <h3 className="font-extrabold text-slate-900 text-base sm:text-lg flex flex-wrap items-center gap-1.5">
                 <span>Grafik Progres Hafalan Ziyadah</span>
                 <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
                   Per Pekan
@@ -278,7 +278,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
         </div>
 
         {/* View & Filter Switches */}
-        <div className="flex items-center gap-1.5 flex-wrap self-start sm:self-auto">
+        <div className="flex items-center gap-2 flex-wrap w-full sm:w-auto">
           {/* Time Range Selector */}
           <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
             <button

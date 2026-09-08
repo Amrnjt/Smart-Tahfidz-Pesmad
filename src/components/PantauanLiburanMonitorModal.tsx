@@ -82,7 +82,7 @@ export const PantauanLiburanMonitorModal: React.FC<PantauanLiburanMonitorModalPr
 
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5">
+    <div className="ui-dialog-overlay">
       <div className="fixed inset-0 bg-slate-900/60" onClick={onClose} aria-hidden="true" />
       <div
         ref={dialogRef}

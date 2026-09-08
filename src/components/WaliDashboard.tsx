@@ -256,12 +256,12 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
               </div>
               <p className="mt-2 text-base font-bold leading-snug text-slate-950 sm:text-lg">{latestActivity.material}</p>
 
-              <div className="mt-5 grid grid-cols-[1fr_auto] gap-4 border-t border-slate-100 pt-4">
+              <div className="mt-5 grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4 border-t border-slate-100 pt-4">
                 <div>
                   <p className="ui-meta font-semibold">Penilaian terakhir</p>
                   <p className={`mt-1 text-lg font-bold ${scoreTone[latestActivity.nilai]}`}>{latestActivity.nilai}</p>
                 </div>
-                <div className="text-right">
+                <div className="min-w-0 sm:text-right">
                   <p className="ui-meta font-semibold">Dicatat oleh</p>
                   <p className="mt-1 max-w-[11rem] truncate text-sm font-semibold text-slate-700">{latestActivity.inputBy}</p>
                 </div>

@@ -40,7 +40,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     ];
 
     return (
-      <nav aria-label="Navigasi bawah" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 px-1.5 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
+      <nav aria-label="Navigasi bawah" className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 ui-bottom-nav pt-1.5">
         <div className="flex justify-around items-center max-w-md mx-auto">
           {nonUstadzItems.map((item) => {
             const Icon = item.icon;
@@ -71,7 +71,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   return (
     <>
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 px-1 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 ui-bottom-nav pt-1.5"
         aria-label="Navigasi Bawah"
       >
         <div className="max-w-md mx-auto grid grid-cols-5 items-center">

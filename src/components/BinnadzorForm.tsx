@@ -183,7 +183,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
             <h4 className="text-sm font-bold text-slate-900">Identitas & waktu</h4>
             <p className="text-xs text-slate-500">Pilih santri serta waktu setoran yang benar.</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="ui-form-identity">
             <div>
               <label className="block text-sm font-semibold text-slate-800 mb-2">
                 Pilih Santri <span className="text-rose-500">*</span>

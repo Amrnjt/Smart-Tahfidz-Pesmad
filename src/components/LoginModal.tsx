@@ -281,7 +281,7 @@ const MobileLogin: React.FC<FormState> = ({
   showPassword, setShowPassword, rememberMe, setRememberMe,
   errorMsg, isLoading, onSubmit, onForgotPassword,
 }) => (
-  <div className="-mx-3 -my-5 min-h-[calc(100vh-3.5rem)] flex flex-col bg-emerald-950 relative overflow-hidden">
+  <div className="mx-auto w-full max-w-xl min-h-[calc(100dvh-6rem)] rounded-2xl flex flex-col bg-emerald-950 relative overflow-hidden">
     {/* ===== Hero ===== */}
     <div className="relative z-10 flex flex-col items-center text-center px-6 pt-12 pb-9 text-white">
       <div className="relative mb-5">
