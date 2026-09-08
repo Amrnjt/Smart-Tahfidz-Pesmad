@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 import type { ActiveTab, User } from '../types';
 
 const VALID_TABS: ActiveTab[] = [
@@ -14,6 +15,14 @@ const VALID_TABS: ActiveTab[] = [
 ];
 
 const VIEW_ONLY_TABS = new Set<ActiveTab>(['dashboard', 'riwayat', 'mushaf']);
+
+type NativeViewTransition = {
+  finished: Promise<void>;
+};
+
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (updateCallback: () => void | Promise<void>) => NativeViewTransition;
+};
 
 function readUrlTab(): ActiveTab {
   if (typeof window === 'undefined') return 'dashboard';
@@ -38,26 +47,61 @@ function urlForTab(tab: ActiveTab): string {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
+function commitWithViewTransition(update: () => void): void {
+  if (typeof document === 'undefined' || typeof window === 'undefined') {
+    update();
+    return;
+  }
+
+  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+  const transitionDocument = document as ViewTransitionDocument;
+  if (reduceMotion || !transitionDocument.startViewTransition) {
+    update();
+    return;
+  }
+
+  let updateRan = false;
+  try {
+    transitionDocument.startViewTransition(() => {
+      updateRan = true;
+      flushSync(update);
+    });
+  } catch {
+    if (!updateRan) update();
+  }
+}
+
 export function useActiveTabNavigation(user: User | null): [ActiveTab, (tab: ActiveTab) => void] {
   const [activeTab, setActiveTabState] = useState<ActiveTab>(() => sanitizeTab(user, readUrlTab()));
 
   const setActiveTab = useCallback((requestedTab: ActiveTab) => {
     const nextTab = sanitizeTab(user, requestedTab);
-    setActiveTabState(nextTab);
 
-    if (typeof window === 'undefined') return;
-    const currentTab = new URLSearchParams(window.location.search).get('tab');
-    if (currentTab === nextTab) return;
-    window.history.pushState(null, '', urlForTab(nextTab));
-  }, [user]);
+    if (typeof window !== 'undefined') {
+      const currentTab = new URLSearchParams(window.location.search).get('tab');
+      if (currentTab !== nextTab) {
+        window.history.pushState(null, '', urlForTab(nextTab));
+      }
+    }
+
+    if (nextTab === activeTab) return;
+    commitWithViewTransition(() => setActiveTabState(nextTab));
+  }, [activeTab, user]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    let isInitialSync = true;
     const syncFromLocation = () => {
       const requestedTab = readUrlTab();
       const nextTab = sanitizeTab(user, requestedTab);
-      setActiveTabState(nextTab);
+
+      if (isInitialSync) {
+        setActiveTabState(nextTab);
+        isInitialSync = false;
+      } else {
+        commitWithViewTransition(() => setActiveTabState(nextTab));
+      }
 
       const currentTab = new URLSearchParams(window.location.search).get('tab');
       if (currentTab !== nextTab) {
