@@ -14,6 +14,7 @@ import {
   AlertTriangle,
   ArrowRight,
   BookOpen,
+  BookPlus,
   BookOpenCheck,
   CalendarCheck,
   ChartBar as BarChart3,
@@ -67,7 +68,7 @@ const categoryStyles: Record<ActivityCategory, {
   Ziyadah: {
     dot: 'bg-emerald-600',
     text: 'text-emerald-800',
-    icon: BookOpen,
+    icon: BookPlus,
     onDarkText: 'text-emerald-100',
     onDarkSurface: 'bg-emerald-900/60'
   },

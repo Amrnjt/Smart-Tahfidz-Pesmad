@@ -12,6 +12,7 @@ import {
 import {
   ArrowRight,
   BookOpen,
+  BookPlus,
   BookOpenCheck,
   GraduationCap,
   MessageSquareText,
@@ -51,7 +52,7 @@ const categoryMeta: Record<ActivityCategory, {
   surface: string;
   icon: React.ComponentType<{ className?: string }>;
 }> = {
-  Ziyadah: { text: 'text-emerald-800', surface: 'bg-emerald-50', icon: BookOpen },
+  Ziyadah: { text: 'text-emerald-800', surface: 'bg-emerald-50', icon: BookPlus },
   "Muroja'ah": { text: 'text-teal-800', surface: 'bg-teal-50', icon: RotateCw },
   Binnadzor: { text: 'text-indigo-800', surface: 'bg-indigo-50', icon: BookOpenCheck },
   Pembelajaran: { text: 'text-amber-800', surface: 'bg-amber-50', icon: GraduationCap }

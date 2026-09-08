@@ -21,6 +21,7 @@ import {
   Download,
   FileText,
   CircleCheck as CheckCircle,
+  Check,
   CircleAlert as AlertCircle,
   Loader as Loader2,
   Calendar,
@@ -431,7 +432,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
                     }`}
                   >
                     {options[item.key] && (
-                      <CheckCircle className="w-3.5 h-3.5 text-white" />
+                      <Check className="w-3.5 h-3.5 text-white" aria-hidden="true" />
                     )}
                   </div>
 

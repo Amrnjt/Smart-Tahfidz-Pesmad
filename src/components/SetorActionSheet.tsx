@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ActiveTab, Santri } from '../types';
 import { storageService } from '../services/storageService';
 import {
-  CirclePlus as PlusCircle,
+  BookPlus,
   RotateCw,
   BookOpenCheck,
   BookOpen,
@@ -71,7 +71,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
       subtitle: 'Hafalan baru',
       badge: 'Bil-Ghoib',
       badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      icon: PlusCircle,
+      icon: BookPlus,
       iconBg: 'bg-emerald-600 text-white'
     },
     {

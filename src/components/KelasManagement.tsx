@@ -5,7 +5,7 @@ import {
   GraduationCap,
   Plus,
   Trash2,
-  CreditCard as Edit3,
+  SquarePen,
   Save,
   X,
   CircleCheck as CheckCircle2,
@@ -426,7 +426,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                     onClick={() => handleOpenEdit(kls)}
                     className="min-h-11 flex-1 px-3 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    <Edit3 className="w-3.5 h-3.5" />
+                    <SquarePen className="w-3.5 h-3.5" />
                     <span>Edit / Tambah Santri</span>
                   </button>
                   <button
@@ -668,7 +668,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
           <div className="ui-dialog-panel max-w-lg">
             <div className="ui-dialog-header sticky top-0 z-10">
               <h4 className="font-bold text-slate-800 text-base flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-emerald-700" />
+                <SquarePen className="w-5 h-5 text-emerald-700" />
                 Edit Kelas: {kelasToEdit.namaKelas}
               </h4>
               <button onClick={() => setKelasToEdit(null)} aria-label="Tutup dialog edit kelas" className="ui-dialog-close cursor-pointer">

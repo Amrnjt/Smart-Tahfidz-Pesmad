@@ -6,6 +6,7 @@ import {
   Search,
   Trash2,
   BookOpen,
+  BookPlus,
   RotateCw,
   BookOpenCheck,
   Download,
@@ -26,9 +27,7 @@ import {
   RotateCcw,
   SlidersHorizontal,
   ArrowRight,
-  AlertTriangle,
-  CheckSquare,
-  Square
+  AlertTriangle
 } from 'lucide-react';
 import { addDaysToDateInput, formatTanggalLengkap, formatTanggalRingkas, getTodayInputFormat, parseDateSafe } from '../utils/dateFormatter';
 import { UnduhLaporanModal } from './UnduhLaporanModal';
@@ -161,7 +160,7 @@ const KATEGORI_OPTIONS: KategoriOption[] = [
     id: 'Ziyadah',
     label: 'Ziyadah',
     sublabel: 'Hafalan Baru',
-    icon: BookOpen,
+    icon: BookPlus,
     badgeBg: 'bg-emerald-100',
     badgeText: 'text-emerald-800',
     activeColor: 'bg-emerald-800 text-white  border-emerald-800',

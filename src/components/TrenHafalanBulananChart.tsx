@@ -31,7 +31,8 @@ import {
   Layers,
   ChevronDown,
   Trophy,
-  Medal
+  ListOrdered,
+  Gauge
 } from 'lucide-react';
 import { Santri, ZiyadahRecord, MurojaahRecord, Kelas } from '../types';
 import { AnimatedCounter } from './AnimatedCounter';
@@ -477,7 +478,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
               : 'bg-slate-100 hover:bg-slate-200/80 text-slate-600'
           }`}
         >
-          <Award className="w-3.5 h-3.5" />
+          <Gauge className="w-3.5 h-3.5" />
           <span>Tingkat Kelancaran (%)</span>
         </button>
 
@@ -622,7 +623,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                     : 'hover:text-slate-900'
                 }`}
               >
-                <Medal className="w-3.5 h-3.5 text-amber-500" />
+                <ListOrdered className="w-3.5 h-3.5 text-slate-600" />
                 <span>Daftar Peringkat</span>
               </button>
               <button

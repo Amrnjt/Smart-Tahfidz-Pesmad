@@ -137,7 +137,7 @@ export const PantauanLiburanMonitorModal: React.FC<PantauanLiburanMonitorModalPr
               type="button"
               role="switch"
               aria-checked={appConfig.programLiburanActive}
-              aria-label="Aktifkan Program Pantauan Liburan"
+              aria-label={appConfig.programLiburanActive ? 'Nonaktifkan Program Pantauan Liburan' : 'Aktifkan Program Pantauan Liburan'}
               aria-busy={isToggling}
               onClick={handleToggleProgram}
               disabled={isToggling}

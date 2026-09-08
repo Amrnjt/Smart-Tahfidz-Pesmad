@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, Kelas } from '../types';
 import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
-import { CirclePlus as PlusCircle, BookOpen, Save, RotateCcw, Calendar, Clock } from 'lucide-react';
+import { BookPlus, BookOpen, Save, RotateCcw, Calendar, Clock } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
 
@@ -95,7 +95,7 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
         {/* Form Header */}
         <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
           <div className="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center flex-shrink-0">
-            <PlusCircle className="w-6 h-6" />
+            <BookPlus className="w-6 h-6" />
           </div>
           <div>
             <h3 className="ui-section-title text-slate-900">

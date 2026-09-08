@@ -19,7 +19,7 @@ import { KelasManagement } from './components/KelasManagement';
 import { NotificationToastContainer } from './components/NotificationToastContainer';
 import { Snackbar, SnackbarState, NotifyFn } from './components/Snackbar';
 import { useSetoranNotifications } from './hooks/useSetoranNotifications';
-import { LayoutDashboard, CirclePlus as PlusCircle, History, BookOpen, Users, Cloud, GraduationCap } from 'lucide-react';
+import { LayoutDashboard, CirclePlus as PlusCircle, History, BookOpen, Users, Cloud, School } from 'lucide-react';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -256,7 +256,7 @@ export default function App() {
                       : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
                   }`}
                 >
-                  <GraduationCap className="w-4 h-4 flex-shrink-0" />
+                  <School className="w-4 h-4 flex-shrink-0" />
                   <span className="truncate">Kelas</span>
                 </button>
               )}
