@@ -21,7 +21,7 @@ old_guard = """    count = text.count(old)
     return text.replace(old, new, 1)
 """
 new_guard = """    count = text.count(old)
-    if label == 'History current month WIB' and count == 2:
+    if label in {'History current month WIB', 'fadeInUp stacking context cleanup'} and count == 2:
         return text.replace(old, new)
     if count != 1:
         raise RuntimeError(f'{label}: expected exactly 1 match, found {count}')
