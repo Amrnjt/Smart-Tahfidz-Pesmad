@@ -1,0 +1,19 @@
+{
+  "name": "Pesmad Smart Tahfidz",
+  "short_name": "Smart Tahfidz",
+  "description": "Aplikasi Pantauan Hafalan Santri Pesantren Madrasah Darul Fikri - MTsN 3 Bojonegoro",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#065f46",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "/pesmad-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
