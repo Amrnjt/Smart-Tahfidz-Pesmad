@@ -149,8 +149,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-5">
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-6">
         {/* Form Header */}
         <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
           <div className="w-11 h-11 rounded-2xl bg-indigo-100 text-indigo-800 flex items-center justify-center flex-shrink-0">
@@ -158,8 +158,8 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg sm:text-xl font-bold text-slate-800">Setoran Binnadzor</h3>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Melihat Mushaf</span>
+              <h3 className="ui-section-title text-slate-900">Setoran Binnadzor</h3>
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">Melihat Mushaf</span>
             </div>
             <p className="text-xs sm:text-sm text-slate-500">Bacaan tartil dengan penilaian tajwid, makhraj, fashohah, dan kelancaran.</p>
           </div>
@@ -172,23 +172,27 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
             <BookOpen className="w-4 h-4 text-indigo-600 flex-shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-indigo-950">Tentang Setoran Binnadzor:</p>
-              <p className="text-indigo-800/90 text-[11px] mt-0.5 leading-relaxed">
+              <p className="text-indigo-800/90 text-xs mt-0.5 leading-relaxed">
                 Binnadzor adalah setoran santri dengan membaca langsung mushaf al-Qur'an (bukan hafalan bil-ghoib). Fokus penilaian terletak pada kelancaran, ketepatan tajwid, waqaf/ibtida', serta makhraj huruf.
               </p>
             </div>
           </div>
 
           {/* Santri, Tanggal & Waktu */}
+          <div className="space-y-1">
+            <h4 className="text-sm font-bold text-slate-900">Identitas & waktu</h4>
+            <p className="text-xs text-slate-500">Pilih santri serta waktu setoran yang benar.</p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+              <label className="block text-sm font-semibold text-slate-800 mb-2">
                 Pilih Santri <span className="text-rose-500">*</span>
               </label>
               <select
                 value={idSantri}
                 onChange={(e) => setIdSantri(e.target.value)}
                 required
-                className="w-full py-3 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">-- Pilih Nama Santri --</option>
                 {mySantriList.map((s) => (
@@ -198,14 +202,14 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                 ))}
               </select>
               {myKelas && (
-                <p className="text-[11px] text-indigo-700 font-semibold mt-1">
+                <p className="text-xs text-indigo-700 font-semibold mt-1">
                   Kelas: {myKelas.namaKelas} • {mySantriList.length} santri
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex items-center gap-1">
+              <label className="block text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 text-indigo-700" />
                 <span>Tanggal Setoran <span className="text-rose-500">*</span></span>
               </label>
@@ -214,15 +218,15 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                 value={tanggalSetor}
                 onChange={(e) => setTanggalSetor(e.target.value)}
                 required
-                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
-              <span className="text-[11px] text-indigo-700 font-semibold mt-1 block truncate">
+              <span className="text-xs text-indigo-700 font-semibold mt-1 block truncate">
                 {formatTanggalLengkap(tanggalSetor)}
               </span>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex items-center gap-1">
+              <label className="block text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-indigo-700" />
                 <span>Waktu / Jam <span className="text-rose-500">*</span></span>
               </label>
@@ -231,24 +235,28 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                 value={waktuSetor}
                 onChange={(e) => setWaktuSetor(e.target.value)}
                 required
-                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
-              <span className="text-[11px] text-slate-500 mt-1 block">WIB (Waktu Indonesia Barat)</span>
+              <span className="text-xs text-slate-500 mt-1 block">WIB (Waktu Indonesia Barat)</span>
             </div>
           </div>
 
           {/* 3. Pilihan Mode Materi Binnadzor */}
+          <div className="space-y-1">
+            <h4 className="text-sm font-bold text-slate-900">Materi bacaan</h4>
+            <p className="text-xs text-slate-500">Pilih cara pencatatan materi sesuai setoran santri.</p>
+          </div>
           <div className="space-y-3">
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <label className="block text-sm font-semibold text-slate-800">
               Metode Input Materi Binnadzor <span className="text-rose-500">*</span>
             </label>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => setModeInput('surah')}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border cursor-pointer ${
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors min-h-11 flex items-center justify-center gap-2 border cursor-pointer ${
                   modeInput === 'surah'
-                    ? 'bg-indigo-700 text-white border-indigo-800 shadow-xs'
+                    ? 'bg-indigo-700 text-white border-indigo-800'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`}
               >
@@ -258,9 +266,9 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               <button
                 type="button"
                 onClick={() => setModeInput('halaman')}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border cursor-pointer ${
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors min-h-11 flex items-center justify-center gap-2 border cursor-pointer ${
                   modeInput === 'halaman'
-                    ? 'bg-indigo-700 text-white border-indigo-800 shadow-xs'
+                    ? 'bg-indigo-700 text-white border-indigo-800'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`}
               >
@@ -270,9 +278,9 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               <button
                 type="button"
                 onClick={() => setModeInput('juz')}
-                className={`py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border cursor-pointer ${
+                className={`py-2 px-3 rounded-xl text-xs font-bold transition-colors min-h-11 flex items-center justify-center gap-2 border cursor-pointer ${
                   modeInput === 'juz'
-                    ? 'bg-indigo-700 text-white border-indigo-800 shadow-xs'
+                    ? 'bg-indigo-700 text-white border-indigo-800'
                     : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                 }`}
               >
@@ -363,7 +371,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                   />
                 </div>
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-xs text-slate-500">
                 Format standar mushaf Madinah rasm Utsmani (1 sampai 604 halaman).
               </p>
             </div>
@@ -392,7 +400,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
 
           {/* 4. Predikat Nilai */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            <label className="block text-sm font-semibold text-slate-800 mb-2">
               Predikat Penilaian Kelancaran & Tartil <span className="text-rose-500">*</span>
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -403,7 +411,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                   onClick={() => setNilai(opt.value)}
                   className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition flex flex-col items-center justify-center gap-1 cursor-pointer ${
                     nilai === opt.value
-                      ? 'bg-indigo-700 text-white border-indigo-800 shadow-xs'
+                      ? 'bg-indigo-700 text-white border-indigo-800'
                       : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                   }`}
                 >
@@ -422,14 +430,14 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                   <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
                   <span>Fokus Kualitas Bacaan Binnadzor</span>
                 </h4>
-                <p className="text-[11px] text-slate-500 mt-0.5">
+                <p className="text-xs text-slate-500 mt-0.5">
                   Evaluasi mendalam 4 pilar kualitas tilawah Al-Qur'an santri
                 </p>
               </div>
 
               {/* Quick Preset Buttons */}
               <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] text-slate-400 font-semibold">Preset Cepat:</span>
+                <span className="text-xs text-slate-400 font-semibold">Preset Cepat:</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -438,7 +446,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                     setKefasihan('Baik');
                     setKelancaran('Baik');
                   }}
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 transition cursor-pointer"
+                  className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 transition cursor-pointer"
                 >
                   Semua Baik
                 </button>
@@ -450,7 +458,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                     setKefasihan('Sangat Baik');
                     setKelancaran('Sangat Baik');
                   }}
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-200 hover:bg-teal-200 transition cursor-pointer"
+                  className="text-xs font-bold px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-200 hover:bg-teal-200 transition cursor-pointer"
                 >
                   Sangat Baik
                 </button>
@@ -462,7 +470,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                     setKefasihan('Mutqin');
                     setKelancaran('Mutqin');
                   }}
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200 hover:bg-indigo-200 transition cursor-pointer"
+                  className="text-xs font-bold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 border border-indigo-200 hover:bg-indigo-200 transition cursor-pointer"
                 >
                   Mutqin
                 </button>
@@ -475,18 +483,18 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               <div className="bg-white/90 p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800">1. Hukum Tajwid</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
                     {hukumTajwid}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-500">Ikhfa, idgham, ghunnah, mad far'i & tanda waqaf</p>
+                <p className="text-xs text-slate-500">Ikhfa, idgham, ghunnah, mad far'i & tanda waqaf</p>
                 <div className="grid grid-cols-3 gap-1 pt-1">
                   {(['Perlu Bimbingan', 'Baik', 'Mutqin'] as AspekKualitas[]).map((level) => (
                     <button
                       key={level}
                       type="button"
                       onClick={() => setHukumTajwid(level)}
-                      className={`py-1 px-1.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                      className={`py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                         hukumTajwid === level
                           ? 'bg-indigo-700 text-white shadow-2xs'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -502,18 +510,18 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               <div className="bg-white/90 p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800">2. Makharijul Huruf</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
                     {makhrojHuruf}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-500">Ketepatan artikulasi bunyi huruf hijaiyah</p>
+                <p className="text-xs text-slate-500">Ketepatan artikulasi bunyi huruf hijaiyah</p>
                 <div className="grid grid-cols-3 gap-1 pt-1">
                   {(['Perlu Bimbingan', 'Baik', 'Mutqin'] as AspekKualitas[]).map((level) => (
                     <button
                       key={level}
                       type="button"
                       onClick={() => setMakhrojHuruf(level)}
-                      className={`py-1 px-1.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                      className={`py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                         makhrojHuruf === level
                           ? 'bg-indigo-700 text-white shadow-2xs'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -529,18 +537,18 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               <div className="bg-white/90 p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800">3. Kefasihan (Fashohah)</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
                     {kefasihan}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-500">Kefasihan dialek Arab & kesempurnaan sifat huruf</p>
+                <p className="text-xs text-slate-500">Kefasihan dialek Arab & kesempurnaan sifat huruf</p>
                 <div className="grid grid-cols-3 gap-1 pt-1">
                   {(['Perlu Bimbingan', 'Baik', 'Mutqin'] as AspekKualitas[]).map((level) => (
                     <button
                       key={level}
                       type="button"
                       onClick={() => setKefasihan(level)}
-                      className={`py-1 px-1.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                      className={`py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                         kefasihan === level
                           ? 'bg-indigo-700 text-white shadow-2xs'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -556,18 +564,18 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
               <div className="bg-white/90 p-3 rounded-xl border border-slate-200/80 shadow-2xs space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-800">4. Kelancaran & Tartil</span>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-800 border border-indigo-200">
                     {kelancaran}
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-500">Irama tilawah, aliran tanpa terbata & nafas</p>
+                <p className="text-xs text-slate-500">Irama tilawah, aliran tanpa terbata & nafas</p>
                 <div className="grid grid-cols-3 gap-1 pt-1">
                   {(['Perlu Bimbingan', 'Baik', 'Mutqin'] as AspekKualitas[]).map((level) => (
                     <button
                       key={level}
                       type="button"
                       onClick={() => setKelancaran(level)}
-                      className={`py-1 px-1.5 rounded-lg text-[10px] font-bold transition cursor-pointer ${
+                      className={`py-1 px-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                         kelancaran === level
                           ? 'bg-indigo-700 text-white shadow-2xs'
                           : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
@@ -584,10 +592,10 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
           {/* 5. Rekomendasi Catatan Cepat & Textarea */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+              <label className="block text-sm font-semibold text-slate-800">
                 Catatan Ustadz / Evaluasi Bacaan
               </label>
-              <span className="text-[10px] text-slate-500">Opsional</span>
+              <span className="text-xs text-slate-500">Opsional</span>
             </div>
 
             {/* Quick Chips */}
@@ -597,7 +605,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                   key={idx}
                   type="button"
                   onClick={() => setCatatan(chip)}
-                  className="text-[11px] px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200/80 transition-colors"
+                  className="text-xs px-2.5 py-1 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200/80 transition-colors"
                 >
                   + {chip}
                 </button>
