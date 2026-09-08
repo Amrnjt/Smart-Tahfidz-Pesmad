@@ -37,7 +37,11 @@ async function verifyCaller(req: any) {
   const header = String(req.headers.authorization || '');
   if (!header.startsWith('Bearer ')) throw new Error('UNAUTHENTICATED');
   const { auth } = getAdminServices();
-  return auth.verifyIdToken(header.slice(7));
+  const decoded = await auth.verifyIdToken(header.slice(7));
+  if (!ALLOWED_ROLES.has(String(decoded.role || ''))) {
+    throw new Error('FORBIDDEN');
+  }
+  return decoded;
 }
 
 function isStaff(role: unknown) {
@@ -313,6 +317,9 @@ export default async function handler(req: any, res: any) {
   } catch (error: any) {
     if (error?.message === 'UNAUTHENTICATED' || error?.code === 'auth/id-token-expired') {
       return send(res, 401, { success: false, message: 'Sesi autentikasi tidak valid. Silakan login ulang.' });
+    }
+    if (error?.message === 'FORBIDDEN') {
+      return send(res, 403, { success: false, message: 'Token tidak memiliki role aplikasi yang tepercaya.' });
     }
     console.error('Secure account API error:', error);
     return send(res, 500, { success: false, message: 'Operasi akun gagal diproses.' });
