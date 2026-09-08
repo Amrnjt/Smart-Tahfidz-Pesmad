@@ -1,0 +1,167 @@
+name: P2.18 Final Contract v2 Gate
+
+on:
+  push:
+    branches:
+      - p2-18-final-v2
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: p2-18-final-v2
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Measure main baseline
+        shell: bash
+        run: |
+          cp src/App.tsx /tmp/p2-18-split-App.tsx
+          git show origin/main:src/App.tsx > src/App.tsx
+          npm run build
+          BASE_TOTAL=$(find dist/assets -type f -name '*.js' -printf '%s\n' | awk '{s+=$1} END {print s+0}')
+          BASE_ENTRY=$(node - <<'NODE'
+          const fs = require('fs');
+          const h = fs.readFileSync('dist/index.html','utf8');
+          const m = h.match(/<script[^>]+src="\/([^"]+\.js)"/);
+          if (!m) process.exit(2);
+          process.stdout.write(String(fs.statSync('dist/' + m[1]).size));
+          NODE
+          )
+          echo "$BASE_TOTAL" > /tmp/p2-18-base-total
+          echo "$BASE_ENTRY" > /tmp/p2-18-base-entry
+          echo "Baseline total JS: $BASE_TOTAL"
+          echo "Baseline entry JS: $BASE_ENTRY"
+          mv /tmp/p2-18-split-App.tsx src/App.tsx
+          rm -rf dist
+
+      - name: Apply final P2.18 PDF corrections
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/hooks/useGeneratePDF.ts')
+          text = p.read_text()
+          replacements = [
+              ("import jsPDF from 'jspdf';", "import type jsPDF from 'jspdf';"),
+              ("    try {\n      const pdf = new jsPDF('p', 'mm', 'a4');", "    try {\n      const { default: jsPDF } = await import('jspdf');\n      const pdf = new jsPDF('p', 'mm', 'a4');"),
+              ("else if (item.type === 'K. Istimewa') typeColor = [147, 51, 234]; // purple", "else if (item.type === 'K. Istimewa') typeColor = C.amber;"),
+          ]
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f'Expected P2.18 pattern missing: {old}')
+              text = text.replace(old, new, 1)
+          p.write_text(text)
+          PY
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Measure final bundle
+        shell: bash
+        run: |
+          FINAL_TOTAL=$(find dist/assets -type f -name '*.js' -printf '%s\n' | awk '{s+=$1} END {print s+0}')
+          FINAL_ENTRY=$(node - <<'NODE'
+          const fs = require('fs');
+          const h = fs.readFileSync('dist/index.html','utf8');
+          const m = h.match(/<script[^>]+src="\/([^"]+\.js)"/);
+          if (!m) process.exit(2);
+          process.stdout.write(String(fs.statSync('dist/' + m[1]).size));
+          NODE
+          )
+          BASE_TOTAL=$(cat /tmp/p2-18-base-total)
+          BASE_ENTRY=$(cat /tmp/p2-18-base-entry)
+          echo "Baseline total JS: $BASE_TOTAL"
+          echo "Final total JS: $FINAL_TOTAL"
+          echo "Baseline entry JS: $BASE_ENTRY"
+          echo "Final entry JS: $FINAL_ENTRY"
+          echo "Largest final JS chunks:"
+          find dist/assets -type f -name '*.js' -printf '%s %p\n' | sort -nr | head -15
+          # Code splitting may create small wrapper overhead, but entry must materially fall.
+          test "$FINAL_TOTAL" -le $((BASE_TOTAL + 51200))
+          test "$FINAL_ENTRY" -le $((BASE_ENTRY * 75 / 100))
+
+      - name: P2.18 Final Contract v2 static gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          contract = Path('DESIGN_CONTRACT.md').read_text()
+          app = Path('src/App.tsx').read_text()
+          pdf = Path('src/hooks/useGeneratePDF.ts').read_text()
+          storage = Path('src/services/storageService.ts').read_text()
+          css = Path('src/index.css').read_text()
+
+          # Contract v2 is the governing baseline.
+          for required in [
+              'Final Design Contract v2',
+              'performance-proportionate, measured, and maintainable',
+              'Responsive Contract',
+              'Taste Contract',
+              'P2.18 Final Gate Order',
+          ]:
+              assert required in contract, required
+
+          # Route split preserves the existing App mental model while deferring heavy feature code.
+          for component in [
+              'UstadzDashboard', 'WaliDashboard', 'SantriDashboard',
+              'ZiyadahForm', 'MurojaahForm', 'BinnadzorForm', 'PembelajaranForm',
+              'HistoryTable', 'MushafQuran', 'SantriManagement', 'KelasManagement',
+          ]:
+              assert f'const {component} = React.lazy' in app, component
+          assert '<React.Suspense fallback={<RouteLoading />}>' in app
+          assert 'role="status"' in app and 'Memuat kode fitur yang diperlukan.' in app
+          assert "setIsSetorMenuOpen(true)" in app
+          assert '<BottomNav' in app and '<Navbar' in app
+          assert "setActiveTab('dashboard')" in app
+          assert 'aria-current' in app
+
+          # PDF remains functional but heavy code is deferred and category semantics are aligned.
+          assert "import type jsPDF from 'jspdf';" in pdf
+          assert "await import('jspdf')" in pdf
+          assert "new jsPDF('p', 'mm', 'a4')" in pdf
+          assert "item.type === 'K. Istimewa') typeColor = C.amber" in pdf
+          assert '[147, 51, 234]' not in pdf
+          assert 'pdf.save(' in pdf
+
+          # Critical data/reliability contracts remain present.
+          for required in [
+              'initRealtimeSync', 'syncWithCloud', 'saveZiyadah', 'saveMurojaah',
+              'saveBinnadzor', 'savePembelajaran', 'setProgramLiburanActive',
+          ]:
+              assert required in storage, required
+
+          # Accessibility / overlay foundations remain intact.
+          assert 'prefers-reduced-motion' in css
+          assert '.ui-dialog-overlay' in css
+          assert 'z-index: 70 !important' in css
+
+          # No dependency mutation in Final Gate.
+          PY
+          git diff --check
+          git diff --exit-code -- package.json || { echo 'package.json changed unexpectedly'; exit 1; }
+
+      - name: Commit verified P2.18 PDF source
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/hooks/useGeneratePDF.ts
+          git diff --cached --quiet && { echo "No PDF source change to commit"; exit 1; }
+          git commit -m "perf: defer PDF engine and align report semantics"
+          git push origin HEAD:p2-18-final-v2
