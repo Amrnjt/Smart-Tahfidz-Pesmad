@@ -121,7 +121,7 @@ export function useSetoranNotifications(
       try {
         const notif = new Notification(title, {
           body,
-          icon: '/pesmad-icon.svg',
+          icon: '/pesmad-app-icon-v2-192.png',
           tag: data.id,
           requireInteraction: false,
         });
