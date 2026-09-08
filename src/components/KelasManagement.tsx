@@ -280,7 +280,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
       </div>
 
       {/* ================= SECTION RINGKASAN PENEMPATAN SANTRI ================= */}
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 space-y-4">
+      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:ui-dialog-body space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
           <div>
             <h4 className="ui-section-title">Penempatan santri</h4>
@@ -443,23 +443,23 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
       {showAddModal && (
         <div
           ref={addDialogRef}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          className="ui-dialog-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Tambah kelas baru"
           tabIndex={-1}
         >
-          <div className="bg-white rounded-3xl shadow-xl max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
-            <div className="flex items-center justify-between p-5 border-b border-slate-100 sticky top-0 bg-white rounded-t-3xl z-10">
+          <div className="ui-dialog-panel max-w-lg">
+            <div className="ui-dialog-header sticky top-0 z-10">
               <h4 className="font-bold text-slate-800 text-base flex items-center gap-2">
                 <Plus className="w-5 h-5 text-emerald-700" />
                 Tambah Kelas Baru
               </h4>
-              <button onClick={() => setShowAddModal(false)} aria-label="Tutup dialog tambah kelas" className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer">
+              <button onClick={() => setShowAddModal(false)} aria-label="Tutup dialog tambah kelas" className="ui-dialog-close cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <form onSubmit={handleAddKelas} className="p-5 space-y-4">
+            <form onSubmit={handleAddKelas} className="ui-dialog-body space-y-4">
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Nama Kelas</label>
                 <input
@@ -513,7 +513,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                 <p className="text-xs text-slate-500">
                   {showAlreadyAssignedInAdd
                     ? 'Menampilkan seluruh santri (termasuk yang sudah memiliki kelas).'
-                    : '✨ Santri yang sudah masuk kelas disembunyikan. Tinggal pilih santri yang belum ditempatkan.'}
+                    : 'Santri yang sudah masuk kelas disembunyikan. Tinggal pilih santri yang belum ditempatkan.'}
                 </p>
 
                 {/* Search Bar & Fast Select Buttons */}
@@ -625,18 +625,18 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-3 border-t border-slate-100">
+              <div className="ui-dialog-footer">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                  className="ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-sm font-semibold transition-colors cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-900 text-white text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60 shadow-xs"
+                  className="ui-control w-full sm:w-auto px-5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60"
                 >
                   <Save className="w-4 h-4" />
                   {isSaving ? 'Menyimpan...' : 'Simpan Kelas'}
@@ -651,23 +651,23 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
       {kelasToEdit && (
         <div
           ref={editDialogRef}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          className="ui-dialog-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Edit kelas"
           tabIndex={-1}
         >
-          <div className="bg-white rounded-3xl shadow-xl max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
-            <div className="flex items-center justify-between p-5 border-b border-slate-100 sticky top-0 bg-white rounded-t-3xl z-10">
+          <div className="ui-dialog-panel max-w-lg">
+            <div className="ui-dialog-header sticky top-0 z-10">
               <h4 className="font-bold text-slate-800 text-base flex items-center gap-2">
                 <Edit3 className="w-5 h-5 text-emerald-700" />
                 Edit Kelas: {kelasToEdit.namaKelas}
               </h4>
-              <button onClick={() => setKelasToEdit(null)} aria-label="Tutup dialog edit kelas" className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer">
+              <button onClick={() => setKelasToEdit(null)} aria-label="Tutup dialog edit kelas" className="ui-dialog-close cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <form onSubmit={handleSaveEdit} className="p-5 space-y-4">
+            <form onSubmit={handleSaveEdit} className="ui-dialog-body space-y-4">
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Nama Kelas</label>
                 <input
@@ -826,18 +826,18 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-3 border-t border-slate-100">
+              <div className="ui-dialog-footer">
                 <button
                   type="button"
                   onClick={() => setKelasToEdit(null)}
-                  className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer"
+                  className="ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-sm font-semibold transition-colors cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-900 text-white text-xs font-bold transition cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60 shadow-xs"
+                  className="ui-control w-full sm:w-auto px-5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-60"
                 >
                   <Save className="w-4 h-4" />
                   {isSaving ? 'Menyimpan...' : 'Simpan Perubahan'}
@@ -852,15 +852,15 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
       {kelasToDelete && (
         <div
           ref={deleteDialogRef}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          className="ui-dialog-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Konfirmasi hapus kelas"
           tabIndex={-1}
         >
-          <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6">
+          <div className="ui-dialog-panel max-w-md p-5 sm:p-6">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center">
+              <div className="w-11 h-11 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center">
                 <AlertTriangle className="w-6 h-6 text-rose-600" />
               </div>
               <div>
@@ -871,9 +871,9 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
             <p className="text-sm text-slate-600 mb-5">
               Yakin ingin menghapus kelas <span className="font-bold">{kelasToDelete.namaKelas}</span>? Data santri dan riwayat setoran tidak akan terhapus, santri akan kembali berstatus belum ditempatkan ke kelas.
             </p>
-            <div className="flex gap-2">
-              <button onClick={() => setKelasToDelete(null)} className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition cursor-pointer">Batal</button>
-              <button onClick={handleDeleteKelas} disabled={isDeleting} className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition cursor-pointer disabled:opacity-60">
+            <div className="ui-dialog-footer">
+              <button onClick={() => setKelasToDelete(null)} className="ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-sm font-semibold transition-colors cursor-pointer">Batal</button>
+              <button onClick={handleDeleteKelas} disabled={isDeleting} className="ui-control w-full sm:w-auto px-5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-sm font-semibold transition-colors cursor-pointer disabled:opacity-60">
                 {isDeleting ? 'Menghapus...' : 'Hapus Kelas'}
               </button>
             </div>

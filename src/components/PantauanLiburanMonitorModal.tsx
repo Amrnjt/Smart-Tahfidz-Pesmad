@@ -86,7 +86,7 @@ export const PantauanLiburanMonitorModal: React.FC<PantauanLiburanMonitorModalPr
       <div className="fixed inset-0 bg-slate-900/60" onClick={onClose} aria-hidden="true" />
       <div
         ref={dialogRef}
-        className="relative z-10 flex w-full max-w-5xl max-h-[calc(100dvh-1.5rem)] flex-col overflow-hidden overscroll-contain rounded-2xl border border-slate-200 bg-white shadow-2xl sm:max-h-[calc(100dvh-2.5rem)]"
+        className="ui-dialog-frame relative z-10 flex max-w-5xl flex-col overscroll-contain"
         role="dialog"
         aria-modal="true"
         aria-labelledby="pantauan-monitor-title"

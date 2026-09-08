@@ -1952,30 +1952,30 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       {editingItem && (
         <div
           ref={editDialogRef}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm"
+          className="ui-dialog-overlay"
           onClick={closeEditModal}
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-modal-title"
           tabIndex={-1}
         >
-          <div className="w-full max-w-lg max-h-[calc(100dvh-2rem)] bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-y-auto overscroll-contain" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between gap-2 p-5 bg-gradient-to-br from-emerald-800 to-teal-900 text-white">
+          <div className="ui-dialog-panel max-w-lg" onClick={(e) => e.stopPropagation()}>
+            <div className="ui-dialog-header">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center flex-shrink-0">
                   <Pencil className="w-5 h-5" />
                 </div>
                 <div className="leading-tight">
                   <h3 id="edit-modal-title" className="font-extrabold text-base">Edit Setoran {editingItem.type}</h3>
-                  <p className="text-xs text-emerald-100/90">{editingItem.namaSantri}</p>
+                  <p className="text-xs text-slate-500">{editingItem.namaSantri}</p>
                 </div>
               </div>
-              <button onClick={closeEditModal} aria-label="Tutup" className="p-1.5 rounded-lg text-white/80 hover:bg-white/15 transition cursor-pointer">
+              <button onClick={closeEditModal} aria-label="Tutup" className="ui-dialog-close cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit} className="p-5 sm:p-6 space-y-4">
+            <form onSubmit={handleSaveEdit} className="ui-dialog-body space-y-4">
               {editingItem.type === 'Ziyadah' ? (
                 <>
                   <div>
@@ -2033,14 +2033,14 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   ))}
                 </select>
               </div>
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+              <div className="ui-dialog-footer">
                 <button type="button" onClick={closeEditModal}
-                  className="px-5 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer flex items-center gap-1.5"
+                  className="ui-control w-full sm:w-auto px-5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <X className="w-3.5 h-3.5" /><span>Batal</span>
                 </button>
                 <button type="submit" disabled={isSavingEdit}
-                  className="px-6 py-2.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-bold text-xs  transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="ui-control w-full sm:w-auto px-6 rounded-lg bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isSavingEdit ? (
                     <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div><span>Menyimpan...</span></>
@@ -2070,7 +2070,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       {itemToDelete && (
         <div
           ref={deleteDialogRef}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
+          className="ui-dialog-overlay"
           onClick={() => !isDeleting && setItemToDelete(null)}
           role="dialog"
           aria-modal="true"
@@ -2078,20 +2078,20 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           tabIndex={-1}
         >
           <div
-            className="w-full max-w-md max-h-[calc(100dvh-2rem)] bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-y-auto overscroll-contain animate-in fade-in zoom-in-95 duration-150"
+            className="ui-dialog-panel max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-5 bg-gradient-to-r from-rose-800 to-rose-900 text-white">
+            <div className="ui-dialog-header">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0 text-white">
+                <div className="w-10 h-10 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center flex-shrink-0 text-rose-700">
                   <Trash2 className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 id="delete-dialog-title" className="font-extrabold text-base leading-tight">
                     Hapus Rekaman Histori
                   </h3>
-                  <p className="text-xs text-rose-100/90 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     Konfirmasi penghapusan data setoran santri
                   </p>
                 </div>
@@ -2099,7 +2099,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               <button
                 onClick={() => !isDeleting && setItemToDelete(null)}
                 disabled={isDeleting}
-                className="p-1.5 rounded-lg text-white/80 hover:bg-white/15 transition cursor-pointer disabled:opacity-50"
+                className="ui-dialog-close cursor-pointer disabled:opacity-50"
                 aria-label="Tutup dialog"
               >
                 <X className="w-5 h-5" />
@@ -2107,9 +2107,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
             </div>
 
             {/* Content Body */}
-            <div className="p-5 sm:p-6 space-y-4">
+            <div className="ui-dialog-body space-y-4">
               {/* Record Summary Card */}
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5 text-xs">
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5 text-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 font-semibold uppercase text-xs tracking-wider">Kategori Setoran</span>
                   {itemToDelete.type === 'Ziyadah' ? (
@@ -2167,7 +2167,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               </div>
 
               {/* Warning Alert */}
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-800">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2.5 text-sm text-rose-800">
                 <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
                   Rekaman ini akan <b>dihapus permanen</b> dari histori santri dan tersinkronisasi ke <b>Cloud Firestore</b>.
@@ -2175,12 +2175,12 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <div className="ui-dialog-footer">
                 <button
                   type="button"
                   onClick={() => setItemToDelete(null)}
                   disabled={isDeleting}
-                  className="px-4 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs transition cursor-pointer disabled:opacity-50"
+                  className="ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-sm transition-colors cursor-pointer disabled:opacity-50"
                 >
                   Batal
                 </button>
@@ -2188,7 +2188,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   type="button"
                   onClick={confirmSingleDelete}
                   disabled={isDeleting}
-                  className="px-5 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs  transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="ui-control w-full sm:w-auto px-5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isDeleting ? (
                     <>
@@ -2212,7 +2212,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       {isBatchDeleteModalOpen && (
         <div
           ref={batchDeleteDialogRef}
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
+          className="ui-dialog-overlay"
           onClick={() => !isBatchDeleting && setIsBatchDeleteModalOpen(false)}
           role="dialog"
           aria-modal="true"
@@ -2220,19 +2220,19 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           tabIndex={-1}
         >
           <div
-            className="w-full max-w-md max-h-[calc(100dvh-2rem)] bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-y-auto overscroll-contain animate-in fade-in zoom-in-95 duration-150"
+            className="ui-dialog-panel max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between p-5 bg-gradient-to-r from-rose-800 to-rose-900 text-white">
+            <div className="ui-dialog-header">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0 text-white">
+                <div className="w-10 h-10 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center flex-shrink-0 text-rose-700">
                   <Trash2 className="w-5 h-5" />
                 </div>
                 <div>
                   <h3 id="batch-delete-dialog-title" className="font-extrabold text-base leading-tight">
                     Hapus Masal Histori ({selectedIds.size})
                   </h3>
-                  <p className="text-xs text-rose-100/90 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     Hapus {selectedIds.size} rekaman yang dipilih
                   </p>
                 </div>
@@ -2240,31 +2240,31 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               <button
                 onClick={() => !isBatchDeleting && setIsBatchDeleteModalOpen(false)}
                 disabled={isBatchDeleting}
-                className="p-1.5 rounded-lg text-white/80 hover:bg-white/15 transition cursor-pointer disabled:opacity-50"
+                className="ui-dialog-close cursor-pointer disabled:opacity-50"
                 aria-label="Tutup dialog"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-5 sm:p-6 space-y-4">
+            <div className="ui-dialog-body space-y-4">
               <p className="text-xs text-slate-600 leading-relaxed">
                 Anda memilih untuk menghapus <b>{selectedIds.size} rekaman histori</b> secara bersamaan. Rekaman yang dipilih mencakup setoran santri aktif.
               </p>
 
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-800">
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2.5 text-sm text-rose-800">
                 <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
                 <p className="leading-relaxed">
                   Tindakan ini bersifat <b>permanen</b> dan akan menghapus data terpilih dari Cloud Firestore. Apakah Anda yakin ingin melanjutkan?
                 </p>
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100">
+              <div className="ui-dialog-footer">
                 <button
                   type="button"
                   onClick={() => setIsBatchDeleteModalOpen(false)}
                   disabled={isBatchDeleting}
-                  className="px-4 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-bold text-xs transition cursor-pointer disabled:opacity-50"
+                  className="ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-sm transition-colors cursor-pointer disabled:opacity-50"
                 >
                   Batal
                 </button>
@@ -2272,7 +2272,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   type="button"
                   onClick={confirmBatchDelete}
                   disabled={isBatchDeleting}
-                  className="px-5 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold text-xs  transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="ui-control w-full sm:w-auto px-5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isBatchDeleting ? (
                     <>

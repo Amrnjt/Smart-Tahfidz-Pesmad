@@ -228,26 +228,26 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   ];
 
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="ui-dialog-overlay">
       <div
         ref={dialogRef}
-        className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+        className="ui-dialog-panel max-w-lg"
         role="dialog"
         aria-modal="true"
         aria-labelledby="report-download-title"
         tabIndex={-1}
       >
         {/* Modal Header */}
-        <div className="sticky top-0 z-10 bg-gradient-to-r from-emerald-800 to-teal-800 text-white px-5 sm:px-6 py-4 rounded-t-3xl flex items-center justify-between">
+        <div className="ui-dialog-header sticky top-0 z-10">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center flex-shrink-0">
               <FileText className="w-5 h-5" />
             </div>
             <div className="min-w-0">
               <h3 id="report-download-title" className="font-bold text-sm sm:text-base truncate">
                 Unduh Laporan Hafalan (PDF)
               </h3>
-              <p className="text-[11px] text-emerald-100">
+              <p className="text-xs text-slate-500">
                 Pilih periode dan konten laporan
               </p>
             </div>
@@ -255,7 +255,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-white/15 transition cursor-pointer flex-shrink-0"
+            className="ui-dialog-close cursor-pointer"
             title="Tutup"
             aria-label="Tutup"
           >
@@ -264,16 +264,16 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="p-5 sm:p-6 space-y-5">
+        <div className="ui-dialog-body space-y-5">
           {success && (
-            <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2.5">
+            <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center gap-2.5">
               <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />
               <span>PDF berhasil diunduh! Periksa folder Unduhan Anda.</span>
             </div>
           )}
 
           {error && (
-            <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2.5">
+            <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-medium flex items-center gap-2.5">
               <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
               <span className="min-w-0 break-words">{error}</span>
             </div>
@@ -401,7 +401,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
             )}
 
             {useRange && !rangeValid && (
-              <p className="text-[11px] text-rose-600 font-semibold mt-1.5">
+              <p className="text-xs text-rose-700 font-semibold mt-1.5">
                 Bulan awal harus sebelum atau sama dengan bulan akhir.
               </p>
             )}
@@ -446,7 +446,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
                     <div className="text-xs font-bold text-slate-800">
                       {item.label}
                     </div>
-                    <div className="text-[11px] text-slate-500">
+                    <div className="text-xs text-slate-500">
                       {item.desc}
                     </div>
                   </div>
@@ -456,7 +456,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
           </div>
 
           {/* Preview Info */}
-          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500">
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500">
             <div className="flex items-center gap-1.5 mb-1">
               <FileText className="w-3.5 h-3.5 text-slate-400" />
               <span className="font-semibold text-slate-600">
@@ -536,10 +536,10 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
         </div>
 
         {/* Modal Footer */}
-        <div className="sticky bottom-0 z-10 bg-white border-t border-slate-100 px-5 sm:px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] flex items-center justify-end gap-3 rounded-b-3xl">
+        <div className="ui-dialog-footer sticky bottom-0 z-10 bg-white px-5 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom,0px))]">
           <button
             onClick={onClose}
-            className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer"
+            className="ui-control w-full sm:w-auto px-5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-sm transition-colors cursor-pointer"
           >
             Batal
           </button>
@@ -547,7 +547,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
           <button
             onClick={handleDownload}
             disabled={isGenerating || (useRange && !rangeValid)}
-            className="px-6 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+            className="ui-control w-full sm:w-auto px-6 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {isGenerating ? (
               <>
