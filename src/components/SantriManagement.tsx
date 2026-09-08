@@ -465,7 +465,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                 <Users className="w-8 h-8 text-emerald-700" />
               </div>
               <div>
-                <h4 className="font-extrabold text-slate-800 text-base">Belum Ada Data Santri</h4>
+                <h4 className="font-extrabold text-slate-800 text-base">Belum ada santri</h4>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                   Database santri bersih & tersinkronisasi ke Cloud Firestore. Tambahkan santri baru untuk mulai mencatat setoran Ziyadah & Muroja'ah.
                 </p>

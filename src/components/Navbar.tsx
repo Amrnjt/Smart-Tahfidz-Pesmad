@@ -92,7 +92,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   }[normalizedRole];
 
   return (
-    <header id="main-header" className="p2-topbar ui-safe-top sticky top-0 z-40 select-none">
+    <header id="main-header" className="p2-topbar ui-safe-top relative select-none">
       <div className="p2-topbar-wrap max-w-7xl mx-auto ui-page-gutter">
         <div className="p2-topbar-inner">
           <a
