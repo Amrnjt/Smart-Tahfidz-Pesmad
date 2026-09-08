@@ -209,15 +209,15 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-5">
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-6">
         {/* Form Header */}
         <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
           <div className="w-11 h-11 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0">
             <GraduationCap className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg sm:text-xl font-bold text-slate-800">Setoran Pembelajaran</h3>
+            <h3 className="ui-section-title text-slate-900">Setoran Pembelajaran</h3>
             <p className="text-xs sm:text-sm text-slate-500">Jilid Ummi Dewasa dan Kelas Istimewa dengan evaluasi progres materi.</p>
           </div>
         </div>
@@ -225,8 +225,12 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* 1. Pemilihan Tipe Kelas Non-Tahfidz */}
+          <div className="space-y-1">
+            <h4 className="text-sm font-bold text-slate-900">Program pembelajaran</h4>
+            <p className="text-xs text-slate-500">Pilih program yang sesuai dengan kelas dan kebutuhan santri.</p>
+          </div>
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <label className="block text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-emerald-600" />
               <span>Program Kelas Pembelajaran <span className="text-rose-500">*</span></span>
             </label>
@@ -235,9 +239,9 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
               <button
                 type="button"
                 onClick={() => setTipeKelas('Jilid')}
-                className={`p-3.5 rounded-2xl border text-left transition cursor-pointer flex items-start gap-3 ${
+                className={`p-3.5 rounded-2xl border text-left transition-colors cursor-pointer flex items-start gap-3 min-h-24 ${
                   tipeKelas === 'Jilid'
-                    ? 'bg-emerald-50/80 border-emerald-600 ring-2 ring-emerald-600/20'
+                    ? 'bg-emerald-50/80 border-emerald-600'
                     : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                 }`}
               >
@@ -246,7 +250,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                 </div>
                 <div>
                   <h4 className="text-sm font-bold text-slate-900">Jilid Ummi Dewasa</h4>
-                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                     Standar kurikulum Ummi Jilid Dewasa (Jilid 1 s.d. 3) untuk percepatan tartil & makhroj.
                   </p>
                 </div>
@@ -256,9 +260,9 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
               <button
                 type="button"
                 onClick={() => setTipeKelas('Kelas Istimewa')}
-                className={`p-3.5 rounded-2xl border text-left transition cursor-pointer flex items-start gap-3 ${
+                className={`p-3.5 rounded-2xl border text-left transition-colors cursor-pointer flex items-start gap-3 min-h-24 ${
                   tipeKelas === 'Kelas Istimewa'
-                    ? 'bg-indigo-50/80 border-indigo-600 ring-2 ring-indigo-600/20'
+                    ? 'bg-indigo-50/80 border-indigo-600'
                     : 'bg-slate-50 border-slate-200 hover:bg-slate-100'
                 }`}
               >
@@ -268,11 +272,11 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                 <div>
                   <div className="flex items-center gap-1.5">
                     <h4 className="text-sm font-bold text-slate-900">Kelas Istimewa</h4>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-200">
+                    <span className="text-xs font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800 border border-amber-200">
                       Pendampingan
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                  <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                     Bimbingan personal & intensif untuk santri dengan pemahaman dan capaian di bawah rata-rata.
                   </p>
                 </div>
@@ -281,16 +285,20 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
           </div>
 
           {/* 2. Pilih Santri, Tanggal & Waktu */}
+          <div className="space-y-1">
+            <h4 className="text-sm font-bold text-slate-900">Identitas & waktu</h4>
+            <p className="text-xs text-slate-500">Pilih santri serta waktu pencatatan pembelajaran.</p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+              <label className="block text-sm font-semibold text-slate-800 mb-2">
                 Pilih Santri <span className="text-rose-500">*</span>
               </label>
               <select
                 value={idSantri}
                 onChange={(e) => handleSantriChange(e.target.value)}
                 required
-                className="w-full py-3 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
               >
                 <option value="">-- Pilih Nama Santri --</option>
                 {filteredSantriList.map((santri) => (
@@ -300,14 +308,14 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                 ))}
               </select>
               {currentSantri?.kelas && (
-                <p className="text-[11px] text-amber-800 font-semibold mt-1">
+                <p className="text-xs text-amber-800 font-semibold mt-1">
                   Kelas: {currentSantri.kelas}
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex items-center gap-1">
+              <label className="block text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 text-amber-700" />
                 <span>Tanggal Setoran <span className="text-rose-500">*</span></span>
               </label>
@@ -316,15 +324,15 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                 value={tanggalSetor}
                 onChange={(e) => setTanggalSetor(e.target.value)}
                 required
-                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
-              <span className="text-[11px] text-amber-800 font-semibold mt-1 block truncate">
+              <span className="text-xs text-amber-800 font-semibold mt-1 block truncate">
                 {formatTanggalLengkap(tanggalSetor)}
               </span>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex items-center gap-1">
+              <label className="block text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-amber-700" />
                 <span>Waktu / Jam <span className="text-rose-500">*</span></span>
               </label>
@@ -333,9 +341,9 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                 value={waktuSetor}
                 onChange={(e) => setWaktuSetor(e.target.value)}
                 required
-                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
+                className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500"
               />
-              <span className="text-[11px] text-slate-500 mt-1 block">WIB (Waktu Indonesia Barat)</span>
+              <span className="text-xs text-slate-500 mt-1 block">WIB (Waktu Indonesia Barat)</span>
             </div>
           </div>
 
@@ -366,7 +374,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                       }}
                       className={`py-2 px-3 rounded-xl text-xs font-bold transition border cursor-pointer ${
                         jilidUmmiIndex === idx
-                          ? 'bg-emerald-700 text-white border-emerald-800 shadow-xs'
+                          ? 'bg-emerald-700 text-white border-emerald-800'
                           : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
@@ -410,7 +418,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                 </div>
               </div>
 
-              <div className="p-3 bg-white/80 rounded-xl border border-emerald-200/60 text-[11px] text-slate-600">
+              <div className="p-3 bg-white/80 rounded-xl border border-emerald-200/60 text-xs text-slate-600">
                 <span className="font-bold text-emerald-900">Target Capaian Jilid: </span>
                 {KURIKULUM_JILID_UMMI_DEWASA[jilidUmmiIndex]?.targetCapaian}
               </div>
@@ -442,12 +450,12 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                       }}
                       className={`p-2.5 rounded-xl text-left text-xs font-bold transition border cursor-pointer ${
                         tahapIstimewaIndex === idx
-                          ? 'bg-indigo-700 text-white border-indigo-800 shadow-xs'
+                          ? 'bg-indigo-700 text-white border-indigo-800'
                           : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
                       <div className="font-extrabold">{t.tingkat}</div>
-                      <div className={`text-[10px] mt-0.5 ${tahapIstimewaIndex === idx ? 'text-indigo-200' : 'text-slate-500'}`}>
+                      <div className={`text-xs mt-0.5 ${tahapIstimewaIndex === idx ? 'text-indigo-200' : 'text-slate-500'}`}>
                         {t.targetCapaian}
                       </div>
                     </button>
@@ -491,7 +499,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                       key={i}
                       type="button"
                       onClick={() => setKendalaSantri(prev => prev ? `${prev}, ${kd}` : kd)}
-                      className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition"
+                      className="text-xs font-medium px-2 py-0.5 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition"
                     >
                       + {kd}
                     </button>
@@ -525,7 +533,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
           {/* 4. Predikat Nilai & Status Kenaikan */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+              <label className="block text-sm font-semibold text-slate-800 mb-2">
                 Predikat Nilai Pembelajaran <span className="text-rose-500">*</span>
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -536,7 +544,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                     onClick={() => setNilai(opt.value)}
                     className={`py-2 px-2.5 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
                       nilai === opt.value
-                        ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
+                        ? 'bg-slate-900 text-white border-slate-900'
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
@@ -548,7 +556,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+              <label className="block text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
                 <Award className="w-3.5 h-3.5 text-amber-600" />
                 Status Kenaikan / Progres Materi <span className="text-rose-500">*</span>
               </label>
@@ -560,7 +568,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                     onClick={() => setStatusKenaikan(st.value)}
                     className={`py-2 px-2 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer text-center ${
                       statusKenaikan === st.value
-                        ? 'bg-emerald-700 text-white border-emerald-800 shadow-xs'
+                        ? 'bg-emerald-700 text-white border-emerald-800'
                         : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
@@ -580,7 +588,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                   <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
                   <span>Evaluasi Kualitas Bacaan Santri</span>
                 </h4>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-xs text-slate-500">
                   Pemantauan 4 pilar kualitas bacaan Al-Qur'an / materi
                 </p>
               </div>
@@ -593,7 +601,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                     setKefasihan('Baik');
                     setKelancaran('Baik');
                   }}
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 transition cursor-pointer"
+                  className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 transition cursor-pointer"
                 >
                   Semua Baik
                 </button>
@@ -605,7 +613,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                     setKefasihan('Sangat Baik');
                     setKelancaran('Sangat Baik');
                   }}
-                  className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-200 hover:bg-teal-200 transition cursor-pointer"
+                  className="text-xs font-bold px-2 py-0.5 rounded-md bg-teal-100 text-teal-800 border border-teal-200 hover:bg-teal-200 transition cursor-pointer"
                 >
                   Sangat Baik
                 </button>
@@ -617,7 +625,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
               <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 space-y-1">
                 <div className="flex justify-between items-center text-xs font-bold text-slate-800">
                   <span>1. Hukum Tajwid</span>
-                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
+                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
                     {hukumTajwid}
                   </span>
                 </div>
@@ -627,7 +635,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                       key={l}
                       type="button"
                       onClick={() => setHukumTajwid(l)}
-                      className={`py-1 text-[10px] font-bold rounded-lg transition ${
+                      className={`py-1 text-xs font-bold rounded-lg transition ${
                         hukumTajwid === l ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -641,7 +649,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
               <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 space-y-1">
                 <div className="flex justify-between items-center text-xs font-bold text-slate-800">
                   <span>2. Makharijul Huruf</span>
-                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
+                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
                     {makhrojHuruf}
                   </span>
                 </div>
@@ -651,7 +659,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                       key={l}
                       type="button"
                       onClick={() => setMakhrojHuruf(l)}
-                      className={`py-1 text-[10px] font-bold rounded-lg transition ${
+                      className={`py-1 text-xs font-bold rounded-lg transition ${
                         makhrojHuruf === l ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -665,7 +673,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
               <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 space-y-1">
                 <div className="flex justify-between items-center text-xs font-bold text-slate-800">
                   <span>3. Kefasihan (Fashohah)</span>
-                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
+                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
                     {kefasihan}
                   </span>
                 </div>
@@ -675,7 +683,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                       key={l}
                       type="button"
                       onClick={() => setKefasihan(l)}
-                      className={`py-1 text-[10px] font-bold rounded-lg transition ${
+                      className={`py-1 text-xs font-bold rounded-lg transition ${
                         kefasihan === l ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -689,7 +697,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
               <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 space-y-1">
                 <div className="flex justify-between items-center text-xs font-bold text-slate-800">
                   <span>4. Kelancaran & Tartil</span>
-                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
+                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
                     {kelancaran}
                   </span>
                 </div>
@@ -699,7 +707,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                       key={l}
                       type="button"
                       onClick={() => setKelancaran(l)}
-                      className={`py-1 text-[10px] font-bold rounded-lg transition ${
+                      className={`py-1 text-xs font-bold rounded-lg transition ${
                         kelancaran === l ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                       }`}
                     >
@@ -714,10 +722,10 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
           {/* 6. Catatan Ustadz */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+              <label className="block text-sm font-semibold text-slate-800">
                 Catatan Ustadz & Rekomendasi Khusus
               </label>
-              <span className="text-[10px] text-slate-500">Opsional</span>
+              <span className="text-xs text-slate-500">Opsional</span>
             </div>
 
             <div className="flex flex-wrap gap-1.5 mb-2">
@@ -726,7 +734,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                   key={i}
                   type="button"
                   onClick={() => setCatatan(qn)}
-                  className="text-[11px] px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition"
+                  className="text-xs px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition"
                 >
                   + {qn}
                 </button>

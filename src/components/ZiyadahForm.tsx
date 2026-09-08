@@ -90,15 +90,15 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-5">
+    <div className="max-w-4xl mx-auto">
+      <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-6">
         {/* Form Header */}
         <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
           <div className="w-11 h-11 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center flex-shrink-0">
             <PlusCircle className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg sm:text-xl font-bold text-slate-800">
+            <h3 className="ui-section-title text-slate-900">
               Setoran Ziyadah
             </h3>
             <p className="text-xs sm:text-sm text-slate-500">
@@ -119,16 +119,20 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
         ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Santri & Tanggal Setoran */}
+          <div className="space-y-1">
+            <h4 className="text-sm font-bold text-slate-900">Identitas & waktu</h4>
+            <p className="text-xs text-slate-500">Pilih santri serta waktu setoran yang benar.</p>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="md:col-span-1">
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+              <label className="block text-sm font-semibold text-slate-800 mb-2">
                 Pilih Santri <span className="text-rose-500">*</span>
               </label>
               <select
                 required
                 value={idSantri}
                 onChange={(e) => setIdSantri(e.target.value)}
-                className="w-full py-3 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 <option value="">-- Pilih Nama Santri --</option>
                 {mySantriList.map((s) => (
@@ -138,14 +142,14 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
                 ))}
               </select>
               {myKelas && (
-                <p className="text-[11px] text-emerald-700 font-semibold mt-1">
+                <p className="text-xs text-emerald-700 font-semibold mt-1">
                   Kelas: {myKelas.namaKelas} • {mySantriList.length} santri
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex items-center gap-1">
+              <label className="block text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5 text-emerald-700" />
                 <span>Tanggal Setoran <span className="text-rose-500">*</span></span>
               </label>
@@ -154,15 +158,15 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
                 required
                 value={tanggalSetor}
                 onChange={(e) => setTanggalSetor(e.target.value)}
-                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
-              <span className="text-[11px] text-emerald-700 font-semibold mt-1 block truncate">
+              <span className="text-xs text-emerald-700 font-semibold mt-1 block truncate">
                 {formatTanggalLengkap(tanggalSetor)}
               </span>
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5 flex items-center gap-1">
+              <label className="block text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-emerald-700" />
                 <span>Waktu / Jam <span className="text-rose-500">*</span></span>
               </label>
@@ -171,22 +175,26 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
                 required
                 value={waktuSetor}
                 onChange={(e) => setWaktuSetor(e.target.value)}
-                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
-              <span className="text-[11px] text-slate-500 mt-1 block">WIB (Waktu Indonesia Barat)</span>
+              <span className="text-xs text-slate-500 mt-1 block">WIB (Waktu Indonesia Barat)</span>
             </div>
           </div>
 
           {/* Surah Selector */}
+          <div className="space-y-1">
+            <h4 className="text-sm font-bold text-slate-900">Materi setoran</h4>
+            <p className="text-xs text-slate-500">Tentukan surah dan rentang ayat yang disetorkan.</p>
+          </div>
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+            <label className="block text-sm font-semibold text-slate-800 mb-2">
               Pilih Surah (1 - 114) <span className="text-rose-500">*</span>
             </label>
             <select
               required
               value={surahName}
               onChange={(e) => handleSurahChange(e.target.value)}
-              className="w-full py-3 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             >
               {SURAH_LIST.map((s) => (
                 <option key={s.number} value={s.nameLatin}>
@@ -210,7 +218,7 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
           {/* Ayat Awal, Ayat Akhir, Nilai */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+              <label className="block text-sm font-semibold text-slate-800 mb-2">
                 Ayat Awal <span className="text-rose-500">*</span>
               </label>
               <input
@@ -220,12 +228,12 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
                 required
                 value={ayatAwal}
                 onChange={(e) => setAyatAwal(Number(e.target.value))}
-                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+              <label className="block text-sm font-semibold text-slate-800 mb-2">
                 Ayat Akhir <span className="text-rose-500">*</span>
               </label>
               <input
@@ -235,21 +243,21 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
                 required
                 value={ayatAkhir}
                 onChange={(e) => setAyatAkhir(Number(e.target.value))}
-                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
 
             <div className="col-span-2 md:col-span-1">
-              <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+              <label className="block text-sm font-semibold text-slate-800 mb-2">
                 Kualitas Hafalan <span className="text-rose-500">*</span>
               </label>
               <select
                 value={nilai}
                 onChange={(e) => setNilai(e.target.value as PredikatNilai)}
-                className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               >
                 {PREDIKAT_NILAI_OPTIONS.map(opt => (
-                  <option key={opt.value} value={opt.value}>{opt.emoji} {opt.label}</option>
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
             </div>
@@ -257,7 +265,7 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
 
           {/* Catatan / Evaluasi Ustadz */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase mb-1.5">
+            <label className="block text-sm font-semibold text-slate-800 mb-2">
               Catatan Tajwid / Evaluasi Ustadz
             </label>
             <textarea
@@ -265,17 +273,17 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
               value={catatan}
               onChange={(e) => setCatatan(e.target.value)}
               placeholder="Contoh: Makhraj huruf 'Ain dan Ghain sudah tepat, tajwid ghunnah 2 harakat konsisten..."
-              className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full min-h-28 py-3 px-3.5 bg-white border border-slate-300 rounded-xl text-sm leading-6 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
           {/* Form Actions */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 pt-4 border-t border-slate-200">
             <button
               type="button"
               onClick={handleReset}
               disabled={isSubmitting}
-              className="px-3 py-2 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+              className="ui-control w-full sm:w-auto px-4 rounded-xl border border-slate-200 bg-white text-slate-600 hover:text-slate-900 hover:bg-slate-50 font-semibold text-sm transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               <span>Reset</span>
@@ -284,7 +292,7 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-bold text-xs transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              className="px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed min-h-11 w-full sm:w-auto"
             >
               {isSubmitting ? (
                 <>
