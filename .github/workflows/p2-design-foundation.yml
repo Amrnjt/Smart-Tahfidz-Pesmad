@@ -9,6 +9,7 @@ on:
       - 'src/dashboard-experience.css'
       - 'src/input-workflow.css'
       - 'src/history-experience.css'
+      - 'src/motion-finish.css'
       - 'src/design-system/**'
       - 'src/components/Navbar.tsx'
       - 'src/components/BottomNav.tsx'
@@ -22,6 +23,7 @@ on:
       - 'src/components/SetoranFormNav.tsx'
       - 'src/components/SetorActionSheet.tsx'
       - 'src/components/HistoryTable.tsx'
+      - 'src/hooks/useActiveTabNavigation.ts'
       - 'src/main.tsx'
       - 'P2_DESIGN_FOUNDATION.md'
       - '.github/workflows/p2-design-foundation.yml'
@@ -63,6 +65,8 @@ jobs:
           grep -q 'forced-colors: active' src/input-workflow.css
           grep -q 'prefers-reduced-motion: reduce' src/history-experience.css
           grep -q 'forced-colors: active' src/history-experience.css
+          grep -q 'prefers-reduced-motion: reduce' src/motion-finish.css
+          grep -q 'forced-colors: active' src/motion-finish.css
           grep -q 'p2-dashboard-ustadz' src/components/UstadzDashboard.tsx
           grep -q 'p2-dashboard-wali' src/components/WaliDashboard.tsx
           grep -q 'p2-dashboard-santri' src/components/SantriDashboard.tsx
@@ -75,9 +79,23 @@ jobs:
           grep -q 'p2-history' src/components/HistoryTable.tsx
           grep -q 'data-selected' src/components/HistoryTable.tsx
 
+      - name: Verify P2 motion finish contract
+        run: |
+          grep -q 'startViewTransition' src/hooks/useActiveTabNavigation.ts
+          grep -q 'flushSync' src/hooks/useActiveTabNavigation.ts
+          grep -q 'view-transition-name: p2-page' src/motion-finish.css
+          grep -q 'view-transition-name: p2-nav-active' src/motion-finish.css
+          grep -q 'p2-dialog-in' src/motion-finish.css
+          grep -q 'p2-record-in' src/motion-finish.css
+          MOTION_BYTES=$(wc -c < src/motion-finish.css)
+          if [ "$MOTION_BYTES" -gt 45000 ]; then
+            echo "P2 motion layer is too large: ${MOTION_BYTES} bytes"
+            exit 1
+          fi
+
       - name: Reject expensive global effects
         run: |
-          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/design-foundation.css src/app-shell.css src/dashboard-experience.css src/input-workflow.css src/history-experience.css; then
+          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/design-foundation.css src/app-shell.css src/dashboard-experience.css src/input-workflow.css src/history-experience.css src/motion-finish.css; then
             echo 'P2 visual system contains an expensive global effect.'
             exit 1
           fi
