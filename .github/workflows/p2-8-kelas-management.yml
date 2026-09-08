@@ -1,0 +1,104 @@
+name: P2.8 Kelas Management Validation
+
+on:
+  push:
+    branches: [p2-8-kelas-management]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Apply P2.8 hierarchy polish
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/components/KelasManagement.tsx')
+          text = path.read_text()
+          text = text.replace(',\n  Sparkles\n', '\n')
+          text = text.replace('bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-sm space-y-6','space-y-6')
+          text = text.replace('flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100','flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-slate-200')
+          text = text.replace('font-extrabold text-slate-800 text-base sm:text-lg flex items-center gap-2','ui-page-title text-slate-900 flex items-center gap-2')
+          text = text.replace('Kelola kelas tahfidz, musyrif, dan penempatan santri per kelas','Kelola kelas, musyrif, dan penempatan santri secara terstruktur.')
+          text = text.replace('px-4 py-2.5 bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-900 text-white rounded-xl text-xs font-bold shadow-sm transition flex items-center justify-center gap-2 cursor-pointer','ui-control w-full sm:w-auto px-4 bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-900 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer')
+          start = text.index('      {/* ================= SECTION RINGKASAN PENEMPATAN SANTRI ================= */}')
+          end = text.index('      {/* Unassigned Santri Alert & Quick Placement Banner (Saat Ada Santri Belum Berkelas) */}')
+          summary = '''      {/* ================= SECTION RINGKASAN PENEMPATAN SANTRI ================= */}\n      <section className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 space-y-4">\n        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">\n          <div>\n            <h4 className="ui-section-title">Penempatan santri</h4>\n            <p className="ui-secondary mt-0.5">Pantau kelengkapan anggota kelas tanpa metrik dekoratif.</p>\n          </div>\n          <span className="ui-meta">{sudahBerkelas} dari {totalSantri} santri sudah ditempatkan</span>\n        </div>\n        <div className="grid grid-cols-3 overflow-hidden rounded-xl border border-slate-200 bg-slate-50 divide-x divide-slate-200">\n          <div className="p-3 sm:p-4"><p className="ui-meta">Total santri</p><p className="mt-1 text-xl sm:text-2xl font-bold text-slate-900">{totalSantri}</p></div>\n          <div className="p-3 sm:p-4"><p className="ui-meta">Sudah berkelas</p><p className="mt-1 text-xl sm:text-2xl font-bold text-emerald-800">{sudahBerkelas}</p></div>\n          <div className="p-3 sm:p-4"><p className="ui-meta">Belum berkelas</p><p className={`mt-1 text-xl sm:text-2xl font-bold ${belumBerkelas > 0 ? 'text-amber-800' : 'text-slate-700'}`}>{belumBerkelas}</p></div>\n        </div>\n        <div className="space-y-2">\n          <div className="flex items-center justify-between gap-3 text-xs"><span className="font-semibold text-slate-700">Kelengkapan penempatan</span><span className="font-bold text-emerald-800">{placementPercent}%</span></div>\n          <div className="h-2.5 overflow-hidden rounded-full bg-slate-200" aria-label={`Kelengkapan penempatan ${placementPercent}%`}>\n            <div className="h-full rounded-full bg-emerald-700 transition-[width] duration-500" style={{ width: `${placementPercent}%` }} />\n          </div>\n          {totalSantri > 0 && belumBerkelas === 0 && (\n            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs font-semibold text-emerald-900"><CheckCircle2 className="w-4 h-4 flex-shrink-0" />Seluruh santri telah memiliki kelas.</div>\n          )}\n        </div>\n      </section>\n\n'''
+          text = text[:start] + summary + text[end:]
+          text = text.replace('p-4 rounded-2xl bg-amber-50 border border-amber-300 text-amber-950 space-y-3','p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 space-y-4')
+          text = text.replace('text-[11px] text-amber-800 mt-0.5','text-xs text-amber-800 mt-1 leading-5')
+          text = text.replace('px-3 py-1.5 rounded-xl bg-white hover:bg-amber-100/60 border border-amber-300 text-amber-900 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5','min-h-10 px-3 rounded-xl bg-white hover:bg-amber-100/60 border border-amber-300 text-amber-900 text-xs font-semibold transition-colors cursor-pointer flex items-center justify-center gap-1.5')
+          text = text.replace('px-3.5 py-1.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition cursor-pointer flex items-center gap-1.5','min-h-10 px-3.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5')
+          text = text.replace('<span>+ Buat Kelas Baru</span>', '<span>Buat kelas baru</span>')
+          text = text.replace('text-[11px] font-bold text-amber-900 mb-2','text-xs font-bold text-amber-900 mb-2')
+          text = text.replace('text-[10px] text-slate-500 font-mono','text-xs text-slate-500 font-mono')
+          text = text.replace('text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 whitespace-nowrap','text-xs font-semibold px-2 py-1 rounded-md bg-amber-100 text-amber-900 whitespace-nowrap')
+          text = text.replace('p-2.5 rounded-xl bg-white border border-amber-200 flex items-center justify-between gap-2 shadow-2xs','p-3 rounded-xl bg-white border border-amber-200 flex items-center justify-between gap-3')
+          text = text.replace('      {/* Kelas List */}\n','''      {/* Kelas List */}\n      <div className="flex items-end justify-between gap-3">\n        <div>\n          <h4 className="ui-section-title">Daftar kelas</h4>\n          <p className="ui-secondary mt-0.5">{kelasList.length} kelas terdaftar dalam sistem.</p>\n        </div>\n      </div>\n''',1)
+          text = text.replace('grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4','grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4',1)
+          text = text.replace('p-5 rounded-2xl bg-slate-50 border border-slate-200/80 hover:border-emerald-400 transition-all flex flex-col','p-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 transition-colors flex flex-col')
+          text = text.replace('w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center','w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center')
+          text = text.replace('font-bold text-slate-800 text-sm','text-base font-bold text-slate-900')
+          text = text.replace('text-[10px] font-semibold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md','text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-1 rounded-md')
+          text = text.replace('text-xs text-slate-600 mb-2','text-sm text-slate-700 mb-2')
+          text = text.replace('text-xs text-slate-500 mb-3','text-xs font-medium text-slate-500 mb-3')
+          text = text.replace('flex flex-wrap gap-1 mb-3','space-y-1 mb-4')
+          text = text.replace('<span key={s!.idSantri} className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700">\n                        {s!.namaSantri}\n                      </span>','<p key={s!.idSantri} className="text-xs text-slate-600 truncate">{s!.namaSantri}</p>')
+          text = text.replace('<span className="text-[10px] font-medium px-2 py-0.5 text-slate-500">+{anggota.length - 6} lainnya</span>','<p className="text-xs font-semibold text-slate-500">+{anggota.length - 6} santri lainnya</p>')
+          text = text.replace('text-[11px] text-slate-400 italic mb-3','text-xs text-slate-500 mb-4')
+          text = text.replace('flex-1 py-1.5 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200 transition cursor-pointer flex items-center justify-center gap-1.5','min-h-10 flex-1 px-3 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5')
+          text = text.replace('py-1.5 px-3 rounded-lg bg-white hover:bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200 transition cursor-pointer flex items-center gap-1.5','min-h-10 px-3 rounded-lg bg-white hover:bg-rose-50 text-rose-700 text-xs font-semibold border border-rose-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5')
+          text = text.replace('text-[9.5px]','text-xs').replace('text-[9px]','text-xs').replace('text-[10px]','text-xs').replace('text-[11px]','text-xs')
+          text = text.replace("'✨ Menampilkan anggota kelas ini dan santri yang belum ditempatkan (santri kelas lain disembunyikan).'", "'Menampilkan anggota kelas ini dan santri yang belum ditempatkan. Santri kelas lain disembunyikan.'")
+          text = text.replace('<Sparkles className="w-3 h-3" />','<UserCheck className="w-3 h-3" />')
+          text = text.replace('w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500','ui-control w-full pl-9 pr-3 bg-white border border-slate-300 rounded-lg text-sm font-medium')
+          text = text.replace('px-2.5 py-1.5 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-xs font-semibold transition cursor-pointer flex items-center gap-1','min-h-10 px-3 rounded-lg bg-amber-100 hover:bg-amber-200 text-amber-900 border border-amber-300 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5')
+          text = text.replace('px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition cursor-pointer','min-h-10 px-3 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors cursor-pointer')
+          path.write_text(text)
+          PY
+          git diff -- src/components/KelasManagement.tsx
+      - name: Install dependencies
+        run: npm install --no-package-lock --ignore-scripts
+      - name: TypeScript check
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: P2.8 finish gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          file=src/components/KelasManagement.tsx
+          grep -q 'Penempatan santri' "$file"
+          grep -q 'Daftar kelas' "$file"
+          grep -q 'Kelengkapan penempatan' "$file"
+          grep -q 'handleAddKelas' "$file"
+          grep -q 'handleSaveEdit' "$file"
+          grep -q 'handleDeleteKelas' "$file"
+          grep -q 'storageService.addKelas' "$file"
+          grep -q 'storageService.updateKelas' "$file"
+          grep -q 'storageService.deleteKelas' "$file"
+          grep -q 'useAccessibleDialog' "$file"
+          ! grep -q 'bg-gradient' "$file"
+          ! grep -q 'Sparkles' "$file"
+          ! grep -q 'text-\[9px\]' "$file"
+          ! grep -q 'text-\[10px\]' "$file"
+          ! grep -q 'text-\[11px\]' "$file"
+          git diff --check
+      - name: Commit verified P2.8 change
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/components/KelasManagement.tsx
+          if ! git diff --cached --quiet; then
+            git commit -m 'refactor: redesign P2.8 Kelas Management hierarchy'
+            git push
+          fi
