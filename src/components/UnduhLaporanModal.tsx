@@ -26,6 +26,7 @@ import {
   Calendar,
   CalendarRange
 } from 'lucide-react';
+import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
 
 interface UnduhLaporanModalProps {
   isOpen: boolean;
@@ -49,6 +50,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   pembelajaranRecords = []
 }) => {
   const { isGenerating, error, success, generatePDF } = useGeneratePDF();
+  const dialogRef = useAccessibleDialog(isOpen, onClose);
 
   const isViewOnly = currentUser.role === 'Wali' || currentUser.role === 'Santri';
   const targetSantriId =
@@ -227,7 +229,14 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
 
   return createPortal(
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[calc(100dvh-1.5rem)] sm:max-h-[90vh] overflow-y-auto">
+      <div
+        ref={dialogRef}
+        className="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-lg max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="report-download-title"
+        tabIndex={-1}
+      >
         {/* Modal Header */}
         <div className="sticky top-0 z-10 bg-gradient-to-r from-emerald-800 to-teal-800 text-white px-5 sm:px-6 py-4 rounded-t-3xl flex items-center justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -235,7 +244,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
               <FileText className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <h3 className="font-bold text-sm sm:text-base truncate">
+              <h3 id="report-download-title" className="font-bold text-sm sm:text-base truncate">
                 Unduh Laporan Hafalan (PDF)
               </h3>
               <p className="text-[11px] text-emerald-100">

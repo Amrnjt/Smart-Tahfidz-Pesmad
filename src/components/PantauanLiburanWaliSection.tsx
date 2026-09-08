@@ -4,6 +4,7 @@ import { storageService } from '../services/storageService';
 import { Sparkles, Calendar, BookOpen, CircleCheck as CheckCircle2, CircleAlert as AlertCircle, Check, Trash2, Edit3, Save, RotateCcw, Clock, Lock } from 'lucide-react';
 import { formatTanggalIndo, getTodayInputFormat } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
+import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
 
 interface PantauanLiburanWaliSectionProps {
   currentUser: User;
@@ -52,6 +53,9 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
 
   // Local state of records for target santri
   const [records, setRecords] = useState<PantauanLiburanRecord[]>([]);
+  const deleteDialogRef = useAccessibleDialog(Boolean(recordToDelete), () => {
+    if (!isDeletingRecord) setRecordToDelete(null);
+  });
 
   const loadRecords = () => {
     const all = storageService.getPantauanLiburanRecords();
@@ -614,10 +618,12 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
       {recordToDelete && (
         <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-[1px] flex items-center justify-center p-4">
           <div
-            className="w-full max-w-sm rounded-2xl bg-white border border-slate-200 shadow-xl p-5 space-y-4"
+            ref={deleteDialogRef}
+            className="w-full max-w-sm max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain rounded-2xl bg-white border border-slate-200 shadow-xl p-5 space-y-4"
             role="dialog"
             aria-modal="true"
             aria-labelledby="pantauan-delete-title"
+            tabIndex={-1}
           >
             <div>
               <h4 id="pantauan-delete-title" className="text-sm font-extrabold text-slate-900">Hapus catatan amaliyah?</h4>
