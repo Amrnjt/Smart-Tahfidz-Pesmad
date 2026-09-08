@@ -1,0 +1,272 @@
+name: P2.18 Final Finish Gate
+
+on:
+  push:
+    branches:
+      - p2-18-final-finish-gate
+    paths:
+      - .github/workflows/p2-18-final-finish-gate.yml
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: p2-18-final-finish-gate
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Measure baseline build
+        shell: bash
+        run: |
+          npm run build | tee /tmp/p2-18-baseline-build.log
+          BASE_TOTAL_JS=$(find dist/assets -type f -name '*.js' -printf '%s\n' | awk '{s+=$1} END {print s+0}')
+          BASE_ENTRY_REL=$(python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path('dist/index.html').read_text()
+          match = re.search(r'<script[^>]+src="/([^\"]+\.js)"', html)
+          if not match:
+              raise SystemExit('Unable to resolve baseline entry chunk')
+          print(match.group(1))
+          PY
+          )
+          BASE_ENTRY_JS=$(stat -c%s "dist/$BASE_ENTRY_REL")
+          BASE_ENTRY_GZIP=$(gzip -c "dist/$BASE_ENTRY_REL" | wc -c)
+          echo "$BASE_TOTAL_JS" > /tmp/p2-18-base-total-js
+          echo "$BASE_ENTRY_JS" > /tmp/p2-18-base-entry-js
+          echo "$BASE_ENTRY_GZIP" > /tmp/p2-18-base-entry-gzip
+          echo "Baseline total JS: $BASE_TOTAL_JS bytes"
+          echo "Baseline entry JS: $BASE_ENTRY_JS bytes"
+          echo "Baseline entry gzip: $BASE_ENTRY_GZIP bytes"
+          find dist/assets -type f -name '*.js' -printf '%s %p\n' | sort -nr | head -8
+          rm -rf dist
+
+      - name: Apply low-risk route code splitting
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('src/App.tsx')
+          text = path.read_text()
+
+          eager_imports = [
+              "import { UstadzDashboard } from './components/UstadzDashboard';\n",
+              "import { WaliDashboard } from './components/WaliDashboard';\n",
+              "import { SantriDashboard } from './components/SantriDashboard';\n",
+              "import { ZiyadahForm } from './components/ZiyadahForm';\n",
+              "import { MurojaahForm } from './components/MurojaahForm';\n",
+              "import { BinnadzorForm } from './components/BinnadzorForm';\n",
+              "import { PembelajaranForm } from './components/PembelajaranForm';\n",
+              "import { HistoryTable } from './components/HistoryTable';\n",
+              "import { MushafQuran } from './components/MushafQuran';\n",
+              "import { SantriManagement } from './components/SantriManagement';\n",
+              "import { KelasManagement } from './components/KelasManagement';\n",
+          ]
+          for import_line in eager_imports:
+              if import_line not in text:
+                  raise SystemExit(f'Expected eager import missing: {import_line.strip()}')
+              text = text.replace(import_line, '', 1)
+
+          anchor = "import { LayoutDashboard, CirclePlus as PlusCircle, History, BookOpen, Users, Cloud, GraduationCap } from 'lucide-react';\n"
+          if anchor not in text:
+              raise SystemExit('Lazy import insertion anchor not found')
+
+          lazy_block = """
+
+const UstadzDashboard = React.lazy(() =>
+  import('./components/UstadzDashboard').then(({ UstadzDashboard }) => ({ default: UstadzDashboard }))
+);
+const WaliDashboard = React.lazy(() =>
+  import('./components/WaliDashboard').then(({ WaliDashboard }) => ({ default: WaliDashboard }))
+);
+const SantriDashboard = React.lazy(() =>
+  import('./components/SantriDashboard').then(({ SantriDashboard }) => ({ default: SantriDashboard }))
+);
+const ZiyadahForm = React.lazy(() =>
+  import('./components/ZiyadahForm').then(({ ZiyadahForm }) => ({ default: ZiyadahForm }))
+);
+const MurojaahForm = React.lazy(() =>
+  import('./components/MurojaahForm').then(({ MurojaahForm }) => ({ default: MurojaahForm }))
+);
+const BinnadzorForm = React.lazy(() =>
+  import('./components/BinnadzorForm').then(({ BinnadzorForm }) => ({ default: BinnadzorForm }))
+);
+const PembelajaranForm = React.lazy(() =>
+  import('./components/PembelajaranForm').then(({ PembelajaranForm }) => ({ default: PembelajaranForm }))
+);
+const HistoryTable = React.lazy(() =>
+  import('./components/HistoryTable').then(({ HistoryTable }) => ({ default: HistoryTable }))
+);
+const MushafQuran = React.lazy(() =>
+  import('./components/MushafQuran').then(({ MushafQuran }) => ({ default: MushafQuran }))
+);
+const SantriManagement = React.lazy(() =>
+  import('./components/SantriManagement').then(({ SantriManagement }) => ({ default: SantriManagement }))
+);
+const KelasManagement = React.lazy(() =>
+  import('./components/KelasManagement').then(({ KelasManagement }) => ({ default: KelasManagement }))
+);
+
+const RouteLoading = () => (
+  <div
+    role="status"
+    aria-live="polite"
+    className="ui-surface flex min-h-24 items-center gap-3 rounded-xl border border-slate-200 px-4 py-5 text-slate-700"
+  >
+    <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-emerald-600 animate-pulse" aria-hidden="true" />
+    <div>
+      <p className="text-sm font-semibold text-slate-900">Membuka tampilan...</p>
+      <p className="text-xs text-slate-500">Memuat kode fitur yang diperlukan.</p>
+    </div>
+  </div>
+);
+"""
+          text = text.replace(anchor, anchor + lazy_block, 1)
+
+          content_anchor = "            {/* Content per Tab */}\n            {activeTab === 'dashboard' && ("
+          if content_anchor not in text:
+              raise SystemExit('Content Suspense anchor not found')
+          text = text.replace(
+              content_anchor,
+              "            {/* Content per Tab */}\n            <React.Suspense fallback={<RouteLoading />}>\n            {activeTab === 'dashboard' && (",
+              1,
+          )
+
+          footer_anchor = "\n            {/* Production Footer */}"
+          if footer_anchor not in text:
+              raise SystemExit('Footer Suspense close anchor not found')
+          text = text.replace(footer_anchor, "\n            </React.Suspense>\n\n            {/* Production Footer */}", 1)
+
+          path.write_text(text)
+          print('P2.18 route code splitting patch applied')
+          PY
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        shell: bash
+        run: npm run build | tee /tmp/p2-18-final-build.log
+
+      - name: Measure final bundle
+        shell: bash
+        run: |
+          BASE_TOTAL_JS=$(cat /tmp/p2-18-base-total-js)
+          BASE_ENTRY_JS=$(cat /tmp/p2-18-base-entry-js)
+          BASE_ENTRY_GZIP=$(cat /tmp/p2-18-base-entry-gzip)
+          FINAL_TOTAL_JS=$(find dist/assets -type f -name '*.js' -printf '%s\n' | awk '{s+=$1} END {print s+0}')
+          FINAL_ENTRY_REL=$(python - <<'PY'
+          import re
+          from pathlib import Path
+          html = Path('dist/index.html').read_text()
+          match = re.search(r'<script[^>]+src="/([^\"]+\.js)"', html)
+          if not match:
+              raise SystemExit('Unable to resolve final entry chunk')
+          print(match.group(1))
+          PY
+          )
+          FINAL_ENTRY_JS=$(stat -c%s "dist/$FINAL_ENTRY_REL")
+          FINAL_ENTRY_GZIP=$(gzip -c "dist/$FINAL_ENTRY_REL" | wc -c)
+          echo "Baseline total JS: $BASE_TOTAL_JS bytes"
+          echo "Final total JS:    $FINAL_TOTAL_JS bytes"
+          echo "Baseline entry JS: $BASE_ENTRY_JS bytes"
+          echo "Final entry JS:    $FINAL_ENTRY_JS bytes"
+          echo "Baseline entry gzip: $BASE_ENTRY_GZIP bytes"
+          echo "Final entry gzip:    $FINAL_ENTRY_GZIP bytes"
+          echo "Final JS chunks:"
+          find dist/assets -type f -name '*.js' -printf '%s %p\n' | sort -nr | head -12
+
+          # Route splitting may add a little chunk-wrapper overhead, but must materially reduce first-load entry JS.
+          MAX_TOTAL=$((BASE_TOTAL_JS + 51200))
+          test "$FINAL_TOTAL_JS" -le "$MAX_TOTAL"
+          test "$FINAL_ENTRY_JS" -lt "$BASE_ENTRY_JS"
+          TARGET_ENTRY=$((BASE_ENTRY_JS * 75 / 100))
+          if [ "$FINAL_ENTRY_JS" -gt "$TARGET_ENTRY" ]; then
+            echo "Entry chunk reduction is not material enough: $FINAL_ENTRY_JS > $TARGET_ENTRY"
+            exit 1
+          fi
+
+      - name: P2.18 final static gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          app = Path('src/App.tsx').read_text()
+          contract = Path('DESIGN_CONTRACT.md').read_text()
+          src = '\n'.join(p.read_text(errors='ignore') for p in Path('src').rglob('*') if p.suffix in {'.ts', '.tsx', '.css'})
+
+          # Contract v2 is actually locked.
+          for required in [
+              'Final Design Contract v2',
+              'performance-proportionate, measured, and maintainable',
+              '360px mobile',
+              '768px tablet',
+              '1440px desktop',
+              'Taste Gate',
+              'Apakah ini terasa spesifik milik Pesmad?',
+              'Data truth',
+              'Purposeful motion',
+          ]:
+              assert required in contract, f'contract v2 requirement missing: {required}'
+
+          # Heavy feature screens are no longer eager imports in App.
+          for eager in [
+              "import { UstadzDashboard }",
+              "import { WaliDashboard }",
+              "import { SantriDashboard }",
+              "import { HistoryTable }",
+              "import { MushafQuran }",
+              "import { SantriManagement }",
+              "import { KelasManagement }",
+          ]:
+              assert eager not in app, f'eager route import remains: {eager}'
+          assert app.count('React.lazy(') >= 11
+          assert '<React.Suspense fallback={<RouteLoading />}>' in app
+          assert 'Memuat kode fitur yang diperlukan.' in app
+
+          # Core contracts remain present.
+          for required in [
+              'storageService.initRealtimeSync',
+              'storageService.syncWithCloud',
+              'setIsSetorMenuOpen(true)',
+              '<BottomNav',
+              '<Navbar',
+              '<Snackbar',
+              'useSetoranNotifications',
+          ]:
+              assert required in app, f'core App contract missing: {required}'
+
+          # Anti-slop/static regression check across source.
+          for forbidden in ['text-[9px]', 'text-[10px]', 'Sparkles', 'bg-gradient-to', 'backdrop-blur']:
+              assert forbidden not in src, f'legacy token reintroduced: {forbidden}'
+
+          # P0 overlay and safe-area contracts still exist.
+          css = Path('src/index.css').read_text()
+          assert '.fixed.inset-0.z-50' in css
+          assert 'z-index: 70 !important' in css
+          assert 'safe-area-inset-bottom' in src
+          assert 'prefers-reduced-motion' in css
+          PY
+          git diff --check
+
+      - name: Commit verified P2.18 App change
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/App.tsx
+          git diff --cached --quiet && { echo "No App change to commit"; exit 1; }
+          git commit -m "perf: code-split P2.18 feature routes"
+          git push origin HEAD:p2-18-final-finish-gate
