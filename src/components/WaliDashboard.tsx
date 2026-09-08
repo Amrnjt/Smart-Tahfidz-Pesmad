@@ -178,12 +178,13 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   const latestNote = activities.find(activity => Boolean(activity.catatan));
   const totalRecords = activities.length;
   const latestByCategory = (category: ActivityCategory) => activities.find(activity => activity.category === category);
-  const categoryRows: { category: ActivityCategory; count: number; latest?: WaliActivity }[] = [
+  const categoryRowsSource: { category: ActivityCategory; count: number; latest?: WaliActivity }[] = [
     { category: 'Ziyadah', count: santriZiyadah.length, latest: latestByCategory('Ziyadah') },
     { category: "Muroja'ah", count: santriMurojaah.length, latest: latestByCategory("Muroja'ah") },
     { category: 'Binnadzor', count: santriBinnadzor.length, latest: latestByCategory('Binnadzor') },
     { category: 'Pembelajaran', count: santriPembelajaran.length, latest: latestByCategory('Pembelajaran') }
-  ].filter(row => row.count > 0 || row.category !== 'Pembelajaran');
+  ];
+  const categoryRows = categoryRowsSource.filter(row => row.count > 0 || row.category !== 'Pembelajaran');
 
   const latestCategory = latestActivity ? categoryMeta[latestActivity.category] : null;
   const LatestIcon = latestCategory?.icon || BookOpen;
