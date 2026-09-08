@@ -1,29 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SURAH_LIST } from '../data/quranSurahs';
-import { SurahMeta } from '../types';
-import {
-  BookOpen,
-  Search,
-  Volume2,
-  VolumeX,
-  Pause,
-  Play,
-  Square,
-  Sparkles,
-  AlertCircle,
-  Moon,
-  Sun,
-  Type,
-  RotateCcw,
-  SkipBack,
-  SkipForward,
-  Music,
-  ListMusic,
-  CheckCircle2,
-  Radio,
-  ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
+import { Search, Volume2, VolumeX, Pause, Play, Square, AlertCircle, Moon, Sun, RotateCcw, SkipBack, SkipForward, ListMusic, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface EquranAyah {
   nomorAyat: number;
@@ -66,7 +43,13 @@ export const MushafQuran: React.FC = () => {
   });
   const [fontSizeOffset, setFontSizeOffset] = useState<'normal' | 'large' | 'xlarge'>('normal');
 
+  const [showLatin, setShowLatin] = useState(true);
+  const [showTranslation, setShowTranslation] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [audioError, setAudioError] = useState<string | null>(null);
+
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const surahRequestRef = useRef(0);
 
   const toggleNightMode = () => {
     setIsNightMode(prev => {
@@ -94,21 +77,36 @@ export const MushafQuran: React.FC = () => {
     setPlaybackMode('idle');
     setPlayingAyahNumber(null);
     setCurrentTime(0);
+    setDuration(0);
+    setAudioError(null);
   };
 
   useEffect(() => {
     fetchSurahDetail(selectedSurahNumber);
   }, [selectedSurahNumber]);
 
+  useEffect(() => () => {
+    surahRequestRef.current += 1;
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+    }
+  }, []);
+
   const fetchSurahDetail = async (surahNumber: number) => {
+    const requestId = ++surahRequestRef.current;
     setIsLoading(true);
+    setLoadError(null);
+    setAyahs([]);
+    setFullAudioUrls({});
     stopAudio();
 
     try {
       const response = await fetch(`https://equran.id/api/v2/surat/${surahNumber}`);
       if (response.ok) {
         const json = await response.json();
-        if (json.code === 200 && json.data) {
+        if (requestId !== surahRequestRef.current) return;
+        if (json.code === 200 && json.data && Array.isArray(json.data.ayat) && json.data.ayat.length > 0) {
           if (json.data.ayat) {
             setAyahs(json.data.ayat);
           }
@@ -120,10 +118,12 @@ export const MushafQuran: React.FC = () => {
         }
       }
     } catch (err) {
-      console.warn('Fallback local quran data activated:', err);
+      console.warn('Surah text could not be loaded:', err);
     }
 
-    // Fallback data if offline / rate limited
+    if (requestId !== surahRequestRef.current) return;
+
+    // Keep the existing full-surah audio source, but never substitute another surah's text.
     const padded = String(surahNumber).padStart(3, '0');
     const fallbackAudioFull: Record<string, string> = {
       '05': `https://equran.nos.wjv-1.neo.id/audio-full/Misyari-Rasyid-Al-Afasi/${padded}.mp3`,
@@ -134,23 +134,7 @@ export const MushafQuran: React.FC = () => {
     };
     setFullAudioUrls(fallbackAudioFull);
 
-    const fallbackAyahs: EquranAyah[] = [
-      {
-        nomorAyat: 1,
-        teksArab: 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-        teksLatin: 'Bismillāhir-raḥmānir-raḥīm',
-        teksIndonesia: 'Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.',
-        audio: { '05': `https://equran.nos.wjv-1.neo.id/audio-full/Misyari-Rasyid-Al-Afasi/${padded}.mp3` }
-      },
-      {
-        nomorAyat: 2,
-        teksArab: 'الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ',
-        teksLatin: 'Al-ḥamdu lillāhi rabbil-‘ālamīn',
-        teksIndonesia: 'Segala puji bagi Allah, Tuhan seluruh alam.',
-        audio: { '05': `https://equran.nos.wjv-1.neo.id/audio-full/Misyari-Rasyid-Al-Afasi/${padded}.mp3` }
-      }
-    ];
-    setAyahs(fallbackAyahs);
+    setLoadError('Ayat surah ini belum dapat dimuat. Periksa koneksi, lalu coba lagi.');
     setIsLoading(false);
   };
 
@@ -161,7 +145,10 @@ export const MushafQuran: React.FC = () => {
         audioRef.current.pause();
         setIsAudioPlaying(false);
       } else {
-        audioRef.current.play().then(() => setIsAudioPlaying(true)).catch(e => console.warn(e));
+        audioRef.current.play().then(() => { setIsAudioPlaying(true); setAudioError(null); }).catch(e => {
+          console.warn(e);
+          setAudioError('Audio belum dapat diputar. Periksa koneksi, lalu coba putar kembali.');
+        });
       }
       return;
     }
@@ -205,6 +192,7 @@ export const MushafQuran: React.FC = () => {
       })
       .catch(e => {
         console.warn('Full surah audio error:', e);
+        setAudioError('Audio belum dapat diputar. Periksa koneksi, lalu coba putar kembali.');
         setIsAudioPlaying(false);
         setPlaybackMode('idle');
       });
@@ -212,12 +200,17 @@ export const MushafQuran: React.FC = () => {
 
   // Play individual ayah or continuous sequential
   const handlePlayAyahAudio = (ayah: EquranAyah, continuous = false) => {
-    if (playbackMode === 'ayah' && playingAyahNumber === ayah.nomorAyat && audioRef.current) {
+    if ((playbackMode === 'ayah' || playbackMode === 'auto-continuous') &&
+        playingAyahNumber === ayah.nomorAyat && audioRef.current &&
+        (!continuous || playbackMode === 'auto-continuous')) {
       if (isAudioPlaying) {
         audioRef.current.pause();
         setIsAudioPlaying(false);
       } else {
-        audioRef.current.play().then(() => setIsAudioPlaying(true)).catch(e => console.warn(e));
+        audioRef.current.play().then(() => { setIsAudioPlaying(true); setAudioError(null); }).catch(e => {
+          console.warn(e);
+          setAudioError('Audio belum dapat diputar. Periksa koneksi, lalu coba putar kembali.');
+        });
       }
       return;
     }
@@ -225,7 +218,10 @@ export const MushafQuran: React.FC = () => {
     stopAudio();
 
     const audioUrl = ayah.audio[selectedQari] || ayah.audio['05'] || Object.values(ayah.audio)[0];
-    if (!audioUrl) return;
+    if (!audioUrl) {
+      setAudioError('Audio ayat ini belum tersedia. Coba qari lain atau putar surah penuh.');
+      return;
+    }
 
     const audio = new Audio(audioUrl);
     audioRef.current = audio;
@@ -268,6 +264,7 @@ export const MushafQuran: React.FC = () => {
       })
       .catch(e => {
         console.warn('Ayah audio error:', e);
+        setAudioError('Audio belum dapat diputar. Periksa koneksi, lalu coba putar kembali.');
         setIsAudioPlaying(false);
         setPlaybackMode('idle');
         setPlayingAyahNumber(null);
@@ -301,573 +298,519 @@ export const MushafQuran: React.FC = () => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Font size classes based on state
+
   const arabicFontSizeClass =
     fontSizeOffset === 'xlarge'
-      ? 'text-3xl sm:text-4xl lg:text-5xl leading-loose'
+      ? 'text-4xl sm:text-5xl leading-[2.4]'
       : fontSizeOffset === 'large'
-      ? 'text-2xl sm:text-3xl lg:text-4xl leading-loose'
-      : 'text-xl sm:text-2xl lg:text-3xl leading-loose';
-
-  const currentQariObj = QARI_LIST.find(q => q.id === selectedQari) || QARI_LIST[0];
+        ? 'text-3xl sm:text-4xl leading-[2.4]'
+        : 'text-2xl sm:text-3xl leading-[2.4]';
+  const currentQariObj = QARI_LIST.find((q) => q.id === selectedQari) || QARI_LIST[0];
+  const surfaceClass = isNightMode
+    ? 'border-slate-700 bg-slate-900 text-slate-100'
+    : 'border-slate-200 bg-white text-slate-900';
+  const mutedClass = isNightMode ? 'text-slate-300' : 'text-slate-600';
+  const controlClass = isNightMode
+    ? 'border-slate-600 bg-slate-800 text-slate-100 hover:bg-slate-700'
+    : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50';
 
   return (
-    <div className={`space-y-6 pb-24 transition-colors duration-300 ${isNightMode ? 'night-mode-active text-slate-100' : ''}`}>
-      {/* Quran Header & Surah Selector Grid */}
-      <div
-        className={`rounded-3xl p-5 sm:p-7 border shadow-xs space-y-5 transition-colors duration-300 ${
-          isNightMode
-            ? 'bg-slate-900 border-slate-800 text-slate-100'
-            : 'bg-white border-slate-200/90'
-        }`}
-      >
-        <div className={`flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b ${isNightMode ? 'border-slate-800' : 'border-slate-100'}`}>
+    <div
+      className={`space-y-4 ${playbackMode !== 'idle' ? 'pb-[calc(24rem+env(safe-area-inset-bottom,0px))]' : 'pb-6'} ${isNightMode ? 'night-mode-active rounded-xl bg-slate-950 text-slate-100' : ''}`}
+    >
+      <header className={`rounded-xl border p-4 sm:p-6 ${surfaceClass}`}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2">
-              <span className={`p-2 rounded-xl ${isNightMode ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-emerald-100 text-emerald-800'}`}>
-                <BookOpen className="w-5 h-5" />
-              </span>
-              <h3 className={`font-extrabold text-lg sm:text-xl ${isNightMode ? 'text-slate-100' : 'text-slate-800'}`}>
-                Mushaf Al-Qur'an Digital 30 Juz
-              </h3>
-            </div>
-            <p className={`text-xs sm:text-sm mt-1 ${isNightMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              Simak hafalan dan muraja'ah santri lengkap dengan teks Arab, transliterasi Latin, terjemahan & murottal 1 surat penuh.
-            </p>
+            <h2 className="text-xl font-bold sm:text-2xl">Mushaf Al-Qur'an</h2>
+            <p className={`mt-1 text-sm ${mutedClass}`}>Baca dan dengarkan surah pilihan.</p>
           </div>
-
-          {/* Controls: Night Mode Toggle, Font Size & Search Box */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Night Mode Toggle Button */}
-            <button
-              onClick={toggleNightMode}
-              type="button"
-              className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
-                isNightMode
-                  ? 'bg-amber-400/15 text-amber-300 border-amber-400/40 hover:bg-amber-400/25 shadow-xs'
-                  : 'bg-slate-800 text-slate-100 border-slate-700 hover:bg-slate-900 shadow-xs'
-              }`}
-              title={isNightMode ? 'Beralih ke Mode Terang' : 'Aktifkan Mode Malam untuk kenyamanan mata'}
-            >
-              {isNightMode ? (
-                <>
-                  <Sun className="w-4 h-4 text-amber-300" />
-                  <span>Mode Terang</span>
-                </>
-              ) : (
-                <>
-                  <Moon className="w-4 h-4 text-indigo-300" />
-                  <span>Night Mode</span>
-                </>
-              )}
-            </button>
-
-            {/* Font Size Adjuster */}
-            <div className={`flex items-center rounded-xl border p-1 text-xs font-bold ${isNightMode ? 'bg-slate-800/80 border-slate-700' : 'bg-slate-100 border-slate-200'}`}>
-              <button
-                onClick={() => setFontSizeOffset('normal')}
-                className={`px-2 py-1 rounded-lg transition ${
-                  fontSizeOffset === 'normal'
-                    ? (isNightMode ? 'bg-emerald-800 text-white' : 'bg-white text-emerald-800 shadow-xs')
-                    : (isNightMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600')
-                }`}
-                title="Ukuran Standar"
-              >
-                A
-              </button>
-              <button
-                onClick={() => setFontSizeOffset('large')}
-                className={`px-2 py-1 rounded-lg transition ${
-                  fontSizeOffset === 'large'
-                    ? (isNightMode ? 'bg-emerald-800 text-white' : 'bg-white text-emerald-800 shadow-xs')
-                    : (isNightMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600')
-                }`}
-                title="Ukuran Sedang"
-              >
-                A+
-              </button>
-              <button
-                onClick={() => setFontSizeOffset('xlarge')}
-                className={`px-2 py-1 rounded-lg transition ${
-                  fontSizeOffset === 'xlarge'
-                    ? (isNightMode ? 'bg-emerald-800 text-white' : 'bg-white text-emerald-800 shadow-xs')
-                    : (isNightMode ? 'text-slate-400 hover:text-slate-200' : 'text-slate-600')
-                }`}
-                title="Ukuran Besar"
-              >
-                A++
-              </button>
-            </div>
-
-            {/* Search Surah Box */}
-            <div className="relative w-full sm:w-60">
-              <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari Surah (cth: Yasin)..."
-                className={`w-full pl-10 pr-4 py-2.5 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500 transition ${
-                  isNightMode
-                    ? 'bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-400 focus:bg-slate-750'
-                    : 'bg-slate-50 border border-slate-300 text-slate-800 placeholder-slate-400 focus:bg-white'
-                }`}
-              />
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={toggleNightMode}
+            aria-pressed={isNightMode}
+            aria-label="Mode malam"
+            className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${controlClass}`}
+          >
+            {isNightMode ? (
+              <Sun className="h-4 w-4" aria-hidden="true" />
+            ) : (
+              <Moon className="h-4 w-4" aria-hidden="true" />
+            )}
+            {isNightMode ? 'Mode terang' : 'Mode malam'}
+          </button>
         </div>
-
-        {/* Quick Surah Selection Grid */}
-        <div>
-          <div className="flex items-center justify-between mb-2.5">
-            <p className={`text-xs font-bold uppercase tracking-wider ${isNightMode ? 'text-slate-400' : 'text-slate-500'}`}>
-              Pilih Surah ({filteredSurahs.length} dari 114 Surah):
-            </p>
-            {isNightMode && (
-              <span className="text-[10px] text-amber-300 font-semibold flex items-center gap-1">
-                <Moon className="w-3 h-3" /> Mode Belajar Malam Aktif
+        <div className="mt-4 grid items-start gap-3 lg:grid-cols-2">
+          <details
+            className={`min-w-0 rounded-lg border ${isNightMode ? 'border-slate-700' : 'border-slate-200'}`}
+          >
+            <summary className="min-h-11 cursor-pointer rounded-lg px-3 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500">
+              Pilih surah{' '}
+              <span className={`font-normal ${mutedClass}`}>
+                · {selectedSurah.number}. {selectedSurah.nameLatin}
               </span>
+            </summary>
+            <div className="space-y-3 px-3 pb-3">
+              <label htmlFor="mushaf-search" className="block text-sm font-medium">
+                Cari nama, nomor, atau arti surah
+              </label>
+              <div className="relative">
+                <Search
+                  className={`pointer-events-none absolute left-3 top-3.5 h-4 w-4 ${mutedClass}`}
+                  aria-hidden="true"
+                />
+                <input
+                  id="mushaf-search"
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Contoh: Yasin atau 36"
+                  className={`min-h-11 w-full min-w-0 rounded-lg border py-2 pl-9 pr-3 text-base ${controlClass}`}
+                />
+              </div>
+              <p role="status" className={`text-xs ${mutedClass}`}>
+                {filteredSurahs.length} dari 114 surah
+              </p>
+              {filteredSurahs.length === 0 ? (
+                <p className={`py-3 text-sm ${mutedClass}`}>
+                  Surah tidak ditemukan. Coba nama atau nomor lain.
+                </p>
+              ) : (
+                <div className="grid max-h-64 grid-cols-1 gap-1 overflow-y-auto overscroll-contain p-1 sm:grid-cols-2">
+                  {filteredSurahs.map((surah) => (
+                    <button
+                      type="button"
+                      key={surah.number}
+                      onClick={() => setSelectedSurahNumber(surah.number)}
+                      aria-pressed={surah.number === selectedSurahNumber}
+                      className={`flex min-h-11 items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left ${surah.number === selectedSurahNumber ? 'border-emerald-700 bg-emerald-700 text-white' : controlClass}`}
+                    >
+                      <span className="min-w-0">
+                        <span className="block break-words text-sm font-semibold">
+                          {surah.number}. {surah.nameLatin}
+                        </span>
+                        <span className="text-xs">{surah.numberOfAyahs} ayat</span>
+                      </span>
+                      <span lang="ar" dir="rtl" className="shrink-0 font-arabic text-xl">
+                        {surah.nameArabic}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </details>
+          <details
+            className={`min-w-0 rounded-lg border ${isNightMode ? 'border-slate-700' : 'border-slate-200'}`}
+          >
+            <summary className="min-h-11 cursor-pointer rounded-lg px-3 py-3 text-sm font-semibold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500">
+              Pengaturan bacaan dan qari
+            </summary>
+            <div className="space-y-4 px-3 pb-3">
+              <fieldset>
+                <legend className="mb-2 text-sm font-medium">Ukuran teks Arab</legend>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      { value: 'normal', label: 'Standar' },
+                      { value: 'large', label: 'Besar' },
+                      { value: 'xlarge', label: 'Lebih besar' }
+                    ] as const
+                  ).map((size) => (
+                    <button
+                      type="button"
+                      key={size.value}
+                      onClick={() => setFontSizeOffset(size.value)}
+                      aria-pressed={fontSizeOffset === size.value}
+                      className={`min-h-11 rounded-lg border px-3 py-2 text-sm font-semibold ${fontSizeOffset === size.value ? 'border-emerald-700 bg-emerald-700 text-white' : controlClass}`}
+                    >
+                      {size.label}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+              <div className="flex flex-wrap gap-x-6 gap-y-2">
+                <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={showLatin}
+                    onChange={(e) => setShowLatin(e.target.checked)}
+                    className="h-5 w-5 accent-emerald-600"
+                  />
+                  Teks Latin
+                </label>
+                <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={showTranslation}
+                    onChange={(e) => setShowTranslation(e.target.checked)}
+                    className="h-5 w-5 accent-emerald-600"
+                  />
+                  Terjemahan
+                </label>
+              </div>
+              <div className="space-y-2">
+                <label htmlFor="mushaf-qari" className="block text-sm font-medium">
+                  Qari
+                </label>
+                <select
+                  id="mushaf-qari"
+                  value={selectedQari}
+                  onChange={(e) => {
+                    setSelectedQari(e.target.value);
+                    stopAudio();
+                  }}
+                  className={`min-h-11 w-full min-w-0 rounded-lg border px-3 py-2 text-base ${controlClass}`}
+                >
+                  {QARI_LIST.map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </details>
+        </div>
+      </header>
+
+      <section
+        aria-labelledby="mushaf-surah-title"
+        className={`mx-auto max-w-4xl overflow-hidden rounded-xl border ${surfaceClass}`}
+      >
+        <header
+          className={`space-y-4 border-b p-4 sm:p-6 ${isNightMode ? 'border-slate-700' : 'border-slate-200'}`}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className={`text-xs ${mutedClass}`}>Surah {selectedSurah.number} dari 114</p>
+              <h3 id="mushaf-surah-title" className="mt-1 text-xl font-semibold sm:text-2xl">
+                {selectedSurah.nameLatin}
+              </h3>
+              <p className={`mt-1 text-sm ${mutedClass}`}>
+                {selectedSurah.translation} · {selectedSurah.numberOfAyahs} ayat ·{' '}
+                {selectedSurah.revelationType}
+              </p>
+            </div>
+            <p
+              lang="ar"
+              dir="rtl"
+              className={`font-arabic text-3xl leading-loose sm:text-4xl ${isNightMode ? 'text-emerald-200' : 'text-emerald-900'}`}
+            >
+              {selectedSurah.nameArabic}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleToggleFullSurahAudio}
+              disabled={isLoading}
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-wait disabled:opacity-60"
+            >
+              {playbackMode === 'full-surah' && isAudioPlaying ? (
+                <Pause className="h-4 w-4" aria-hidden="true" />
+              ) : (
+                <Play className="h-4 w-4" aria-hidden="true" />
+              )}
+              {playbackMode === 'full-surah' && isAudioPlaying ? 'Jeda surah' : 'Putar surah penuh'}
+            </button>
+            {ayahs.length > 0 && !isLoading && (
+              <button
+                type="button"
+                onClick={() => handlePlayAyahAudio(ayahs[0], true)}
+                aria-pressed={playbackMode === 'auto-continuous'}
+                className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${controlClass}`}
+              >
+                <ListMusic className="h-4 w-4" aria-hidden="true" />
+                Putar ayat bersambung
+              </button>
             )}
           </div>
-          <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 max-h-52 overflow-y-auto p-2 rounded-2xl border ${
-            isNightMode
-              ? 'bg-slate-950/70 border-slate-800'
-              : 'bg-slate-50/80 border-slate-200'
-          }`}>
-            {filteredSurahs.map((surah) => {
-              const isSelected = surah.number === selectedSurahNumber;
-              return (
-                <button
-                  key={surah.number}
-                  onClick={() => setSelectedSurahNumber(surah.number)}
-                  className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between cursor-pointer ${
-                    isSelected
-                      ? (isNightMode ? 'bg-emerald-900 text-white border-emerald-600 shadow-md' : 'bg-emerald-800 text-white border-emerald-900 shadow-sm')
-                      : (isNightMode
-                          ? 'bg-slate-900/90 text-slate-200 border-slate-800 hover:border-emerald-500/60 hover:bg-slate-850'
-                          : 'bg-white text-slate-700 border-slate-200/80 hover:border-emerald-500 hover:bg-emerald-50/50')
-                  }`}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <span className={`text-[10px] font-bold ${isSelected ? (isNightMode ? 'text-emerald-300' : 'text-emerald-200') : (isNightMode ? 'text-slate-500' : 'text-slate-400')}`}>
-                      {surah.number}
-                    </span>
-                    <span className={`font-arabic text-sm font-bold ${isSelected ? 'text-amber-300' : (isNightMode ? 'text-amber-200' : 'text-slate-800')}`}>
-                      {surah.nameArabic}
-                    </span>
-                  </div>
-                  <div className="mt-1">
-                    <div className="text-xs font-bold truncate leading-tight">{surah.nameLatin}</div>
-                    <span className={`text-[10px] truncate block ${isSelected ? 'text-emerald-200' : (isNightMode ? 'text-slate-400' : 'text-slate-400')}`}>
-                      {surah.numberOfAyahs} Ayat
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+          <p className={`text-xs ${mutedClass}`}>Qari: {currentQariObj.name}</p>
+        </header>
 
-      {/* Surah Header Banner with Integrated Full Surah Audio Player */}
-      <div className={`rounded-3xl p-6 sm:p-8 shadow-md relative overflow-hidden text-white transition-colors duration-300 ${
-        isNightMode
-          ? 'bg-gradient-to-r from-slate-950 via-emerald-950 to-slate-900 border border-emerald-900/60'
-          : 'bg-gradient-to-r from-emerald-900 via-emerald-800 to-teal-900'
-      }`}>
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${isNightMode ? 'bg-emerald-900/80 text-emerald-300 border border-emerald-700/50' : 'bg-white/20 text-emerald-200'}`}>
-                {selectedSurah.number}
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-wide">
-                Surah {selectedSurah.nameLatin}
-              </h2>
-              <span className={`text-[11px] px-2.5 py-0.5 rounded-full font-semibold border ${
-                isNightMode
-                  ? 'bg-emerald-950/80 border-emerald-700/60 text-emerald-200'
-                  : 'bg-emerald-700/80 border-emerald-500/50 text-emerald-100'
-              }`}>
-                {selectedSurah.revelationType}
-              </span>
-            </div>
-            <p className={`text-xs sm:text-sm mt-1.5 ${isNightMode ? 'text-emerald-300/90' : 'text-emerald-200'}`}>
-              Arti: <span className="font-semibold text-white">{selectedSurah.translation}</span> • Total {selectedSurah.numberOfAyahs} Ayat
+        {selectedSurah.number !== 9 && (
+          <div className="px-4 py-8 text-center sm:px-8">
+            <p lang="ar" dir="rtl" className="font-arabic text-2xl leading-loose sm:text-3xl">
+              بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
             </p>
+            {showTranslation && (
+              <p className={`mt-3 text-sm ${mutedClass}`}>
+                Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.
+              </p>
+            )}
           </div>
+        )}
 
-          {/* Center/Right: Arabic Title & Murottal Full Surah Action Button */}
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 lg:gap-6 justify-between lg:justify-end">
-            <div className="text-left sm:text-right">
-              <span className="font-arabic text-3xl sm:text-4xl font-bold text-amber-300 block">
-                {selectedSurah.nameArabic}
-              </span>
-              <span className="text-[11px] text-emerald-200/80 block mt-0.5">
-                Qari: {currentQariObj.name}
-              </span>
+        <div aria-busy={isLoading}>
+          {isLoading ? (
+            <div role="status" className="space-y-6 px-4 py-8 sm:px-8">
+              <p className={`text-sm ${mutedClass}`}>
+                Memuat ayat Surah {selectedSurah.nameLatin}...
+              </p>
+              <div aria-hidden="true" className="space-y-5">
+                <div
+                  className={`ml-auto h-8 w-4/5 rounded ${isNightMode ? 'bg-slate-800' : 'bg-slate-100'}`}
+                />
+                <div
+                  className={`ml-auto h-8 w-full rounded ${isNightMode ? 'bg-slate-800' : 'bg-slate-100'}`}
+                />
+              </div>
             </div>
-
-            {/* Main Full Surah Audio Play Button */}
-            <div className="flex items-center gap-2">
+          ) : loadError ? (
+            <div
+              role="alert"
+              className={`space-y-3 p-4 sm:p-8 ${isNightMode ? 'bg-rose-950 text-rose-100' : 'bg-rose-50 text-rose-900'}`}
+            >
+              <p className="flex items-center gap-2 text-base font-semibold">
+                <AlertCircle className="h-5 w-5 shrink-0" aria-hidden="true" />
+                Ayat belum tersedia
+              </p>
+              <p className="text-sm leading-relaxed">{loadError}</p>
               <button
-                onClick={handleToggleFullSurahAudio}
                 type="button"
-                className={`px-5 py-3 rounded-2xl font-bold text-xs sm:text-sm flex items-center gap-2.5 shadow-lg transition-all cursor-pointer transform active:scale-95 ${
-                  playbackMode === 'full-surah' && isAudioPlaying
-                    ? 'bg-amber-400 text-amber-950 hover:bg-amber-300 shadow-amber-950/40 ring-4 ring-amber-400/30 animate-pulse'
-                    : 'bg-white text-emerald-950 hover:bg-emerald-50 shadow-emerald-950/40'
-                }`}
+                onClick={() => fetchSurahDetail(selectedSurahNumber)}
+                className={`min-h-11 rounded-lg border px-4 py-2 text-sm font-semibold ${controlClass}`}
               >
-                {playbackMode === 'full-surah' && isAudioPlaying ? (
-                  <>
-                    <Pause className="w-5 h-5 fill-amber-950" />
-                    <span>Jeda 1 Surat</span>
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-5 h-5 fill-emerald-950" />
-                    <span>Putar 1 Surat Penuh</span>
-                  </>
-                )}
+                Coba lagi
               </button>
-
-              {/* Auto Continue Ayah-by-Ayah Mode Button */}
-              {ayahs.length > 0 && (
-                <button
-                  onClick={() => handlePlayAyahAudio(ayahs[0], true)}
-                  type="button"
-                  className={`p-3 rounded-2xl border text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer ${
-                    playbackMode === 'auto-continuous'
-                      ? 'bg-emerald-600 text-white border-emerald-400 ring-2 ring-emerald-300'
-                      : 'bg-emerald-950/60 border-emerald-700/60 text-emerald-200 hover:bg-emerald-900/80'
-                  }`}
-                  title="Putar ayat demi ayat bersambung otomatis (Auto-Scroll)"
-                >
-                  <ListMusic className="w-5 h-5" />
-                  <span className="hidden sm:inline">Ayat Bersambung</span>
-                </button>
-              )}
             </div>
-          </div>
+          ) : (
+            ayahs.map((ayah) => {
+              const isPlayingThisAyah =
+                (playbackMode === 'ayah' || playbackMode === 'auto-continuous') &&
+                playingAyahNumber === ayah.nomorAyat &&
+                isAudioPlaying;
+              return (
+                <article
+                  id={`ayah-${ayah.nomorAyat}`}
+                  key={ayah.nomorAyat}
+                  aria-label={`Ayat ${ayah.nomorAyat}`}
+                  className={`scroll-mt-28 space-y-5 border-t px-4 py-6 sm:px-8 sm:py-8 ${isPlayingThisAyah ? (isNightMode ? 'border-emerald-700 bg-emerald-950' : 'border-emerald-300 bg-emerald-50') : isNightMode ? 'border-slate-800' : 'border-slate-200'}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p
+                      className={`text-sm font-medium ${isPlayingThisAyah ? (isNightMode ? 'text-emerald-200' : 'text-emerald-800') : mutedClass}`}
+                    >
+                      Ayat {ayah.nomorAyat}
+                      {isPlayingThisAyah && ' · Sedang diputar'}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => handlePlayAyahAudio(ayah, false)}
+                      aria-label={`${isPlayingThisAyah ? 'Jeda' : 'Putar'} ayat ${ayah.nomorAyat}`}
+                      className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${controlClass}`}
+                    >
+                      {isPlayingThisAyah ? (
+                        <Pause className="h-4 w-4" aria-hidden="true" />
+                      ) : (
+                        <Play className="h-4 w-4" aria-hidden="true" />
+                      )}
+                      {isPlayingThisAyah ? 'Jeda' : 'Putar ayat'}
+                    </button>
+                  </div>
+                  <p
+                    lang="ar"
+                    dir="rtl"
+                    className={`break-words text-right font-arabic ${arabicFontSizeClass} ${isNightMode ? 'text-slate-100' : 'text-slate-950'}`}
+                  >
+                    {ayah.teksArab}
+                  </p>
+                  {(showLatin || showTranslation) && (
+                    <div className="space-y-3">
+                      {showLatin && (
+                        <p
+                          className={`break-words text-sm leading-relaxed ${isNightMode ? 'text-emerald-200' : 'text-emerald-900'}`}
+                        >
+                          {ayah.teksLatin}
+                        </p>
+                      )}
+                      {showTranslation && (
+                        <p
+                          className={`break-words text-sm leading-relaxed sm:text-base ${mutedClass}`}
+                        >
+                          {ayah.teksIndonesia}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </article>
+              );
+            })
+          )}
         </div>
-
-        {/* Qari Selection Bar inside Header */}
-        <div className="mt-5 pt-4 border-t border-emerald-700/40 flex flex-wrap items-center justify-between gap-3 text-xs text-emerald-200">
-          <div className="flex items-center gap-2">
-            <Radio className="w-4 h-4 text-amber-300" />
-            <span className="font-semibold text-emerald-100">Pilihan Qari / Murattal:</span>
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {QARI_LIST.map(q => (
-              <button
-                key={q.id}
-                onClick={() => {
-                  setSelectedQari(q.id);
-                  if (isAudioPlaying) {
-                    stopAudio();
-                  }
-                }}
-                className={`px-3 py-1 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                  selectedQari === q.id
-                    ? 'bg-amber-300 text-amber-950 font-bold shadow-xs'
-                    : 'bg-emerald-950/70 text-emerald-200 hover:bg-emerald-900 hover:text-white border border-emerald-700/40'
-                }`}
-              >
-                {q.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Surah Navigation Quick Bar */}
-      <div className="flex items-center justify-between gap-2 px-1">
-        <button
-          onClick={handlePrevSurah}
-          disabled={selectedSurahNumber <= 1}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-            selectedSurahNumber <= 1
-              ? 'opacity-40 cursor-not-allowed text-slate-400'
-              : (isNightMode ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200')
-          }`}
+        <nav
+          aria-label="Navigasi surah"
+          className={`flex flex-wrap justify-between gap-2 border-t p-4 sm:p-6 ${isNightMode ? 'border-slate-700' : 'border-slate-200'}`}
         >
-          <ChevronLeft className="w-4 h-4" />
-          <span>Surah Sebelumnya</span>
-        </button>
+          <button
+            type="button"
+            onClick={handlePrevSurah}
+            disabled={selectedSurahNumber <= 1}
+            className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${controlClass}`}
+          >
+            <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+            Surah sebelumnya
+          </button>
+          <button
+            type="button"
+            onClick={handleNextSurah}
+            disabled={selectedSurahNumber >= 114}
+            className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${controlClass}`}
+          >
+            Surah berikutnya
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </nav>
+      </section>
 
-        <span className={`text-xs font-bold ${isNightMode ? 'text-slate-400' : 'text-slate-600'}`}>
-          Surah {selectedSurah.number} dari 114
-        </span>
-
-        <button
-          onClick={handleNextSurah}
-          disabled={selectedSurahNumber >= 114}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition ${
-            selectedSurahNumber >= 114
-              ? 'opacity-40 cursor-not-allowed text-slate-400'
-              : (isNightMode ? 'bg-slate-800 text-slate-200 hover:bg-slate-700' : 'bg-slate-100 text-slate-700 hover:bg-slate-200')
-          }`}
+      {audioError && playbackMode === 'idle' && (
+        <div
+          role="alert"
+          className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] left-3 right-3 z-30 space-y-3 rounded-xl border border-rose-700 bg-slate-950 p-4 text-sm text-white shadow-xl sm:left-auto sm:right-6 sm:w-96 md:bottom-4"
         >
-          <span>Surah Berikutnya</span>
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
-
-      {/* Bismillah Header (except At-Taubah #9) */}
-      {selectedSurah.number !== 9 && (
-        <div className={`py-6 text-center rounded-2xl border shadow-2xs transition-colors duration-300 ${
-          isNightMode
-            ? 'bg-slate-900/90 border-slate-800 text-amber-100'
-            : 'bg-white border-slate-200 text-emerald-950'
-        }`}>
-          <p className={`font-arabic text-2xl sm:text-3xl ${isNightMode ? 'text-amber-200' : 'text-emerald-950'}`}>
-            بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-          </p>
-          <p className={`text-xs mt-1 italic ${isNightMode ? 'text-slate-400' : 'text-slate-500'}`}>
-            Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.
-          </p>
+          <p>{audioError}</p>
+          <button
+            type="button"
+            onClick={() => setAudioError(null)}
+            className="min-h-11 rounded-lg border border-slate-600 px-4 py-2 text-sm font-semibold hover:bg-slate-800"
+          >
+            Tutup pesan
+          </button>
         </div>
       )}
 
-      {/* Ayahs Container */}
-      <div className="space-y-4">
-        {isLoading ? (
-          <div className={`rounded-3xl p-12 text-center border ${
-            isNightMode
-              ? 'bg-slate-900 border-slate-800 text-slate-400'
-              : 'bg-white border-slate-200 text-slate-500'
-          }`}>
-            <div className="w-10 h-10 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-            <p className="text-sm font-semibold">Memuat ayat-ayat Surah {selectedSurah.nameLatin}...</p>
-          </div>
-        ) : (
-          ayahs.map((ayah) => {
-            const isPlayingThisAyah = (playbackMode === 'ayah' || playbackMode === 'auto-continuous') && playingAyahNumber === ayah.nomorAyat && isAudioPlaying;
-
-            return (
-              <div
-                id={`ayah-${ayah.nomorAyat}`}
-                key={ayah.nomorAyat}
-                className={`rounded-3xl p-5 sm:p-7 border transition-all duration-300 shadow-xs space-y-4 ${
-                  isPlayingThisAyah
-                    ? (isNightMode
-                        ? 'bg-slate-850 border-amber-500/80 ring-2 ring-amber-500/30 shadow-lg'
-                        : 'bg-amber-50/40 border-emerald-500 ring-2 ring-emerald-200 shadow-sm')
-                    : (isNightMode
-                        ? 'bg-slate-900 border-slate-800 hover:border-slate-700'
-                        : 'bg-white border-slate-200/90')
-                }`}
-              >
-                {/* Ayah Top Control */}
-                <div className={`flex items-center justify-between pb-3 border-b ${isNightMode ? 'border-slate-800' : 'border-slate-100'}`}>
-                  <div className="flex items-center gap-2">
-                    <span className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold ${
-                      isPlayingThisAyah
-                        ? 'bg-amber-400 text-amber-950 font-extrabold'
-                        : (isNightMode
-                            ? 'bg-emerald-950 text-emerald-300 border border-emerald-800'
-                            : 'bg-emerald-100 text-emerald-800')
-                    }`}>
-                      {ayah.nomorAyat}
-                    </span>
-                    <span className={`text-xs font-semibold ${isPlayingThisAyah ? 'text-amber-500 font-bold' : (isNightMode ? 'text-slate-400' : 'text-slate-500')}`}>
-                      Ayat ke-{ayah.nomorAyat} {isPlayingThisAyah && '• Sedang Dilantunkan'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handlePlayAyahAudio(ayah, false)}
-                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition cursor-pointer ${
-                        isPlayingThisAyah
-                          ? (isNightMode ? 'bg-amber-400 text-amber-950 font-bold shadow-md' : 'bg-emerald-800 text-white shadow-sm')
-                          : (isNightMode
-                              ? 'bg-slate-800 hover:bg-slate-750 text-emerald-400 border border-slate-700'
-                              : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200')
-                      }`}
-                    >
-                      {isPlayingThisAyah ? (
-                        <>
-                          <Pause className="w-3.5 h-3.5" />
-                          <span>Jeda</span>
-                        </>
-                      ) : (
-                        <>
-                          <Play className={`w-3.5 h-3.5 ${isNightMode ? 'text-emerald-400' : 'text-emerald-700'}`} />
-                          <span>Murottal Ayat</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Arabic Text (Right-aligned, large serif font) */}
-                <div className="text-right py-3">
-                  <p className={`font-arabic ${arabicFontSizeClass} ${
-                    isNightMode
-                      ? 'text-amber-100 tracking-wide font-medium'
-                      : 'text-slate-900 font-normal'
-                  }`}>
-                    {ayah.teksArab}
-                  </p>
-                </div>
-
-                {/* Transliteration & Translation */}
-                <div className={`pt-3 border-t space-y-1.5 ${isNightMode ? 'border-slate-800' : 'border-slate-100'}`}>
-                  <p className={`text-xs sm:text-sm font-semibold italic ${
-                    isNightMode
-                      ? 'text-emerald-400/90'
-                      : 'text-emerald-900/90'
-                  }`}>
-                    {ayah.teksLatin}
-                  </p>
-                  <p className={`text-xs sm:text-sm leading-relaxed ${
-                    isNightMode
-                      ? 'text-slate-300'
-                      : 'text-slate-600'
-                  }`}>
-                    {ayah.teksIndonesia}
-                  </p>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* Floating / Sticky Full-Featured Audio Player Bar */}
       {playbackMode !== 'idle' && (
-        <div className="fixed bottom-20 md:bottom-6 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-xl z-50 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <div className="bg-slate-950/95 backdrop-blur-md text-white rounded-3xl p-4 sm:p-5 shadow-2xl border border-emerald-500/40 ring-1 ring-emerald-500/30 space-y-3">
-            {/* Header Track Info */}
-            <div className="flex items-center justify-between gap-3 border-b border-slate-800 pb-2.5">
-              <div className="flex items-center gap-2.5 truncate">
-                <div className="w-9 h-9 rounded-xl bg-emerald-600/90 text-white flex items-center justify-center flex-shrink-0">
-                  <Music className="w-5 h-5" />
-                </div>
-                <div className="truncate">
-                  <h4 className="font-extrabold text-xs sm:text-sm text-white truncate">
-                    {playbackMode === 'full-surah'
-                      ? `Murottal 1 Surat Penuh • Surah ${selectedSurah.nameLatin}`
-                      : `Surah ${selectedSurah.nameLatin} • Ayat ke-${playingAyahNumber}`}
-                  </h4>
-                  <p className="text-[11px] text-emerald-400 font-medium truncate">
-                    Qari: {currentQariObj.name}
-                  </p>
-                </div>
-              </div>
-
-              {/* Stop / Close Player */}
+        <section
+          aria-label="Pemutar murottal"
+          className="fixed bottom-[calc(6rem+env(safe-area-inset-bottom,0px))] left-3 right-3 z-30 max-h-[calc(100dvh-7rem-env(safe-area-inset-bottom,0px))] overflow-y-auto overscroll-contain rounded-xl border border-slate-700 bg-slate-950 p-3 text-white shadow-xl sm:left-auto sm:right-6 sm:w-96 md:bottom-4 md:max-h-[calc(100dvh-2rem)]"
+        >
+          {audioError && (
+            <p role="alert" className="mb-3 text-sm text-rose-200">
+              {audioError}
+            </p>
+          )}
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold">
+                {selectedSurah.nameLatin} ·{' '}
+                {playbackMode === 'full-surah' ? 'Surah penuh' : `Ayat ${playingAyahNumber}`}
+              </p>
+              <p role="status" className="mt-1 text-xs text-emerald-200">
+                {isAudioPlaying ? 'Sedang diputar' : 'Dijeda'}
+                {playbackMode === 'auto-continuous' && ' · Bersambung'}
+              </p>
+              <p className="mt-1 truncate text-xs text-slate-300" title={currentQariObj.name}>
+                {currentQariObj.name}
+              </p>
+            </div>
+            <div className="flex shrink-0 gap-1">
               <button
-                onClick={stopAudio}
-                className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition cursor-pointer"
-                title="Hentikan Audio"
+                type="button"
+                onClick={() => {
+                  if (playbackMode === 'full-surah') {
+                    handleToggleFullSurahAudio();
+                  } else if (playingAyahNumber && ayahs.length > 0) {
+                    const curAyah =
+                      ayahs.find((a) => a.nomorAyat === playingAyahNumber) || ayahs[0];
+                    handlePlayAyahAudio(curAyah, playbackMode === 'auto-continuous');
+                  }
+                }}
+                aria-label={isAudioPlaying ? 'Jeda audio' : 'Lanjutkan audio'}
+                className="flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-600 text-white hover:bg-emerald-500"
               >
-                <Square className="w-4 h-4" />
+                {isAudioPlaying ? (
+                  <Pause className="h-5 w-5" aria-hidden="true" />
+                ) : (
+                  <Play className="h-5 w-5" aria-hidden="true" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={stopAudio}
+                aria-label="Hentikan audio"
+                className="flex h-11 w-11 items-center justify-center rounded-lg text-slate-200 hover:bg-slate-800"
+              >
+                <Square className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
-
-            {/* Time Seeker Slider */}
-            <div className="space-y-1">
-              <input
-                type="range"
-                min={0}
-                max={duration || 100}
-                value={currentTime}
-                onChange={handleSeek}
-                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-              />
-              <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
-                <span>{formatTime(currentTime)}</span>
-                <span>{duration > 0 ? formatTime(duration) : '--:--'}</span>
-              </div>
-            </div>
-
-            {/* Playback Controls */}
-            <div className="flex items-center justify-between gap-2 pt-1">
-              {/* Loop Toggle */}
+          </div>
+          <div className="mt-1 flex items-center gap-2">
+            <span className="text-xs tabular-nums text-slate-300">{formatTime(currentTime)}</span>
+            <input
+              aria-label="Posisi audio"
+              aria-valuetext={`${formatTime(currentTime)} dari ${duration > 0 ? formatTime(duration) : 'durasi belum tersedia'}`}
+              type="range"
+              min={0}
+              max={duration || 100}
+              value={currentTime}
+              onChange={handleSeek}
+              className="h-11 min-w-0 flex-1 cursor-pointer accent-emerald-400"
+            />
+            <span className="text-xs tabular-nums text-slate-300">
+              {duration > 0 ? formatTime(duration) : '--:--'}
+            </span>
+          </div>
+          <details className="border-t border-slate-700">
+            <summary className="min-h-11 cursor-pointer rounded-lg py-3 text-sm text-slate-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-400">
+              Kontrol audio lainnya
+            </summary>
+            <div className="flex flex-wrap items-center justify-between gap-1">
               <button
+                type="button"
+                onClick={handlePrevSurah}
+                disabled={selectedSurahNumber <= 1}
+                aria-label="Surah sebelumnya"
+                className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-slate-800 disabled:opacity-40"
+              >
+                <SkipBack className="h-4 w-4" aria-hidden="true" />
+              </button>
+              <button
+                type="button"
                 onClick={() => {
-                  setIsLooping(prev => {
+                  setIsLooping((prev) => {
                     const next = !prev;
                     if (audioRef.current) audioRef.current.loop = next;
                     return next;
                   });
                 }}
-                className={`p-2 rounded-xl text-xs font-semibold transition cursor-pointer flex items-center gap-1 ${
-                  isLooping ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title={isLooping ? 'Ulangi Surat Aktif' : 'Ulangi Surat Nonaktif'}
+                aria-pressed={isLooping}
+                className={`inline-flex min-h-11 items-center gap-2 rounded-lg px-3 py-2 text-sm ${isLooping ? 'bg-emerald-700 text-white' : 'text-slate-300 hover:bg-slate-800'}`}
               >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline text-[10px]">Ulangi</span>
+                <RotateCcw className="h-4 w-4" aria-hidden="true" />
+                Ulangi
               </button>
-
-              {/* Prev Surah */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handlePrevSurah}
-                  disabled={selectedSurahNumber <= 1}
-                  className="p-2 text-slate-400 hover:text-white disabled:opacity-30 cursor-pointer"
-                  title="Surah Sebelumnya"
-                >
-                  <SkipBack className="w-4 h-4" />
-                </button>
-
-                {/* Main Play / Pause in floating bar */}
-                <button
-                  onClick={() => {
-                    if (playbackMode === 'full-surah') {
-                      handleToggleFullSurahAudio();
-                    } else if (playingAyahNumber && ayahs.length > 0) {
-                      const curAyah = ayahs.find(a => a.nomorAyat === playingAyahNumber) || ayahs[0];
-                      handlePlayAyahAudio(curAyah, playbackMode === 'auto-continuous');
-                    }
-                  }}
-                  className="p-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-full shadow-lg transition cursor-pointer transform active:scale-90"
-                  title={isAudioPlaying ? 'Jeda Audio' : 'Lanjutkan Audio'}
-                >
-                  {isAudioPlaying ? (
-                    <Pause className="w-5 h-5 fill-slate-950" />
-                  ) : (
-                    <Play className="w-5 h-5 fill-slate-950" />
-                  )}
-                </button>
-
-                {/* Next Surah */}
-                <button
-                  onClick={handleNextSurah}
-                  disabled={selectedSurahNumber >= 114}
-                  className="p-2 text-slate-400 hover:text-white disabled:opacity-30 cursor-pointer"
-                  title="Surah Berikutnya"
-                >
-                  <SkipForward className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Mute / Unmute */}
               <button
+                type="button"
                 onClick={() => {
-                  setIsMuted(prev => {
+                  setIsMuted((prev) => {
                     const next = !prev;
                     if (audioRef.current) audioRef.current.muted = next;
                     return next;
                   });
                 }}
-                className={`p-2 rounded-xl transition cursor-pointer ${
-                  isMuted ? 'text-rose-400' : 'text-slate-400 hover:text-slate-200'
-                }`}
-                title={isMuted ? 'Buka Suara' : 'Bisukan'}
+                aria-label="Bisukan audio"
+                aria-pressed={isMuted}
+                className={`flex h-11 w-11 items-center justify-center rounded-lg hover:bg-slate-800 ${isMuted ? 'text-rose-300' : 'text-slate-300'}`}
               >
-                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                {isMuted ? (
+                  <VolumeX className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Volume2 className="h-4 w-4" aria-hidden="true" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleNextSurah}
+                disabled={selectedSurahNumber >= 114}
+                aria-label="Surah berikutnya"
+                className="flex h-11 w-11 items-center justify-center rounded-lg hover:bg-slate-800 disabled:opacity-40"
+              >
+                <SkipForward className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
-          </div>
-        </div>
+          </details>
+        </section>
       )}
     </div>
   );
 };
-
-
