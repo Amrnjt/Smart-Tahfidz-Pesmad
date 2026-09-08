@@ -1,4 +1,6 @@
+import { onAuthStateChanged, signOut as firebaseSignOut } from 'firebase/auth';
 import { auth } from './firebase';
+import { authService } from './authService';
 import { storageService } from './storageService';
 import type { Santri, User } from '../types';
 
@@ -6,9 +8,13 @@ const USER_CACHE_KEY = 'tahfidz_users_db_v2';
 const MASKED_PASSWORD = '••••••••';
 let installed = false;
 
+function stripPassword(user: User): User {
+  const { password: _password, ...safe } = user;
+  return safe;
+}
+
 function maskUser(user: User): User {
-  const safe: User = { ...user };
-  delete safe.password;
+  const safe: User = stripPassword(user);
   Object.defineProperty(safe, 'password', {
     value: MASKED_PASSWORD,
     writable: false,
@@ -20,11 +26,7 @@ function maskUser(user: User): User {
 
 function scrubLocalUserCache(users: User[]) {
   try {
-    const safeUsers = users.map((user) => {
-      const { password: _password, ...safe } = user;
-      return safe;
-    });
-    localStorage.setItem(USER_CACHE_KEY, JSON.stringify(safeUsers));
+    localStorage.setItem(USER_CACHE_KEY, JSON.stringify(users.map(stripPassword)));
   } catch (error) {
     console.warn('Failed to scrub local user credential cache:', error);
   }
@@ -59,8 +61,44 @@ export function installSecureAccountBridge() {
   installed = true;
 
   const originalGetUsers = storageService.getUsers.bind(storageService);
+  const originalSetSession = storageService.setSession.bind(storageService);
   const originalSyncWithCloud = storageService.syncWithCloud.bind(storageService);
+  const originalInitRealtimeSync = storageService.initRealtimeSync.bind(storageService);
 
+  // Legacy LoginView can keep its UI while credential verification moves server-side.
+  storageService.authenticate = (username: string, password: string) =>
+    authService.signIn(username, password, true);
+
+  // Never persist a password inside the application session again.
+  storageService.setSession = (user: User | null) => {
+    originalSetSession(user ? stripPassword(user) : null);
+    if (!user && auth.currentUser) {
+      void firebaseSignOut(auth).catch((error) => {
+        console.warn('Firebase sign-out cleanup failed:', error);
+      });
+    }
+  };
+
+  // Firestore listeners only exist while Firebase has a verified identity.
+  storageService.initRealtimeSync = (onUpdate?: () => void) => {
+    let stopFirestore: (() => void) | null = null;
+
+    const stopAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      stopFirestore?.();
+      stopFirestore = null;
+      if (firebaseUser) {
+        stopFirestore = originalInitRealtimeSync(onUpdate);
+      }
+    });
+
+    return () => {
+      stopAuth();
+      stopFirestore?.();
+    };
+  };
+
+  // The UI may still render a password column during the transition, but it only
+  // receives a non-enumerable mask. Plaintext is scrubbed from the local cache.
   storageService.getUsers = () => {
     const rawUsers = originalGetUsers();
     scrubLocalUserCache(rawUsers);
@@ -73,7 +111,7 @@ export function installSecureAccountBridge() {
       throw new Error('Password awal akun wajib diisi.');
     }
 
-    const { password: _password, ...profile } = user;
+    const profile = stripPassword(user);
     const result = await callAccountApi<{ success: true; user: User }>({
       action: 'createUser',
       user: profile,
