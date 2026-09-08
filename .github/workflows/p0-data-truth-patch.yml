@@ -48,3 +48,5 @@ jobs:
           git add -A
           git commit -m "fix: enforce P0 data truth and reliability"
           git push origin HEAD:main
+
+# rerun after patch-guard hardening
