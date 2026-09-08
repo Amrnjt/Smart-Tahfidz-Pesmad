@@ -5,59 +5,21 @@ import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
 import { SetorActionSheet } from './components/SetorActionSheet';
 import { LoginView } from './components/LoginModal';
+import { UstadzDashboard } from './components/UstadzDashboard';
+import { WaliDashboard } from './components/WaliDashboard';
+import { SantriDashboard } from './components/SantriDashboard';
+import { ZiyadahForm } from './components/ZiyadahForm';
+import { MurojaahForm } from './components/MurojaahForm';
+import { BinnadzorForm } from './components/BinnadzorForm';
+import { PembelajaranForm } from './components/PembelajaranForm';
+import { HistoryTable } from './components/HistoryTable';
+import { MushafQuran } from './components/MushafQuran';
+import { SantriManagement } from './components/SantriManagement';
+import { KelasManagement } from './components/KelasManagement';
 import { NotificationToastContainer } from './components/NotificationToastContainer';
 import { Snackbar, SnackbarState, NotifyFn } from './components/Snackbar';
 import { useSetoranNotifications } from './hooks/useSetoranNotifications';
 import { LayoutDashboard, CirclePlus as PlusCircle, History, BookOpen, Users, Cloud, GraduationCap } from 'lucide-react';
-
-
-const UstadzDashboard = React.lazy(() =>
-  import('./components/UstadzDashboard').then(({ UstadzDashboard }) => ({ default: UstadzDashboard }))
-);
-const WaliDashboard = React.lazy(() =>
-  import('./components/WaliDashboard').then(({ WaliDashboard }) => ({ default: WaliDashboard }))
-);
-const SantriDashboard = React.lazy(() =>
-  import('./components/SantriDashboard').then(({ SantriDashboard }) => ({ default: SantriDashboard }))
-);
-const ZiyadahForm = React.lazy(() =>
-  import('./components/ZiyadahForm').then(({ ZiyadahForm }) => ({ default: ZiyadahForm }))
-);
-const MurojaahForm = React.lazy(() =>
-  import('./components/MurojaahForm').then(({ MurojaahForm }) => ({ default: MurojaahForm }))
-);
-const BinnadzorForm = React.lazy(() =>
-  import('./components/BinnadzorForm').then(({ BinnadzorForm }) => ({ default: BinnadzorForm }))
-);
-const PembelajaranForm = React.lazy(() =>
-  import('./components/PembelajaranForm').then(({ PembelajaranForm }) => ({ default: PembelajaranForm }))
-);
-const HistoryTable = React.lazy(() =>
-  import('./components/HistoryTable').then(({ HistoryTable }) => ({ default: HistoryTable }))
-);
-const MushafQuran = React.lazy(() =>
-  import('./components/MushafQuran').then(({ MushafQuran }) => ({ default: MushafQuran }))
-);
-const SantriManagement = React.lazy(() =>
-  import('./components/SantriManagement').then(({ SantriManagement }) => ({ default: SantriManagement }))
-);
-const KelasManagement = React.lazy(() =>
-  import('./components/KelasManagement').then(({ KelasManagement }) => ({ default: KelasManagement }))
-);
-
-const RouteLoading = () => (
-  <div
-    role="status"
-    aria-live="polite"
-    className="ui-surface flex min-h-24 items-center gap-3 rounded-xl border border-slate-200 px-4 py-5 text-slate-700"
-  >
-    <span className="h-2.5 w-2.5 flex-shrink-0 rounded-full bg-emerald-600 animate-pulse" aria-hidden="true" />
-    <div>
-      <p className="text-sm font-semibold text-slate-900">Membuka tampilan...</p>
-      <p className="text-xs text-slate-500">Memuat kode fitur yang diperlukan.</p>
-    </div>
-  </div>
-);
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -329,7 +291,6 @@ export default function App() {
             </nav>
 
             {/* Content per Tab */}
-            <React.Suspense fallback={<RouteLoading />}>
             {activeTab === 'dashboard' && (
               isUstadz ? (
                 <UstadzDashboard
@@ -456,8 +417,6 @@ export default function App() {
                 onNotify={notify}
               />
             )}
-
-            </React.Suspense>
 
             {/* Production Footer */}
             <div className="pt-6 border-t border-slate-200/80">
