@@ -422,7 +422,7 @@ export default function App() {
             <div className="pt-6 border-t border-slate-200/80">
               <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
                   <span>Tahfidz al-Qur'an Pesantren Madrasah Darul Fikri • Jl. Budi Utomo No. 190 Kepohbaru Bojonegoro</span>
                 </div>
                 <div
