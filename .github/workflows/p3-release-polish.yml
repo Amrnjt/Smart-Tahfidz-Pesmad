@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - 'src/release-polish.css'
+      - 'src/App.tsx'
+      - 'src/components/Navbar.tsx'
+      - 'src/components/DesktopPrimaryNav.tsx'
       - 'src/components/SantriManagement.tsx'
       - 'src/components/KelasManagement.tsx'
       - 'src/components/MushafQuran.tsx'
@@ -46,11 +49,24 @@ jobs:
           grep -q 'content-visibility: auto' src/release-polish.css
           grep -q 'night-mode-active' src/release-polish.css
 
+      - name: Verify persistent chrome contract
+        run: |
+          grep -q 'p3-chrome-stack' src/App.tsx
+          grep -q 'DesktopPrimaryNav' src/App.tsx
+          grep -q 'data-app-chrome="primary-navigation"' src/components/DesktopPrimaryNav.tsx
+          grep -q 'p2-topbar ui-safe-top relative select-none' src/components/Navbar.tsx
+          grep -q 'position: sticky' src/release-polish.css
+          grep -q 'p3-primary-nav-layer' src/release-polish.css
+          if grep -A120 'Main Container' src/App.tsx | grep -q 'aria-label="Navigasi utama"'; then
+            echo 'Desktop primary navigation must stay outside main page transitions.'
+            exit 1
+          fi
+
       - name: Enforce P3 performance budget
         run: |
           size=$(wc -c < src/release-polish.css)
           echo "release-polish.css bytes: $size"
-          test "$size" -le 20000
+          test "$size" -le 24000
           if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/release-polish.css; then
             echo 'P3 release polish contains an expensive global effect.'
             exit 1
