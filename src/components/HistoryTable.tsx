@@ -21,7 +21,6 @@ import {
   ChevronUp,
   Inbox,
   GraduationCap,
-  Sparkles,
   CheckCircle2,
   Layers,
   RotateCcw,
@@ -202,11 +201,11 @@ const KATEGORI_OPTIONS: KategoriOption[] = [
     id: 'Istimewa',
     label: 'Kelas Istimewa',
     sublabel: 'Pendampingan',
-    icon: Sparkles,
-    badgeBg: 'bg-purple-100',
-    badgeText: 'text-purple-800',
-    activeColor: 'bg-purple-800 text-white  border-purple-800',
-    inactiveColor: 'bg-purple-50/70 hover:bg-purple-100/70 text-purple-800 border-purple-200'
+    icon: GraduationCap,
+    badgeBg: 'bg-amber-100',
+    badgeText: 'text-amber-900',
+    activeColor: 'bg-amber-800 text-white  border-amber-800',
+    inactiveColor: 'bg-amber-50/70 hover:bg-amber-100/70 text-amber-900 border-amber-200'
   }
 ];
 
@@ -1332,7 +1331,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       {!isViewOnly && selectedIds.size > 0 && (
         <>
           {/* Mobile: compact sticky selection toolbar */}
-          <div className="sm:hidden sticky top-0 z-20 -mx-0.5 px-2 py-1.5 bg-white/95 backdrop-blur border border-slate-200 rounded-lg flex items-center gap-1.5 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1">
+          <div className="sm:hidden sticky top-0 z-20 -mx-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded-lg flex items-center gap-1.5 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1">
             <div className="min-w-0 flex-1 flex items-center gap-1.5">
               <span className="w-5 h-5 rounded-md bg-slate-900 text-white inline-flex items-center justify-center text-xs font-bold flex-shrink-0">
                 {selectedIds.size}
@@ -1515,7 +1514,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   : item.type === 'Binnadzor'
                   ? { label: 'Binnadzor', dot: 'bg-indigo-500', text: 'text-indigo-700' }
                   : isIstimewa
-                  ? { label: 'Kelas Istimewa', dot: 'bg-purple-500', text: 'text-purple-700' }
+                  ? { label: 'Kelas Istimewa', dot: 'bg-amber-500', text: 'text-amber-800' }
                   : { label: 'Pembelajaran', dot: 'bg-amber-500', text: 'text-amber-700' };
 
               return (
@@ -1735,8 +1734,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                           <BookOpenCheck className="w-2.5 h-2.5" /> Bnd
                         </span>
                       ) : isIstimewa ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-50 text-purple-800 font-bold text-xs border border-purple-200">
-                          <Sparkles className="w-2.5 h-2.5" /> Istimewa
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-900 font-bold text-xs border border-amber-200">
+                          <GraduationCap className="w-2.5 h-2.5" /> Istimewa
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 font-bold text-xs border border-amber-200">
@@ -2134,8 +2133,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                       <BookOpenCheck className="w-3 h-3" /> Binnadzor (Bacaan Al-Qur'an)
                     </span>
                   ) : itemToDelete.tipeKelas && itemToDelete.tipeKelas.toLowerCase().includes('istimewa') ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-purple-100 text-purple-800 font-bold border border-purple-300 text-xs">
-                      <Sparkles className="w-3 h-3" /> Kelas Istimewa (Pendampingan)
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-900 font-bold border border-amber-300 text-xs">
+                      <GraduationCap className="w-3 h-3" /> Kelas Istimewa (Pendampingan)
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-bold border border-amber-300 text-xs">

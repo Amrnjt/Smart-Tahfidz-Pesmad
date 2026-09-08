@@ -16,7 +16,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { TrendingUp, ChartBar as BarChart3, ChartPie as PieIcon, ListFilter as Filter, Calendar, GraduationCap, Sparkles, BookOpenCheck } from 'lucide-react';
+import { TrendingUp, ChartBar as BarChart3, ChartPie as PieIcon, ListFilter as Filter, Calendar, GraduationCap, BookOpenCheck } from 'lucide-react';
 
 interface HafalanStatsChartProps {
   santriList: Santri[];
@@ -213,7 +213,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
   const totalFilteredSetoran = filteredZiyadah.length + filteredMurojaah.length + filteredBinnadzor.length + filteredPembelajaran.length;
 
   return (
-    <div className="bg-white/90 backdrop-blur-md rounded-2xl p-3.5 sm:p-5 border border-slate-200/80 shadow-xs space-y-4 sm:space-y-5 w-full min-w-0 max-w-full">
+    <div className="bg-white rounded-2xl p-3.5 sm:p-5 border border-slate-200/80 shadow-xs space-y-4 sm:space-y-5 w-full min-w-0 max-w-full">
       {/* Header & Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 border-b border-slate-100 pb-3.5 sm:pb-4 w-full min-w-0">
         <div className="min-w-0">
@@ -234,7 +234,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
         <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 max-w-full">
           {/* Kelas Filter */}
           {kelasList.length > 0 && (
-            <div className="flex items-center gap-1.5 bg-white/80 border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 max-w-[150px] sm:max-w-none">
+            <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 max-w-[150px] sm:max-w-none">
               <GraduationCap className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
               <select
                 value={selectedKelasFilter}
@@ -250,7 +250,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
           )}
 
           {/* Santri Filter */}
-          <div className="flex items-center gap-1.5 bg-white/80 border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 max-w-[170px] sm:max-w-none">
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700 max-w-[170px] sm:max-w-none">
             <Filter className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
             <select
               value={selectedSantriFilter}
@@ -267,7 +267,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
           </div>
 
           {/* Time Range Filter */}
-          <div className="flex items-center gap-1.5 bg-white/80 border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700">
+          <div className="flex items-center gap-1.5 bg-white border border-slate-200/90 rounded-xl px-2.5 py-1.5 text-xs text-slate-700">
             <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
             <select
               value={timeRangeMonths}
@@ -285,7 +285,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
             <button
               onClick={() => setChartType('bar')}
               title="Grafik Batang (Bar Chart)"
-              className={`p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer press-feedback active:scale-[0.985] ${
+              className={`p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer press-feedback ${
                 chartType === 'bar'
                   ? 'bg-white text-emerald-800 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
@@ -296,7 +296,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
             <button
               onClick={() => setChartType('area')}
               title="Grafik Area / Garis (Area Chart)"
-              className={`p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer press-feedback active:scale-[0.985] ${
+              className={`p-1.5 rounded-lg text-xs font-semibold transition cursor-pointer press-feedback ${
                 chartType === 'area'
                   ? 'bg-white text-emerald-800 shadow-xs'
                   : 'text-slate-500 hover:text-slate-800'
@@ -316,11 +316,11 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 min-w-0">
             <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5 min-w-0">
               <span className="truncate">Aktivitas Setoran Bulanan</span>
-              <span className="text-[11px] font-normal text-slate-400 truncate">
+              <span className="text-xs font-normal text-slate-400 truncate">
                 ({selectedSantriFilter === 'ALL' ? 'Seluruh Santri' : santriList.find(s => s.idSantri === selectedSantriFilter)?.namaSantri || selectedSantriFilter})
               </span>
             </h4>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-[10px] sm:text-[11px]">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-xs">
               <span className="flex items-center gap-1 text-emerald-700 font-semibold">
                 <span className="w-2.5 h-2.5 rounded-sm bg-emerald-600 flex-shrink-0"></span>
                 Ziyadah ({filteredZiyadah.length})
@@ -376,7 +376,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     height={32}
                     iconType="circle"
                     formatter={(value) => (
-                      <span className="text-[11px] text-slate-600 font-medium">
+                      <span className="text-xs text-slate-600 font-medium">
                         {value === 'Ziyadah' ? 'Ziyadah' : value === 'Murojaah' ? 'Muroja\'ah' : value === 'Binnadzor' ? 'Binnadzor' : 'Pembelajaran'}
                       </span>
                     )}
@@ -438,7 +438,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     height={32}
                     iconType="circle"
                     formatter={(value) => (
-                      <span className="text-[11px] text-slate-600 font-medium">
+                      <span className="text-xs text-slate-600 font-medium">
                         {value === 'Ziyadah' ? 'Ziyadah' : value === 'Murojaah' ? 'Muroja\'ah' : value === 'Binnadzor' ? 'Binnadzor' : 'Pembelajaran'}
                       </span>
                     )}
@@ -497,7 +497,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                 <PieIcon className="w-3.5 h-3.5 text-emerald-700" />
                 <span>Distribusi Nilai</span>
               </h4>
-              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
                 {totalFilteredSetoran} Total
               </span>
             </div>
@@ -543,7 +543,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                   <span className="text-base sm:text-lg font-extrabold text-slate-800">
                     <AnimatedCounter value={totalFilteredSetoran} />
                   </span>
-                  <span className="text-[9px] sm:text-[10px] text-slate-500 font-medium">Setoran</span>
+                  <span className="text-xs sm:text-xs text-slate-500 font-medium">Setoran</span>
                 </div>
               </div>
             )}
@@ -561,7 +561,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                   </div>
                   <div className="flex items-center gap-1.5 flex-shrink-0 font-semibold">
                     <span className="text-slate-800">{item.value}</span>
-                    <span className="text-[10px] text-slate-400">({percentage}%)</span>
+                    <span className="text-xs text-slate-400">({percentage}%)</span>
                   </div>
                 </div>
               );
@@ -573,7 +573,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
       </div>
 
       {/* Panel Analisis 4 Pilar Kualitas Bacaan Non-Tahfidz & Binnadzor */}
-      <div className="bg-gradient-to-br from-slate-50 to-emerald-50/40 rounded-2xl p-4 sm:p-5 border border-emerald-100/90 shadow-xs space-y-3.5">
+      <div className="bg-slate-50 rounded-2xl p-4 sm:p-5 border border-emerald-100/90 shadow-xs space-y-3.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-100 pb-3">
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-xl bg-emerald-600 text-white flex-shrink-0 shadow-xs">
@@ -582,16 +582,16 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
             <div>
               <h4 className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5">
                 Evaluasi 4 Aspek Kualitas Tilawah &amp; Pembelajaran
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">
+                <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-semibold">
                   Binnadzor &amp; Jilid Ummi
                 </span>
               </h4>
-              <p className="text-[11px] text-slate-500 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Standar penilaian capaian santri: Tajwid, Makhroj, Kefasihan (Fashohah), dan Kelancaran
               </p>
             </div>
           </div>
-          <div className="text-[11px] text-slate-600 font-medium self-start sm:self-auto bg-white px-3 py-1 rounded-xl border border-emerald-200/80">
+          <div className="text-xs text-slate-600 font-medium self-start sm:self-auto bg-white px-3 py-1 rounded-xl border border-emerald-200/80">
             Teranalisis dari <span className="font-bold text-emerald-800">{filteredBinnadzor.length + filteredPembelajaran.length}</span> sesi
           </div>
         </div>
@@ -612,12 +612,12 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     style={{ width: `${item.score}%`, backgroundColor: item.color }}
                   ></div>
                 </div>
-                <p className="text-[10px] text-slate-400 truncate">{item.ket}</p>
+                <p className="text-xs text-slate-400 truncate">{item.ket}</p>
               </div>
             ))}
           </div>
         ) : (
-          <div className="bg-white/80 rounded-xl p-4 text-center text-slate-500 text-xs border border-dashed border-slate-200">
+          <div className="bg-white rounded-xl p-4 text-center text-slate-500 text-xs border border-dashed border-slate-200">
             Belum ada penilaian 4 aspek kualitas pada filter ini. Input setoran Binnadzor atau Pembelajaran (Jilid Ummi/Istimewa) untuk melihat indikator.
           </div>
         )}
