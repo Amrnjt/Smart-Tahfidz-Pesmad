@@ -20,6 +20,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import type { NotifyFn } from './Snackbar';
+import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
 
 interface KelasManagementProps {
   kelasList: Kelas[];
@@ -43,6 +44,16 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showUnassignedList, setShowUnassignedList] = useState(false);
+
+  const addDialogRef = useAccessibleDialog(showAddModal, () => {
+    if (!isSaving) setShowAddModal(false);
+  });
+  const editDialogRef = useAccessibleDialog(Boolean(kelasToEdit), () => {
+    if (!isSaving) setKelasToEdit(null);
+  });
+  const deleteDialogRef = useAccessibleDialog(Boolean(kelasToDelete), () => {
+    if (!isDeleting) setKelasToDelete(null);
+  });
 
   // Add Form State
   const [newNamaKelas, setNewNamaKelas] = useState('');
@@ -670,14 +681,21 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
 
       {/* ================= MODAL TAMBAH KELAS ================= */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-xl max-w-lg w-full max-h-[92vh] overflow-y-auto">
+        <div
+          ref={addDialogRef}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Tambah kelas baru"
+          tabIndex={-1}
+        >
+          <div className="bg-white rounded-3xl shadow-xl max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
             <div className="flex items-center justify-between p-5 border-b border-slate-100 sticky top-0 bg-white rounded-t-3xl z-10">
               <h4 className="font-bold text-slate-800 text-base flex items-center gap-2">
                 <Plus className="w-5 h-5 text-emerald-700" />
                 Tambah Kelas Baru
               </h4>
-              <button onClick={() => setShowAddModal(false)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer">
+              <button onClick={() => setShowAddModal(false)} aria-label="Tutup dialog tambah kelas" className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -871,14 +889,21 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
 
       {/* ================= MODAL EDIT KELAS ================= */}
       {kelasToEdit && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-white rounded-3xl shadow-xl max-w-lg w-full max-h-[92vh] overflow-y-auto">
+        <div
+          ref={editDialogRef}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Edit kelas"
+          tabIndex={-1}
+        >
+          <div className="bg-white rounded-3xl shadow-xl max-w-lg w-full max-h-[calc(100dvh-2rem)] overflow-y-auto overscroll-contain">
             <div className="flex items-center justify-between p-5 border-b border-slate-100 sticky top-0 bg-white rounded-t-3xl z-10">
               <h4 className="font-bold text-slate-800 text-base flex items-center gap-2">
                 <Edit3 className="w-5 h-5 text-emerald-700" />
                 Edit Kelas: {kelasToEdit.namaKelas}
               </h4>
-              <button onClick={() => setKelasToEdit(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer">
+              <button onClick={() => setKelasToEdit(null)} aria-label="Tutup dialog edit kelas" className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 cursor-pointer">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -1065,7 +1090,14 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
 
       {/* ================= MODAL KONFIRMASI HAPUS ================= */}
       {kelasToDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+        <div
+          ref={deleteDialogRef}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Konfirmasi hapus kelas"
+          tabIndex={-1}
+        >
           <div className="bg-white rounded-3xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center">

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
 import type { NotifyFn } from './Snackbar';
+import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
 
 interface SetorActionSheetProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
   const [isProgramLiburanActive, setIsProgramLiburanActive] = useState(false);
   const [isTogglingLiburan, setIsTogglingLiburan] = useState(false);
   const [showMonitorModal, setShowMonitorModal] = useState(false);
+  const dialogRef = useAccessibleDialog(isOpen, onClose);
 
   useEffect(() => {
     if (isOpen) {
@@ -59,16 +61,6 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
     }
   };
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -120,17 +112,20 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
       />
 
       <div
-        className="relative z-10 w-full max-w-lg max-h-[88dvh] overflow-y-auto bg-white rounded-t-2xl border-t border-slate-200 px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] animate-in slide-in-from-bottom-5 duration-200"
+        ref={dialogRef}
+        className="relative z-10 w-full max-w-lg max-h-[88dvh] overflow-y-auto overscroll-contain bg-white rounded-t-2xl border-t border-slate-200 px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] animate-in slide-in-from-bottom-5 duration-200"
         role="dialog"
         aria-modal="true"
-        aria-label="Pilih Jenis Setoran"
+        aria-labelledby="setor-action-sheet-title"
+        aria-describedby="setor-action-sheet-description"
+        tabIndex={-1}
       >
         <div className="w-9 h-1 bg-slate-300 rounded-full mx-auto mb-2" />
 
         <div className="flex items-start justify-between gap-3 pb-2 border-b border-slate-100">
           <div className="min-w-0">
-            <h2 className="text-sm font-bold text-slate-900 leading-5">Input Setoran Santri</h2>
-            <p className="text-[11px] text-slate-500 leading-4">
+            <h2 id="setor-action-sheet-title" className="text-sm font-bold text-slate-900 leading-5">Input Setoran Santri</h2>
+            <p id="setor-action-sheet-description" className="text-[11px] text-slate-500 leading-4">
               Pilih jenis setoran yang akan diinput
             </p>
           </div>
@@ -264,6 +259,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
           isOpen={showMonitorModal}
           onClose={() => setShowMonitorModal(false)}
           santriList={santriList}
+          onNotify={onNotify}
         />
       )}
     </div>

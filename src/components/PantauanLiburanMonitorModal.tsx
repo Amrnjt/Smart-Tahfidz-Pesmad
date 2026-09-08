@@ -3,17 +3,21 @@ import { PantauanLiburanRecord, Santri, AppConfig } from '../types';
 import { storageService } from '../services/storageService';
 import { X, Search, Calendar, Filter, Sparkles, CheckCircle2, CircleAlert as AlertCircle, BookOpen, Clock, Shield, Eye, FileText, ToggleLeft, ToggleRight, Check, AlertTriangle } from 'lucide-react';
 import { formatTanggalIndo } from '../utils/dateFormatter';
+import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
+import type { NotifyFn } from './Snackbar';
 
 interface PantauanLiburanMonitorModalProps {
   isOpen: boolean;
   onClose: () => void;
   santriList: Santri[];
+  onNotify: NotifyFn;
 }
 
 export const PantauanLiburanMonitorModal: React.FC<PantauanLiburanMonitorModalProps> = ({
   isOpen,
   onClose,
-  santriList
+  santriList,
+  onNotify
 }) => {
   const [records, setRecords] = useState<PantauanLiburanRecord[]>([]);
   const [appConfig, setAppConfig] = useState<AppConfig>({ programLiburanActive: false });
@@ -21,6 +25,7 @@ export const PantauanLiburanMonitorModal: React.FC<PantauanLiburanMonitorModalPr
   const [selectedKelas, setSelectedKelas] = useState<string>('all');
   const [selectedTanggal, setSelectedTanggal] = useState<string>('all');
   const [isToggling, setIsToggling] = useState(false);
+  const dialogRef = useAccessibleDialog(isOpen, onClose);
 
   useEffect(() => {
     if (isOpen) {
@@ -41,8 +46,10 @@ export const PantauanLiburanMonitorModal: React.FC<PantauanLiburanMonitorModalPr
     try {
       const updated = await storageService.setProgramLiburanActive(newStatus, 'Ustadz / Admin');
       setAppConfig(updated);
+      onNotify('success', newStatus ? 'Program Pantauan Liburan aktif dan tersimpan di Cloud.' : 'Program Pantauan Liburan dinonaktifkan dan tersimpan di Cloud.');
     } catch (err) {
       console.error(err);
+      onNotify('error', 'Status Program Pantauan Liburan gagal diperbarui di Cloud.');
     } finally {
       setIsToggling(false);
     }
@@ -84,10 +91,13 @@ export const PantauanLiburanMonitorModal: React.FC<PantauanLiburanMonitorModalPr
 
       {/* Modal Dialog */}
       <div
-        className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-slate-200 z-10 flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-200"
+        ref={dialogRef}
+        className="relative w-full max-w-5xl bg-white rounded-3xl shadow-2xl border border-slate-200 z-10 flex flex-col max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-2.5rem)] overflow-hidden overscroll-contain animate-in zoom-in-95 duration-200"
         role="dialog"
         aria-modal="true"
-        aria-label="Rekap Program Pantauan Liburan Santri"
+        aria-labelledby="pantauan-monitor-title"
+        aria-describedby="pantauan-monitor-description"
+        tabIndex={-1}
       >
         {/* Header */}
         <div className="p-5 sm:p-6 border-b border-slate-200/90 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-50/70">
@@ -97,14 +107,14 @@ export const PantauanLiburanMonitorModal: React.FC<PantauanLiburanMonitorModalPr
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base sm:text-lg font-extrabold text-slate-900">
+                <h3 id="pantauan-monitor-title" className="text-base sm:text-lg font-extrabold text-slate-900">
                   Rekapitulasi Program Pantauan Liburan Santri
                 </h3>
                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 border border-indigo-200 text-indigo-800">
                   Mode: Khusus Pantauan Ustadz (View-Only)
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p id="pantauan-monitor-description" className="text-xs text-slate-500 mt-0.5">
                 Monitoring amaliyah wirid yaumiyyah (al-Waqi'ah, al-Mulk, al-Insyirah) & shalat berjama'ah yang diisi oleh Wali Santri
               </p>
             </div>

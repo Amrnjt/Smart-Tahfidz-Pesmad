@@ -36,6 +36,7 @@ import { TableSkeleton } from './SkeletonLoading';
 import { UnduhLaporanModal } from './UnduhLaporanModal';
 import { getClassGroup } from '../utils/classUtils';
 import type { NotifyFn } from './Snackbar';
+import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
 
 interface EditableItem {
   id: string;
@@ -244,6 +245,19 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const [isBatchDeleteModalOpen, setIsBatchDeleteModalOpen] = useState(false);
   const [isBatchDeleting, setIsBatchDeleting] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  const editDialogRef = useAccessibleDialog(Boolean(editingItem), () => {
+    if (!isSavingEdit) {
+      setEditingItem(null);
+      setIsSavingEdit(false);
+    }
+  });
+  const deleteDialogRef = useAccessibleDialog(Boolean(itemToDelete), () => {
+    if (!isDeleting) setItemToDelete(null);
+  });
+  const batchDeleteDialogRef = useAccessibleDialog(isBatchDeleteModalOpen, () => {
+    if (!isBatchDeleting) setIsBatchDeleteModalOpen(false);
+  });
 
   if (isLoading) return <TableSkeleton rows={7} />;
 
@@ -1929,13 +1943,15 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       {/* Edit Record Modal */}
       {editingItem && (
         <div
+          ref={editDialogRef}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/50 backdrop-blur-sm"
           onClick={closeEditModal}
           role="dialog"
           aria-modal="true"
           aria-labelledby="edit-modal-title"
+          tabIndex={-1}
         >
-          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-lg max-h-[calc(100dvh-2rem)] bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-y-auto overscroll-contain" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-2 p-5 bg-gradient-to-br from-emerald-800 to-teal-900 text-white">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0">
@@ -2045,14 +2061,16 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       {/* Single Item Delete Confirmation Modal */}
       {itemToDelete && (
         <div
+          ref={deleteDialogRef}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
           onClick={() => !isDeleting && setItemToDelete(null)}
           role="dialog"
           aria-modal="true"
           aria-labelledby="delete-dialog-title"
+          tabIndex={-1}
         >
           <div
-            className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+            className="w-full max-w-md max-h-[calc(100dvh-2rem)] bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-y-auto overscroll-contain animate-in fade-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
@@ -2185,14 +2203,16 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       {/* Batch Delete Confirmation Modal */}
       {isBatchDeleteModalOpen && (
         <div
+          ref={batchDeleteDialogRef}
           className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs"
           onClick={() => !isBatchDeleting && setIsBatchDeleteModalOpen(false)}
           role="dialog"
           aria-modal="true"
           aria-labelledby="batch-delete-dialog-title"
+          tabIndex={-1}
         >
           <div
-            className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+            className="w-full max-w-md max-h-[calc(100dvh-2rem)] bg-white rounded-3xl shadow-2xl border border-slate-200 overflow-y-auto overscroll-contain animate-in fade-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between p-5 bg-gradient-to-r from-rose-800 to-rose-900 text-white">
