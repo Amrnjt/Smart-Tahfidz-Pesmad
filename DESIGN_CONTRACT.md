@@ -95,23 +95,23 @@ Status must always have wording and/or an icon. Color alone is never sufficient.
 
 ## Typography Contract
 
-Use the system sans-serif stack by default. A font dependency may be introduced only when it materially strengthens identity/readability and has a measured product reason.
+Primary interface typeface: **Plus Jakarta Sans Variable**, self-hosted through the application bundle with system sans-serif fallbacks. It is the default UI and display family because it materially strengthens Pesmad's modern Indonesian institutional identity while preserving strong screen readability. Use one variable family rather than stacking decorative font families. New font dependencies still require a measured product reason.
 
 ### Mobile
 
-- metadata: 12px / 16px
-- secondary: 13px / 18px
-- body: 14px / 20px
-- section title: 16px / 24px
-- page title: 22px / 28px
+- metadata: 12px / 17px
+- secondary: 13px / 19px
+- body: 14px / 21px
+- section title: 17px / 24px
+- page title: 24px / 30px
 
 ### Desktop
 
-- metadata: 12px / 16px
-- secondary: 14px / 20px
-- body: 15px / 22px
-- section title: 18px / 26px
-- page title: 26px / 32px
+- metadata: 12px / 17px
+- secondary: 14px / 21px
+- body: 15px / 23px
+- section title: 19px / 28px
+- page title: 30px / 38px
 
 Rules:
 

@@ -5,18 +5,19 @@
    Components should migrate toward these tokens progressively during P2.2–P2.18. */
 :root {
   /* Typography */
-  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-display: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 
   --text-meta-size: 0.75rem;
-  --text-meta-line: 1rem;
+  --text-meta-line: 1.0625rem;
   --text-secondary-size: 0.8125rem;
-  --text-secondary-line: 1.125rem;
+  --text-secondary-line: 1.1875rem;
   --text-body-size: 0.875rem;
-  --text-body-line: 1.25rem;
-  --text-section-size: 1rem;
+  --text-body-line: 1.3125rem;
+  --text-section-size: 1.0625rem;
   --text-section-line: 1.5rem;
-  --text-page-size: 1.375rem;
-  --text-page-line: 1.75rem;
+  --text-page-size: 1.5rem;
+  --text-page-line: 1.875rem;
 
   /* Neutral surfaces and content */
   --surface-page: #f8fafc;
@@ -95,15 +96,15 @@
 @media (min-width: 768px) {
   :root {
     --text-meta-size: 0.75rem;
-    --text-meta-line: 1rem;
+    --text-meta-line: 1.0625rem;
     --text-secondary-size: 0.875rem;
-    --text-secondary-line: 1.25rem;
+    --text-secondary-line: 1.3125rem;
     --text-body-size: 0.9375rem;
-    --text-body-line: 1.375rem;
-    --text-section-size: 1.125rem;
-    --text-section-line: 1.625rem;
-    --text-page-size: 1.625rem;
-    --text-page-line: 2rem;
+    --text-body-line: 1.4375rem;
+    --text-section-size: 1.1875rem;
+    --text-section-line: 1.75rem;
+    --text-page-size: 1.875rem;
+    --text-page-line: 2.375rem;
   }
 }
 
@@ -123,6 +124,9 @@ body {
   line-height: var(--text-body-line);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+  font-kerning: normal;
+  font-synthesis: none;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
 }
 
 button,
@@ -145,36 +149,67 @@ textarea {
 /* === Semantic typography helpers === */
 .ui-page-title {
   color: var(--content-primary);
+  font-family: var(--font-display);
   font-size: var(--text-page-size);
   line-height: var(--text-page-line);
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  font-weight: 750;
+  letter-spacing: -0.032em;
+  text-wrap: balance;
 }
 
 .ui-section-title {
   color: var(--content-primary);
+  font-family: var(--font-display);
   font-size: var(--text-section-size);
   line-height: var(--text-section-line);
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.018em;
+  text-wrap: balance;
 }
 
 .ui-body {
   color: var(--content-primary);
   font-size: var(--text-body-size);
   line-height: var(--text-body-line);
+  letter-spacing: -0.004em;
 }
 
 .ui-secondary {
   color: var(--content-secondary);
   font-size: var(--text-secondary-size);
   line-height: var(--text-secondary-line);
+  letter-spacing: -0.003em;
 }
 
 .ui-meta {
   color: var(--content-tertiary);
   font-size: var(--text-meta-size);
   line-height: var(--text-meta-line);
+  font-weight: 500;
+  letter-spacing: 0.002em;
+}
+
+.ui-eyebrow {
+  font-size: var(--text-meta-size);
+  line-height: var(--text-meta-line);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ui-display-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.625rem, 1.3rem + 1vw, 2.25rem);
+  line-height: 1.14;
+  font-weight: 750;
+  letter-spacing: -0.038em;
+  text-wrap: balance;
+}
+
+.ui-number {
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: "tnum" 1, "lnum" 1;
+  letter-spacing: -0.035em;
 }
 
 /* === Semantic surface helpers === */
