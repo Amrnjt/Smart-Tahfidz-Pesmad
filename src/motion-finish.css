@@ -1,0 +1,470 @@
+/* P2.5 — Motion, Responsive Polish & Performance Finish
+ * Motion is purposeful: navigation continuity, hierarchy, feedback, and state.
+ * Expensive paint effects are intentionally avoided; transforms/opacity dominate.
+ */
+
+:root {
+  --p2-motion-spring: cubic-bezier(0.16, 1, 0.3, 1);
+  --p2-motion-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --p2-motion-exit: cubic-bezier(0.4, 0, 1, 1);
+  --p2-motion-fast: 180ms;
+  --p2-motion-medium: 320ms;
+  --p2-motion-page: 440ms;
+}
+
+/* Native same-document View Transition target. Header + bottom dock stay stable. */
+.ui-app-shell > main#main-content {
+  view-transition-name: p2-page;
+}
+
+::view-transition-group(p2-page) {
+  animation-duration: var(--p2-motion-page);
+  animation-timing-function: var(--p2-motion-spring);
+}
+
+::view-transition-old(p2-page) {
+  animation: p2-page-out 220ms var(--p2-motion-exit) both;
+}
+
+::view-transition-new(p2-page) {
+  animation: p2-page-in var(--p2-motion-page) var(--p2-motion-spring) both;
+}
+
+/* Morph active navigation state between destinations. */
+@media (min-width: 768px) {
+  nav[aria-label='Navigasi utama'] button[aria-current='page'] {
+    view-transition-name: p2-nav-active;
+    position: relative;
+    isolation: isolate;
+  }
+}
+
+@media (max-width: 767px) {
+  .p2-bottom-item.is-active .p2-bottom-icon-wrap,
+  .p2-setor-fab.is-active {
+    view-transition-name: p2-nav-active;
+  }
+}
+
+::view-transition-group(p2-nav-active) {
+  animation-duration: 420ms;
+  animation-timing-function: var(--p2-motion-spring);
+  z-index: 100;
+}
+
+::view-transition-old(p2-nav-active),
+::view-transition-new(p2-nav-active) {
+  height: 100%;
+  width: 100%;
+  mix-blend-mode: normal;
+}
+
+/* Desktop active tab behaves like a soft magnetic pill. */
+nav[aria-label='Navigasi utama'] button {
+  transform-origin: center bottom;
+  transition:
+    color var(--p2-motion-fast) ease,
+    background-color var(--p2-motion-fast) ease,
+    border-color var(--p2-motion-fast) ease,
+    transform var(--p2-motion-fast) var(--p2-motion-spring),
+    box-shadow var(--p2-motion-fast) ease;
+}
+
+nav[aria-label='Navigasi utama'] button[aria-current='page'] {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -22px rgba(5, 150, 105, 0.8);
+}
+
+/* Floating mobile dock: active icons lift and settle with visual continuity. */
+.p2-bottom-item,
+.p2-bottom-icon-wrap,
+.p2-bottom-label,
+.p2-setor-fab,
+.p2-setor-label {
+  transition:
+    transform var(--p2-motion-medium) var(--p2-motion-spring),
+    color var(--p2-motion-fast) ease,
+    background-color var(--p2-motion-fast) ease,
+    border-color var(--p2-motion-fast) ease,
+    box-shadow var(--p2-motion-medium) var(--p2-motion-spring),
+    opacity var(--p2-motion-fast) ease;
+}
+
+.p2-bottom-item.is-active .p2-bottom-icon-wrap {
+  transform: translateY(-3px) scale(1.08);
+}
+
+.p2-bottom-item.is-active .p2-bottom-label {
+  transform: translateY(-1px);
+}
+
+.p2-bottom-item:not(.is-active):active .p2-bottom-icon-wrap {
+  transform: scale(0.9);
+}
+
+.p2-setor-fab:active {
+  transform: translateY(1px) scale(0.93);
+}
+
+.p2-setor-fab[aria-expanded='true'] {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    0 18px 42px -24px rgba(5, 150, 105, 0.82),
+    0 0 0 6px rgba(16, 185, 129, 0.08);
+}
+
+.p2-setor-fab[aria-expanded='true'] svg {
+  transform: rotate(45deg);
+}
+
+.p2-setor-fab svg {
+  transition: transform 320ms var(--p2-motion-spring);
+}
+
+/* App chrome microinteractions. */
+.p2-brand-mark,
+.p2-brand-copy,
+.p2-profile-trigger,
+.p2-profile-avatar,
+.p2-sync-control,
+.p2-sync-icon-wrap {
+  transition:
+    transform var(--p2-motion-medium) var(--p2-motion-spring),
+    box-shadow var(--p2-motion-medium) var(--p2-motion-spring),
+    background-color var(--p2-motion-fast) ease,
+    border-color var(--p2-motion-fast) ease;
+}
+
+.p2-profile-trigger[aria-expanded='true'] .p2-profile-avatar {
+  transform: scale(1.06) rotate(-2deg);
+}
+
+.p2-profile-popover {
+  transform-origin: top right;
+  animation: p2-popover-in 300ms var(--p2-motion-spring) both;
+}
+
+.p2-profile-menu-item {
+  transition:
+    transform var(--p2-motion-fast) var(--p2-motion-spring),
+    background-color var(--p2-motion-fast) ease,
+    color var(--p2-motion-fast) ease;
+}
+
+.p2-profile-menu-item:active {
+  transform: scale(0.985);
+}
+
+.p2-sync-control[aria-busy='true'] .p2-sync-icon-wrap {
+  animation: p2-sync-breathe 900ms ease-in-out 2;
+}
+
+/* Generic dialog entrance — applies to existing accessible dialogs, not layout logic. */
+.ui-dialog-overlay {
+  animation: p2-overlay-in 180ms ease-out both;
+}
+
+.ui-dialog-overlay > .ui-dialog-panel {
+  transform-origin: center bottom;
+  animation: p2-dialog-in 360ms var(--p2-motion-spring) both;
+}
+
+@media (min-width: 768px) {
+  .ui-dialog-overlay > .ui-dialog-panel {
+    transform-origin: center center;
+  }
+}
+
+/* Setor / Manage action sheets get a stronger launch animation. */
+[aria-labelledby='setor-action-sheet-title'] .ui-dialog-panel,
+[aria-labelledby='manage-action-sheet-title'] .ui-dialog-panel {
+  animation-duration: 420ms;
+}
+
+/* Dashboard reveal is staggered, but only direct children animate. */
+.p2-dashboard-ustadz > *,
+.p2-dashboard-wali > *,
+.p2-dashboard-santri > * {
+  animation: p2-surface-rise 520ms var(--p2-motion-spring) both;
+}
+
+.p2-dashboard-ustadz > *:nth-child(1),
+.p2-dashboard-wali > *:nth-child(1),
+.p2-dashboard-santri > *:nth-child(1) { animation-delay: 20ms; }
+.p2-dashboard-ustadz > *:nth-child(2),
+.p2-dashboard-wali > *:nth-child(2),
+.p2-dashboard-santri > *:nth-child(2) { animation-delay: 65ms; }
+.p2-dashboard-ustadz > *:nth-child(3),
+.p2-dashboard-wali > *:nth-child(3),
+.p2-dashboard-santri > *:nth-child(3) { animation-delay: 110ms; }
+.p2-dashboard-ustadz > *:nth-child(4),
+.p2-dashboard-wali > *:nth-child(4),
+.p2-dashboard-santri > *:nth-child(4) { animation-delay: 155ms; }
+.p2-dashboard-ustadz > *:nth-child(5),
+.p2-dashboard-wali > *:nth-child(5),
+.p2-dashboard-santri > *:nth-child(5) { animation-delay: 200ms; }
+.p2-dashboard-ustadz > *:nth-child(n+6),
+.p2-dashboard-wali > *:nth-child(n+6),
+.p2-dashboard-santri > *:nth-child(n+6) { animation-delay: 235ms; }
+
+/* Form sections rise in sequence; saving keeps the existing truth semantics. */
+form:has(.ui-form-identity) > * {
+  animation: p2-form-step-in 420ms var(--p2-motion-spring) both;
+}
+
+form:has(.ui-form-identity) > *:nth-child(1) { animation-delay: 15ms; }
+form:has(.ui-form-identity) > *:nth-child(2) { animation-delay: 55ms; }
+form:has(.ui-form-identity) > *:nth-child(3) { animation-delay: 95ms; }
+form:has(.ui-form-identity) > *:nth-child(4) { animation-delay: 135ms; }
+form:has(.ui-form-identity) > *:nth-child(5) { animation-delay: 175ms; }
+form:has(.ui-form-identity) > *:nth-child(n+6) { animation-delay: 205ms; }
+
+form[aria-busy='true']:has(.ui-form-identity) .ui-form-actions {
+  animation: p2-saving-confirm 700ms ease-in-out 2;
+}
+
+/* History: animate only the first visible records to avoid long-list jank. */
+.p2-history-record:nth-child(-n+8) {
+  animation: p2-record-in 360ms var(--p2-motion-spring) both;
+}
+
+.p2-history-record:nth-child(1) { animation-delay: 20ms; }
+.p2-history-record:nth-child(2) { animation-delay: 45ms; }
+.p2-history-record:nth-child(3) { animation-delay: 70ms; }
+.p2-history-record:nth-child(4) { animation-delay: 95ms; }
+.p2-history-record:nth-child(5) { animation-delay: 120ms; }
+.p2-history-record:nth-child(6) { animation-delay: 145ms; }
+.p2-history-record:nth-child(7) { animation-delay: 170ms; }
+.p2-history-record:nth-child(8) { animation-delay: 195ms; }
+
+.p2-history-record[data-selected='true'] {
+  transform: translateX(2px);
+}
+
+/* Press feedback is tactile but never blocks click. */
+.press-feedback,
+.ui-action,
+.ui-action-primary,
+.ui-action-secondary,
+.ui-action-quiet,
+.ui-action-danger {
+  transition:
+    transform var(--p2-motion-fast) var(--p2-motion-spring),
+    box-shadow var(--p2-motion-fast) ease,
+    background-color var(--p2-motion-fast) ease,
+    border-color var(--p2-motion-fast) ease,
+    color var(--p2-motion-fast) ease;
+}
+
+.press-feedback:active,
+.ui-action:active,
+.ui-action-primary:active,
+.ui-action-secondary:active,
+.ui-action-quiet:active,
+.ui-action-danger:active {
+  transform: scale(0.975);
+}
+
+/* Desktop hover can be richer; touch devices avoid hover-only paint work. */
+@media (hover: hover) and (pointer: fine) {
+  .p2-brand-link:hover .p2-brand-mark {
+    transform: translateY(-1px) rotate(-2deg) scale(1.035);
+  }
+
+  .p2-profile-trigger:hover {
+    transform: translateY(-1px);
+  }
+
+  .p2-sync-control:hover:not(:disabled) .p2-sync-icon-wrap {
+    transform: rotate(12deg) scale(1.05);
+  }
+
+  .p2-dashboard-ustadz .ui-panel:hover,
+  .p2-dashboard-wali .ui-panel:hover,
+  .p2-dashboard-santri .ui-panel:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 20px 40px -34px rgba(15, 23, 42, 0.52);
+  }
+
+  .p2-history-record:hover {
+    transform: translateX(2px);
+  }
+}
+
+/* Keep animation compositing cheap. */
+.p2-bottom-icon-wrap,
+.p2-setor-fab,
+.p2-profile-popover,
+.ui-dialog-panel,
+.p2-history-record:nth-child(-n+8) {
+  backface-visibility: hidden;
+}
+
+@keyframes p2-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes p2-page-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.996);
+  }
+}
+
+@keyframes p2-popover-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(1px) scale(1.008);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes p2-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes p2-dialog-in {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.965);
+  }
+  72% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.004);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes p2-surface-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes p2-form-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes p2-record-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes p2-sync-breathe {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0.09);
+  }
+}
+
+@keyframes p2-saving-confirm {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+/* Small phones: reduce travel while retaining the responsive feel. */
+@media (max-width: 380px) {
+  .p2-bottom-item.is-active .p2-bottom-icon-wrap {
+    transform: translateY(-2px) scale(1.04);
+  }
+
+  .p2-dashboard-ustadz > *,
+  .p2-dashboard-wali > *,
+  .p2-dashboard-santri > * {
+    animation-duration: 420ms;
+  }
+}
+
+/* Reduced motion is a hard stop, including native View Transitions. */
+@media (prefers-reduced-motion: reduce) {
+  .ui-app-shell > main#main-content,
+  nav[aria-label='Navigasi utama'] button[aria-current='page'],
+  .p2-bottom-item.is-active .p2-bottom-icon-wrap,
+  .p2-setor-fab.is-active {
+    view-transition-name: none !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-old(p2-page),
+  ::view-transition-new(p2-page),
+  ::view-transition-group(p2-page),
+  ::view-transition-group(p2-nav-active) {
+    animation: none !important;
+  }
+
+  .p2-dashboard-ustadz > *,
+  .p2-dashboard-wali > *,
+  .p2-dashboard-santri > *,
+  form:has(.ui-form-identity) > *,
+  .p2-history-record:nth-child(-n+8),
+  .p2-profile-popover,
+  .ui-dialog-overlay,
+  .ui-dialog-overlay > .ui-dialog-panel,
+  .p2-sync-control[aria-busy='true'] .p2-sync-icon-wrap,
+  form[aria-busy='true']:has(.ui-form-identity) .ui-form-actions {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    transform: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .p2-bottom-item.is-active .p2-bottom-icon-wrap,
+  .p2-setor-fab.is-active,
+  nav[aria-label='Navigasi utama'] button[aria-current='page'] {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+    box-shadow: none !important;
+  }
+
+  .p2-sync-control[aria-busy='true'] .p2-sync-icon-wrap,
+  .p2-profile-popover,
+  .ui-dialog-panel {
+    box-shadow: none !important;
+  }
+}
