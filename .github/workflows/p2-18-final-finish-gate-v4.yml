@@ -1,0 +1,80 @@
+name: P2.18 Final Finish Gate v4
+
+on:
+  push:
+    branches:
+      - p2-18-final-finish-gate
+    paths:
+      - .github/workflows/p2-18-final-finish-gate-v4.yml
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: p2-18-final-finish-gate
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Baseline build and measure
+        shell: bash
+        run: |
+          npm run build
+          TOTAL=$(find dist/assets -type f -name '*.js' -printf '%s\n' | awk '{s+=$1} END {print s+0}')
+          ENTRY=$(node -e "const fs=require('fs');const h=fs.readFileSync('dist/index.html','utf8');const m=h.match(/<script[^>]+src=\"\/([^\"]+\.js)\"/);if(!m)process.exit(2);console.log(m[1])")
+          ENTRY_BYTES=$(stat -c%s "dist/$ENTRY")
+          ENTRY_GZIP=$(gzip -c "dist/$ENTRY" | wc -c)
+          echo "$TOTAL" > /tmp/base-total
+          echo "$ENTRY_BYTES" > /tmp/base-entry
+          echo "$ENTRY_GZIP" > /tmp/base-gzip
+          rm -rf dist
+      - name: Apply validated route split
+        run: python .github/p2-18-patch.py
+      - name: TypeScript check
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+      - name: Measure final bundle
+        shell: bash
+        run: |
+          TOTAL=$(find dist/assets -type f -name '*.js' -printf '%s\n' | awk '{s+=$1} END {print s+0}')
+          ENTRY=$(node -e "const fs=require('fs');const h=fs.readFileSync('dist/index.html','utf8');const m=h.match(/<script[^>]+src=\"\/([^\"]+\.js)\"/);if(!m)process.exit(2);console.log(m[1])")
+          ENTRY_BYTES=$(stat -c%s "dist/$ENTRY")
+          ENTRY_GZIP=$(gzip -c "dist/$ENTRY" | wc -c)
+          BASE_TOTAL=$(cat /tmp/base-total)
+          BASE_ENTRY=$(cat /tmp/base-entry)
+          BASE_GZIP=$(cat /tmp/base-gzip)
+          echo "Baseline total JS: $BASE_TOTAL"
+          echo "Final total JS: $TOTAL"
+          echo "Baseline entry JS: $BASE_ENTRY"
+          echo "Final entry JS: $ENTRY_BYTES"
+          echo "Baseline entry gzip: $BASE_GZIP"
+          echo "Final entry gzip: $ENTRY_GZIP"
+          echo "Largest final chunks:"
+          find dist/assets -type f -name '*.js' -printf '%s %p\n' | sort -nr | head -12
+          test "$TOTAL" -le $((BASE_TOTAL + 51200))
+          test "$ENTRY_BYTES" -le $((BASE_ENTRY * 75 / 100))
+      - name: P2.18 final static gate
+        run: |
+          python .github/p2-18-gate.py
+          git diff --check
+      - name: Apply verified App through Contents API
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          APP_SHA=$(gh api "repos/$GITHUB_REPOSITORY/contents/src/App.tsx?ref=p2-18-final-finish-gate" --jq .sha)
+          APP_CONTENT=$(base64 -w0 src/App.tsx)
+          gh api --method PUT "repos/$GITHUB_REPOSITORY/contents/src/App.tsx" \
+            -f message='perf: code-split P2.18 feature routes' \
+            -f content="$APP_CONTENT" \
+            -f sha="$APP_SHA" \
+            -f branch='p2-18-final-finish-gate' >/tmp/p2-18-put.json
+          cat /tmp/p2-18-put.json | jq -r '.commit.sha'
