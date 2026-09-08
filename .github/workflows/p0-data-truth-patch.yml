@@ -24,6 +24,28 @@ jobs:
         with:
           node-version: 20
 
+      - name: Harden staged patch script
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          path = Path('.github/p0_patch.py')
+          text = path.read_text(encoding='utf-8')
+
+          bad_date = '    """\\];\n'
+          good_date = '    """];\n'
+          if bad_date not in text:
+              raise SystemExit('Expected date helper escape not found')
+          text = text.replace(bad_date, good_date, 1)
+
+          old_regex = '        r"catch \\((e|err)\\) \\{\\n(?P<indent>\\s+)console\\.error\\((?P<message>[^\\n]+)\\);\\n(?P=indent)\\}"\n'
+          new_regex = '        r"catch \\((e|err)\\) \\{\\n(?P<indent>\\s+)console\\.error\\((?P<message>[^\\n]+)\\);\\n\\s+\\}"\n'
+          if old_regex not in text:
+              raise SystemExit('Expected catch regex not found')
+          text = text.replace(old_regex, new_regex, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
       - name: Apply P0 patch
         run: python3 .github/p0_patch.py
 
