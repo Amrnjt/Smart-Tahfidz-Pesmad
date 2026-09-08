@@ -1,0 +1,35 @@
+name: P2.4 Transient History Markers
+
+on:
+  push:
+    branches:
+      - design/p2-4-history-data-experience
+    paths:
+      - '.github/workflows/p2-4-transient-history-markers.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: design/p2-4-history-data-experience
+
+      - name: Apply HistoryTable markers
+        run: node scripts/p2-4-history-markers.mjs
+
+      - name: Commit markers
+        run: |
+          if git diff --quiet -- src/components/HistoryTable.tsx; then
+            echo "No marker patch needed."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/components/HistoryTable.tsx
+          git commit -m "P2.4: mark history workspace surfaces"
+          git push origin HEAD:design/p2-4-history-data-experience
