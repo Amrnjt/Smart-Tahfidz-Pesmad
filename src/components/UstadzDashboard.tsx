@@ -230,7 +230,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-300">Ritme 7 hari</p>
-                <p className="mt-1 text-sm font-bold text-white">{sevenDayTotal} setoran</p>
+                <p className="ui-number mt-1 text-base font-[750] text-white">{sevenDayTotal} setoran</p>
               </div>
               <span className="rounded-lg border border-emerald-700 bg-emerald-950/70 px-2 py-1 text-xs font-semibold text-emerald-200">{momentumLabel}</span>
             </div>
@@ -271,7 +271,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                   <PesmadLogo size="md" className="h-full w-full" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-emerald-200">Pesmad Smart Tahfidz</p>
+                  <p className="ui-eyebrow text-emerald-200">Pesmad Smart Tahfidz</p>
                   <p className="mt-0.5 text-sm text-emerald-300">Pesantren Madrasah Darul Fikri</p>
                 </div>
               </div>
@@ -287,7 +287,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                 </span>
                 <span>
                   <span className="block text-xs font-semibold text-emerald-300">Setoran hari ini</span>
-                  <strong className="mt-0.5 block text-2xl font-bold leading-none tabular-nums text-white">{todayActivities.length}</strong>
+                  <strong className="ui-number mt-0.5 block text-2xl font-[750] leading-none text-white">{todayActivities.length}</strong>
                   <span className="mt-1 block text-xs text-emerald-300">{momentumLabel}</span>
                 </span>
                 <ChevronRight className="h-4 w-4 text-emerald-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
@@ -295,11 +295,11 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
             </div>
 
             <div className="mt-7 max-w-2xl lg:max-w-[72%]">
-              <p className="text-sm font-semibold text-emerald-300">Dashboard Ustadz</p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-[2rem] lg:leading-tight">
+              <p className="ui-eyebrow text-emerald-300">Dashboard Ustadz</p>
+              <h1 className="ui-display-title mt-1 max-w-xl text-white">
                 Assalamu'alaikum, {currentUser.nama}
               </h1>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-emerald-100/80">
+              <p className="mt-3 max-w-xl text-sm leading-6 tracking-[-0.006em] text-emerald-100/85 sm:text-[15px]">
                 Catat setoran, pantau aktivitas hari ini, dan temukan santri yang perlu dicermati tanpa berpindah-pindah konteks.
               </p>
 
@@ -359,7 +359,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                       <Icon className={`h-4 w-4 ${style.onDarkText}`} aria-hidden="true" />
                       <span className={`truncate text-xs font-semibold ${style.onDarkText}`}>{item.label}</span>
                     </span>
-                    <strong className="mt-1.5 block text-xl font-bold tabular-nums text-white">{item.value}</strong>
+                    <strong className="ui-number mt-1.5 block text-xl font-[750] text-white">{item.value}</strong>
                     <span className={`mt-0.5 block text-xs ${style.onDarkText}`}>setoran hari ini</span>
                     <span className="mt-2 block h-1 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
                       <span className="block h-full rounded-full bg-white/70 transition-[width] duration-300" style={{ width: `${item.share}%` }} />
@@ -377,7 +377,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
         <aside className={`ui-panel overflow-hidden shadow-[0_16px_42px_-34px_rgba(15,23,42,0.35)] lg:col-span-2 ${todayAttention.length > 0 ? 'border-t-4 border-t-amber-500' : 'border-t-4 border-t-emerald-600'}`}>
           <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-4 sm:p-5">
             <div className="min-w-0">
-              <p className="ui-meta font-semibold uppercase tracking-[0.08em]">Perlu dicermati</p>
+              <p className="ui-eyebrow">Perlu dicermati</p>
               <h2 className="ui-section-title mt-1">Tindak lanjut setoran</h2>
               <p className="ui-secondary mt-1">Nilai Kurang atau Mengulang dari data setoran aktual.</p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
@@ -390,7 +390,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
               </button>
             </div>
             <div className={`flex min-w-14 flex-col items-center rounded-xl border px-3 py-2 ${todayAttention.length > 0 ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
-              <span className="text-2xl font-bold leading-none">{todayAttention.length}</span>
+              <span className="ui-number text-2xl font-[750] leading-none">{todayAttention.length}</span>
               <span className="mt-1 text-xs font-semibold">hari ini</span>
             </div>
           </div>
@@ -430,7 +430,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
       <section aria-label="Status operasional" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <button type="button" onClick={() => setActiveTab('santri')} className="ui-panel group flex min-h-24 items-center gap-3 px-4 py-4 text-left transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:px-5">
           <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700"><Users className="h-5 w-5" aria-hidden="true" /></span>
-          <span className="min-w-0 flex-1"><span className="ui-meta block font-semibold">Santri aktif</span><strong className="mt-0.5 block text-2xl font-bold text-slate-950">{santriList.length}</strong><span className="ui-meta mt-0.5 block">Lihat data santri</span></span>
+          <span className="min-w-0 flex-1"><span className="ui-meta block font-semibold">Santri aktif</span><strong className="ui-number mt-0.5 block text-2xl font-[750] text-slate-950">{santriList.length}</strong><span className="ui-meta mt-0.5 block">Lihat data santri</span></span>
           <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
         </button>
 
@@ -448,7 +448,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
 
         <button type="button" onClick={() => setActiveTab('riwayat')} className="ui-panel group flex min-h-24 items-center gap-3 px-4 py-4 text-left transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 sm:px-5">
           <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-800"><CalendarCheck className="h-5 w-5" aria-hidden="true" /></span>
-          <span className="min-w-0 flex-1"><span className="ui-meta block font-semibold">Setoran tersimpan</span><strong className="mt-0.5 block text-2xl font-bold text-slate-950">{activities.length}</strong><span className="ui-meta mt-0.5 block">Seluruh kategori</span></span>
+          <span className="min-w-0 flex-1"><span className="ui-meta block font-semibold">Setoran tersimpan</span><strong className="ui-number mt-0.5 block text-2xl font-[750] text-slate-950">{activities.length}</strong><span className="ui-meta mt-0.5 block">Seluruh kategori</span></span>
           <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
         </button>
       </section>
@@ -456,7 +456,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
       <ScrollReveal className="ui-panel overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div>
-            <p className="ui-meta font-semibold uppercase tracking-[0.08em]">Arus kegiatan</p>
+            <p className="ui-eyebrow">Arus kegiatan</p>
             <h2 className="ui-section-title mt-1">Aktivitas terbaru</h2>
             <p className="ui-secondary mt-0.5">Setoran paling baru dari seluruh kategori.</p>
           </div>
@@ -516,7 +516,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
       <ScrollReveal delay={80} className="space-y-3">
         <div id="dashboard-analytics" className="scroll-mt-24 flex flex-col gap-3 px-1 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
-            <p className="ui-meta font-semibold uppercase tracking-[0.08em]">Insight</p>
+            <p className="ui-eyebrow">Insight</p>
             <h2 className="ui-section-title mt-1">Analitik hafalan</h2>
             <p className="ui-secondary mt-0.5">Gunakan grafik untuk membaca pola perkembangan setelah melihat kondisi operasional hari ini.</p>
           </div>
@@ -568,7 +568,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
       <ScrollReveal delay={80} className="ui-panel overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-slate-200 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
           <div>
-            <p className="ui-meta font-semibold uppercase tracking-[0.08em]">Operasional santri</p>
+            <p className="ui-eyebrow">Operasional santri</p>
             <h2 className="ui-section-title mt-1">Santri & setoran berikutnya</h2>
             <p className="ui-secondary mt-0.5">Lihat target, aktivitas terakhir, lalu masuk ke form sesuai kelas.</p>
           </div>
