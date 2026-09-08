@@ -104,7 +104,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
+    <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center md:p-4">
       <div
         className="fixed inset-0 bg-slate-950/55 animate-in fade-in"
         onClick={onClose}
@@ -113,14 +113,14 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
 
       <div
         ref={dialogRef}
-        className="relative z-10 w-full max-w-lg max-h-[88dvh] overflow-y-auto overscroll-contain bg-white rounded-t-2xl border-t border-slate-200 ui-sheet-insets pt-2 animate-in slide-in-from-bottom-5 duration-200"
+        className="relative z-10 w-full max-w-lg max-h-[88dvh] overflow-y-auto overscroll-contain bg-white rounded-t-2xl border-t border-slate-200 ui-sheet-insets pt-2 animate-in slide-in-from-bottom-5 duration-200 md:max-w-2xl md:max-h-[calc(100dvh-2rem)] md:rounded-2xl md:border md:border-slate-200 md:pt-3 md:shadow-xl"
         role="dialog"
         aria-modal="true"
         aria-labelledby="setor-action-sheet-title"
         aria-describedby="setor-action-sheet-description"
         tabIndex={-1}
       >
-        <div className="w-9 h-1 bg-slate-300 rounded-full mx-auto mb-2" />
+        <div className="w-9 h-1 bg-slate-300 rounded-full mx-auto mb-2 md:hidden" />
 
         <div className="flex items-start justify-between gap-3 pb-2 border-b border-slate-100">
           <div className="min-w-0">
@@ -195,7 +195,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
           )}
         </section>
 
-        <div className="py-2 space-y-1.5">
+        <div className="grid grid-cols-1 gap-2 py-3 md:grid-cols-2">
           {actions.map((act) => {
             const Icon = act.icon;
 
@@ -207,7 +207,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
                   onSelect(act.tab);
                   onClose();
                 }}
-                className="w-full min-h-[54px] px-2.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-2.5 text-left cursor-pointer group"
+                className="w-full min-h-[54px] px-2.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-2.5 text-left cursor-pointer group md:min-h-[68px] md:p-3"
               >
                 <div
                   className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${act.iconBg}`}
