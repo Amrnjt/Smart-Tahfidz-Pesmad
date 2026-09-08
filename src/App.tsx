@@ -52,8 +52,8 @@ export default function App() {
     try { return storageService.getUsers(); } catch { return []; }
   });
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
-  const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
-  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
+  const isSyncing = syncState === 'syncing';
   const [snack, setSnack] = useState<SnackbarState | null>(null);
   const [isSetorMenuOpen, setIsSetorMenuOpen] = useState(false);
 
@@ -104,13 +104,14 @@ export default function App() {
 
   const handleManualRefresh = async () => {
     if (isSyncing) return;
-    setIsSyncing(true);
+    setSyncState('syncing');
     try {
       const result = await storageService.syncWithCloud();
       if (!result.success) {
         throw new Error(result.message || 'Cloud tidak dapat dijangkau.');
       }
       refreshData();
+      setSyncState('success');
       setSnack({
         id: `sync-${Date.now()}`,
         message: 'Data berhasil disinkronkan dengan Cloud Firestore.',
@@ -119,6 +120,7 @@ export default function App() {
     } catch (err) {
       console.error(err);
       refreshData();
+      setSyncState('error');
       setSnack({
         id: `sync-err-${Date.now()}`,
         message: 'Gagal memperbarui data dari Cloud. Data lokal hanya digunakan sebagai cache.',
@@ -126,8 +128,6 @@ export default function App() {
         actionLabel: 'Coba Lagi',
         onAction: handleManualRefresh,
       });
-    } finally {
-      setIsSyncing(false);
     }
   };
 
@@ -140,6 +140,23 @@ export default function App() {
   const isSantri = userRoleStr === 'santri';
   const isUstadz = !isWali && !isSantri;
   const isSetorActive = ['ziyadah', 'murojaah', 'binnadzor', 'pembelajaran'].includes(activeTab);
+
+  const syncStatusCopy =
+    syncState === 'syncing'
+      ? 'Memeriksa koneksi dan data Cloud...'
+      : syncState === 'success'
+      ? 'Cloud Firestore • sinkronisasi terakhir berhasil'
+      : syncState === 'error'
+      ? 'Cloud tidak terjangkau • cache lokal tetap tersedia'
+      : 'Cloud Firestore • status koneksi belum diverifikasi';
+  const syncStatusTone =
+    syncState === 'success'
+      ? 'ui-state-success'
+      : syncState === 'error'
+      ? 'ui-state-error'
+      : syncState === 'syncing'
+      ? 'ui-state-info'
+      : 'ui-state-neutral';
 
   // Delayed notification system for Wali Santri role
   const { toasts, dismissToast } = useSetoranNotifications(
@@ -289,7 +306,6 @@ export default function App() {
                   setActiveTab={setActiveTab}
                   onSelectSantriForZiyadah={handleSelectSantriForZiyadah}
                   onOpenSetorMenu={() => setIsSetorMenuOpen(true)}
-                  isLoading={isLoadingData}
                 />
               ) : isWali ? (
                 <WaliDashboard
@@ -300,7 +316,6 @@ export default function App() {
                   binnadzorRecords={binnadzorRecords}
                   pembelajaranRecords={pembelajaranRecords}
                   setActiveTab={setActiveTab}
-                  isLoading={isLoadingData}
                   onNotify={notify}
                 />
               ) : (
@@ -312,7 +327,6 @@ export default function App() {
                   binnadzorRecords={binnadzorRecords}
                   pembelajaranRecords={pembelajaranRecords}
                   setActiveTab={setActiveTab}
-                  isLoading={isLoadingData}
                 />
               )
             )}
@@ -381,7 +395,6 @@ export default function App() {
                 binnadzorRecords={binnadzorRecords}
                 pembelajaranRecords={pembelajaranRecords}
                 onDataChanged={refreshData}
-                isLoading={isLoadingData}
                 santriList={santriList}
                 onNotify={notify}
               />
@@ -414,9 +427,14 @@ export default function App() {
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                   <span>Tahfidz al-Qur'an Pesantren Madrasah Darul Fikri • Jl. Budi Utomo No. 190 Kepohbaru Bojonegoro</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200 text-[11px] font-semibold">
-                  <Cloud className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Cloud Firestore • Sinkronisasi Real-Time Multi-Device</span>
+                <div
+                  role="status"
+                  aria-live="polite"
+                  aria-atomic="true"
+                  className={`ui-state-surface flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold ${syncStatusTone}`}
+                >
+                  <Cloud className={`w-3.5 h-3.5 ${syncState === 'syncing' ? 'animate-pulse' : ''}`} aria-hidden="true" />
+                  <span>{syncStatusCopy}</span>
                 </div>
               </div>
             </div>

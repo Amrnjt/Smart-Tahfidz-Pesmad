@@ -23,7 +23,6 @@ import {
 import { ZiyadahProgressChart } from './ZiyadahProgressChart';
 import { PesmadLogo } from './PesmadLogo';
 import { formatTanggalWaktu } from '../utils/dateFormatter';
-import { SantriWaliDashboardSkeleton } from './SkeletonLoading';
 import { ScrollReveal } from './ScrollReveal';
 import { PantauanLiburanWaliSection } from './PantauanLiburanWaliSection';
 import { storageService } from '../services/storageService';
@@ -37,7 +36,6 @@ interface WaliDashboardProps {
   binnadzorRecords?: BinnadzorRecord[];
   pembelajaranRecords?: PembelajaranRecord[];
   setActiveTab: (tab: ActiveTab) => void;
-  isLoading?: boolean;
   onNotify: NotifyFn;
 }
 
@@ -100,12 +98,8 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   binnadzorRecords = [],
   pembelajaranRecords = [],
   setActiveTab,
-  isLoading = false,
   onNotify
 }) => {
-  if (isLoading) {
-    return <SantriWaliDashboardSkeleton role="Wali" />;
-  }
 
   const targetSantri = santriList.find(santri => santri.idSantri === currentUser.idSantri);
 

@@ -32,7 +32,6 @@ import {
   Square
 } from 'lucide-react';
 import { addDaysToDateInput, formatTanggalLengkap, formatTanggalRingkas, getTodayInputFormat, parseDateSafe } from '../utils/dateFormatter';
-import { TableSkeleton } from './SkeletonLoading';
 import { UnduhLaporanModal } from './UnduhLaporanModal';
 import { getClassGroup } from '../utils/classUtils';
 import type { NotifyFn } from './Snackbar';
@@ -57,7 +56,6 @@ interface HistoryTableProps {
   binnadzorRecords?: BinnadzorRecord[];
   pembelajaranRecords?: PembelajaranRecord[];
   onDataChanged: () => void;
-  isLoading?: boolean;
   santriList?: Santri[];
   onNotify: NotifyFn;
 }
@@ -213,7 +211,7 @@ const KATEGORI_OPTIONS: KategoriOption[] = [
 ];
 
 export const HistoryTable: React.FC<HistoryTableProps> = ({
-  currentUser, ziyadahRecords, murojaahRecords, binnadzorRecords, pembelajaranRecords, onDataChanged, isLoading = false, santriList = [], onNotify
+  currentUser, ziyadahRecords, murojaahRecords, binnadzorRecords, pembelajaranRecords, onDataChanged, santriList = [], onNotify
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [kategoriFilter, setKategoriFilter] = useState<KategoriFilter>('ALL');
@@ -259,7 +257,6 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     if (!isBatchDeleting) setIsBatchDeleteModalOpen(false);
   });
 
-  if (isLoading) return <TableSkeleton rows={7} />;
 
   const normalizedRole = (() => {
     if (!currentUser?.role) return 'Ustadz';

@@ -331,6 +331,18 @@ textarea {
   border-color: color-mix(in srgb, var(--status-info) 25%, white);
 }
 
+.ui-state-neutral {
+  color: var(--status-neutral);
+  background: var(--status-neutral-subtle);
+  border-color: color-mix(in srgb, var(--status-neutral) 22%, white);
+}
+
+.ui-state-surface {
+  border-width: 1px;
+  border-style: solid;
+  border-radius: var(--radius-surface);
+}
+
 /* === Entry transitions === */
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(16px); }
