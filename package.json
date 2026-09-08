@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "prebuild": "node -e \"console.log('=== BUILD LOG START [' + new Date().toISOString() + '] ==='); console.log('Builder Environment Check Passed.');\"",
@@ -27,6 +30,7 @@
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
     "firebase": "^12.18.0",
+    "firebase-admin": "^14.3.0",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.546.0",
