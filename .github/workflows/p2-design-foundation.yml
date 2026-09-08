@@ -7,12 +7,19 @@ on:
       - 'src/design-foundation.css'
       - 'src/app-shell.css'
       - 'src/dashboard-experience.css'
+      - 'src/input-workflow.css'
       - 'src/design-system/**'
       - 'src/components/Navbar.tsx'
       - 'src/components/BottomNav.tsx'
       - 'src/components/UstadzDashboard.tsx'
       - 'src/components/WaliDashboard.tsx'
       - 'src/components/SantriDashboard.tsx'
+      - 'src/components/ZiyadahForm.tsx'
+      - 'src/components/MurojaahForm.tsx'
+      - 'src/components/BinnadzorForm.tsx'
+      - 'src/components/PembelajaranForm.tsx'
+      - 'src/components/SetoranFormNav.tsx'
+      - 'src/components/SetorActionSheet.tsx'
       - 'src/main.tsx'
       - 'P2_DESIGN_FOUNDATION.md'
       - '.github/workflows/p2-design-foundation.yml'
@@ -50,13 +57,21 @@ jobs:
           grep -q 'forced-colors: active' src/app-shell.css
           grep -q 'prefers-reduced-motion: reduce' src/dashboard-experience.css
           grep -q 'forced-colors: active' src/dashboard-experience.css
+          grep -q 'prefers-reduced-motion: reduce' src/input-workflow.css
+          grep -q 'forced-colors: active' src/input-workflow.css
           grep -q 'p2-dashboard-ustadz' src/components/UstadzDashboard.tsx
           grep -q 'p2-dashboard-wali' src/components/WaliDashboard.tsx
           grep -q 'p2-dashboard-santri' src/components/SantriDashboard.tsx
+          grep -q 'ui-form-identity' src/components/ZiyadahForm.tsx
+          grep -q 'ui-form-identity' src/components/MurojaahForm.tsx
+          grep -q 'ui-form-identity' src/components/BinnadzorForm.tsx
+          grep -q 'ui-form-identity' src/components/PembelajaranForm.tsx
+          grep -q 'Navigasi form setoran' src/components/SetoranFormNav.tsx
+          grep -q 'setor-action-sheet-title' src/components/SetorActionSheet.tsx
 
       - name: Reject expensive global effects
         run: |
-          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/design-foundation.css src/app-shell.css src/dashboard-experience.css; then
+          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/design-foundation.css src/app-shell.css src/dashboard-experience.css src/input-workflow.css; then
             echo 'P2 visual system contains an expensive global effect.'
             exit 1
           fi
