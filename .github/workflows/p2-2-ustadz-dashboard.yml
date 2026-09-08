@@ -16,18 +16,31 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Wire shared Setor action sheet into dashboard
+      - name: Apply final P2.2 wiring and typing fix
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
-          path = Path('src/App.tsx')
-          text = path.read_text()
+
+          app_path = Path('src/App.tsx')
+          app = app_path.read_text()
           old = """                  onSelectSantriForZiyadah={handleSelectSantriForZiyadah}\n                  isLoading={isLoadingData}\n"""
           new = """                  onSelectSantriForZiyadah={handleSelectSantriForZiyadah}\n                  onOpenSetorMenu={() => setIsSetorMenuOpen(true)}\n                  isLoading={isLoadingData}\n"""
-          if old not in text:
+          if old in app:
+              app = app.replace(old, new, 1)
+          elif 'onOpenSetorMenu={() => setIsSetorMenuOpen(true)}' not in app:
               raise SystemExit('UstadzDashboard prop anchor not found')
-          path.write_text(text.replace(old, new, 1))
+          app_path.write_text(app)
+
+          dashboard_path = Path('src/components/UstadzDashboard.tsx')
+          dashboard = dashboard_path.read_text()
+          old_map = "const santriById = new Map(santriList.map(santri => [santri.idSantri, santri]));"
+          new_map = "const santriById = new Map<string, Santri>(santriList.map(santri => [santri.idSantri, santri]));"
+          if old_map in dashboard:
+              dashboard = dashboard.replace(old_map, new_map, 1)
+          elif new_map not in dashboard:
+              raise SystemExit('santriById typing anchor not found')
+          dashboard_path.write_text(dashboard)
           PY
       - name: Install dependencies
         run: npm install --no-package-lock --ignore-scripts
@@ -41,6 +54,7 @@ jobs:
           set -euo pipefail
           grep -q 'onOpenSetorMenu={() => setIsSetorMenuOpen(true)}' src/App.tsx
           grep -q 'onOpenSetorMenu: () => void' src/components/UstadzDashboard.tsx
+          grep -q 'new Map<string, Santri>' src/components/UstadzDashboard.tsx
           grep -q 'Perlu perhatian hari ini' src/components/UstadzDashboard.tsx
           grep -q 'Aktivitas terbaru' src/components/UstadzDashboard.tsx
           grep -q 'Belum ada setoran tersimpan untuk menghitung kualitas' src/components/UstadzDashboard.tsx
