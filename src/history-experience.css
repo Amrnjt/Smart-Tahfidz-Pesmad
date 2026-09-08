@@ -1,0 +1,243 @@
+/* P2.4 — History & Data Experience
+ * Scope: visual hierarchy, scanning, filters, selection, details.
+ * No record filtering, permissions, export, delete, or edit semantics live here.
+ */
+
+.p2-history {
+  --history-ink: #0f172a;
+  --history-muted: #64748b;
+  --history-border: rgba(148, 163, 184, 0.26);
+  --history-surface: rgba(255, 255, 255, 0.96);
+  --history-soft: rgba(248, 250, 252, 0.88);
+  --history-accent: #047857;
+  position: relative;
+  overflow: visible;
+  border-radius: 24px;
+  border-color: var(--history-border) !important;
+  background:
+    radial-gradient(circle at 12% 0%, rgba(16, 185, 129, 0.08), transparent 28%),
+    linear-gradient(180deg, rgba(255,255,255,0.98), rgba(248,250,252,0.96));
+  box-shadow: 0 24px 60px -48px rgba(15, 23, 42, 0.46);
+}
+
+.p2-history-toolbar {
+  position: relative;
+  border-bottom-color: rgba(203, 213, 225, 0.72) !important;
+}
+
+.p2-history-toolbar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 42px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #059669, #14b8a6);
+}
+
+.p2-history-toolbar h3 {
+  letter-spacing: -0.025em;
+}
+
+.p2-history-toolbar input[type='text'] {
+  background: rgba(255, 255, 255, 0.96) !important;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.4);
+}
+
+.p2-history-toolbar input[type='text']:focus {
+  box-shadow: 0 0 0 4px rgba(16,185,129,0.1);
+}
+
+.p2-history-results {
+  border-radius: 20px !important;
+  border-color: rgba(203, 213, 225, 0.78) !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+.p2-history-record {
+  position: relative;
+  isolation: isolate;
+  transition:
+    background-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.p2-history-record::before {
+  content: '';
+  position: absolute;
+  inset: 8px auto 8px 0;
+  width: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color 160ms ease;
+}
+
+.p2-history-record:hover::before,
+.p2-history-record:focus-within::before {
+  background: rgba(5, 150, 105, 0.48);
+}
+
+.p2-history-record:focus-within {
+  z-index: 1;
+  box-shadow: inset 0 0 0 1px rgba(16,185,129,0.22);
+}
+
+.p2-history-record[data-selected='true'] {
+  background: rgba(236, 253, 245, 0.84) !important;
+}
+
+.p2-history-record[data-selected='true']::before {
+  background: #059669;
+}
+
+.p2-history-mobile-row {
+  transition: background-color 160ms ease;
+}
+
+.p2-history-mobile-row > div > button[aria-expanded='true'] h4 {
+  color: var(--history-ink);
+}
+
+.p2-history-mobile-detail,
+.p2-history-desktop-detail {
+  animation: p2-history-detail-in 180ms ease-out both;
+}
+
+.p2-history-mobile-detail {
+  border-left-color: rgba(16,185,129,0.42) !important;
+  background:
+    linear-gradient(90deg, rgba(236,253,245,0.78), rgba(248,250,252,0.9)) !important;
+}
+
+.p2-history-desktop-detail {
+  background:
+    radial-gradient(circle at 100% 0%, rgba(16,185,129,0.06), transparent 30%),
+    rgba(248,250,252,0.94) !important;
+}
+
+.p2-history-desktop-detail > div > div {
+  border-radius: 16px !important;
+  border-color: rgba(203,213,225,0.76) !important;
+  box-shadow: 0 12px 30px -28px rgba(15,23,42,0.5);
+}
+
+.p2-history-empty {
+  min-height: 240px;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(16,185,129,0.08), transparent 28%);
+}
+
+.p2-history [aria-controls='history-mobile-filter-panel'] {
+  position: relative;
+}
+
+.p2-history #history-mobile-filter-panel {
+  box-shadow: 0 18px 42px -34px rgba(15,23,42,0.6);
+}
+
+.p2-history [aria-label='Filter kategori setoran'],
+.p2-history [aria-label='Filter nilai setoran'] {
+  background-color: rgba(248,250,252,0.94) !important;
+}
+
+.p2-history [aria-label='Filter kategori setoran']:focus,
+.p2-history [aria-label='Filter nilai setoran']:focus {
+  background-color: #fff !important;
+}
+
+.p2-history .ui-dialog-panel {
+  border-radius: 22px;
+  box-shadow: 0 34px 90px -42px rgba(15,23,42,0.72);
+}
+
+.p2-history .ui-dialog-header {
+  background: linear-gradient(180deg, rgba(248,250,252,0.9), rgba(255,255,255,0.98));
+}
+
+.p2-history button,
+.p2-history a,
+.p2-history input,
+.p2-history select,
+.p2-history textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.p2-history button:active,
+.p2-history a:active {
+  transform: translateY(1px);
+}
+
+@keyframes p2-history-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 1024px) {
+  .p2-history {
+    padding: 16px !important;
+  }
+
+  .p2-history-toolbar {
+    padding-bottom: 12px !important;
+  }
+
+  .p2-history-record:hover {
+    background: rgba(248,250,252,0.9) !important;
+  }
+
+  .p2-history-desktop-row {
+    min-height: 70px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .p2-history {
+    border-radius: 20px;
+    padding: 10px !important;
+  }
+
+  .p2-history-results {
+    border-radius: 16px !important;
+  }
+
+  .p2-history-mobile-row {
+    padding-block: 14px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p2-history *,
+  .p2-history *::before,
+  .p2-history *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .p2-history,
+  .p2-history-results,
+  .p2-history-record,
+  .p2-history-mobile-detail,
+  .p2-history-desktop-detail {
+    background: Canvas !important;
+    border-color: CanvasText !important;
+    box-shadow: none !important;
+  }
+
+  .p2-history-record::before,
+  .p2-history-toolbar::before {
+    background: Highlight !important;
+  }
+}
