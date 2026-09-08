@@ -174,14 +174,27 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
     { label: 'Pembelajaran', value: todayActivities.filter(record => record.category === 'Pembelajaran').length }
   ];
 
+  const categoryTargetTabs: Record<ActivityCategory, ActiveTab> = {
+    Ziyadah: 'ziyadah',
+    "Muroja'ah": 'murojaah',
+    Binnadzor: 'binnadzor',
+    Pembelajaran: 'pembelajaran'
+  };
+
   return (
     <div className="w-full min-w-0 max-w-full space-y-6">
       <section aria-label="Pusat kerja Ustadz" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <div className="overflow-hidden rounded-2xl border border-emerald-900 bg-emerald-950 text-white lg:col-span-3">
-          <div className="p-5 sm:p-6 lg:p-7">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+        <div className="relative isolate overflow-hidden rounded-2xl border border-emerald-800 bg-emerald-950 text-white shadow-[0_18px_48px_-32px_rgba(6,78,59,0.8)] lg:col-span-3">
+          <div aria-hidden="true" className="pointer-events-none absolute -right-10 top-12 hidden h-60 w-48 rounded-t-[999px] border border-emerald-700/50 lg:block" />
+          <div aria-hidden="true" className="pointer-events-none absolute right-5 top-20 hidden h-48 w-36 rounded-t-[999px] border border-emerald-800 bg-emerald-900/35 lg:flex lg:items-center lg:justify-center">
+            <BookOpen className="h-10 w-10 text-emerald-500/45" />
+          </div>
+          <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -right-8 h-40 w-40 rounded-full border border-emerald-800/70" />
+
+          <div className="relative z-10 p-5 sm:p-6 lg:p-7">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex min-w-0 items-center gap-3">
-                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-emerald-700 bg-white p-1.5">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-emerald-700 bg-white p-1.5 shadow-sm">
                   <PesmadLogo size="md" className="h-full w-full" />
                 </div>
                 <div className="min-w-0">
@@ -190,78 +203,112 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-end gap-2 border-l-2 border-emerald-700 pl-3 sm:flex-col sm:items-end sm:gap-0">
-                <span className="text-xs font-semibold text-emerald-300">Setoran hari ini</span>
-                <strong className="text-3xl font-bold tracking-tight text-white sm:text-4xl">{todayActivities.length}</strong>
-              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('riwayat')}
+                className="group flex min-h-14 items-center gap-3 self-start rounded-xl border border-emerald-700 bg-emerald-900/70 px-3.5 py-2.5 text-left transition-[border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-emerald-500 hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 sm:self-auto"
+                aria-label={`${todayActivities.length} setoran hari ini. Buka riwayat setoran`}
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-700 bg-emerald-950 text-emerald-200">
+                  <CalendarCheck className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <span>
+                  <span className="block text-xs font-semibold text-emerald-300">Setoran hari ini</span>
+                  <strong className="mt-0.5 block text-2xl font-bold leading-none tabular-nums text-white">{todayActivities.length}</strong>
+                </span>
+                <ChevronRight className="h-4 w-4 text-emerald-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+              </button>
             </div>
 
-            <div className="mt-7 max-w-2xl">
+            <div className="mt-7 max-w-2xl lg:max-w-[72%]">
               <p className="text-sm font-semibold text-emerald-300">Dashboard Ustadz</p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+              <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl lg:text-[2rem] lg:leading-tight">
                 Assalamu'alaikum, {currentUser.nama}
               </h1>
               <p className="mt-2 max-w-xl text-sm leading-6 text-emerald-100/80">
                 Catat setoran, pantau aktivitas hari ini, dan temukan santri yang perlu dicermati tanpa berpindah-pindah konteks.
               </p>
+
+              <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
+                <span className={`inline-flex min-h-8 items-center gap-1.5 rounded-lg border px-2.5 ${todayAttention.length > 0 ? 'border-amber-700/70 bg-amber-950/30 text-amber-200' : 'border-emerald-700 bg-emerald-900/60 text-emerald-200'}`}>
+                  <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
+                  {todayAttention.length > 0 ? `${todayAttention.length} perlu tindak lanjut hari ini` : 'Tidak ada tindak lanjut hari ini'}
+                </span>
+                <span className="inline-flex min-h-8 items-center rounded-lg border border-emerald-800 bg-emerald-900/45 px-2.5 text-emerald-200">
+                  {activities.length} setoran tersimpan
+                </span>
+              </div>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-2.5">
               <button
                 type="button"
                 onClick={onOpenSetorMenu}
-                className="ui-control press-feedback inline-flex items-center justify-center gap-2 bg-white px-4 text-sm font-bold text-emerald-950 transition-colors hover:bg-emerald-50"
+                className="ui-control press-feedback inline-flex items-center justify-center gap-2 bg-emerald-300 px-4 text-sm font-bold text-emerald-950 shadow-sm transition-[background-color,transform] hover:bg-emerald-200"
               >
-                <PlusCircle className="h-4 w-4" />
+                <PlusCircle className="h-4 w-4" aria-hidden="true" />
                 Mulai Setor
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('mushaf')}
-                className="ui-control press-feedback inline-flex items-center justify-center gap-2 border border-emerald-700 bg-emerald-900/50 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-900"
+                className="ui-control press-feedback inline-flex items-center justify-center gap-2 border border-emerald-600 bg-emerald-900/55 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-900"
               >
-                <BookOpen className="h-4 w-4" />
+                <BookOpen className="h-4 w-4" aria-hidden="true" />
                 Buka Mushaf
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('riwayat')}
-                className="ui-control press-feedback inline-flex items-center justify-center gap-2 px-3 text-sm font-semibold text-emerald-100 transition-colors hover:text-white"
+                className="ui-control press-feedback group inline-flex items-center justify-center gap-2 px-3 text-sm font-semibold text-emerald-100 transition-colors hover:text-white"
               >
                 Riwayat
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 border-t border-emerald-800 sm:grid-cols-4">
-            {dailyBreakdown.map((item, index) => {
+          <div className="relative z-10 grid grid-cols-2 gap-px border-t border-emerald-800 bg-emerald-800 sm:grid-cols-4">
+            {dailyBreakdown.map((item) => {
               const style = categoryStyles[item.label];
               const Icon = style.icon;
               return (
-                <div
+                <button
+                  type="button"
                   key={item.label}
-                  className={`${style.onDarkSurface} px-4 py-3.5 ${index % 2 !== 0 ? 'border-l border-emerald-800 sm:border-l' : ''} ${index > 1 ? 'border-t border-emerald-800 sm:border-t-0' : ''} ${index > 0 ? 'sm:border-l sm:border-emerald-800' : ''}`}
+                  onClick={() => setActiveTab(categoryTargetTabs[item.label])}
+                  className={`${style.onDarkSurface} group flex min-h-[82px] items-center justify-between gap-3 px-4 py-3.5 text-left transition-[filter,transform] duration-200 hover:-translate-y-0.5 hover:brightness-110 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300`}
+                  aria-label={`${item.label}: ${item.value} setoran hari ini. Buka form ${item.label}`}
                 >
-                  <div className="flex items-center gap-2">
-                    <Icon className={`h-4 w-4 ${style.onDarkText}`} aria-hidden="true" />
-                    <span className={`text-xs font-semibold ${style.onDarkText}`}>{item.label}</span>
-                  </div>
-                  <p className="mt-1.5 text-xl font-bold tabular-nums text-white">{item.value}</p>
-                </div>
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-2">
+                      <Icon className={`h-4 w-4 ${style.onDarkText}`} aria-hidden="true" />
+                      <span className={`truncate text-xs font-semibold ${style.onDarkText}`}>{item.label}</span>
+                    </span>
+                    <strong className="mt-1.5 block text-xl font-bold tabular-nums text-white">{item.value}</strong>
+                    <span className={`mt-0.5 block text-xs ${style.onDarkText}`}>setoran hari ini</span>
+                  </span>
+                  <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/10">
+                    <ChevronRight className="h-4 w-4 text-white/70 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                  </span>
+                </button>
               );
             })}
           </div>
         </div>
 
-        <aside className={`ui-panel overflow-hidden lg:col-span-2 ${todayAttention.length > 0 ? 'border-t-4 border-t-amber-500' : 'border-t-4 border-t-emerald-600'}`}>
+        <aside className={`ui-panel overflow-hidden shadow-[0_16px_42px_-34px_rgba(15,23,42,0.35)] lg:col-span-2 ${todayAttention.length > 0 ? 'border-t-4 border-t-amber-500' : 'border-t-4 border-t-emerald-600'}`}>
           <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-4 sm:p-5">
             <div className="min-w-0">
               <p className="ui-meta font-semibold uppercase tracking-[0.08em]">Perlu dicermati</p>
               <h2 className="ui-section-title mt-1">Tindak lanjut setoran</h2>
               <p className="ui-secondary mt-1">Nilai Kurang atau Mengulang dari data setoran aktual.</p>
+              <button type="button" onClick={() => setActiveTab('riwayat')} className="group mt-3 inline-flex min-h-9 items-center gap-1.5 text-sm font-semibold text-emerald-800 hover:text-emerald-950">
+                Lihat semua
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+              </button>
             </div>
-            <div className={`flex min-w-14 flex-col items-center rounded-xl px-3 py-2 ${todayAttention.length > 0 ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-800'}`}>
+            <div className={`flex min-w-14 flex-col items-center rounded-xl border px-3 py-2 ${todayAttention.length > 0 ? 'border-amber-200 bg-amber-50 text-amber-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800'}`}>
               <span className="text-2xl font-bold leading-none">{todayAttention.length}</span>
               <span className="mt-1 text-xs font-semibold">hari ini</span>
             </div>
@@ -280,7 +327,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                   type="button"
                   key={`${record.category}-${record.id}`}
                   onClick={() => setActiveTab('riwayat')}
-                  className="group flex w-full items-start gap-3 py-3.5 text-left"
+                  className="group -mx-2 flex w-[calc(100%+1rem)] items-start gap-3 rounded-lg px-2 py-3.5 text-left transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
                 >
                   <div className={`mt-1.5 h-2.5 w-2.5 flex-shrink-0 rounded-full ${record.nilai === 'Mengulang' ? 'bg-rose-600' : 'bg-amber-600'}`} aria-hidden="true" />
                   <div className="min-w-0 flex-1">
@@ -299,40 +346,29 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
         </aside>
       </section>
 
-      <section aria-label="Status operasional" className="ui-panel overflow-hidden">
-        <div className="grid grid-cols-1 sm:grid-cols-3 sm:divide-x sm:divide-slate-200">
-          <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-4 sm:border-b-0 sm:px-5">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
-              <Users className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="ui-meta font-semibold">Santri aktif</p>
-              <p className="mt-0.5 text-xl font-bold text-slate-950">{santriList.length}</p>
-            </div>
-          </div>
+      <section aria-label="Status operasional" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <button type="button" onClick={() => setActiveTab('santri')} className="ui-panel group flex min-h-24 items-center gap-3 px-4 py-4 text-left transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:px-5">
+          <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700"><Users className="h-5 w-5" aria-hidden="true" /></span>
+          <span className="min-w-0 flex-1"><span className="ui-meta block font-semibold">Santri aktif</span><strong className="mt-0.5 block text-2xl font-bold text-slate-950">{santriList.length}</strong><span className="ui-meta mt-0.5 block">Lihat data santri</span></span>
+          <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+        </button>
 
-          <div className="flex items-center gap-3 border-b border-slate-200 px-4 py-4 sm:border-b-0 sm:px-5">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-800">
-              <CheckCircle2 className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="ui-meta font-semibold">Kualitas Sangat Baik</p>
-              <p className="mt-0.5 text-xl font-bold text-slate-950">{sangatBaikPercent === null ? '—' : `${sangatBaikPercent}%`}</p>
-              <p className="ui-meta mt-0.5">{activities.length === 0 ? 'Belum ada penilaian' : `${sangatBaikCount} dari ${activities.length} setoran`}</p>
-            </div>
+        <div className="ui-panel flex min-h-24 items-center gap-3 px-4 py-4 sm:px-5">
+          <div className="relative h-12 w-12 flex-shrink-0" aria-hidden="true">
+            <svg viewBox="0 0 36 36" className="h-12 w-12 -rotate-90">
+              <circle cx="18" cy="18" r="14" fill="none" stroke="#d1fae5" strokeWidth="4" />
+              <circle cx="18" cy="18" r="14" fill="none" stroke="#059669" strokeWidth="4" strokeLinecap="round" pathLength="100" strokeDasharray={`${sangatBaikPercent ?? 0} 100`} />
+            </svg>
+            <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-emerald-900">{sangatBaikPercent === null ? '—' : `${sangatBaikPercent}%`}</span>
           </div>
-
-          <div className="flex items-center gap-3 px-4 py-4 sm:px-5">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-800">
-              <CalendarCheck className="h-5 w-5" />
-            </div>
-            <div className="min-w-0">
-              <p className="ui-meta font-semibold">Setoran tersimpan</p>
-              <p className="mt-0.5 text-xl font-bold text-slate-950">{activities.length}</p>
-              <p className="ui-meta mt-0.5">Seluruh kategori</p>
-            </div>
-          </div>
+          <div className="min-w-0"><p className="ui-meta font-semibold">Kualitas Sangat Baik</p><p className="mt-0.5 text-base font-bold text-slate-950">{sangatBaikPercent === null ? 'Belum ada nilai' : `${sangatBaikPercent}% dari seluruh setoran`}</p><p className="ui-meta mt-0.5">{activities.length === 0 ? 'Belum ada penilaian' : `${sangatBaikCount} dari ${activities.length} setoran`}</p></div>
         </div>
+
+        <button type="button" onClick={() => setActiveTab('riwayat')} className="ui-panel group flex min-h-24 items-center gap-3 px-4 py-4 text-left transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 sm:px-5">
+          <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-800"><CalendarCheck className="h-5 w-5" aria-hidden="true" /></span>
+          <span className="min-w-0 flex-1"><span className="ui-meta block font-semibold">Setoran tersimpan</span><strong className="mt-0.5 block text-2xl font-bold text-slate-950">{activities.length}</strong><span className="ui-meta mt-0.5 block">Seluruh kategori</span></span>
+          <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+        </button>
       </section>
 
       <ScrollReveal className="ui-panel overflow-hidden">
@@ -364,7 +400,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
               const style = categoryStyles[record.category];
               const Icon = style.icon;
               return (
-                <div key={`${record.category}-${record.id}`} className="grid gap-2 px-4 py-3.5 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_auto] sm:items-center sm:gap-4 sm:px-5">
+                <div key={`${record.category}-${record.id}`} className="group grid gap-2 px-4 py-3.5 transition-colors hover:bg-slate-50 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)_auto] sm:items-center sm:gap-4 sm:px-5">
                   <div className="flex min-w-0 items-center gap-3">
                     <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-slate-50 ${style.text}`}>
                       <Icon className="h-4 w-4" aria-hidden="true" />
