@@ -1,0 +1,127 @@
+name: P2.18 Final Contract v2 Gate
+
+on:
+  push:
+    branches:
+      - p2-18-final-v2b
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: p2-18-final-v2b
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Measure baseline build
+        shell: bash
+        run: |
+          npm run build
+          BASE_TOTAL=$(find dist/assets -type f -name '*.js' -printf '%s\n' | awk '{s+=$1} END {print s+0}')
+          BASE_HISTORY=$(find dist/assets -type f -name 'HistoryTable-*.js' -printf '%s\n' | head -1)
+          test -n "$BASE_HISTORY"
+          echo "$BASE_TOTAL" > /tmp/base-total
+          echo "$BASE_HISTORY" > /tmp/base-history
+          echo "Baseline total JS: $BASE_TOTAL"
+          echo "Baseline HistoryTable chunk: $BASE_HISTORY"
+          rm -rf dist
+
+      - name: Apply measured P2.18 corrections
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('src/hooks/useGeneratePDF.ts')
+          text = p.read_text()
+          replacements = [
+              ("import jsPDF from 'jspdf';", "import type jsPDF from 'jspdf';"),
+              ("    try {\n      const pdf = new jsPDF('p', 'mm', 'a4');", "    try {\n      const { default: jsPDF } = await import('jspdf');\n      const pdf = new jsPDF('p', 'mm', 'a4');"),
+              ("else if (item.type === 'K. Istimewa') typeColor = [147, 51, 234]; // purple", "else if (item.type === 'K. Istimewa') typeColor = C.amber;"),
+          ]
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit(f'Missing expected pattern: {old}')
+              text = text.replace(old, new, 1)
+          p.write_text(text)
+          PY
+
+      - name: TypeScript check
+        run: npm run lint
+      - name: Production build
+        run: npm run build
+
+      - name: Measure final bundle
+        shell: bash
+        run: |
+          FINAL_TOTAL=$(find dist/assets -type f -name '*.js' -printf '%s\n' | awk '{s+=$1} END {print s+0}')
+          FINAL_HISTORY=$(find dist/assets -type f -name 'HistoryTable-*.js' -printf '%s\n' | head -1)
+          JSPDF_CHUNK=$(find dist/assets -type f -name 'jspdf*.js' -printf '%s\n' | head -1)
+          BASE_TOTAL=$(cat /tmp/base-total)
+          BASE_HISTORY=$(cat /tmp/base-history)
+          echo "Baseline total JS: $BASE_TOTAL"
+          echo "Final total JS: $FINAL_TOTAL"
+          echo "Baseline HistoryTable chunk: $BASE_HISTORY"
+          echo "Final HistoryTable chunk: $FINAL_HISTORY"
+          echo "Deferred jsPDF chunk: $JSPDF_CHUNK"
+          find dist/assets -type f -name '*.js' -printf '%s %p\n' | sort -nr | head -12
+          test -n "$FINAL_HISTORY"
+          test -n "$JSPDF_CHUNK"
+          test "$FINAL_TOTAL" -le $((BASE_TOTAL + 20480))
+          test "$FINAL_HISTORY" -le $((BASE_HISTORY / 2))
+
+      - name: P2.18 Final Contract v2 gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          contract = Path('DESIGN_CONTRACT.md').read_text()
+          app = Path('src/App.tsx').read_text()
+          pdf = Path('src/hooks/useGeneratePDF.ts').read_text()
+          storage = Path('src/services/storageService.ts').read_text()
+          css = Path('src/index.css').read_text()
+
+          for required in ['Final Design Contract v2', 'performance-proportionate, measured, and maintainable', 'Responsive Contract', 'Taste Contract', 'P2.18 Final Gate Order']:
+              assert required in contract, required
+
+          # Keep existing simple App route architecture because measured route splitting did not improve entry size.
+          assert "import { HistoryTable } from './components/HistoryTable';" in app
+          assert '<BottomNav' in app and '<Navbar' in app
+          assert "setIsSetorMenuOpen(true)" in app
+          assert "setActiveTab('dashboard')" in app
+          assert 'aria-current' in app
+
+          assert "import type jsPDF from 'jspdf';" in pdf
+          assert "await import('jspdf')" in pdf
+          assert "new jsPDF('p', 'mm', 'a4')" in pdf
+          assert "item.type === 'K. Istimewa') typeColor = C.amber" in pdf
+          assert '[147, 51, 234]' not in pdf
+          assert 'pdf.save(' in pdf
+
+          for required in ['initRealtimeSync', 'syncWithCloud', 'saveZiyadah', 'saveMurojaah', 'saveBinnadzor', 'savePembelajaran', 'setProgramLiburanActive']:
+              assert required in storage, required
+
+          assert 'prefers-reduced-motion' in css
+          assert '.ui-dialog-overlay' in css
+          assert 'z-index: 70 !important' in css
+          PY
+          git diff --check
+          git diff --exit-code -- package.json || { echo 'package.json changed unexpectedly'; exit 1; }
+
+      - name: Commit verified P2.18 source
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/hooks/useGeneratePDF.ts
+          git diff --cached --quiet && { echo "No source change to commit"; exit 1; }
+          git commit -m "perf: defer PDF engine and align report semantics"
+          git push origin HEAD:p2-18-final-v2b
