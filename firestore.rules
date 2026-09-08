@@ -7,6 +7,12 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Server-only credential material. Firebase Admin SDK bypasses client rules;
+    // browser/mobile clients can never read or write this collection.
+    match /auth_credentials/{credentialId} {
+      allow read, write: if false;
+    }
+
     match /users/{userId} {
       allow read, write: if isAuthenticated();
     }
