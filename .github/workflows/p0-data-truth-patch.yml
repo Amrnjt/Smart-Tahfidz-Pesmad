@@ -25,58 +25,13 @@ jobs:
           node-version: 20
 
       - name: Harden staged patch script
-        run: |
-          python3 <<'PY'
-          from pathlib import Path
-          path = Path('.github/p0_patch.py')
-          text = path.read_text(encoding='utf-8')
-
-          bad_date = '    """\\];\n'
-          good_date = '    """];\n'
-          if bad_date not in text:
-              raise SystemExit('Expected date helper escape not found')
-          text = text.replace(bad_date, good_date, 1)
-
-          old_regex = '        r"catch \\((e|err)\\) \\{\\n(?P<indent>\\s+)console\\.error\\((?P<message>[^\\n]+)\\);\\n(?P=indent)\\}"\n'
-          new_regex = '        r"catch \\((e|err)\\) \\{\\n(?P<indent>\\s+)console\\.error\\((?P<message>[^\\n]+)\\);\\n\\s+\\}"\n'
-          if old_regex not in text:
-              raise SystemExit('Expected catch regex not found')
-          text = text.replace(old_regex, new_regex, 1)
-
-          old_guard = """    count = text.count(old)
-    if count != 1:
-        raise RuntimeError(f'{label}: expected exactly 1 match, found {count}')
-    return text.replace(old, new, 1)
-"""
-          new_guard = """    count = text.count(old)
-    if label == 'History current month WIB' and count == 2:
-        return text.replace(old, new)
-    if count != 1:
-        raise RuntimeError(f'{label}: expected exactly 1 match, found {count}')
-    return text.replace(old, new, 1)
-"""
-          if old_guard not in text:
-              raise SystemExit('Expected replace_once guard not found')
-          text = text.replace(old_guard, new_guard, 1)
-
-          path.write_text(text, encoding='utf-8')
-          PY
+        run: python3 .github/p0_fix.py
 
       - name: Apply P0 patch
         run: python3 .github/p0_patch.py
 
       - name: Validate build
-        run: |
-          npm install --no-package-lock --ignore-scripts
-          npm run build
-          git diff --check
+        run: npm install --no-package-lock --ignore-scripts && npm run build && git diff --check
 
       - name: Commit P0 changes
-        run: |
-          rm .github/p0_patch.py
-          rm .github/workflows/p0-data-truth-patch.yml
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "fix: enforce P0 data truth and reliability"
-          git push origin HEAD:main
+        run: rm .github/p0_fix.py .github/p0_patch.py .github/workflows/p0-data-truth-patch.yml && git config user.name "github-actions[bot]" && git config user.email "41898282+github-actions[bot]@users.noreply.github.com" && git add -A && git commit -m "fix: enforce P0 data truth and reliability" && git push origin HEAD:main
