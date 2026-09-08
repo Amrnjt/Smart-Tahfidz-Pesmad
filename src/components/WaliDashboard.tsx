@@ -186,7 +186,7 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   const programLiburanActive = storageService.getAppConfig().programLiburanActive;
 
   return (
-    <div className="w-full min-w-0 space-y-6">
+    <div className="p2-dashboard p2-dashboard-wali w-full min-w-0 space-y-6">
       <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="relative overflow-hidden rounded-2xl bg-emerald-950 p-5 text-white sm:p-6 lg:col-span-3 lg:p-7">
           <div className="absolute inset-y-0 left-0 w-1 bg-emerald-400" aria-hidden="true" />
