@@ -29,6 +29,7 @@ const STORAGE_KEYS = {
   BINNADZOR: 'tahfidz_binnadzor_db_v2',
   PEMBELAJARAN: 'tahfidz_pembelajaran_db_v2',
   KELAS: 'tahfidz_kelas_db_v2',
+  SESSION: 'tahfidz_active_session_v2',
   PANTAUAN_LIBURAN: 'tahfidz_pantauan_liburan_v2',
   APP_CONFIG: 'tahfidz_app_config_v2'
 } as const;
@@ -45,6 +46,9 @@ const COLLECTIONS = {
 } as const;
 
 let installed = false;
+let realtimeRegistered = false;
+let activeUnsubscribe: (() => void) | null = null;
+let activeOnUpdate: (() => void) | undefined;
 
 function writeArrayCache<T>(key: string, items: T[]): void {
   localStorage.setItem(key, JSON.stringify(items));
@@ -79,6 +83,20 @@ function sortPantauan(items: PantauanLiburanRecord[]): PantauanLiburanRecord[] {
   );
 }
 
+function readStrictSession(): User | null {
+  const raw = localStorage.getItem(STORAGE_KEYS.SESSION);
+  if (!raw) return null;
+
+  try {
+    const parsed = JSON.parse(raw) as User;
+    const role = normalizeUserRole(parsed?.role);
+    if (!parsed || !role) return null;
+    return { ...parsed, role };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * P0.5 privacy/read-scope gate.
  *
@@ -94,8 +112,11 @@ export function installRoleScopedSync(): void {
 
   const originalInitRealtimeSync = storageService.initRealtimeSync.bind(storageService);
   const originalSyncWithCloud = storageService.syncWithCloud.bind(storageService);
+  const originalSetSession = storageService.setSession.bind(storageService);
 
-  storageService.initRealtimeSync = (onUpdate?: () => void): (() => void) => {
+  storageService.getSession = (): User | null => readStrictSession();
+
+  const startRealtimeScope = (onUpdate?: () => void): (() => void) => {
     const session = storageService.getSession();
     const role = normalizeUserRole(session?.role);
 
@@ -236,6 +257,41 @@ export function installRoleScopedSync(): void {
       unsubPantauan();
       unsubAppConfig();
     };
+  };
+
+  const restartRealtimeScope = () => {
+    if (!realtimeRegistered) return;
+    activeUnsubscribe?.();
+    activeUnsubscribe = startRealtimeScope(activeOnUpdate);
+  };
+
+  storageService.initRealtimeSync = (onUpdate?: () => void): (() => void) => {
+    realtimeRegistered = true;
+    activeOnUpdate = onUpdate;
+    activeUnsubscribe?.();
+    activeUnsubscribe = startRealtimeScope(onUpdate);
+
+    return () => {
+      realtimeRegistered = false;
+      activeOnUpdate = undefined;
+      activeUnsubscribe?.();
+      activeUnsubscribe = null;
+    };
+  };
+
+  storageService.setSession = (user: User | null): void => {
+    if (!user) {
+      originalSetSession(null);
+    } else {
+      const role = normalizeUserRole(user.role);
+      if (!role) {
+        console.warn('Rejected session with unknown application role.');
+        originalSetSession(null);
+      } else {
+        originalSetSession({ ...user, role });
+      }
+    }
+    restartRealtimeScope();
   };
 
   storageService.syncWithCloud = async (): Promise<{ success: boolean; message?: string }> => {
