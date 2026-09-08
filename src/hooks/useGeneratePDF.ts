@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import jsPDF from 'jspdf';
+import type jsPDF from 'jspdf';
 import { ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri, User } from '../types';
 import { formatTanggalLengkap, parseDateSafe } from '../utils/dateFormatter';
 import { getClassGroup, isNonTahfidzClass } from '../utils/classUtils';
@@ -150,6 +150,7 @@ export function useGeneratePDF() {
     setSuccess(false);
 
     try {
+      const { default: jsPDF } = await import('jspdf');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageW = pdf.internal.pageSize.getWidth();
       const pageH = pdf.internal.pageSize.getHeight();
@@ -464,7 +465,7 @@ export function useGeneratePDF() {
             if (item.type === "Muroja'ah") typeColor = C.teal;
             else if (item.type === 'Binnadzor') typeColor = C.indigo;
             else if (item.type === 'Jilid Ummi') typeColor = C.amber;
-            else if (item.type === 'K. Istimewa') typeColor = [147, 51, 234]; // purple
+            else if (item.type === 'K. Istimewa') typeColor = C.amber;
 
             setText(pdf, typeColor);
             pdf.setFont('helvetica', 'bold');
