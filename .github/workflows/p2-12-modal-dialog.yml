@@ -37,6 +37,14 @@ jobs:
               text = text.replace(old, new) if count is None else text.replace(old, new, count)
               p.write_text(text)
 
+          def replace_last(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              idx = text.rfind(old)
+              if idx < 0:
+                  raise SystemExit(f'Last pattern not found in {path}: {old[:160]!r}')
+              p.write_text(text[:idx] + new + text[idx + len(old):])
+
           # Shared centered-dialog visual contract.
           path = 'src/index.css'
           marker = '''.ui-control {
@@ -165,16 +173,15 @@ jobs:
           replace(path, 'flex items-center justify-between gap-2 p-5 bg-gradient-to-br from-emerald-800 to-teal-900 text-white', 'ui-dialog-header')
           replace(path, 'w-10 h-10 rounded-lg bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0', 'w-10 h-10 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center justify-center flex-shrink-0')
           replace(path, 'text-xs text-emerald-100/90', 'text-xs text-slate-500')
+          # This common prefix intentionally also preserves any trailing disabled class.
           replace(path, 'p-1.5 rounded-lg text-white/80 hover:bg-white/15 transition cursor-pointer', 'ui-dialog-close cursor-pointer')
-          replace(path, 'p-5 sm:p-6 space-y-4', 'ui-dialog-body space-y-4', 1)
+          replace(path, 'p-5 sm:p-6 space-y-4', 'ui-dialog-body space-y-4')
           replace(path, 'flex items-center justify-end gap-3 pt-3 border-t border-slate-100', 'ui-dialog-footer')
           replace(path, 'px-5 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer flex items-center gap-1.5', 'ui-control w-full sm:w-auto px-5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5')
           replace(path, 'px-6 py-2.5 rounded-lg bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-bold text-xs  transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed', 'ui-control w-full sm:w-auto px-6 rounded-lg bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed')
           replace(path, 'flex items-center justify-between p-5 bg-gradient-to-r from-rose-800 to-rose-900 text-white', 'ui-dialog-header')
           replace(path, 'w-10 h-10 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0 text-white', 'w-10 h-10 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center flex-shrink-0 text-rose-700')
           replace(path, 'text-xs text-rose-100/90 mt-0.5', 'text-xs text-slate-500 mt-0.5')
-          replace(path, 'p-1.5 rounded-lg text-white/80 hover:bg-white/15 transition cursor-pointer disabled:opacity-50', 'ui-dialog-close cursor-pointer disabled:opacity-50')
-          replace(path, 'p-5 sm:p-6 space-y-4', 'ui-dialog-body space-y-4')
           replace(path, 'bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5 text-xs', 'bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2.5 text-xs')
           replace(path, 'p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-start gap-2.5 text-xs text-rose-800', 'p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2.5 text-sm text-rose-800')
           replace(path, 'flex items-center justify-end gap-2.5 pt-2 border-t border-slate-100', 'ui-dialog-footer')
@@ -189,8 +196,9 @@ jobs:
           replace(path, 'text-slate-400 hover:text-slate-600 text-lg cursor-pointer', 'ui-dialog-close cursor-pointer text-lg')
           replace(path, 'flex items-center justify-end gap-2 pt-3 border-t border-slate-100', 'ui-dialog-footer')
           replace(path, 'flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100', 'ui-dialog-footer')
-          replace(path, 'px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer', 'ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer')
+          # Longer disabled cancel class must be transformed before its shorter prefix.
           replace(path, 'px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer transition disabled:opacity-50', 'ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer transition-colors disabled:opacity-50')
+          replace(path, 'px-4 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-600 hover:bg-slate-100 cursor-pointer', 'ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer')
           replace(path, 'px-5 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition disabled:opacity-50', 'ui-control w-full sm:w-auto px-5 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50')
           replace(path, 'px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-bold shadow-xs cursor-pointer flex items-center gap-1.5 transition disabled:opacity-50', 'ui-control w-full sm:w-auto px-5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-sm font-semibold cursor-pointer flex items-center justify-center gap-1.5 transition-colors disabled:opacity-50')
           replace(path, '<option value="Superadmin">👑 Superadmin</option>', '<option value="Superadmin">Superadmin</option>')
@@ -211,7 +219,8 @@ jobs:
           replace(path, "'✨ Santri yang sudah masuk kelas disembunyikan. Tinggal pilih santri yang belum ditempatkan.'", "'Santri yang sudah masuk kelas disembunyikan. Tinggal pilih santri yang belum ditempatkan.'")
           replace(path, 'bg-white rounded-3xl shadow-xl max-w-md w-full p-6', 'ui-dialog-panel max-w-md p-5 sm:p-6')
           replace(path, 'w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center', 'w-11 h-11 rounded-lg bg-rose-50 border border-rose-200 flex items-center justify-center')
-          replace(path, 'flex gap-2', 'ui-dialog-footer', 1)
+          # Delete confirmation is the last remaining plain flex-gap-2 action row.
+          replace_last(path, 'flex gap-2', 'ui-dialog-footer')
           replace(path, 'flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition cursor-pointer disabled:opacity-60', 'ui-control w-full sm:w-auto px-5 rounded-lg bg-rose-700 hover:bg-rose-800 text-white text-sm font-semibold transition-colors cursor-pointer disabled:opacity-60')
 
           # PDF report dialog: deliberately simple and operational, no hero-style gradient.
@@ -226,8 +235,9 @@ jobs:
           replace(path, 'p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2.5', 'p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm font-medium flex items-center gap-2.5')
           replace(path, 'p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2.5', 'p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-medium flex items-center gap-2.5')
           replace(path, 'text-[11px] text-rose-600 font-semibold mt-1.5', 'text-xs text-rose-700 font-semibold mt-1.5')
-          replace(path, 'text-[11px] text-slate-500', 'text-xs text-slate-500')
+          # Transform the full preview container before the generic microtext token.
           replace(path, 'p-3 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-500', 'p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500')
+          replace(path, 'text-[11px] text-slate-500', 'text-xs text-slate-500')
           replace(path, 'sticky bottom-0 z-10 bg-white border-t border-slate-100 px-5 sm:px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] flex items-center justify-end gap-3 rounded-b-3xl', 'ui-dialog-footer sticky bottom-0 z-10 bg-white px-5 sm:px-6 pb-[max(1rem,env(safe-area-inset-bottom,0px))]')
           replace(path, 'px-5 py-2.5 rounded-xl border border-slate-300 text-slate-600 hover:bg-slate-100 font-semibold text-xs transition cursor-pointer', 'ui-control w-full sm:w-auto px-5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-sm transition-colors cursor-pointer')
           replace(path, 'px-6 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed', 'ui-control w-full sm:w-auto px-6 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed')
@@ -304,7 +314,6 @@ jobs:
           assert 'ui-dialog-overlay' in wali and 'ui-dialog-panel max-w-sm' in wali
           assert 'confirmDeleteRecord' in wali and 'useAccessibleDialog' in wali
 
-          # Specialized navigation sheet intentionally remains separate in P2.12.
           sheet = Path('src/components/SetorActionSheet.tsx').read_text()
           assert 'rounded-t-2xl' in sheet and 'role="dialog"' in sheet
           PY
