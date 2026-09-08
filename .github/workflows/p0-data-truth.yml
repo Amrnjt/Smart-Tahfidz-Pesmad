@@ -1,0 +1,38 @@
+name: P0 Data Truth Gate
+
+on:
+  push:
+    branches:
+      - fix/p0-2-remove-production-demo-fallback
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript check
+        run: npm run lint:types
+
+      - name: Production build
+        run: npm run build
+
+      - name: Ensure production storage has no sample fallback
+        run: |
+          if grep -q "sampleDatabase\|INITIAL_USERS\|INITIAL_SANTRI\|INITIAL_ZIYADAH\|INITIAL_MUROJAAH\|INITIAL_BINNADZOR\|INITIAL_PEMBELAJARAN" src/services/storageService.ts; then
+            echo "Production storageService still references sample/demo fixtures."
+            exit 1
+          fi
