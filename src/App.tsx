@@ -185,18 +185,16 @@ export default function App() {
             
             {/* Primary Navigation: same mental model across tablet and desktop */}
             <nav
-              className={`hidden md:grid bg-white/85 backdrop-blur-md rounded-2xl p-1.5 shadow-xs border border-slate-200/80 gap-1.5 ${
-                isUstadz ? 'grid-cols-6' : 'grid-cols-3'
-              }`}
+              className="hidden md:flex items-stretch gap-1 border-b border-slate-200 bg-white px-1"
               aria-label="Navigasi utama"
             >
               <button
                 onClick={() => setActiveTab('dashboard')}
                 aria-current={activeTab === 'dashboard' ? 'page' : undefined}
-                className={`press-feedback min-w-0 py-2.5 px-2 lg:px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer ${
+                className={`press-feedback min-h-11 min-w-0 px-3 lg:px-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset ${
                   activeTab === 'dashboard'
-                    ? 'bg-emerald-800 text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'border-emerald-700 bg-emerald-50/60 text-emerald-900'
+                    : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
                 }`}
               >
                 <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
@@ -206,10 +204,10 @@ export default function App() {
               <button
                 onClick={() => setActiveTab('riwayat')}
                 aria-current={activeTab === 'riwayat' ? 'page' : undefined}
-                className={`press-feedback min-w-0 py-2.5 px-2 lg:px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer ${
+                className={`press-feedback min-h-11 min-w-0 px-3 lg:px-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset ${
                   activeTab === 'riwayat'
-                    ? 'bg-emerald-800 text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'border-emerald-700 bg-emerald-50/60 text-emerald-900'
+                    : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
                 }`}
               >
                 <History className="w-4 h-4 flex-shrink-0" />
@@ -222,10 +220,10 @@ export default function App() {
                   aria-haspopup="dialog"
                   aria-expanded={isSetorMenuOpen}
                   aria-current={isSetorActive ? 'page' : undefined}
-                  className={`press-feedback min-w-0 py-2.5 px-2 lg:px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer ${
+                  className={`press-feedback min-h-11 min-w-0 px-3 lg:px-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset ${
                     isSetorActive
-                      ? 'bg-emerald-800 text-white shadow-xs'
-                      : 'text-slate-600 hover:bg-emerald-50 hover:text-emerald-800'
+                      ? 'border-emerald-700 bg-emerald-50/60 text-emerald-900'
+                      : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
                   }`}
                 >
                   <PlusCircle className="w-4 h-4 flex-shrink-0" />
@@ -237,10 +235,10 @@ export default function App() {
                 <button
                   onClick={() => setActiveTab('kelas')}
                   aria-current={activeTab === 'kelas' ? 'page' : undefined}
-                  className={`press-feedback min-w-0 py-2.5 px-2 lg:px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer ${
+                  className={`press-feedback min-h-11 min-w-0 px-3 lg:px-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset ${
                     activeTab === 'kelas'
-                      ? 'bg-emerald-800 text-white shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-100'
+                      ? 'border-emerald-700 bg-emerald-50/60 text-emerald-900'
+                      : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
                   }`}
                 >
                   <GraduationCap className="w-4 h-4 flex-shrink-0" />
@@ -252,10 +250,10 @@ export default function App() {
                 <button
                   onClick={() => setActiveTab('santri')}
                   aria-current={activeTab === 'santri' ? 'page' : undefined}
-                  className={`press-feedback min-w-0 py-2.5 px-2 lg:px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer ${
+                  className={`press-feedback min-h-11 min-w-0 px-3 lg:px-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset ${
                     activeTab === 'santri'
-                      ? 'bg-emerald-800 text-white shadow-xs'
-                      : 'text-slate-600 hover:bg-slate-100'
+                      ? 'border-emerald-700 bg-emerald-50/60 text-emerald-900'
+                      : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
                   }`}
                 >
                   <Users className="w-4 h-4 flex-shrink-0" />
@@ -266,10 +264,10 @@ export default function App() {
               <button
                 onClick={() => setActiveTab('mushaf')}
                 aria-current={activeTab === 'mushaf' ? 'page' : undefined}
-                className={`press-feedback min-w-0 py-2.5 px-2 lg:px-3 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 lg:gap-2 cursor-pointer ${
+                className={`press-feedback min-h-11 min-w-0 px-3 lg:px-4 text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer border-b-2 -mb-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-inset ${
                   activeTab === 'mushaf'
-                    ? 'bg-emerald-800 text-white shadow-xs'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'border-emerald-700 bg-emerald-50/60 text-emerald-900'
+                    : 'border-transparent text-slate-600 hover:bg-slate-50 hover:text-emerald-800'
                 }`}
               >
                 <BookOpen className="w-4 h-4 flex-shrink-0" />

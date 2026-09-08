@@ -40,7 +40,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     ];
 
     return (
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-[18px] border-t border-slate-200/80 shadow-[0_-4px_20px_-2px_rgba(0,0,0,0.05)] px-2 pt-1 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 px-1.5 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]">
         <div className="flex justify-around items-center max-w-md mx-auto">
           {nonUstadzItems.map((item) => {
             const Icon = item.icon;
@@ -49,14 +49,15 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`press-feedback flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all duration-150 active:scale-[0.985] ${
-                  isActive ? 'text-emerald-800 font-bold' : 'text-slate-500 font-medium'
+                aria-current={isActive ? 'page' : undefined}
+                className={`press-feedback min-h-14 flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+                  isActive ? 'text-emerald-900 font-semibold' : 'text-slate-500 font-medium'
                 }`}
               >
-                <div className={`p-1 rounded-lg transition-colors ${isActive ? 'bg-emerald-100 text-emerald-800' : ''}`}>
+                <div className={`p-1.5 rounded-lg transition-colors ${isActive ? 'bg-emerald-50 text-emerald-800' : 'text-slate-500'}`}>
                   <Icon className="w-5 h-5" />
                 </div>
-                <span className="text-[10px] tracking-tight mt-0.5">{item.label}</span>
+                <span className="text-xs tracking-tight mt-0.5">{item.label}</span>
               </button>
             );
           })}
@@ -69,7 +70,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   return (
     <>
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/90 backdrop-blur-[18px] border-t border-slate-200/80 shadow-[0_-4px_20px_-2px_rgba(0,0,0,0.05)] px-1 pt-1 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 px-1 pt-1.5 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))]"
         aria-label="Navigasi Bawah"
       >
         <div className="max-w-md mx-auto grid grid-cols-5 items-center">
@@ -90,24 +91,24 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           />
 
           {/* 3. Central FAB: + Setor */}
-          <div className="flex flex-col items-center justify-center relative -top-3.5 px-0.5">
+          <div className="flex flex-col items-center justify-center relative -top-3 px-0.5">
             <button
               ref={fabRipple.elementRef}
               onClick={(e) => {
                 fabRipple.createRipple(e);
                 setIsActionSheetOpen(true);
               }}
-              className={`ripple-container relative w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-md transition-all duration-150 cursor-pointer active:scale-[0.985] ${
+              className={`ripple-container relative w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-sm transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
                 isSetorActive
-                  ? 'bg-gradient-to-tr from-emerald-700 to-teal-600 ring-4 ring-emerald-200/80 shadow-emerald-700/25'
-                  : 'bg-gradient-to-tr from-emerald-800 to-emerald-600 hover:from-emerald-700 hover:to-emerald-500 shadow-emerald-900/25'
+                  ? 'bg-emerald-950'
+                  : 'bg-emerald-800 hover:bg-emerald-700'
               }`}
               aria-label="Tambah Setoran Baru"
               title="Tambah Setoran Baru"
             >
               <Plus className="w-5 h-5 stroke-[2.5]" />
             </button>
-            <span className={`text-[10px] tracking-tight font-bold mt-1 ${isSetorActive ? 'text-emerald-800' : 'text-slate-600'}`}>
+            <span className={`text-xs tracking-tight font-semibold mt-1 ${isSetorActive ? 'text-emerald-800' : 'text-slate-600'}`}>
               Setor
             </span>
           </div>
@@ -159,15 +160,16 @@ const NavButton: React.FC<NavButtonProps> = ({ label, icon: Icon, isActive, onCl
         ripple.createRipple(e);
         onClick();
       }}
-      className={`ripple-container press-feedback flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-all duration-150 cursor-pointer min-w-0 w-full active:scale-[0.985] ${
-        isActive ? 'text-emerald-800 font-bold' : 'text-slate-500 font-medium hover:text-slate-700'
+      className={`ripple-container press-feedback min-h-14 flex flex-col items-center justify-center py-1 px-1 rounded-xl transition-colors cursor-pointer min-w-0 w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${
+        isActive ? 'text-emerald-900 font-semibold' : 'text-slate-500 font-medium hover:text-slate-700'
       }`}
       aria-label={label}
+      aria-current={isActive ? 'page' : undefined}
     >
-      <div className={`p-1 rounded-xl transition-colors ${isActive ? 'bg-emerald-100/90 text-emerald-800' : ''}`}>
+      <div className={`p-1.5 rounded-lg transition-colors ${isActive ? 'bg-emerald-50 text-emerald-800' : 'text-slate-500'}`}>
         <Icon className="w-5 h-5" />
       </div>
-      <span className="text-[10px] tracking-tight mt-0.5 truncate w-full text-center">{label}</span>
+      <span className="text-xs tracking-tight mt-0.5 truncate w-full text-center">{label}</span>
     </button>
   );
 };
