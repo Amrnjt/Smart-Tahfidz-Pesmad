@@ -27,8 +27,9 @@ for (const relative of targets) {
     fail(`${relative} defaults an unknown role to Ustadz (fail-open privilege escalation).`);
   }
 
-  if (!/return\s+null\s*;/.test(body)) {
-    fail(`${relative} must return null for an unknown role.`);
+  const hasFailClosedNull = /return\s+null\s*;/.test(body) || /:\s*null\s*;/.test(body);
+  if (!hasFailClosedNull) {
+    fail(`${relative} must resolve an unknown role to null.`);
   }
 }
 
