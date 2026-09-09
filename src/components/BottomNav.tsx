@@ -81,7 +81,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
     return (
       <div className="p2-bottom-shell md:hidden">
-        <nav aria-label="Navigasi bawah" className="p2-bottom-dock p2-bottom-dock-compact">
+        <nav aria-label="Navigasi bawah" className="p2-bottom-dock p2-bottom-dock-bedimcode p2-bottom-dock-compact">
           {items.map(item => (
             <NavButton
               key={item.id}
@@ -148,7 +148,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       </AnimatePresence>
 
       <div className="p2-bottom-shell md:hidden">
-        <nav className="p2-bottom-dock p2-bottom-dock-ustadz" aria-label="Navigasi bawah">
+        <nav className="p2-bottom-dock p2-bottom-dock-bedimcode p2-bottom-dock-ustadz" aria-label="Navigasi bawah">
           <NavButton
             label="Beranda"
             icon={LayoutDashboard}
@@ -325,7 +325,7 @@ const NavButton: React.FC<NavButtonProps> = ({ label, icon: Icon, isActive, onCl
         ripple.createRipple(event);
         onClick();
       }}
-      className={`ripple-container p2-bottom-item ${isActive ? 'is-active' : ''}`}
+      className={`ripple-container p2-bottom-item p2-bottom-item-bedimcode ${isActive ? 'is-active' : ''}`}
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
     >
@@ -354,7 +354,7 @@ const ManageNavButton: React.FC<ManageNavButtonProps> = ({ isManageSheetOpen, is
         ripple.createRipple(event);
         onClick();
       }}
-      className={`ripple-container p2-bottom-item p2-manage-toggle ${isActive ? 'is-active' : ''}`}
+      className={`ripple-container p2-bottom-item p2-bottom-item-bedimcode p2-manage-toggle ${isActive ? 'is-active' : ''}`}
       aria-label={isManageSheetOpen ? 'Tutup menu Kelola' : 'Buka menu Kelola'}
       aria-haspopup="menu"
       aria-expanded={isManageSheetOpen}
