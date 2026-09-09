@@ -45,17 +45,25 @@ test('Setor drop-up centers the menu and uses balanced balloon widths', () => {
   assert.match(dropupCss, /\.p2-setor-dropup-program\s*\{[\s\S]*?width:\s*min\(14\.25rem,\s*100%\)/);
 });
 
-test('Kelola uses an anchored folder-sheet drop-up instead of a full-width bottom sheet', () => {
-  assert.match(bottomNav, /p2-manage-slot/);
-  assert.match(manageSheet, /p2-manage-folder/);
-  assert.match(manageSheet, /p2-manage-folder-tab/);
-  assert.match(manageSheet, /type: 'spring'/);
-  assert.doesNotMatch(manageSheet, /fixed inset-0 z-50 flex items-end justify-center/);
+test('Kelola follows the Bedimcode dropdown pattern instead of the folder-card layout', () => {
+  assert.match(manageSheet, /p2-manage-dropdown-list/);
+  assert.match(manageSheet, /role="menu"/);
+  assert.doesNotMatch(manageSheet, /p2-manage-folder-tab/);
+  assert.doesNotMatch(manageSheet, /FolderCog/);
+  assert.doesNotMatch(manageSheet, /Kelola Data/);
+  assert.match(dropupCss, /\.p2-manage-dropdown\s*\{[\s\S]*?max-height:\s*0/);
+  assert.match(dropupCss, /\.p2-manage-dropdown\s*\{[\s\S]*?overflow:\s*hidden/);
+  assert.match(dropupCss, /transition:\s*max-height\s*\.4s/);
+  assert.match(dropupCss, /\.p2-manage-dropdown\.is-open\s*\{[\s\S]*?max-height:/);
 });
 
-test('Kelola folder keeps Kelas and Santri destinations', () => {
+test('Kelola keeps Kelas and Santri destinations and rotates a dropdown chevron', () => {
   assert.match(manageSheet, /Kelola Kelas/);
   assert.match(manageSheet, /Kelola Santri/);
   assert.match(manageSheet, /tab: 'kelas'/);
   assert.match(manageSheet, /tab: 'santri'/);
+  assert.match(bottomNav, /ChevronDown/);
+  assert.match(bottomNav, /p2-manage-toggle-chevron/);
+  assert.match(bottomNav, /aria-expanded=\{isManageSheetOpen\}/);
+  assert.match(dropupCss, /\.p2-manage-toggle-chevron\.is-open\s*\{[\s\S]*?rotate\(180deg\)/);
 });
