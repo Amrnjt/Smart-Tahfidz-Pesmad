@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   ChevronRight,
   CirclePlus as PlusCircle,
+  Clock3,
   GraduationCap,
   RotateCw,
   TrendingUp,
@@ -46,6 +47,8 @@ interface UstadzDashboardProps {
 }
 
 type ActivityCategory = 'Ziyadah' | "Muroja'ah" | 'Binnadzor' | 'Pembelajaran';
+type RecencyKind = 'empty' | 'today' | 'recent' | 'older';
+type OperatorActionTarget = 'attention' | 'setor';
 
 interface DashboardActivity {
   id: string;
@@ -55,6 +58,18 @@ interface DashboardActivity {
   category: ActivityCategory;
   material: string;
   nilai: PredikatNilai;
+}
+
+interface RecencyInfo {
+  label: string;
+  description: string;
+  kind: RecencyKind;
+}
+
+interface OperatorAction {
+  target: OperatorActionTarget;
+  label: string;
+  description: string;
 }
 
 const categoryStyles: Record<ActivityCategory, {
@@ -101,6 +116,60 @@ const getNilaiTextClass = (nilai: PredikatNilai) => {
   return 'text-slate-700';
 };
 
+const getRecencyInfo = (timestamp?: string): RecencyInfo => {
+  if (!timestamp) {
+    return {
+      label: 'Belum ada aktivitas',
+      description: 'Belum ada setoran yang tercatat.',
+      kind: 'empty'
+    };
+  }
+
+  const activityDate = new Date(timestamp);
+  if (Number.isNaN(activityDate.getTime())) {
+    return {
+      label: 'Waktu belum tersedia',
+      description: 'Timestamp aktivitas terakhir tidak dapat dibaca.',
+      kind: 'empty'
+    };
+  }
+
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const activityUtc = Date.UTC(activityDate.getFullYear(), activityDate.getMonth(), activityDate.getDate());
+  const dayDifference = Math.max(0, Math.floor((todayUtc - activityUtc) / 86_400_000));
+
+  if (dayDifference === 0) {
+    return {
+      label: 'Aktivitas terbaru hari ini',
+      description: 'Setoran terbaru tercatat hari ini.',
+      kind: 'today'
+    };
+  }
+
+  if (dayDifference === 1) {
+    return {
+      label: 'Aktivitas terakhir kemarin',
+      description: 'Setoran terbaru tercatat kemarin.',
+      kind: 'recent'
+    };
+  }
+
+  if (dayDifference <= 7) {
+    return {
+      label: `Aktivitas terakhir ${dayDifference} hari lalu`,
+      description: `Setoran terbaru tercatat ${dayDifference} hari lalu.`,
+      kind: 'recent'
+    };
+  }
+
+  return {
+    label: `Aktivitas terakhir ${dayDifference} hari lalu`,
+    description: `Setoran terbaru tercatat ${dayDifference} hari lalu.`,
+    kind: 'older'
+  };
+};
+
 export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   currentUser,
   santriList,
@@ -113,7 +182,6 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   onOpenSetorMenu
 }) => {
   const [chartView, setChartView] = useState<'tren_hafalan' | 'aktivitas'>('tren_hafalan');
-
 
   const today = getTodayInputFormat();
   const santriById = new Map<string, Santri>(santriList.map(santri => [santri.idSantri, santri]));
@@ -164,7 +232,9 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   const sangatBaikCount = activities.filter(record => record.nilai === 'Sangat Baik').length;
   const sangatBaikPercent = activities.length > 0 ? Math.round((sangatBaikCount / activities.length) * 100) : null;
   const recentAttention = attentionActivities.slice(0, 4);
+  const latestActivity = activities[0] ?? null;
   const latestTodayActivity = todayActivities[0] ?? null;
+  const latestRecency = getRecencyInfo(latestActivity?.timestamp);
 
   const dailyBreakdown: { label: ActivityCategory; value: number }[] = [
     { label: 'Ziyadah', value: todayActivities.filter(record => record.category === 'Ziyadah').length },
@@ -209,6 +279,36 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   const todayKurangCount = todayAttention.filter(record => record.nilai === 'Kurang').length;
   const todayMengulangCount = todayAttention.filter(record => record.nilai === 'Mengulang').length;
 
+  const operatorAction: OperatorAction = todayAttention.length > 0
+    ? {
+        target: 'attention',
+        label: `Tinjau ${todayAttention.length} tindak lanjut`,
+        description: 'Ada nilai Kurang atau Mengulang hari ini yang perlu ditinjau dari data setoran aktual.'
+      }
+    : {
+        target: 'setor',
+        label: 'Mulai Setor',
+        description: 'Tidak ada tindak lanjut hari ini. Form setoran siap dibuka ketika diperlukan.'
+      };
+
+  const jumpToAttention = () => {
+    if (typeof document === 'undefined') return;
+    const target = document.getElementById('ustadz-tindak-lanjut');
+    if (!target) return;
+    const reducedMotion = typeof window !== 'undefined'
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    target.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
+  };
+
+  const runOperatorAction = () => {
+    if (operatorAction.target === 'attention') {
+      jumpToAttention();
+      return;
+    }
+    onOpenSetorMenu();
+  };
+
   const openAnalytics = () => {
     setChartView('aktivitas');
     requestAnimationFrame(() => {
@@ -220,14 +320,14 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   };
 
   return (
-    <div className="p2-dashboard p2-dashboard-ustadz w-full min-w-0 max-w-full space-y-6">
-      <section aria-label="Pusat kerja Ustadz" className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <div className="relative isolate overflow-hidden rounded-2xl border border-emerald-800 bg-emerald-950 text-white shadow-[0_18px_48px_-32px_rgba(6,78,59,0.8)] lg:col-span-3">
+    <div className="p2-dashboard p2-dashboard-ustadz p3-ustadz-page w-full min-w-0 max-w-full space-y-6">
+      <section aria-label="Pusat kerja Ustadz" className="p323-briefing-grid grid grid-cols-1 gap-4 lg:grid-cols-5">
+        <div className="p323-operator-hero relative isolate overflow-hidden rounded-2xl border border-emerald-800 bg-emerald-950 text-white shadow-[0_18px_48px_-32px_rgba(6,78,59,0.8)] lg:col-span-3">
           <div aria-hidden="true" className="pointer-events-none absolute -right-10 top-12 hidden h-60 w-48 rounded-t-[999px] border border-emerald-700/50 lg:block" />
-          <div className="absolute right-5 top-20 hidden w-60 rounded-2xl border border-emerald-800 bg-emerald-900/60 p-4 shadow-[0_16px_34px_-28px_rgba(0,0,0,0.7)] lg:block">
+          <div className="p323-rhythm-card absolute right-5 top-20 hidden w-60 rounded-2xl border border-emerald-800 bg-emerald-900/60 p-4 shadow-[0_16px_34px_-28px_rgba(0,0,0,0.7)] lg:block">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.08em] text-emerald-300">Ritme 7 hari</p>
+                <p className="p323-kicker text-emerald-300">Ritme 7 hari</p>
                 <p className="ui-number mt-1 text-base font-[750] text-white">{sevenDayTotal} setoran</p>
               </div>
               <span className="rounded-lg border border-emerald-700 bg-emerald-950/70 px-2 py-1 text-xs font-semibold text-emerald-200">{momentumLabel}</span>
@@ -269,7 +369,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                   <PesmadLogo size="md" className="h-full w-full" />
                 </div>
                 <div className="min-w-0">
-                  <p className="ui-eyebrow text-emerald-200">Pesmad Smart Tahfidz</p>
+                  <p className="p323-kicker text-emerald-200">Pusat kerja Ustadz · Pesmad</p>
                   <p className="mt-0.5 text-sm text-emerald-300">Pesantren Madrasah Darul Fikri</p>
                 </div>
               </div>
@@ -293,15 +393,15 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
             </div>
 
             <div className="mt-7 max-w-2xl lg:max-w-[72%]">
-              <p className="ui-eyebrow text-emerald-300">Dashboard Ustadz</p>
-              <h1 className="ui-display-title mt-1 max-w-xl text-white">
+              <p className="p323-kicker text-emerald-300">Dashboard Ustadz</p>
+              <h1 className="p323-display mt-1 max-w-xl text-white">
                 Assalamu'alaikum, {currentUser.nama}
               </h1>
-              <p className="mt-3 max-w-xl text-sm leading-6 tracking-[-0.006em] text-emerald-100/85 sm:text-[15px]">
-                Catat setoran, pantau aktivitas hari ini, dan temukan santri yang perlu dicermati tanpa berpindah-pindah konteks.
+              <p className="p323-body mt-3 max-w-xl text-emerald-100/85">
+                Catat setoran, pantau aktivitas hari ini, dan temukan santri yang perlu dicermati dari data yang sudah tersimpan.
               </p>
 
-              <div className="mt-4 flex flex-wrap gap-2 text-xs font-semibold">
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold">
                 <span className={`inline-flex min-h-8 items-center gap-1.5 rounded-lg border px-2.5 ${todayAttention.length > 0 ? 'border-amber-700/70 bg-amber-950/30 text-amber-200' : 'border-emerald-700 bg-emerald-900/60 text-emerald-200'}`}>
                   <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />
                   {todayAttention.length > 0 ? `${todayAttention.length} perlu tindak lanjut hari ini` : 'Tidak ada tindak lanjut hari ini'}
@@ -309,34 +409,44 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                 <span className="inline-flex min-h-8 items-center rounded-lg border border-emerald-800 bg-emerald-900/45 px-2.5 text-emerald-200">
                   {activities.length} setoran tersimpan
                 </span>
+                <span className={`p323-recency p323-recency-${latestRecency.kind}`} role="status" aria-label={latestRecency.description}>
+                  <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                  {latestRecency.label}
+                </span>
               </div>
+              <p className="p323-meta mt-2 text-emerald-200/75">
+                {latestActivity ? `Terakhir: ${formatTanggalWaktu(latestActivity.timestamp)}` : 'Belum ada aktivitas tersimpan.'}
+              </p>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-2.5">
-              <button
-                type="button"
-                onClick={onOpenSetorMenu}
-                className="ui-control press-feedback inline-flex items-center justify-center gap-2 bg-emerald-300 px-4 text-sm font-bold text-emerald-950 shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:bg-emerald-200 hover:shadow-md focus-visible:ring-2 focus-visible:ring-emerald-100"
-              >
-                <PlusCircle className="h-4 w-4" aria-hidden="true" />
-                Mulai Setor
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('mushaf')}
-                className="ui-control press-feedback inline-flex items-center justify-center gap-2 border border-emerald-600 bg-emerald-900/55 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-900"
-              >
-                <BookOpen className="h-4 w-4" aria-hidden="true" />
-                Buka Mushaf
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('riwayat')}
-                className="ui-control press-feedback group inline-flex items-center justify-center gap-2 px-3 text-sm font-semibold text-emerald-100 transition-colors hover:text-white"
-              >
-                Riwayat
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-              </button>
+            <div className="mt-6 max-w-2xl">
+              <p className="p323-meta text-emerald-100/75">{operatorAction.description}</p>
+              <div className="mt-2 flex flex-wrap gap-2.5">
+                <button
+                  type="button"
+                  onClick={runOperatorAction}
+                  className={`ui-control press-feedback inline-flex items-center justify-center gap-2 px-4 text-sm font-bold shadow-sm transition-[background-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 ${todayAttention.length > 0 ? 'bg-amber-300 text-amber-950 hover:bg-amber-200 focus-visible:ring-amber-100' : 'bg-emerald-300 text-emerald-950 hover:bg-emerald-200 focus-visible:ring-emerald-100'}`}
+                >
+                  {todayAttention.length > 0 ? <AlertTriangle className="h-4 w-4" aria-hidden="true" /> : <PlusCircle className="h-4 w-4" aria-hidden="true" />}
+                  {operatorAction.label}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('mushaf')}
+                  className="ui-control press-feedback inline-flex items-center justify-center gap-2 border border-emerald-600 bg-emerald-900/55 px-4 text-sm font-semibold text-white transition-colors hover:bg-emerald-900"
+                >
+                  <BookOpen className="h-4 w-4" aria-hidden="true" />
+                  Buka Mushaf
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('riwayat')}
+                  className="ui-control press-feedback group inline-flex items-center justify-center gap-2 px-3 text-sm font-semibold text-emerald-100 transition-colors hover:text-white"
+                >
+                  Riwayat
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                </button>
+              </div>
             </div>
           </div>
 
@@ -372,12 +482,12 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           </div>
         </div>
 
-        <aside className={`ui-panel overflow-hidden shadow-[0_16px_42px_-34px_rgba(15,23,42,0.35)] lg:col-span-2 ${todayAttention.length > 0 ? 'border-t-4 border-t-amber-500' : 'border-t-4 border-t-emerald-600'}`}>
+        <aside id="ustadz-tindak-lanjut" className={`ui-panel p323-surface-secondary scroll-mt-32 overflow-hidden shadow-[0_16px_42px_-34px_rgba(15,23,42,0.35)] lg:col-span-2 ${todayAttention.length > 0 ? 'border-t-4 border-t-amber-500' : 'border-t-4 border-t-emerald-600'}`}>
           <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-4 sm:p-5">
             <div className="min-w-0">
-              <p className="ui-eyebrow">Perlu dicermati</p>
-              <h2 className="ui-section-title mt-1">Tindak lanjut setoran</h2>
-              <p className="ui-secondary mt-1">Nilai Kurang atau Mengulang dari data setoran aktual.</p>
+              <p className="p323-kicker text-slate-500">Perlu dicermati</p>
+              <h2 className="p323-heading mt-1 text-slate-950">Tindak lanjut setoran</h2>
+              <p className="p323-body mt-1 text-slate-600">Nilai Kurang atau Mengulang dari data setoran aktual.</p>
               <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
                 <span className="rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-amber-800"><strong>{todayKurangCount}</strong> Kurang</span>
                 <span className="rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-rose-800"><strong>{todayMengulangCount}</strong> Mengulang</span>
@@ -397,7 +507,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
             <div className="flex min-h-48 flex-col items-center justify-center px-5 py-8 text-center">
               <CheckCircle2 className="h-8 w-8 text-emerald-600" />
               <p className="mt-3 text-sm font-bold text-slate-800">Belum ada nilai yang perlu dicermati.</p>
-              <p className="ui-secondary mt-1 max-w-sm">Setoran bernilai Kurang atau Mengulang akan tampil di bagian ini.</p>
+              <p className="p323-body mt-1 max-w-sm text-slate-600">Setoran bernilai Kurang atau Mengulang akan tampil di bagian ini.</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-100 px-4 sm:px-5">
@@ -415,7 +525,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                       <span className={`flex-shrink-0 text-xs font-bold ${getNilaiTextClass(record.nilai)}`}>{record.nilai}</span>
                     </div>
                     <p className="mt-0.5 truncate text-sm text-slate-600">{record.category} · {record.material}</p>
-                    <p className="ui-meta mt-1">{formatTanggalWaktu(record.timestamp)}</p>
+                    <p className="p323-meta mt-1 text-slate-500">{formatTanggalWaktu(record.timestamp)}</p>
                   </div>
                   <ChevronRight className="mt-1 h-4 w-4 flex-shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" />
                 </button>
@@ -425,14 +535,14 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
         </aside>
       </section>
 
-      <section aria-label="Status operasional" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <button type="button" onClick={() => setActiveTab('santri')} className="ui-panel group flex min-h-24 items-center gap-3 px-4 py-4 text-left transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:px-5">
+      <section aria-label="Status operasional" className="p323-context-grid grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <button type="button" onClick={() => setActiveTab('santri')} className="ui-panel p323-surface-tertiary group flex min-h-24 items-center gap-3 px-4 py-4 text-left transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:px-5">
           <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-700"><Users className="h-5 w-5" aria-hidden="true" /></span>
-          <span className="min-w-0 flex-1"><span className="ui-meta block font-semibold">Santri aktif</span><strong className="ui-number mt-0.5 block text-2xl font-[750] text-slate-950">{santriList.length}</strong><span className="ui-meta mt-0.5 block">Lihat data santri</span></span>
+          <span className="min-w-0 flex-1"><span className="p323-meta block font-semibold text-slate-500">Santri aktif</span><strong className="ui-number mt-0.5 block text-2xl font-[750] text-slate-950">{santriList.length}</strong><span className="p323-meta mt-0.5 block text-slate-500">Lihat data santri</span></span>
           <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
         </button>
 
-        <button type="button" onClick={openAnalytics} className="ui-panel group flex min-h-24 items-center gap-3 px-4 py-4 text-left transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:px-5" aria-label="Buka analitik aktivitas dan kualitas">
+        <button type="button" onClick={openAnalytics} className="ui-panel p323-surface-tertiary group flex min-h-24 items-center gap-3 px-4 py-4 text-left transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 sm:px-5" aria-label="Buka analitik aktivitas dan kualitas">
           <div className="relative h-12 w-12 flex-shrink-0" aria-hidden="true">
             <svg viewBox="0 0 36 36" className="h-12 w-12 -rotate-90">
               <circle cx="18" cy="18" r="14" fill="none" stroke="#d1fae5" strokeWidth="4" />
@@ -440,23 +550,23 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
             </svg>
             <span className="absolute inset-0 flex items-center justify-center text-xs font-bold text-emerald-900">{sangatBaikPercent === null ? '—' : `${sangatBaikPercent}%`}</span>
           </div>
-          <span className="min-w-0 flex-1"><span className="ui-meta block font-semibold">Kualitas Sangat Baik</span><strong className="mt-0.5 block text-base font-bold text-slate-950">{sangatBaikPercent === null ? 'Belum ada nilai' : `${sangatBaikPercent}% dari seluruh setoran`}</strong><span className="ui-meta mt-0.5 block">{activities.length === 0 ? 'Belum ada penilaian' : `${sangatBaikCount} dari ${activities.length} setoran · buka analitik`}</span></span>
+          <span className="min-w-0 flex-1"><span className="p323-meta block font-semibold text-slate-500">Kualitas Sangat Baik</span><strong className="mt-0.5 block text-base font-bold text-slate-950">{sangatBaikPercent === null ? 'Belum ada nilai' : `${sangatBaikPercent}% dari seluruh setoran`}</strong><span className="p323-meta mt-0.5 block text-slate-500">{activities.length === 0 ? 'Belum ada penilaian' : `${sangatBaikCount} dari ${activities.length} setoran · buka analitik`}</span></span>
           <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
         </button>
 
-        <button type="button" onClick={() => setActiveTab('riwayat')} className="ui-panel group flex min-h-24 items-center gap-3 px-4 py-4 text-left transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 sm:px-5">
+        <button type="button" onClick={() => setActiveTab('riwayat')} className="ui-panel p323-surface-tertiary group flex min-h-24 items-center gap-3 px-4 py-4 text-left transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 sm:px-5">
           <span className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-800"><CalendarCheck className="h-5 w-5" aria-hidden="true" /></span>
-          <span className="min-w-0 flex-1"><span className="ui-meta block font-semibold">Setoran tersimpan</span><strong className="ui-number mt-0.5 block text-2xl font-[750] text-slate-950">{activities.length}</strong><span className="ui-meta mt-0.5 block">Seluruh kategori</span></span>
+          <span className="min-w-0 flex-1"><span className="p323-meta block font-semibold text-slate-500">Setoran tersimpan</span><strong className="ui-number mt-0.5 block text-2xl font-[750] text-slate-950">{activities.length}</strong><span className="p323-meta mt-0.5 block text-slate-500">Seluruh kategori aktual</span></span>
           <ChevronRight className="h-4 w-4 text-slate-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
         </button>
       </section>
 
-      <ScrollReveal delay={80} className="space-y-3">
+      <ScrollReveal delay={80} className="p323-deferred-surface space-y-3">
         <div id="dashboard-analytics" className="scroll-mt-24 flex flex-col gap-3 px-1 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
-            <p className="ui-eyebrow">Insight</p>
-            <h2 className="ui-section-title mt-1">Analitik hafalan</h2>
-            <p className="ui-secondary mt-0.5">Gunakan grafik untuk membaca pola perkembangan setelah melihat kondisi operasional hari ini.</p>
+            <p className="p323-kicker text-slate-500">Insight</p>
+            <h2 className="p323-heading mt-1 text-slate-950">Analitik hafalan</h2>
+            <p className="p323-body mt-0.5 text-slate-600">Grafik membaca pola dari record yang tersedia setelah kondisi operasional hari ini ditinjau.</p>
           </div>
           <div className="inline-flex self-start rounded-xl border border-slate-200 bg-slate-50 p-1 sm:self-auto" role="group" aria-label="Pilihan analitik">
             <button
