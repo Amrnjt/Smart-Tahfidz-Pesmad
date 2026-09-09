@@ -1,17 +1,48 @@
-/* Navbar / menu transition hotfix
- * Keep persistent app chrome above native same-document View Transition snapshots.
+/* Navbar / menu transition polish
+ * Keep app chrome stable while only changing page content is snapshotted.
  * Motion stays compositor-friendly: opacity + short translation only.
  */
 
 :root {
-  --chrome-transition-page-duration: 360ms;
+  --chrome-transition-page-duration: 300ms;
   --chrome-transition-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* The live chrome is already outside <main>; naming it also lifts its snapshot
- * into the View Transition top layer so page snapshots cannot paint over it. */
+/* The main layout stays live. Only the changing logged-in page content swaps. */
+.ui-app-shell > main#main-content {
+  view-transition-name: none;
+}
+
+.p3-page-content {
+  view-transition-name: p2-page;
+}
+
+/* Persistent top chrome stays outside page snapshots. */
 .p3-chrome-stack {
   view-transition-name: p3-app-chrome;
+}
+
+/* The Bedimcode-style mobile indicator is one shared rail. Its named snapshot
+ * moves between destinations instead of an old marker disappearing and a new
+ * marker appearing independently. */
+.p2-bottom-active-rail {
+  position: absolute;
+  top: -0.25rem;
+  left: 50%;
+  z-index: 2;
+  width: 1.45rem;
+  height: 0.16rem;
+  border-radius: 999px;
+  background: var(--brand-primary);
+  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
+  transform: translateX(-50%);
+  pointer-events: none;
+  view-transition-name: p2-nav-active;
+}
+
+/* Retire the previous per-item pseudo marker so there is only one visual rail. */
+.p2-bottom-dock-bedimcode .p2-bottom-item::before {
+  content: none;
 }
 
 /* Explicit stacking order inside the browser's View Transition top layer. */
@@ -36,16 +67,21 @@
   mix-blend-mode: normal;
 }
 
-/* Active menu indicator still morphs, but always above the chrome snapshot. */
+/* Shared rail morphs above both page and chrome snapshots. */
 ::view-transition-group(p2-nav-active) {
   z-index: 320;
-  animation-duration: var(--chrome-transition-page-duration);
+  animation-duration: 300ms;
   animation-timing-function: var(--chrome-transition-ease);
 }
 
-/* Softer page swap: less travel, no scale pulse, shorter exit. */
+::view-transition-old(p2-nav-active),
+::view-transition-new(p2-nav-active) {
+  mix-blend-mode: normal;
+}
+
+/* Page swap: short exit, tiny upward settle, deliberately no scale pulse. */
 ::view-transition-old(p2-page) {
-  animation: chrome-page-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
+  animation: chrome-page-out 110ms cubic-bezier(0.4, 0, 1, 1) both;
 }
 
 ::view-transition-new(p2-page) {
@@ -55,7 +91,7 @@
 @keyframes chrome-page-in {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(5px);
   }
   to {
     opacity: 1;
@@ -70,13 +106,20 @@
   }
   to {
     opacity: 0;
-    transform: translateY(-2px);
+    transform: translateY(-1px);
   }
 }
 
 @media (max-width: 767px) {
   :root {
-    --chrome-transition-page-duration: 320ms;
+    --chrome-transition-page-duration: 280ms;
+  }
+
+  /* motion-finish.css previously named the active icon/FAB itself. The rail is
+   * now the sole mobile owner of p2-nav-active, avoiding competing snapshots. */
+  .p2-bottom-item.is-active .p2-bottom-icon-wrap,
+  .p2-setor-fab.is-active {
+    view-transition-name: none;
   }
 
   @keyframes chrome-page-in {
@@ -92,7 +135,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .p3-chrome-stack {
+  .p3-chrome-stack,
+  .p3-page-content,
+  .p2-bottom-active-rail {
     view-transition-name: none !important;
   }
 
@@ -102,14 +147,23 @@
   ::view-transition-group(p2-page),
   ::view-transition-old(p2-page),
   ::view-transition-new(p2-page),
-  ::view-transition-group(p2-nav-active) {
+  ::view-transition-group(p2-nav-active),
+  ::view-transition-old(p2-nav-active),
+  ::view-transition-new(p2-nav-active) {
     animation: none !important;
   }
 }
 
 @media (forced-colors: active) {
+  .p2-bottom-active-rail {
+    background: CanvasText;
+    box-shadow: none;
+  }
+
   ::view-transition-old(p3-app-chrome),
-  ::view-transition-new(p3-app-chrome) {
+  ::view-transition-new(p3-app-chrome),
+  ::view-transition-old(p2-nav-active),
+  ::view-transition-new(p2-nav-active) {
     mix-blend-mode: normal;
   }
 }
