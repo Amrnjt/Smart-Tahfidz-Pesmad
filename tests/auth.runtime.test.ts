@@ -7,6 +7,7 @@ import { connectAuthEmulator, getAuth, signInWithCustomToken } from 'firebase/au
 
 import loginHandler from '../api/auth/login';
 import migrateHandler from '../api/auth/migrate-credentials';
+import adminUsersHandler from '../api/auth/admin-users';
 
 const PROJECT_ID = 'demo-smart-tahfidz';
 const MIGRATION_SECRET = 'test-only-migration-secret-123456789';
@@ -48,6 +49,26 @@ async function call(handler: (req: any, res: any) => Promise<any>, req: any) {
   const { state, res } = mockResponse();
   await handler(req, res);
   return state;
+}
+
+async function loginClient(user: (typeof users)[number], suffix: string) {
+  const response = await call(loginHandler, {
+    method: 'POST',
+    headers: {},
+    body: { username: user.username, password: user.password },
+  });
+  assert.equal(response.statusCode, 200, `${user.role}: ${JSON.stringify(response.body)}`);
+
+  const app = initializeApp({
+    apiKey: 'fake-api-key',
+    projectId: PROJECT_ID,
+    authDomain: `${PROJECT_ID}.firebaseapp.com`,
+  }, `runtime-${user.id}-${suffix}-${Date.now()}`);
+  clientApps.push(app);
+  const auth = getAuth(app);
+  connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  const credential = await signInWithCustomToken(auth, response.body.token);
+  return { response, credential, idToken: await credential.user.getIdToken(true) };
 }
 
 before(async () => {
@@ -128,29 +149,91 @@ test('controlled migration hashes credentials and removes plaintext passwords', 
 
 test('all four roles receive usable custom tokens with correct claims', async () => {
   for (const user of users) {
-    const response = await call(loginHandler, {
-      method: 'POST',
-      headers: {},
-      body: { username: user.username, password: user.password },
-    });
-
-    assert.equal(response.statusCode, 200, `${user.role}: ${JSON.stringify(response.body)}`);
+    const { response, credential } = await loginClient(user, 'claims');
     assert.equal(response.body.user.role, user.role);
     assert.ok(response.body.token, `${user.role} must receive a custom token`);
 
-    const app = initializeApp({
-      apiKey: 'fake-api-key',
-      projectId: PROJECT_ID,
-      authDomain: `${PROJECT_ID}.firebaseapp.com`,
-    }, `runtime-${user.id}-${Date.now()}`);
-    clientApps.push(app);
-    const auth = getAuth(app);
-    connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-
-    const credential = await signInWithCustomToken(auth, response.body.token);
     const tokenResult = await credential.user.getIdTokenResult(true);
     assert.equal(tokenResult.claims.role, user.role);
     assert.equal(tokenResult.claims.username, user.username);
     assert.equal(tokenResult.claims.idSantri ?? '', user.idSantri);
   }
+});
+
+test('secure admin account lifecycle enforces staff boundary and never stores plaintext passwords', async () => {
+  const ustadz = users.find((user) => user.role === 'Ustadz')!;
+  const wali = users.find((user) => user.role === 'Wali')!;
+  const ustadzSession = await loginClient(ustadz, 'admin');
+  const waliSession = await loginClient(wali, 'admin');
+
+  const waliCreateDenied = await call(adminUsersHandler, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${waliSession.idToken}` },
+    body: {
+      action: 'createUser',
+      user: { id: 'forbidden-user', username: 'forbidden', nama: 'Forbidden', role: 'Santri', idSantri: 'santri-x' },
+      password: 'Nope123!',
+    },
+  });
+  assert.equal(waliCreateDenied.statusCode, 403);
+
+  const ustadzSuperadminDenied = await call(adminUsersHandler, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${ustadzSession.idToken}` },
+    body: {
+      action: 'createUser',
+      user: { id: 'forbidden-super', username: 'forbiddensuper', nama: 'Forbidden Super', role: 'Superadmin' },
+      password: 'Nope123!',
+    },
+  });
+  assert.equal(ustadzSuperadminDenied.statusCode, 403);
+
+  const created = await call(adminUsersHandler, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${ustadzSession.idToken}` },
+    body: {
+      action: 'createUser',
+      user: { id: 'managed-wali-1', username: 'managedwali', nama: 'Managed Wali', role: 'Wali', idSantri: 'santri-managed' },
+      password: 'ManagedPass123!',
+    },
+  });
+  assert.equal(created.statusCode, 200, JSON.stringify(created.body));
+
+  const selfNotification = await call(adminUsersHandler, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${waliSession.idToken}` },
+    body: {
+      action: 'updateUser',
+      id: wali.id,
+      updatedData: { notificationPermission: 'granted' },
+    },
+  });
+  assert.equal(selfNotification.statusCode, 200, JSON.stringify(selfNotification.body));
+
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    const profile = (await getDoc(doc(db, 'users', 'managed-wali-1'))).data()!;
+    assert.equal('password' in profile, false);
+    assert.equal(profile.role, 'Wali');
+
+    const secureCredential = (await getDoc(doc(db, 'auth_credentials', 'managed-wali-1'))).data()!;
+    assert.equal(secureCredential.credential.algorithm, 'scrypt');
+    assert.notEqual(secureCredential.credential.hash, 'ManagedPass123!');
+
+    const waliProfile = (await getDoc(doc(db, 'users', wali.id))).data()!;
+    assert.equal(waliProfile.notificationPermission, 'granted');
+  });
+
+  const deleted = await call(adminUsersHandler, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${ustadzSession.idToken}` },
+    body: { action: 'deleteUser', id: 'managed-wali-1' },
+  });
+  assert.equal(deleted.statusCode, 200, JSON.stringify(deleted.body));
+
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    assert.equal((await getDoc(doc(db, 'users', 'managed-wali-1'))).exists(), false);
+    assert.equal((await getDoc(doc(db, 'auth_credentials', 'managed-wali-1'))).exists(), false);
+  });
 });
