@@ -6,7 +6,6 @@ const app = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8');
 const bottomNav = readFileSync(new URL('../src/components/BottomNav.tsx', import.meta.url), 'utf8');
 const dropupCss = readFileSync(new URL('../src/setor-dropup.css', import.meta.url), 'utf8');
 const appShellCss = readFileSync(new URL('../src/app-shell.css', import.meta.url), 'utf8');
-const motionFinishCss = readFileSync(new URL('../src/motion-finish.css', import.meta.url), 'utf8');
 const chromeTransitionCss = readFileSync(new URL('../src/chrome-transition-fix.css', import.meta.url), 'utf8');
 const manageSheet = readFileSync(new URL('../src/components/ManageActionSheet.tsx', import.meta.url), 'utf8');
 
@@ -92,7 +91,7 @@ test('Bottom navbar adopts Bedimcode hierarchy while keeping Smart Tahfidz color
   assert.match(appShellCss, /\.p2-bottom-dock-bedimcode\s*\{/);
   assert.match(appShellCss, /\.p2-bottom-dock-bedimcode\s+\.p2-bottom-item\s*\{[\s\S]*?background:\s*transparent/);
   assert.match(appShellCss, /\.p2-bottom-dock-bedimcode\s+\.p2-bottom-item\.is-active\s*\{[\s\S]*?color:\s*var\(--shell-active-text\)/);
-  assert.match(appShellCss, /\.p2-bottom-active-rail\s*\{[\s\S]*?background:\s*var\(--brand-primary\)/);
+  assert.match(chromeTransitionCss, /\.p2-bottom-active-rail\s*\{[\s\S]*?background:\s*var\(--brand-primary\)/);
 });
 
 test('Bedimcode navbar keeps labels visible and transition feedback restrained', () => {
@@ -103,8 +102,8 @@ test('Bedimcode navbar keeps labels visible and transition feedback restrained',
 
 test('Page transition is scoped to the page content with a short no-scale swap', () => {
   assert.match(app, /className="p3-page-content/);
-  assert.match(motionFinishCss, /\.ui-app-shell > main#main-content\s*\{[\s\S]*?view-transition-name:\s*none/);
-  assert.match(motionFinishCss, /\.p3-page-content\s*\{[\s\S]*?view-transition-name:\s*p2-page/);
+  assert.match(chromeTransitionCss, /\.ui-app-shell > main#main-content\s*\{[\s\S]*?view-transition-name:\s*none/);
+  assert.match(chromeTransitionCss, /\.p3-page-content\s*\{[\s\S]*?view-transition-name:\s*p2-page/);
   assert.match(chromeTransitionCss, /--chrome-transition-page-duration:\s*300ms/);
   assert.match(chromeTransitionCss, /@media \(max-width: 767px\)[\s\S]*?--chrome-transition-page-duration:\s*280ms/);
   assert.doesNotMatch(chromeTransitionCss, /scale\(/);
@@ -113,7 +112,6 @@ test('Page transition is scoped to the page content with a short no-scale swap',
 test('Bottom navbar uses one shared active rail for view-transition continuity', () => {
   assert.match(bottomNav, /p2-bottom-active-rail/);
   assert.match(bottomNav, /showActiveRail/);
-  assert.match(appShellCss, /\.p2-bottom-active-rail\s*\{/);
-  assert.match(motionFinishCss, /\.p2-bottom-active-rail\s*\{[\s\S]*?view-transition-name:\s*p2-nav-active/);
-  assert.doesNotMatch(motionFinishCss, /\.p2-bottom-item\.is-active \.p2-bottom-icon-wrap,[\s\S]*?view-transition-name:\s*p2-nav-active/);
+  assert.match(chromeTransitionCss, /\.p2-bottom-active-rail\s*\{[\s\S]*?view-transition-name:\s*p2-nav-active/);
+  assert.match(chromeTransitionCss, /\.p2-bottom-item\.is-active \.p2-bottom-icon-wrap,[\s\S]*?view-transition-name:\s*none/);
 });
