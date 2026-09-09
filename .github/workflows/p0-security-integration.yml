@@ -33,6 +33,9 @@ jobs:
       - name: Fail-closed auth role guard
         run: node scripts/verify-auth-role-fail-closed.mjs
 
+      - name: Preview Firebase isolation guard
+        run: node scripts/verify-preview-firebase-isolation.mjs
+
       - name: TypeScript check
         run: npm run lint
 
