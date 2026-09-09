@@ -12,7 +12,8 @@ import {
   RotateCw,
   BookOpenCheck,
   GraduationCap,
-  Eye
+  Eye,
+  ChevronDown
 } from 'lucide-react';
 import { useRipple } from '../hooks/useRipple';
 import { ManageActionSheet } from './ManageActionSheet';
@@ -268,9 +269,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           </div>
 
           <div className="p2-manage-slot">
-            <NavButton
-              label="Kelola"
-              icon={Settings2}
+            <ManageNavButton
+              isOpen={isManageSheetOpen}
               isActive={isManageActive || isManageSheetOpen}
               onClick={() => {
                 setIsActionSheetOpen(false);
@@ -333,6 +333,40 @@ const NavButton: React.FC<NavButtonProps> = ({ label, icon: Icon, isActive, onCl
         <Icon className="ui-icon-md" />
       </span>
       <span className="p2-bottom-label">{label}</span>
+    </button>
+  );
+};
+
+interface ManageNavButtonProps {
+  isOpen: boolean;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+const ManageNavButton: React.FC<ManageNavButtonProps> = ({ isOpen, isActive, onClick }) => {
+  const ripple = useRipple<HTMLButtonElement>();
+
+  return (
+    <button
+      type="button"
+      ref={ripple.elementRef}
+      onClick={(event) => {
+        ripple.createRipple(event);
+        onClick();
+      }}
+      className={`ripple-container p2-bottom-item p2-manage-toggle ${isActive ? 'is-active' : ''}`}
+      aria-label={isOpen ? 'Tutup menu Kelola' : 'Buka menu Kelola'}
+      aria-haspopup="menu"
+      aria-expanded={isManageSheetOpen}
+      aria-controls="manage-dropdown-menu"
+    >
+      <span className="p2-bottom-icon-wrap">
+        <Settings2 className="ui-icon-md" />
+      </span>
+      <span className="p2-manage-label-row">
+        <span className="p2-bottom-label">Kelola</span>
+        <ChevronDown className={`p2-manage-toggle-chevron ${isOpen ? 'is-open' : ''}`} aria-hidden="true" />
+      </span>
     </button>
   );
 };
