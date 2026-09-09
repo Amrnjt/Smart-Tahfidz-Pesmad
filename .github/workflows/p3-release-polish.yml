@@ -6,6 +6,7 @@ on:
     paths:
       - 'src/release-polish.css'
       - 'src/responsive-accessibility.css'
+      - 'src/santri-experience-finish.css'
       - 'src/App.tsx'
       - 'src/components/Navbar.tsx'
       - 'src/components/DesktopPrimaryNav.tsx'
@@ -13,6 +14,7 @@ on:
       - 'src/components/KelasManagement.tsx'
       - 'src/components/MushafQuran.tsx'
       - 'src/components/WaliDashboard.tsx'
+      - 'src/components/SantriDashboard.tsx'
       - 'src/main.tsx'
       - '.github/workflows/p3-release-polish.yml'
   push:
@@ -90,15 +92,40 @@ jobs:
           grep -q '@media (prefers-reduced-motion: reduce)' src/release-polish.css
           grep -q '@media (forced-colors: active)' src/release-polish.css
 
+      - name: Verify P3.2.2 Santri experience contract
+        run: |
+          grep -q "import './santri-experience-finish.css'" src/main.tsx
+          grep -q 'p3-santri-page' src/components/SantriDashboard.tsx
+          grep -q 'p322-study-hero' src/components/SantriDashboard.tsx
+          grep -q 'getRecencyInfo' src/components/SantriDashboard.tsx
+          grep -q 'primaryAction' src/components/SantriDashboard.tsx
+          grep -q 'santri-feedback-terbaru' src/components/SantriDashboard.tsx
+          grep -q 'p322-deferred-surface' src/components/SantriDashboard.tsx
+          grep -q 'bukan estimasi progres' src/components/SantriDashboard.tsx
+          grep -q 'p3-santri-page' src/santri-experience-finish.css
+          grep -q 'p322-surface-secondary' src/santri-experience-finish.css
+          grep -q 'p322-surface-tertiary' src/santri-experience-finish.css
+          grep -q 'content-visibility: auto' src/santri-experience-finish.css
+          grep -q '@media (max-width: 767px) and (pointer: coarse)' src/santri-experience-finish.css
+          grep -q '@media (prefers-reduced-motion: reduce)' src/santri-experience-finish.css
+          grep -q '@media (forced-colors: active)' src/santri-experience-finish.css
+          if grep -Eq 'position:[[:space:]]*sticky' src/santri-experience-finish.css; then
+            echo 'Santri finish layer must not create competing sticky chrome.'
+            exit 1
+          fi
+
       - name: Enforce P3 performance budget
         run: |
           release_size=$(wc -c < src/release-polish.css)
           responsive_size=$(wc -c < src/responsive-accessibility.css)
+          santri_size=$(wc -c < src/santri-experience-finish.css)
           echo "release-polish.css bytes: $release_size"
           echo "responsive-accessibility.css bytes: $responsive_size"
+          echo "santri-experience-finish.css bytes: $santri_size"
           test "$release_size" -le 24000
           test "$responsive_size" -le 14000
-          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/release-polish.css src/responsive-accessibility.css; then
+          test "$santri_size" -le 9000
+          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/release-polish.css src/responsive-accessibility.css src/santri-experience-finish.css; then
             echo 'P3 polish contains an expensive global effect.'
             exit 1
           fi
