@@ -199,6 +199,165 @@
   transform: rotate(0deg);
 }
 
+/* Kelola — anchored folder-sheet drop-up. */
+.p2-manage-slot {
+  position: relative;
+  min-width: 0;
+  z-index: 3;
+}
+
+.p2-manage-slot > .p2-bottom-item {
+  width: 100%;
+}
+
+.p2-manage-folder-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 44;
+  border: 0;
+  background: rgba(15, 23, 42, 0.08);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.p2-manage-folder {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 0.95rem);
+  z-index: 46;
+  width: min(15.25rem, calc(100vw - 1.25rem));
+  transform-origin: 58% 100%;
+  translate: -58% 0;
+  perspective: 700px;
+}
+
+.p2-manage-folder-tab {
+  width: max-content;
+  min-width: 5.25rem;
+  height: 1.7rem;
+  margin-left: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0 0.75rem;
+  border: 1px solid rgba(16, 185, 129, 0.18);
+  border-bottom: 0;
+  border-radius: 0.8rem 0.8rem 0 0;
+  background: linear-gradient(180deg, #ecfdf5, #dcfce7);
+  color: #047857;
+  font-size: 0.68rem;
+  line-height: 1;
+  font-weight: 800;
+  box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.035);
+}
+
+.p2-manage-folder-body {
+  overflow: hidden;
+  border: 1px solid rgba(16, 185, 129, 0.18);
+  border-radius: 1.2rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(248, 250, 252, 0.99));
+  box-shadow:
+    0 18px 42px rgba(15, 23, 42, 0.16),
+    0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.p2-manage-folder-heading {
+  padding: 0.85rem 0.9rem 0.72rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.p2-manage-folder-heading h2 {
+  margin: 0;
+  color: #0f172a;
+  font-size: 0.78rem;
+  line-height: 1.05rem;
+  font-weight: 800;
+}
+
+.p2-manage-folder-heading p {
+  margin: 0.14rem 0 0;
+  color: #64748b;
+  font-size: 0.65rem;
+  line-height: 0.92rem;
+  font-weight: 550;
+}
+
+.p2-manage-folder-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+  padding: 0.62rem;
+}
+
+.p2-manage-folder-item {
+  width: 100%;
+  min-height: 3.55rem;
+  display: flex;
+  align-items: center;
+  gap: 0.58rem;
+  padding: 0.42rem 0.48rem;
+  border: 1px solid rgba(203, 213, 225, 0.72);
+  border-radius: 0.92rem;
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+  text-align: left;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.p2-manage-folder-item:active {
+  transform: scale(0.985);
+}
+
+.p2-manage-folder-icon {
+  width: 2.35rem;
+  height: 2.35rem;
+  flex: 0 0 2.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.78rem;
+  border: 1px solid rgba(16, 185, 129, 0.14);
+  background: linear-gradient(145deg, #ecfdf5, #d1fae5);
+  color: #047857;
+}
+
+.p2-manage-folder-copy {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.04rem;
+}
+
+.p2-manage-folder-title {
+  overflow: hidden;
+  color: #1e293b;
+  font-size: 0.72rem;
+  line-height: 1rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.p2-manage-folder-subtitle {
+  overflow: hidden;
+  color: #64748b;
+  font-size: 0.62rem;
+  line-height: 0.88rem;
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.p2-manage-folder-chevron {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex: 0 0 0.95rem;
+  color: #94a3b8;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .p2-setor-dropup-item:hover,
   .p2-setor-dropup-program:hover {
@@ -210,6 +369,16 @@
   .p2-setor-program-info:hover .p2-setor-program-icon {
     background: #d1fae5;
     color: #065f46;
+  }
+
+  .p2-manage-folder-item:hover {
+    border-color: rgba(16, 185, 129, 0.24);
+    background: #ffffff;
+  }
+
+  .p2-manage-folder-item:hover .p2-manage-folder-chevron {
+    transform: translateX(2px);
+    color: #047857;
   }
 }
 
@@ -239,6 +408,11 @@
   .p2-setor-program-title {
     max-width: 6.6rem;
   }
+
+  .p2-manage-folder {
+    width: min(14rem, calc(100vw - 0.85rem));
+    translate: -61% 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -248,7 +422,10 @@
   .p2-setor-program-switch,
   .p2-setor-program-switch-thumb,
   .p2-setor-fab.is-open,
-  .p2-setor-fab.is-open svg {
+  .p2-setor-fab.is-open svg,
+  .p2-manage-folder,
+  .p2-manage-folder-item,
+  .p2-manage-folder-chevron {
     transition: none !important;
     animation: none !important;
   }
