@@ -3,10 +3,11 @@ import { getAdminServices } from '../_firebaseAdmin';
 import { hashPassword } from '../_credentials';
 
 const ALLOWED_ROLES = new Set(['Superadmin', 'Ustadz', 'Wali', 'Santri']);
+type AuthRole = 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri';
 
-function normalizeRole(role: unknown): 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri' {
+function normalizeRole(role: unknown): AuthRole | null {
   const value = String(role || '').trim();
-  return ALLOWED_ROLES.has(value) ? value as any : 'Ustadz';
+  return ALLOWED_ROLES.has(value) ? value as AuthRole : null;
 }
 
 function send(res: any, status: number, body: Record<string, unknown>) {
@@ -16,6 +17,7 @@ function send(res: any, status: number, body: Record<string, unknown>) {
 
 function cleanProfile(input: Record<string, any>) {
   const role = normalizeRole(input.role);
+  if (!role) throw new Error('INVALID_ROLE');
   return {
     id: String(input.id || '').trim(),
     username: String(input.username || '').trim().toLowerCase(),
@@ -83,6 +85,8 @@ export default async function handler(req: any, res: any) {
   try {
     const caller = await verifyCaller(req);
     const callerRole = normalizeRole(caller.role);
+    if (!callerRole) throw new Error('FORBIDDEN');
+
     const { auth, db } = getAdminServices();
     const action = String(req.body?.action || '');
 
@@ -196,7 +200,10 @@ export default async function handler(req: any, res: any) {
 
       const credentialRef = db.collection('auth_credentials').doc(id);
       const credentialDoc = await credentialRef.get();
-      const targetRole = credentialDoc.exists ? normalizeRole(credentialDoc.data()?.role) : 'Ustadz';
+      const targetRole = credentialDoc.exists ? normalizeRole(credentialDoc.data()?.role) : null;
+      if (credentialDoc.exists && !targetRole) {
+        return send(res, 409, { success: false, message: 'Role akun target tidak valid.' });
+      }
       if (targetRole === 'Superadmin' && callerRole !== 'Superadmin') {
         return send(res, 403, { success: false, message: 'Akun Superadmin tidak dapat dihapus oleh Ustadz.' });
       }
@@ -320,6 +327,9 @@ export default async function handler(req: any, res: any) {
     }
     if (error?.message === 'FORBIDDEN') {
       return send(res, 403, { success: false, message: 'Token tidak memiliki role aplikasi yang tepercaya.' });
+    }
+    if (error?.message === 'INVALID_ROLE') {
+      return send(res, 400, { success: false, message: 'Role akun tidak valid.' });
     }
     console.error('Secure account API error:', error);
     return send(res, 500, { success: false, message: 'Operasi akun gagal diproses.' });
