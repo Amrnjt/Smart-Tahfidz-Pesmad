@@ -10,6 +10,7 @@ on:
       - 'src/input-workflow.css'
       - 'src/history-experience.css'
       - 'src/motion-finish.css'
+      - 'src/setor-dropup.css'
       - 'src/design-system/**'
       - 'src/components/Navbar.tsx'
       - 'src/components/BottomNav.tsx'
@@ -22,9 +23,11 @@ on:
       - 'src/components/PembelajaranForm.tsx'
       - 'src/components/SetoranFormNav.tsx'
       - 'src/components/SetorActionSheet.tsx'
+      - 'src/components/ManageActionSheet.tsx'
       - 'src/components/HistoryTable.tsx'
       - 'src/hooks/useActiveTabNavigation.ts'
       - 'src/main.tsx'
+      - 'tests/setor-dropup-source.test.mjs'
       - 'P2_DESIGN_FOUNDATION.md'
       - '.github/workflows/p2-design-foundation.yml'
   push:
@@ -51,6 +54,9 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+      - name: Verify Setor and Kelola source contracts
+        run: node --test tests/setor-dropup-source.test.mjs
 
       - name: Verify P2 accessibility contract
         run: |
