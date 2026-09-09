@@ -1,8 +1,6 @@
 import React, { useEffect } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
-import { ChevronRight, FolderCog, School, Users } from 'lucide-react';
+import { ChevronRight, School, Users } from 'lucide-react';
 import type { ActiveTab } from '../types';
-import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
 
 interface ManageActionSheetProps {
   isOpen: boolean;
@@ -31,8 +29,6 @@ const actions: Array<{
 ];
 
 export const ManageActionSheet: React.FC<ManageActionSheetProps> = ({ isOpen, onClose, onSelect }) => {
-  const dialogRef = useAccessibleDialog(isOpen, onClose);
-
   useEffect(() => {
     if (!isOpen) return;
     const handleEscape = (event: KeyboardEvent) => {
@@ -48,80 +44,48 @@ export const ManageActionSheet: React.FC<ManageActionSheetProps> = ({ isOpen, on
   };
 
   return (
-    <AnimatePresence>
+    <>
       {isOpen && (
-        <>
-          <motion.button
-            type="button"
-            className="p2-manage-folder-backdrop"
-            aria-label="Tutup menu Kelola"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.16 }}
-            onClick={onClose}
-          />
-
-          <motion.div
-            ref={dialogRef}
-            className="p2-manage-folder"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="manage-folder-title"
-            aria-describedby="manage-folder-description"
-            tabIndex={-1}
-            initial={{ opacity: 0, y: 18, scale: 0.9, rotateX: -4 }}
-            animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-            exit={{ opacity: 0, y: 12, scale: 0.94, rotateX: -3 }}
-            transition={{ type: 'spring', stiffness: 390, damping: 28, mass: 0.72 }}
-          >
-            <div className="p2-manage-folder-tab" aria-hidden="true">
-              <FolderCog className="h-3.5 w-3.5" />
-              <span>Kelola</span>
-            </div>
-
-            <div className="p2-manage-folder-body">
-              <div className="p2-manage-folder-heading">
-                <h2 id="manage-folder-title">Kelola Data</h2>
-                <p id="manage-folder-description">Pilih data operasional yang ingin dikelola</p>
-              </div>
-
-              <div className="p2-manage-folder-actions">
-                {actions.map((action, index) => {
-                  const Icon = action.icon;
-                  return (
-                    <motion.button
-                      type="button"
-                      key={action.tab}
-                      className="p2-manage-folder-item"
-                      onClick={() => chooseAction(action.tab)}
-                      initial={{ opacity: 0, y: 10, scale: 0.96 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                      transition={{
-                        type: 'spring',
-                        stiffness: 430,
-                        damping: 28,
-                        mass: 0.62,
-                        delay: 0.04 + index * 0.055
-                      }}
-                    >
-                      <span className="p2-manage-folder-icon" aria-hidden="true">
-                        <Icon className="h-[18px] w-[18px]" />
-                      </span>
-                      <span className="p2-manage-folder-copy">
-                        <span className="p2-manage-folder-title">{action.title}</span>
-                        <span className="p2-manage-folder-subtitle">{action.subtitle}</span>
-                      </span>
-                      <ChevronRight className="p2-manage-folder-chevron" aria-hidden="true" />
-                    </motion.button>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>
-        </>
+        <button
+          type="button"
+          className="p2-manage-dropdown-backdrop"
+          aria-label="Tutup menu Kelola"
+          onClick={onClose}
+        />
       )}
-    </AnimatePresence>
+
+      <div
+        id="manage-dropdown-menu"
+        className={`p2-manage-dropdown ${isOpen ? 'is-open' : ''}`}
+        role="menu"
+        aria-label="Pilihan Kelola"
+        aria-hidden={!isOpen}
+      >
+        <div className="p2-manage-dropdown-list">
+          {actions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <button
+                type="button"
+                role="menuitem"
+                key={action.tab}
+                className="p2-manage-dropdown-link"
+                onClick={() => chooseAction(action.tab)}
+                tabIndex={isOpen ? 0 : -1}
+              >
+                <span className="p2-manage-dropdown-icon" aria-hidden="true">
+                  <Icon className="h-[18px] w-[18px]" />
+                </span>
+                <span className="p2-manage-dropdown-copy">
+                  <span className="p2-manage-dropdown-title">{action.title}</span>
+                  <span className="p2-manage-dropdown-subtitle">{action.subtitle}</span>
+                </span>
+                <ChevronRight className="p2-manage-dropdown-chevron" aria-hidden="true" />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </>
   );
 };
