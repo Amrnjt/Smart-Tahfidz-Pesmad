@@ -45,16 +45,28 @@ test('Setor drop-up centers the menu and uses balanced balloon widths', () => {
   assert.match(dropupCss, /\.p2-setor-dropup-program\s*\{[\s\S]*?width:\s*min\(14\.25rem,\s*100%\)/);
 });
 
-test('Kelola follows the Bedimcode dropdown pattern instead of the folder-card layout', () => {
+test('Kelola keeps the Bedimcode open-close mechanism but renders separate floating bars', () => {
   assert.match(manageSheet, /p2-manage-dropdown-list/);
+  assert.match(manageSheet, /p2-manage-dropdown-link/);
   assert.match(manageSheet, /role="menu"/);
-  assert.doesNotMatch(manageSheet, /p2-manage-folder-tab/);
-  assert.doesNotMatch(manageSheet, /FolderCog/);
-  assert.doesNotMatch(manageSheet, /Kelola Data/);
   assert.match(dropupCss, /\.p2-manage-dropdown\s*\{[\s\S]*?max-height:\s*0/);
   assert.match(dropupCss, /\.p2-manage-dropdown\s*\{[\s\S]*?overflow:\s*hidden/);
   assert.match(dropupCss, /transition:\s*max-height\s*\.4s/);
   assert.match(dropupCss, /\.p2-manage-dropdown\.is-open\s*\{[\s\S]*?max-height:/);
+  assert.match(dropupCss, /\.p2-manage-dropdown-list\s*\{[\s\S]*?display:\s*flex/);
+  assert.match(dropupCss, /\.p2-manage-dropdown-list\s*\{[\s\S]*?align-items:\s*center/);
+  assert.match(dropupCss, /\.p2-manage-dropdown-list\s*\{[\s\S]*?gap:/);
+  assert.match(dropupCss, /\.p2-manage-dropdown-link\s*\{[\s\S]*?width:\s*min\(12\.5rem,\s*100%\)/);
+  assert.match(dropupCss, /\.p2-manage-dropdown-link\s*\{[\s\S]*?border-radius:\s*999px/);
+  assert.match(dropupCss, /\.p2-manage-dropdown-link\s*\{[\s\S]*?box-shadow:/);
+});
+
+test('Kelola floating bars stay centered and animate upward with stagger', () => {
+  assert.match(dropupCss, /\.p2-manage-dropdown\s*\{[\s\S]*?left:\s*50%/);
+  assert.match(dropupCss, /\.p2-manage-dropdown\s*\{[\s\S]*?translate:\s*-50%\s+0/);
+  assert.match(dropupCss, /\.p2-manage-dropdown-link\s*\{[\s\S]*?transform:\s*translateY\(/);
+  assert.match(dropupCss, /\.p2-manage-dropdown\.is-open\s+\.p2-manage-dropdown-link/);
+  assert.match(dropupCss, /nth-child\(2\)/);
 });
 
 test('Kelola keeps Kelas and Santri destinations and rotates a dropdown chevron', () => {
