@@ -199,131 +199,116 @@
   transform: rotate(0deg);
 }
 
-/* Kelola — anchored folder-sheet drop-up. */
+/* Kelola — Bedimcode-inspired anchored dropdown, reversed upward for bottom navigation. */
 .p2-manage-slot {
   position: relative;
   min-width: 0;
   z-index: 3;
 }
 
-.p2-manage-slot > .p2-bottom-item {
+.p2-manage-slot > .p2-bottom-item,
+.p2-manage-toggle {
   width: 100%;
 }
 
-.p2-manage-folder-backdrop {
+.p2-manage-label-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.14rem;
+}
+
+.p2-manage-toggle-chevron {
+  width: 0.7rem;
+  height: 0.7rem;
+  color: currentColor;
+  opacity: 0.72;
+  transition: transform .4s ease;
+}
+
+.p2-manage-toggle-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.p2-manage-dropdown-backdrop {
   position: fixed;
   inset: 0;
   z-index: 44;
   border: 0;
-  background: rgba(15, 23, 42, 0.08);
+  background: transparent;
   -webkit-tap-highlight-color: transparent;
 }
 
-.p2-manage-folder {
+.p2-manage-dropdown {
   position: absolute;
-  left: 50%;
-  bottom: calc(100% + 0.95rem);
+  right: -1.35rem;
+  bottom: calc(100% + 0.58rem);
   z-index: 46;
-  width: min(15.25rem, calc(100vw - 1.25rem));
-  transform-origin: 58% 100%;
-  translate: -58% 0;
-  perspective: 700px;
-}
-
-.p2-manage-folder-tab {
-  width: max-content;
-  min-width: 5.25rem;
-  height: 1.7rem;
-  margin-left: 0.75rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.35rem;
-  padding: 0 0.75rem;
-  border: 1px solid rgba(16, 185, 129, 0.18);
-  border-bottom: 0;
-  border-radius: 0.8rem 0.8rem 0 0;
-  background: linear-gradient(180deg, #ecfdf5, #dcfce7);
-  color: #047857;
-  font-size: 0.68rem;
-  line-height: 1;
-  font-weight: 800;
-  box-shadow: 0 -4px 12px rgba(15, 23, 42, 0.035);
-}
-
-.p2-manage-folder-body {
+  width: min(13rem, calc(100vw - 1rem));
+  max-height: 0;
   overflow: hidden;
-  border: 1px solid rgba(16, 185, 129, 0.18);
-  border-radius: 1.2rem;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(248, 250, 252, 0.99));
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(0.5rem);
+  transform-origin: right bottom;
+  transition: max-height .4s ease-out, opacity .22s ease-out, transform .4s ease-out;
+}
+
+.p2-manage-dropdown.is-open {
+  max-height: 9rem;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+  transition: max-height .4s ease-in, opacity .2s ease-in, transform .4s ease-in;
+}
+
+.p2-manage-dropdown-list {
+  overflow: hidden;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 0.72rem;
+  background: #ffffff;
   box-shadow:
-    0 18px 42px rgba(15, 23, 42, 0.16),
-    0 4px 12px rgba(15, 23, 42, 0.06);
+    0 14px 34px rgba(15, 23, 42, 0.14),
+    0 3px 10px rgba(15, 23, 42, 0.06);
 }
 
-.p2-manage-folder-heading {
-  padding: 0.85rem 0.9rem 0.72rem;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
-}
-
-.p2-manage-folder-heading h2 {
-  margin: 0;
-  color: #0f172a;
-  font-size: 0.78rem;
-  line-height: 1.05rem;
-  font-weight: 800;
-}
-
-.p2-manage-folder-heading p {
-  margin: 0.14rem 0 0;
-  color: #64748b;
-  font-size: 0.65rem;
-  line-height: 0.92rem;
-  font-weight: 550;
-}
-
-.p2-manage-folder-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.42rem;
-  padding: 0.62rem;
-}
-
-.p2-manage-folder-item {
+.p2-manage-dropdown-link {
   width: 100%;
-  min-height: 3.55rem;
+  min-height: 3.75rem;
   display: flex;
   align-items: center;
-  gap: 0.58rem;
-  padding: 0.42rem 0.48rem;
-  border: 1px solid rgba(203, 213, 225, 0.72);
-  border-radius: 0.92rem;
-  background: rgba(255, 255, 255, 0.96);
+  gap: 0.65rem;
+  padding: 0.55rem 0.62rem;
+  border: 0;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+  background: #ffffff;
   color: #0f172a;
   text-align: left;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  transition: background-color .3s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.p2-manage-folder-item:active {
-  transform: scale(0.985);
+.p2-manage-dropdown-link:last-child {
+  border-bottom: 0;
 }
 
-.p2-manage-folder-icon {
-  width: 2.35rem;
-  height: 2.35rem;
-  flex: 0 0 2.35rem;
+.p2-manage-dropdown-link:active {
+  background: #f8fafc;
+}
+
+.p2-manage-dropdown-icon {
+  width: 2.2rem;
+  height: 2.2rem;
+  flex: 0 0 2.2rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 0.78rem;
-  border: 1px solid rgba(16, 185, 129, 0.14);
-  background: linear-gradient(145deg, #ecfdf5, #d1fae5);
+  border-radius: 0.55rem;
+  background: #ecfdf5;
   color: #047857;
 }
 
-.p2-manage-folder-copy {
+.p2-manage-dropdown-copy {
   min-width: 0;
   flex: 1 1 auto;
   display: flex;
@@ -331,31 +316,32 @@
   gap: 0.04rem;
 }
 
-.p2-manage-folder-title {
+.p2-manage-dropdown-title {
   overflow: hidden;
   color: #1e293b;
-  font-size: 0.72rem;
+  font-size: 0.73rem;
   line-height: 1rem;
   font-weight: 800;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.p2-manage-folder-subtitle {
+.p2-manage-dropdown-subtitle {
   overflow: hidden;
   color: #64748b;
-  font-size: 0.62rem;
-  line-height: 0.88rem;
+  font-size: 0.61rem;
+  line-height: 0.86rem;
   font-weight: 550;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.p2-manage-folder-chevron {
-  width: 0.95rem;
-  height: 0.95rem;
-  flex: 0 0 0.95rem;
+.p2-manage-dropdown-chevron {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: 0 0 0.9rem;
   color: #94a3b8;
+  transition: transform .3s ease, color .3s ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -371,12 +357,11 @@
     color: #065f46;
   }
 
-  .p2-manage-folder-item:hover {
-    border-color: rgba(16, 185, 129, 0.24);
-    background: #ffffff;
+  .p2-manage-dropdown-link:hover {
+    background: #f0fdf4;
   }
 
-  .p2-manage-folder-item:hover .p2-manage-folder-chevron {
+  .p2-manage-dropdown-link:hover .p2-manage-dropdown-chevron {
     transform: translateX(2px);
     color: #047857;
   }
@@ -409,9 +394,9 @@
     max-width: 6.6rem;
   }
 
-  .p2-manage-folder {
-    width: min(14rem, calc(100vw - 0.85rem));
-    translate: -61% 0;
+  .p2-manage-dropdown {
+    right: -0.75rem;
+    width: min(12.25rem, calc(100vw - 0.75rem));
   }
 }
 
@@ -423,9 +408,10 @@
   .p2-setor-program-switch-thumb,
   .p2-setor-fab.is-open,
   .p2-setor-fab.is-open svg,
-  .p2-manage-folder,
-  .p2-manage-folder-item,
-  .p2-manage-folder-chevron {
+  .p2-manage-dropdown,
+  .p2-manage-dropdown-link,
+  .p2-manage-dropdown-chevron,
+  .p2-manage-toggle-chevron {
     transition: none !important;
     animation: none !important;
   }
