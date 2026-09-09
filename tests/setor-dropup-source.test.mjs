@@ -49,6 +49,8 @@ test('Kelola keeps the Bedimcode open-close mechanism but renders separate float
   assert.match(manageSheet, /p2-manage-dropdown-list/);
   assert.match(manageSheet, /p2-manage-dropdown-link/);
   assert.match(manageSheet, /role="menu"/);
+  assert.doesNotMatch(manageSheet, /p2-manage-dropdown-subtitle/);
+  assert.doesNotMatch(manageSheet, /p2-manage-dropdown-chevron/);
   assert.match(dropupCss, /\.p2-manage-dropdown\s*\{[\s\S]*?max-height:\s*0/);
   assert.match(dropupCss, /\.p2-manage-dropdown\s*\{[\s\S]*?overflow:\s*hidden/);
   assert.match(dropupCss, /transition:\s*max-height\s*\.4s/);
