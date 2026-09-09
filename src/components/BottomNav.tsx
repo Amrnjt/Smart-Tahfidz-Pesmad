@@ -11,10 +11,13 @@ import {
   BookPlus,
   RotateCw,
   BookOpenCheck,
-  GraduationCap
+  GraduationCap,
+  Eye
 } from 'lucide-react';
 import { useRipple } from '../hooks/useRipple';
 import { ManageActionSheet } from './ManageActionSheet';
+import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
+import { storageService } from '../services/storageService';
 import type { NotifyFn } from './Snackbar';
 
 interface BottomNavProps {
@@ -35,14 +38,23 @@ const SETOR_ACTIONS = [
 export const BottomNav: React.FC<BottomNavProps> = ({
   currentUser,
   activeTab,
-  setActiveTab
+  setActiveTab,
+  santriList,
+  onNotify
 }) => {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [isManageSheetOpen, setIsManageSheetOpen] = useState(false);
+  const [showMonitorModal, setShowMonitorModal] = useState(false);
+  const [programLiburanActive, setProgramLiburanActive] = useState(false);
+  const [isProgramToggling, setIsProgramToggling] = useState(false);
   const fabRipple = useRipple<HTMLButtonElement>();
 
   useEffect(() => {
     if (!isActionSheetOpen) return;
+
+    const cfg = storageService.getAppConfig();
+    setProgramLiburanActive(Boolean(cfg.programLiburanActive));
+
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setIsActionSheetOpen(false);
     };
@@ -86,6 +98,35 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   const chooseSetor = (tab: ActiveTab) => {
     setIsActionSheetOpen(false);
     setActiveTab(tab);
+  };
+
+  const openPantauanMonitor = () => {
+    setIsActionSheetOpen(false);
+    setShowMonitorModal(true);
+  };
+
+  const toggleProgramLiburan = async () => {
+    if (isProgramToggling) return;
+
+    const nextStatus = !programLiburanActive;
+    setIsProgramToggling(true);
+
+    try {
+      const updated = await storageService.setProgramLiburanActive(nextStatus, 'Ustadz / Admin');
+      const storedStatus = Boolean(updated.programLiburanActive);
+      setProgramLiburanActive(storedStatus);
+      onNotify(
+        'success',
+        storedStatus
+          ? 'Program Pantauan Liburan aktif dan tersimpan di Cloud.'
+          : 'Program Pantauan Liburan dinonaktifkan dan tersimpan di Cloud.'
+      );
+    } catch (error) {
+      console.error(error);
+      onNotify('error', 'Status Program Pantauan Liburan gagal diperbarui di Cloud.');
+    } finally {
+      setIsProgramToggling(false);
+    }
   };
 
   return (
@@ -134,6 +175,47 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                   exit={{ opacity: 0, y: 12, scale: 0.9 }}
                   transition={{ type: 'spring', stiffness: 420, damping: 30, mass: 0.72 }}
                 >
+                  <motion.div
+                    className="p2-setor-dropup-program"
+                    role="group"
+                    aria-label="Program Pantauan Liburan"
+                    initial={{ opacity: 0, y: 14, scale: 0.82 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 8, scale: 0.9 }}
+                    transition={{ type: 'spring', stiffness: 460, damping: 28, mass: 0.62 }}
+                  >
+                    <button
+                      type="button"
+                      className="p2-setor-program-info"
+                      onClick={openPantauanMonitor}
+                      aria-haspopup="dialog"
+                      aria-label="Buka rekap Program Pantauan Liburan"
+                    >
+                      <span className="p2-setor-program-icon" aria-hidden="true">
+                        <Eye className="ui-icon-md" />
+                      </span>
+                      <span className="p2-setor-program-copy">
+                        <span className="p2-setor-program-title">Pantauan Liburan</span>
+                        <span className="p2-setor-program-status">
+                          {programLiburanActive ? 'Aktif' : 'Nonaktif'}
+                        </span>
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={programLiburanActive}
+                      aria-busy={isProgramToggling}
+                      aria-label={programLiburanActive ? 'Nonaktifkan Program Pantauan Liburan' : 'Aktifkan Program Pantauan Liburan'}
+                      className={`p2-setor-program-switch ${programLiburanActive ? 'is-active' : ''}`}
+                      onClick={toggleProgramLiburan}
+                      disabled={isProgramToggling}
+                    >
+                      <span className="p2-setor-program-switch-thumb" aria-hidden="true" />
+                    </button>
+                  </motion.div>
+
                   {SETOR_ACTIONS.map((action, index) => {
                     const Icon = action.icon;
                     return (
@@ -151,7 +233,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                           stiffness: 460,
                           damping: 28,
                           mass: 0.62,
-                          delay: index * 0.045
+                          delay: (index + 1) * 0.045
                         }}
                       >
                         <span className="p2-setor-dropup-label">{action.label}</span>
@@ -210,6 +292,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         isOpen={isManageSheetOpen}
         onClose={() => setIsManageSheetOpen(false)}
         onSelect={(tab) => setActiveTab(tab)}
+      />
+
+      <PantauanLiburanMonitorModal
+        isOpen={showMonitorModal}
+        onClose={() => setShowMonitorModal(false)}
+        santriList={santriList}
+        onNotify={onNotify}
       />
     </>
   );
