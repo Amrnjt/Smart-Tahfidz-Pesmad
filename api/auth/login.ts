@@ -2,12 +2,15 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getAdminServices } from '../_firebaseAdmin';
 import { hashPassword, safeLegacyCompare, verifyPassword, type StoredCredential } from '../_credentials';
 
-function normalizeRole(role: unknown): 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri' {
+type AuthRole = 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri';
+
+function normalizeRole(role: unknown): AuthRole | null {
   const value = String(role || '').trim().toLowerCase();
   if (value === 'superadmin') return 'Superadmin';
+  if (value === 'ustadz') return 'Ustadz';
   if (value === 'wali' || value.includes('wali')) return 'Wali';
   if (value === 'santri') return 'Santri';
-  return 'Ustadz';
+  return null;
 }
 
 function send(res: any, status: number, body: Record<string, unknown>) {
@@ -61,12 +64,17 @@ export default async function handler(req: any, res: any) {
         const legacyPassword = String(legacyUser.password || '');
 
         if (legacyPassword && safeLegacyCompare(legacyPassword, password)) {
+          const legacyRole = normalizeRole(legacyUser.role);
+          if (!legacyRole) {
+            return send(res, 403, { success: false, message: 'Role akun tidak dikenali.' });
+          }
+
           const userId = String(legacyUser.id || legacyDoc.id);
           const migratedCredential = {
             userId,
             username,
             nama: String(legacyUser.nama || username),
-            role: normalizeRole(legacyUser.role),
+            role: legacyRole,
             idSantri: String(legacyUser.idSantri || ''),
             kelasId: String(legacyUser.kelasId || ''),
             credential: hashPassword(password),
@@ -99,6 +107,10 @@ export default async function handler(req: any, res: any) {
 
     const userId = String(stored.userId || credentialDoc.id);
     const role = normalizeRole(stored.role);
+    if (!role) {
+      return send(res, 403, { success: false, message: 'Role akun tidak dikenali.' });
+    }
+
     const nama = String(stored.nama || username);
     const idSantri = String(stored.idSantri || '');
     const kelasId = String(stored.kelasId || '');
