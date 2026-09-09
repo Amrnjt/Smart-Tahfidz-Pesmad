@@ -252,6 +252,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               ref={fabRipple.elementRef}
               onClick={(event) => {
                 fabRipple.createRipple(event);
+                setIsManageSheetOpen(false);
                 setIsActionSheetOpen(open => !open);
               }}
               className={`ripple-container p2-setor-fab ${isSetorActive ? 'is-active' : ''} ${isActionSheetOpen ? 'is-open' : ''}`}
@@ -266,15 +267,22 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             <span className={`p2-setor-label ${isSetorActive || isActionSheetOpen ? 'is-active' : ''}`}>Setor</span>
           </div>
 
-          <NavButton
-            label="Kelola"
-            icon={Settings2}
-            isActive={isManageActive}
-            onClick={() => {
-              setIsActionSheetOpen(false);
-              setIsManageSheetOpen(true);
-            }}
-          />
+          <div className="p2-manage-slot">
+            <NavButton
+              label="Kelola"
+              icon={Settings2}
+              isActive={isManageActive || isManageSheetOpen}
+              onClick={() => {
+                setIsActionSheetOpen(false);
+                setIsManageSheetOpen(open => !open);
+              }}
+            />
+            <ManageActionSheet
+              isOpen={isManageSheetOpen}
+              onClose={() => setIsManageSheetOpen(false)}
+              onSelect={(tab) => setActiveTab(tab)}
+            />
+          </div>
 
           <NavButton
             label="Mushaf"
@@ -282,17 +290,12 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             isActive={activeTab === 'mushaf'}
             onClick={() => {
               setIsActionSheetOpen(false);
+              setIsManageSheetOpen(false);
               setActiveTab('mushaf');
             }}
           />
         </nav>
       </div>
-
-      <ManageActionSheet
-        isOpen={isManageSheetOpen}
-        onClose={() => setIsManageSheetOpen(false)}
-        onSelect={(tab) => setActiveTab(tab)}
-      />
 
       <PantauanLiburanMonitorModal
         isOpen={showMonitorModal}
