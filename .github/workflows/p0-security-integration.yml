@@ -30,6 +30,9 @@ jobs:
       - name: Security bootstrap integration guard
         run: node scripts/verify-security-bootstrap.mjs
 
+      - name: Fail-closed auth role guard
+        run: node scripts/verify-auth-role-fail-closed.mjs
+
       - name: TypeScript check
         run: npm run lint
 
