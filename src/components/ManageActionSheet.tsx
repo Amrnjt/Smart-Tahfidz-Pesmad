@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ChevronRight, School, Users } from 'lucide-react';
+import { School, Users } from 'lucide-react';
 import type { ActiveTab } from '../types';
 
 interface ManageActionSheetProps {
@@ -11,19 +11,16 @@ interface ManageActionSheetProps {
 const actions: Array<{
   tab: ActiveTab;
   title: string;
-  subtitle: string;
   icon: React.ComponentType<{ className?: string }>;
 }> = [
   {
     tab: 'kelas',
     title: 'Kelola Kelas',
-    subtitle: 'Kelas, musyrif, dan pembagian santri',
     icon: School
   },
   {
     tab: 'santri',
     title: 'Kelola Santri',
-    subtitle: 'Data santri dan akun terkait',
     icon: Users
   }
 ];
@@ -73,14 +70,10 @@ export const ManageActionSheet: React.FC<ManageActionSheetProps> = ({ isOpen, on
                 onClick={() => chooseAction(action.tab)}
                 tabIndex={isOpen ? 0 : -1}
               >
+                <span className="p2-manage-dropdown-title">{action.title}</span>
                 <span className="p2-manage-dropdown-icon" aria-hidden="true">
                   <Icon className="h-[18px] w-[18px]" />
                 </span>
-                <span className="p2-manage-dropdown-copy">
-                  <span className="p2-manage-dropdown-title">{action.title}</span>
-                  <span className="p2-manage-dropdown-subtitle">{action.subtitle}</span>
-                </span>
-                <ChevronRight className="p2-manage-dropdown-chevron" aria-hidden="true" />
               </button>
             );
           })}
