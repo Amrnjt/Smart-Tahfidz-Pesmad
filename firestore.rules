@@ -1,14 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAuthenticated() {
+    function isSignedIn() {
       return request.auth != null;
     }
 
     function hasRole(roleName) {
-      return isAuthenticated()
+      return isSignedIn()
         && ('role' in request.auth.token)
         && request.auth.token.role == roleName;
+    }
+
+    function hasTrustedRole() {
+      return hasRole('Superadmin')
+        || hasRole('Ustadz')
+        || hasRole('Wali')
+        || hasRole('Santri');
+    }
+
+    function isAuthenticated() {
+      return isSignedIn() && hasTrustedRole();
     }
 
     function isStaff() {
@@ -17,6 +28,7 @@ service cloud.firestore {
 
     function hasLinkedSantri() {
       return isAuthenticated()
+        && (hasRole('Wali') || hasRole('Santri'))
         && ('idSantri' in request.auth.token)
         && request.auth.token.idSantri is string
         && request.auth.token.idSantri.size() > 0;
