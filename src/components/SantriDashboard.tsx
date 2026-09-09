@@ -14,6 +14,7 @@ import {
   BookOpen,
   BookPlus,
   BookOpenCheck,
+  Clock3,
   GraduationCap,
   MessageSquareText,
   RotateCw,
@@ -36,6 +37,8 @@ interface SantriDashboardProps {
 }
 
 type ActivityCategory = 'Ziyadah' | "Muroja'ah" | 'Binnadzor' | 'Pembelajaran';
+type RecencyKind = 'empty' | 'today' | 'recent' | 'older';
+type PrimaryActionTarget = 'feedback' | 'riwayat' | 'mushaf';
 
 interface SantriActivity {
   id: string;
@@ -47,15 +50,28 @@ interface SantriActivity {
   inputBy: string;
 }
 
+interface RecencyInfo {
+  label: string;
+  description: string;
+  kind: RecencyKind;
+}
+
+interface PrimaryAction {
+  target: PrimaryActionTarget;
+  label: string;
+  description: string;
+}
+
 const categoryMeta: Record<ActivityCategory, {
+  label: string;
   text: string;
   surface: string;
   icon: React.ComponentType<{ className?: string }>;
 }> = {
-  Ziyadah: { text: 'text-emerald-800', surface: 'bg-emerald-50', icon: BookPlus },
-  "Muroja'ah": { text: 'text-teal-800', surface: 'bg-teal-50', icon: RotateCw },
-  Binnadzor: { text: 'text-indigo-800', surface: 'bg-indigo-50', icon: BookOpenCheck },
-  Pembelajaran: { text: 'text-amber-800', surface: 'bg-amber-50', icon: GraduationCap }
+  Ziyadah: { label: 'Ziyadah', text: 'text-emerald-800', surface: 'bg-emerald-50', icon: BookPlus },
+  "Muroja'ah": { label: "Muroja'ah", text: 'text-teal-800', surface: 'bg-teal-50', icon: RotateCw },
+  Binnadzor: { label: 'Binnadzor', text: 'text-indigo-800', surface: 'bg-indigo-50', icon: BookOpenCheck },
+  Pembelajaran: { label: 'Pembelajaran', text: 'text-amber-800', surface: 'bg-amber-50', icon: GraduationCap }
 };
 
 const scoreTone: Record<PredikatNilai, string> = {
@@ -63,6 +79,60 @@ const scoreTone: Record<PredikatNilai, string> = {
   Baik: 'text-emerald-700',
   Kurang: 'text-amber-700',
   Mengulang: 'text-rose-700'
+};
+
+const getRecencyInfo = (timestamp?: string): RecencyInfo => {
+  if (!timestamp) {
+    return {
+      label: 'Belum ada setoran',
+      description: 'Belum ada aktivitas pembelajaran yang tercatat untuk akun ini.',
+      kind: 'empty'
+    };
+  }
+
+  const activityDate = new Date(timestamp);
+  if (Number.isNaN(activityDate.getTime())) {
+    return {
+      label: 'Waktu belum tersedia',
+      description: 'Timestamp aktivitas terakhir tidak dapat dibaca.',
+      kind: 'empty'
+    };
+  }
+
+  const now = new Date();
+  const todayUtc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const activityUtc = Date.UTC(activityDate.getFullYear(), activityDate.getMonth(), activityDate.getDate());
+  const dayDifference = Math.max(0, Math.floor((todayUtc - activityUtc) / 86_400_000));
+
+  if (dayDifference === 0) {
+    return {
+      label: 'Diperbarui hari ini',
+      description: 'Setoran terakhir tercatat hari ini.',
+      kind: 'today'
+    };
+  }
+
+  if (dayDifference === 1) {
+    return {
+      label: 'Diperbarui kemarin',
+      description: 'Setoran terakhir tercatat kemarin.',
+      kind: 'recent'
+    };
+  }
+
+  if (dayDifference <= 7) {
+    return {
+      label: `Diperbarui ${dayDifference} hari lalu`,
+      description: `Setoran terakhir tercatat ${dayDifference} hari lalu.`,
+      kind: 'recent'
+    };
+  }
+
+  return {
+    label: `Terakhir ${dayDifference} hari lalu`,
+    description: `Setoran terakhir tercatat ${dayDifference} hari lalu. Buka riwayat untuk melihat konteks lengkapnya.`,
+    kind: 'older'
+  };
 };
 
 export const SantriDashboard: React.FC<SantriDashboardProps> = ({
@@ -74,7 +144,6 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   pembelajaranRecords = [],
   setActiveTab
 }) => {
-
   const currentSantri = santriList.find(santri => santri.idSantri === currentUser.idSantri);
 
   if (!currentSantri) {
@@ -148,75 +217,115 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   const totalRecords = activities.length;
   const latestCategory = latestActivity ? categoryMeta[latestActivity.category] : null;
   const LatestIcon = latestCategory?.icon || BookOpen;
+  const latestRecency = getRecencyInfo(latestActivity?.timestamp);
 
-  const categoryRowsSource: { category: ActivityCategory; count: number }[] = [
+  const categoryRows: { category: ActivityCategory; count: number }[] = [
     { category: 'Ziyadah', count: santriZiyadah.length },
     { category: "Muroja'ah", count: santriMurojaah.length },
     { category: 'Binnadzor', count: santriBinnadzor.length },
     { category: 'Pembelajaran', count: santriPembelajaran.length }
   ];
-  const categoryRows = categoryRowsSource.filter(row => row.count > 0 || row.category !== 'Pembelajaran');
+
+  const primaryAction: PrimaryAction = latestFeedback
+    ? {
+        target: 'feedback',
+        label: 'Baca feedback Ustadz',
+        description: 'Ada catatan Ustadz yang dapat dibaca kembali dari setoran yang tercatat.'
+      }
+    : latestActivity
+      ? {
+          target: 'riwayat',
+          label: 'Buka riwayat saya',
+          description: 'Lihat kembali setoran yang sudah tercatat tanpa mengubah data.'
+        }
+      : {
+          target: 'mushaf',
+          label: 'Buka Mushaf',
+          description: 'Belum ada setoran tercatat. Mushaf tetap dapat digunakan untuk membaca dan menyiapkan hafalan.'
+        };
+
+  const jumpToFeedback = () => {
+    if (typeof document === 'undefined') return;
+
+    const destination = document.getElementById('santri-feedback-terbaru');
+    if (!destination) return;
+
+    const reduceMotion = typeof window !== 'undefined'
+      && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    destination.scrollIntoView({
+      behavior: reduceMotion ? 'auto' : 'smooth',
+      block: 'center'
+    });
+  };
+
+  const runPrimaryAction = () => {
+    if (primaryAction.target === 'feedback') {
+      jumpToFeedback();
+      return;
+    }
+
+    setActiveTab(primaryAction.target);
+  };
 
   return (
-    <div className="p2-dashboard p2-dashboard-santri w-full min-w-0 space-y-6">
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <div className="relative overflow-hidden rounded-2xl bg-emerald-950 p-5 text-white sm:p-6 lg:col-span-3 lg:p-7">
-          <div className="absolute inset-y-0 left-0 w-1 bg-emerald-400" aria-hidden="true" />
+    <div className="p2-dashboard p2-dashboard-santri p3-santri-page w-full min-w-0 space-y-6">
+      <section className="p322-briefing-grid grid grid-cols-1 gap-4 lg:grid-cols-5" aria-label="Ringkasan belajar Santri">
+        <article className="p322-study-hero relative overflow-hidden p-5 text-white sm:p-6 lg:col-span-3 lg:p-7">
+          <div className="p322-hero-accent" aria-hidden="true" />
           <div className="flex items-start gap-4">
             <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white p-1.5 sm:h-14 sm:w-14">
               <PesmadLogo size="lg" className="h-full w-full" />
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold uppercase tracking-[0.08em] text-emerald-200">Ruang Belajar · Pesmad</p>
-              <h1 className="mt-1 break-words text-xl font-bold tracking-tight sm:text-2xl">{currentSantri.namaSantri}</h1>
-              <p className="mt-1 text-sm leading-relaxed text-emerald-100/90">
+            <div className="p322-briefing-copy min-w-0 flex-1">
+              <p className="p322-kicker text-emerald-200">Ringkasan belajar · Pesmad</p>
+              <h1 className="p322-display mt-1 break-words text-white">{currentSantri.namaSantri}</h1>
+              <p className="p322-body mt-1 text-emerald-100/90">
                 {currentSantri.kelas || 'Kelas belum ditetapkan'} · ID {currentSantri.idSantri}
               </p>
+              <div className={`p322-recency mt-3 p322-recency-${latestRecency.kind}`} role="status" aria-label={latestRecency.description}>
+                <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                {latestRecency.label}
+              </div>
             </div>
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-4 border-t border-white/15 pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div className="p322-hero-footer mt-6 grid grid-cols-1 gap-4 border-t border-white/15 pt-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
             <div className="min-w-0">
               <div className="flex items-center gap-2 text-emerald-200">
                 <Target className="h-4 w-4" aria-hidden="true" />
-                <span className="text-xs font-semibold uppercase tracking-[0.06em]">Target hafalan saya</span>
+                <span className="p322-kicker">Target hafalan saya</span>
               </div>
-              <p className="mt-1 text-base font-bold text-white sm:text-lg">
+              <p className="p322-heading mt-1 text-white">
                 {currentSantri.targetHafalan || 'Belum ditetapkan'}
               </p>
-              <p className="mt-1 text-xs leading-relaxed text-emerald-200/90">
-                Gunakan data setoran terakhir sebagai acuan belajar berikutnya.
+              <p className="p322-meta mt-1 max-w-2xl text-emerald-100/80">
+                Target ditampilkan langsung dari profil santri yang tersimpan.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2 sm:justify-end">
+            <div className="min-w-0 sm:max-w-xs sm:text-right">
+              <p className="p322-meta text-emerald-100/80">{primaryAction.description}</p>
               <button
                 type="button"
-                onClick={() => setActiveTab('riwayat')}
-                className="ui-control press-feedback inline-flex items-center justify-center gap-2 border border-white/20 bg-white/10 px-3.5 text-sm font-semibold text-white transition-colors hover:bg-white/15"
+                onClick={runPrimaryAction}
+                className="ui-control press-feedback mt-2 inline-flex w-full items-center justify-center gap-2 bg-white px-4 text-sm font-bold text-emerald-950 transition-colors hover:bg-emerald-50 sm:w-auto"
               >
-                Riwayat saya
-                <ArrowRight className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('mushaf')}
-                className="ui-control press-feedback inline-flex items-center justify-center gap-2 bg-white px-3.5 text-sm font-bold text-emerald-950 transition-colors hover:bg-emerald-50"
-              >
-                <BookOpen className="h-4 w-4" />
-                Buka Mushaf
+                {primaryAction.label}
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </button>
             </div>
           </div>
-        </div>
+        </article>
 
-        <div className="ui-panel p-5 sm:p-6 lg:col-span-2">
+        <article className="ui-panel p322-surface-secondary p-5 sm:p-6 lg:col-span-2" aria-label="Setoran terakhir">
           <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-4">
-            <div>
-              <p className="ui-meta font-semibold uppercase tracking-[0.06em]">Setoran terakhir</p>
-              <h2 className="ui-section-title mt-1">Fokus belajar berikutnya</h2>
+            <div className="min-w-0">
+              <p className="p322-kicker text-slate-500">Setoran terakhir</p>
+              <h2 className="p322-heading mt-1 text-slate-950">Catatan terbaru saya</h2>
             </div>
-            <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${latestCategory?.surface || 'bg-slate-100'} ${latestCategory?.text || 'text-slate-600'}`}>
+            <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg ${latestCategory?.surface || 'bg-slate-100'} ${latestCategory?.text || 'text-slate-600'}`}>
               <LatestIcon className="h-5 w-5" aria-hidden="true" />
             </div>
           </div>
@@ -225,73 +334,80 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
             <div className="pt-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className={`text-sm font-bold ${latestCategory?.text}`}>{latestActivity.category}</p>
-                <p className="ui-meta">{formatTanggalWaktu(latestActivity.timestamp)}</p>
+                <p className="p322-meta text-slate-500">{formatTanggalWaktu(latestActivity.timestamp)}</p>
               </div>
               <p className="mt-2 text-base font-bold leading-snug text-slate-950 sm:text-lg">{latestActivity.material}</p>
-              <div className="mt-5 border-t border-slate-100 pt-4">
-                <p className="ui-meta font-semibold">Penilaian</p>
-                <p className={`mt-1 text-lg font-bold ${scoreTone[latestActivity.nilai]}`}>{latestActivity.nilai}</p>
+              <div className="mt-5 grid grid-cols-1 gap-3 border-t border-slate-100 pt-4 sm:grid-cols-2">
+                <div>
+                  <p className="p322-meta font-semibold text-slate-500">Penilaian</p>
+                  <p className={`mt-1 text-lg font-bold ${scoreTone[latestActivity.nilai]}`}>{latestActivity.nilai}</p>
+                </div>
+                <div className="min-w-0 sm:text-right">
+                  <p className="p322-meta font-semibold text-slate-500">Dicatat oleh</p>
+                  <p className="mt-1 truncate text-sm font-semibold text-slate-700">{latestActivity.inputBy}</p>
+                </div>
               </div>
             </div>
           ) : (
             <div className="py-8 text-center">
               <BookOpen className="mx-auto h-6 w-6 text-slate-400" aria-hidden="true" />
               <p className="mt-2 text-sm font-bold text-slate-700">Belum ada setoran tercatat.</p>
-              <p className="ui-meta mt-1">Setoran pertama akan muncul di sini setelah tersimpan.</p>
+              <p className="p322-meta mt-1 text-slate-500">Setoran pertama akan muncul di sini setelah tersimpan.</p>
             </div>
           )}
-        </div>
+        </article>
       </section>
 
-      <section className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <div className="ui-panel p-5 sm:p-6 lg:col-span-3">
+      <section className="p322-context-grid grid grid-cols-1 gap-4 lg:grid-cols-5" aria-label="Konteks belajar Santri">
+        <article id="santri-feedback-terbaru" className="ui-panel p322-surface-tertiary scroll-mt-32 p-5 sm:p-6 lg:col-span-3">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-sky-50 text-sky-800">
               <MessageSquareText className="h-5 w-5" aria-hidden="true" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="ui-meta font-semibold uppercase tracking-[0.06em]">Feedback terbaru</p>
+              <p className="p322-kicker text-slate-500">Feedback Ustadz</p>
               {latestFeedback ? (
                 <>
-                  <p className="mt-2 text-base font-semibold leading-relaxed text-slate-900">“{latestFeedback.catatan}”</p>
+                  <p className="p322-body mt-2 font-semibold text-slate-900">“{latestFeedback.catatan}”</p>
                   <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="text-sm font-semibold text-slate-700">{latestFeedback.inputBy}</span>
-                    <span className="ui-meta">{latestFeedback.category}</span>
-                    <span className="ui-meta">{formatTanggalWaktu(latestFeedback.timestamp)}</span>
+                    <span className="p322-meta text-slate-500">{latestFeedback.category}</span>
+                    <span className="p322-meta text-slate-500">{formatTanggalWaktu(latestFeedback.timestamp)}</span>
                   </div>
                 </>
               ) : (
                 <>
                   <p className="mt-2 text-sm font-semibold text-slate-700">Belum ada feedback tertulis dari Ustadz.</p>
-                  <p className="ui-secondary mt-1">Catatan setoran akan ditampilkan di sini ketika tersedia.</p>
+                  <p className="p322-body mt-1 text-slate-600">Catatan setoran akan ditampilkan di sini ketika tersedia.</p>
                 </>
               )}
             </div>
           </div>
-        </div>
+        </article>
 
-        <div className="ui-panel p-5 sm:p-6 lg:col-span-2">
-          <p className="ui-meta font-semibold uppercase tracking-[0.06em]">Aktivitas saya</p>
-          <h2 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">{totalRecords} setoran</h2>
+        <article className="ui-panel p322-surface-tertiary p-5 sm:p-6 lg:col-span-2" aria-label="Jumlah setoran tercatat">
+          <p className="p322-kicker text-slate-500">Data pembelajaran saya</p>
+          <h2 className="p322-heading mt-1 text-slate-950">{totalRecords} setoran tercatat</h2>
+          <p className="p322-meta mt-1 text-slate-500">Jumlah ini berasal dari record yang tersedia, bukan estimasi progres.</p>
           <div className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-slate-100 pt-4">
             {categoryRows.map(row => {
               const meta = categoryMeta[row.category];
               return (
                 <div key={row.category} className="min-w-0">
-                  <p className={`text-xs font-bold ${meta.text}`}>{row.category}</p>
+                  <p className={`text-xs font-bold ${meta.text}`}>{meta.label}</p>
                   <p className="mt-0.5 text-lg font-bold tabular-nums text-slate-950">{row.count}</p>
                 </div>
               );
             })}
           </div>
-        </div>
+        </article>
       </section>
 
-      <ScrollReveal delay={40} className="ui-panel p-5 sm:p-6">
+      <ScrollReveal delay={40} className="ui-panel p322-deferred-surface p-5 sm:p-6">
         <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="ui-section-title">Aktivitas terbaru saya</h2>
-            <p className="ui-secondary mt-0.5">Lima catatan terbaru dari seluruh jenis setoran.</p>
+            <h2 className="p322-heading text-slate-950">Aktivitas terbaru saya</h2>
+            <p className="p322-body mt-0.5 text-slate-600">Lima catatan terbaru dari seluruh jenis setoran yang tersedia.</p>
           </div>
           <button
             type="button"
@@ -306,7 +422,7 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
           <div className="py-8 text-center">
             <BookOpen className="mx-auto h-6 w-6 text-slate-400" aria-hidden="true" />
             <p className="mt-2 text-sm font-bold text-slate-700">Belum ada aktivitas setoran.</p>
-            <p className="ui-meta mt-1">Aktivitas terbaru akan tampil setelah setoran tersimpan.</p>
+            <p className="p322-meta mt-1 text-slate-500">Aktivitas terbaru akan tampil setelah setoran tersimpan.</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
@@ -321,8 +437,8 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
                   <div className="min-w-0 flex-1 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:gap-4">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                        <p className={`text-sm font-bold ${meta.text}`}>{activity.category}</p>
-                        <span className="ui-meta">{formatTanggalWaktu(activity.timestamp)}</span>
+                        <p className={`text-sm font-bold ${meta.text}`}>{meta.label}</p>
+                        <span className="p322-meta text-slate-500">{formatTanggalWaktu(activity.timestamp)}</span>
                       </div>
                       <p className="mt-1 truncate text-sm text-slate-700">{activity.material}</p>
                     </div>
@@ -335,11 +451,11 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
         )}
       </ScrollReveal>
 
-      <ScrollReveal delay={60}>
+      <ScrollReveal delay={60} className="p322-deferred-surface">
         <div className="space-y-3">
           <div className="px-1">
-            <h2 className="ui-section-title">Tren Ziyadah saya</h2>
-            <p className="ui-secondary mt-0.5">Grafik menggunakan setoran Ziyadah aktual yang tercatat.</p>
+            <h2 className="p322-heading text-slate-950">Tren Ziyadah saya</h2>
+            <p className="p322-body mt-0.5 text-slate-600">Grafik menggunakan setoran Ziyadah aktual yang tercatat.</p>
           </div>
           <ZiyadahProgressChart
             ziyadahRecords={santriZiyadah}
@@ -349,12 +465,12 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
         </div>
       </ScrollReveal>
 
-      <ScrollReveal delay={80}>
-        <div className="ui-panel flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+      <ScrollReveal delay={80} className="p322-deferred-surface">
+        <div className="ui-panel p322-surface-tertiary flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
           <div className="min-w-0">
-            <h2 className="ui-section-title">Lanjutkan belajar di Mushaf</h2>
-            <p className="ui-secondary mt-1 max-w-2xl">
-              Gunakan Mushaf digital untuk membaca, mengulang, atau menyiapkan hafalan berikutnya sesuai arahan Ustadz.
+            <h2 className="p322-heading text-slate-950">Lanjutkan belajar di Mushaf</h2>
+            <p className="p322-body mt-1 max-w-2xl text-slate-600">
+              Gunakan Mushaf digital untuk membaca, mengulang, atau menyiapkan hafalan sesuai target dan arahan Ustadz yang tersedia.
             </p>
           </div>
           <button
@@ -362,7 +478,7 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
             onClick={() => setActiveTab('mushaf')}
             className="ui-control press-feedback inline-flex flex-shrink-0 items-center justify-center gap-2 bg-emerald-800 px-4 text-sm font-bold text-white transition-colors hover:bg-emerald-700"
           >
-            <BookOpen className="h-4 w-4" />
+            <BookOpen className="h-4 w-4" aria-hidden="true" />
             Buka Mushaf 30 Juz
           </button>
         </div>
