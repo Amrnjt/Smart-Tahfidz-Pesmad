@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const bottomNav = readFileSync(new URL('../src/components/BottomNav.tsx', import.meta.url), 'utf8');
 const dropupCss = readFileSync(new URL('../src/setor-dropup.css', import.meta.url), 'utf8');
+const appShellCss = readFileSync(new URL('../src/app-shell.css', import.meta.url), 'utf8');
 const manageSheet = readFileSync(new URL('../src/components/ManageActionSheet.tsx', import.meta.url), 'utf8');
 
 test('Setor launcher exposes a mobile drop-up menu above the FAB', () => {
@@ -80,4 +81,21 @@ test('Kelola keeps Kelas and Santri destinations and rotates a dropdown chevron'
   assert.match(bottomNav, /p2-manage-toggle-chevron/);
   assert.match(bottomNav, /aria-expanded=\{isManageSheetOpen\}/);
   assert.match(dropupCss, /\.p2-manage-toggle-chevron\.is-open\s*\{[\s\S]*?rotate\(180deg\)/);
+});
+
+test('Bottom navbar adopts Bedimcode hierarchy while keeping Smart Tahfidz colors', () => {
+  assert.match(bottomNav, /p2-bottom-dock-bedimcode/);
+  assert.match(bottomNav, /p2-bottom-item-bedimcode/);
+  assert.match(appShellCss, /\.p2-bottom-dock-bedimcode\s*\{/);
+  assert.match(appShellCss, /\.p2-bottom-dock-bedimcode\s+\.p2-bottom-item\s*\{[\s\S]*?background:\s*transparent/);
+  assert.match(appShellCss, /\.p2-bottom-dock-bedimcode\s+\.p2-bottom-item\.is-active\s*\{[\s\S]*?color:\s*var\(--shell-active-text\)/);
+  assert.match(appShellCss, /\.p2-bottom-dock-bedimcode\s+\.p2-bottom-item::before/);
+  assert.match(appShellCss, /\.p2-bottom-dock-bedimcode\s+\.p2-bottom-item\.is-active::before/);
+  assert.match(appShellCss, /background:\s*var\(--brand-primary\)/);
+});
+
+test('Bedimcode navbar keeps labels visible and transition feedback restrained', () => {
+  assert.match(appShellCss, /\.p2-bottom-dock-bedimcode\s+\.p2-bottom-label\s*\{[\s\S]*?opacity:\s*1/);
+  assert.match(appShellCss, /\.p2-bottom-dock-bedimcode\s+\.p2-bottom-icon-wrap\s*\{[\s\S]*?transition:/);
+  assert.match(appShellCss, /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?\.p2-bottom-dock-bedimcode \.p2-bottom-item:hover/);
 });
