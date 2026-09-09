@@ -143,10 +143,16 @@ jobs:
           grep -q 'p3-ustadz-page' src/ustadz-experience-finish.css
           grep -q 'p323-surface-secondary' src/ustadz-experience-finish.css
           grep -q 'p323-surface-tertiary' src/ustadz-experience-finish.css
-          grep -q 'content-visibility: auto' src/ustadz-experience-finish.css
+          grep -q 'content-visibility: visible' src/ustadz-experience-finish.css
+          grep -q 'recharts-responsive-container' src/ustadz-experience-finish.css
+          grep -q 'min-height: 240px' src/ustadz-experience-finish.css
           grep -q '@media (max-width: 767px) and (pointer: coarse)' src/ustadz-experience-finish.css
           grep -q '@media (prefers-reduced-motion: reduce)' src/ustadz-experience-finish.css
           grep -q '@media (forced-colors: active)' src/ustadz-experience-finish.css
+          if grep -Eq 'content-visibility:[[:space:]]*auto' src/ustadz-experience-finish.css; then
+            echo 'Ustadz analytics must stay measurable; content-visibility:auto can blank Recharts.'
+            exit 1
+          fi
           if grep -Eq 'position:[[:space:]]*sticky' src/ustadz-experience-finish.css; then
             echo 'Ustadz finish layer must not create competing sticky chrome.'
             exit 1
