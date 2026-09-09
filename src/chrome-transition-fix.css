@@ -1,0 +1,115 @@
+/* Navbar / menu transition hotfix
+ * Keep persistent app chrome above native same-document View Transition snapshots.
+ * Motion stays compositor-friendly: opacity + short translation only.
+ */
+
+:root {
+  --chrome-transition-page-duration: 360ms;
+  --chrome-transition-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* The live chrome is already outside <main>; naming it also lifts its snapshot
+ * into the View Transition top layer so page snapshots cannot paint over it. */
+.p3-chrome-stack {
+  view-transition-name: p3-app-chrome;
+}
+
+/* Explicit stacking order inside the browser's View Transition top layer. */
+::view-transition-group(root) {
+  z-index: 0;
+}
+
+::view-transition-group(p2-page) {
+  z-index: 10;
+  animation-duration: var(--chrome-transition-page-duration);
+  animation-timing-function: var(--chrome-transition-ease);
+}
+
+::view-transition-group(p3-app-chrome) {
+  z-index: 300;
+  animation: none;
+}
+
+::view-transition-old(p3-app-chrome),
+::view-transition-new(p3-app-chrome) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Active menu indicator still morphs, but always above the chrome snapshot. */
+::view-transition-group(p2-nav-active) {
+  z-index: 320;
+  animation-duration: var(--chrome-transition-page-duration);
+  animation-timing-function: var(--chrome-transition-ease);
+}
+
+/* Softer page swap: less travel, no scale pulse, shorter exit. */
+::view-transition-old(p2-page) {
+  animation: chrome-page-out 180ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(p2-page) {
+  animation: chrome-page-in var(--chrome-transition-page-duration) var(--chrome-transition-ease) both;
+}
+
+@keyframes chrome-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chrome-page-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --chrome-transition-page-duration: 320ms;
+  }
+
+  @keyframes chrome-page-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .p3-chrome-stack {
+    view-transition-name: none !important;
+  }
+
+  ::view-transition-group(p3-app-chrome),
+  ::view-transition-old(p3-app-chrome),
+  ::view-transition-new(p3-app-chrome),
+  ::view-transition-group(p2-page),
+  ::view-transition-old(p2-page),
+  ::view-transition-new(p2-page),
+  ::view-transition-group(p2-nav-active) {
+    animation: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  ::view-transition-old(p3-app-chrome),
+  ::view-transition-new(p3-app-chrome) {
+    mix-blend-mode: normal;
+  }
+}
