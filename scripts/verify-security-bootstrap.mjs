@@ -1,3 +1,4 @@
+// TDD RED: this guard must fail until auth + role integration is complete.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 
