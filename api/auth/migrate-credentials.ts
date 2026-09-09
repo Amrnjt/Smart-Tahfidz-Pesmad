@@ -2,12 +2,15 @@ import { FieldValue } from 'firebase-admin/firestore';
 import { getAdminServices } from '../_firebaseAdmin';
 import { hashPassword } from '../_credentials';
 
-function normalizeRole(role: unknown): 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri' {
+type AuthRole = 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri';
+
+function normalizeRole(role: unknown): AuthRole | null {
   const value = String(role || '').trim().toLowerCase();
   if (value === 'superadmin') return 'Superadmin';
+  if (value === 'ustadz') return 'Ustadz';
   if (value === 'wali' || value.includes('wali')) return 'Wali';
   if (value === 'santri') return 'Santri';
-  return 'Ustadz';
+  return null;
 }
 
 function send(res: any, status: number, body: Record<string, unknown>) {
@@ -47,7 +50,7 @@ export default async function handler(req: any, res: any) {
       const idSantri = String(user.idSantri || '');
       const kelasId = String(user.kelasId || '');
 
-      if (!username) {
+      if (!username || !role) {
         skipped += 1;
         continue;
       }
