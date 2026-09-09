@@ -149,7 +149,7 @@ jobs:
           grep -q '@media (max-width: 767px) and (pointer: coarse)' src/ustadz-experience-finish.css
           grep -q '@media (prefers-reduced-motion: reduce)' src/ustadz-experience-finish.css
           grep -q '@media (forced-colors: active)' src/ustadz-experience-finish.css
-          if grep -Eq 'content-visibility:[[:space:]]*auto' src/ustadz-experience-finish.css; then
+          if grep -Eq '^[[:space:]]*content-visibility:[[:space:]]*auto[[:space:]]*;' src/ustadz-experience-finish.css; then
             echo 'Ustadz analytics must stay measurable; content-visibility:auto can blank Recharts.'
             exit 1
           fi
