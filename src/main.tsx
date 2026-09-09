@@ -15,6 +15,7 @@ import './responsive-accessibility.css';
 import './santri-experience-finish.css';
 import './chrome-transition-fix.css';
 import './ustadz-experience-finish.css';
+import './setoran-workflow-finish.css';
 
 // P0.3: Firestore is the commit gate; LocalStorage remains cache only.
 installCloudCommitGate();
