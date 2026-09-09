@@ -164,6 +164,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           />
 
           <div className="p2-setor-slot">
+            {isSetorActive && <span className="p2-bottom-active-rail" aria-hidden="true" />}
+
             <AnimatePresence>
               {isActionSheetOpen && (
                 <motion.div
@@ -272,6 +274,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             <ManageNavButton
               isManageSheetOpen={isManageSheetOpen}
               isActive={isManageActive || isManageSheetOpen}
+              showActiveRail={isManageActive}
               onClick={() => {
                 setIsActionSheetOpen(false);
                 setIsManageSheetOpen(open => !open);
@@ -311,10 +314,11 @@ interface NavButtonProps {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   isActive: boolean;
+  showActiveRail?: boolean;
   onClick: () => void;
 }
 
-const NavButton: React.FC<NavButtonProps> = ({ label, icon: Icon, isActive, onClick }) => {
+const NavButton: React.FC<NavButtonProps> = ({ label, icon: Icon, isActive, showActiveRail = isActive, onClick }) => {
   const ripple = useRipple<HTMLButtonElement>();
 
   return (
@@ -329,6 +333,7 @@ const NavButton: React.FC<NavButtonProps> = ({ label, icon: Icon, isActive, onCl
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
     >
+      {showActiveRail && <span className="p2-bottom-active-rail" aria-hidden="true" />}
       <span className="p2-bottom-icon-wrap">
         <Icon className="ui-icon-md" />
       </span>
@@ -340,10 +345,11 @@ const NavButton: React.FC<NavButtonProps> = ({ label, icon: Icon, isActive, onCl
 interface ManageNavButtonProps {
   isManageSheetOpen: boolean;
   isActive: boolean;
+  showActiveRail: boolean;
   onClick: () => void;
 }
 
-const ManageNavButton: React.FC<ManageNavButtonProps> = ({ isManageSheetOpen, isActive, onClick }) => {
+const ManageNavButton: React.FC<ManageNavButtonProps> = ({ isManageSheetOpen, isActive, showActiveRail, onClick }) => {
   const ripple = useRipple<HTMLButtonElement>();
 
   return (
@@ -360,6 +366,7 @@ const ManageNavButton: React.FC<ManageNavButtonProps> = ({ isManageSheetOpen, is
       aria-expanded={isManageSheetOpen}
       aria-controls="manage-dropdown-menu"
     >
+      {showActiveRail && <span className="p2-bottom-active-rail" aria-hidden="true" />}
       <span className="p2-bottom-icon-wrap">
         <Settings2 className="ui-icon-md" />
       </span>
