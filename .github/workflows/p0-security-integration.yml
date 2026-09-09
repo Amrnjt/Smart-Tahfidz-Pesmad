@@ -36,6 +36,9 @@ jobs:
       - name: Preview Firebase isolation guard
         run: node scripts/verify-preview-firebase-isolation.mjs
 
+      - name: Firestore emulator role matrix
+        run: npm run test:firestore-rules
+
       - name: TypeScript check
         run: npm run lint
 
