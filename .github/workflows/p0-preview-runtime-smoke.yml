@@ -19,5 +19,5 @@ jobs:
 
       - name: Smoke Vercel Preview
         env:
-          PREVIEW_URL: https://smart-tahfidz-pesmad-git-security-p0-auth-c38723-pesmad-tahfidz.vercel.app
+          PREVIEW_URL: https://smart-tahfidz-pesmad-git-security-p0-auth-role-in-c38723-pesmad.vercel.app
         run: bash scripts/smoke-preview.sh
