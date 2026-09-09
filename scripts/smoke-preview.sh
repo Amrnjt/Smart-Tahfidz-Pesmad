@@ -24,10 +24,18 @@ if [[ "$root_status" != "200" ]]; then
   exit 1
 fi
 
-grep -q 'id="root"' "$ROOT_HTML" || {
+if ! grep -q 'id="root"' "$ROOT_HTML"; then
   echo 'FAIL: preview HTML did not contain the React root element.'
+  title="$(grep -oEi '<title>[^<]*</title>' "$ROOT_HTML" | head -n 1 || true)"
+  [[ -n "$title" ]] && printf 'Received page title: %s\n' "$title"
+  if grep -Eqi 'vercel|authentication|deployment protection|login|challenge' "$ROOT_HTML"; then
+    echo 'Detected marker consistent with a Vercel authentication/protection page.'
+  fi
+  echo 'First 1200 bytes of received HTML:'
+  head -c 1200 "$ROOT_HTML" | tr '\n' ' '
+  echo
   exit 1
-}
+fi
 echo 'PASS: preview root returned HTTP 200 with React root.'
 
 asset_path="$(grep -oE 'src="/assets/[^\"]+\.js"' "$ROOT_HTML" | head -n 1 | cut -d'"' -f2 || true)"
