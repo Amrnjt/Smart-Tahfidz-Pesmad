@@ -270,7 +270,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
           <div className="p2-manage-slot">
             <ManageNavButton
-              isOpen={isManageSheetOpen}
+              isManageSheetOpen={isManageSheetOpen}
               isActive={isManageActive || isManageSheetOpen}
               onClick={() => {
                 setIsActionSheetOpen(false);
@@ -338,12 +338,12 @@ const NavButton: React.FC<NavButtonProps> = ({ label, icon: Icon, isActive, onCl
 };
 
 interface ManageNavButtonProps {
-  isOpen: boolean;
+  isManageSheetOpen: boolean;
   isActive: boolean;
   onClick: () => void;
 }
 
-const ManageNavButton: React.FC<ManageNavButtonProps> = ({ isOpen, isActive, onClick }) => {
+const ManageNavButton: React.FC<ManageNavButtonProps> = ({ isManageSheetOpen, isActive, onClick }) => {
   const ripple = useRipple<HTMLButtonElement>();
 
   return (
@@ -355,7 +355,7 @@ const ManageNavButton: React.FC<ManageNavButtonProps> = ({ isOpen, isActive, onC
         onClick();
       }}
       className={`ripple-container p2-bottom-item p2-manage-toggle ${isActive ? 'is-active' : ''}`}
-      aria-label={isOpen ? 'Tutup menu Kelola' : 'Buka menu Kelola'}
+      aria-label={isManageSheetOpen ? 'Tutup menu Kelola' : 'Buka menu Kelola'}
       aria-haspopup="menu"
       aria-expanded={isManageSheetOpen}
       aria-controls="manage-dropdown-menu"
@@ -365,7 +365,7 @@ const ManageNavButton: React.FC<ManageNavButtonProps> = ({ isOpen, isActive, onC
       </span>
       <span className="p2-manage-label-row">
         <span className="p2-bottom-label">Kelola</span>
-        <ChevronDown className={`p2-manage-toggle-chevron ${isOpen ? 'is-open' : ''}`} aria-hidden="true" />
+        <ChevronDown className={`p2-manage-toggle-chevron ${isManageSheetOpen ? 'is-open' : ''}`} aria-hidden="true" />
       </span>
     </button>
   );
