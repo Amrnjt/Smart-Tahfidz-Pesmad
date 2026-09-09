@@ -1,8 +1,19 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { User, ActiveTab, Santri } from '../types';
-import { LayoutDashboard, History, Plus, BookOpen, Settings2 } from 'lucide-react';
+import {
+  LayoutDashboard,
+  History,
+  Plus,
+  X,
+  BookOpen,
+  Settings2,
+  BookPlus,
+  RotateCw,
+  BookOpenCheck,
+  GraduationCap
+} from 'lucide-react';
 import { useRipple } from '../hooks/useRipple';
-import { SetorActionSheet } from './SetorActionSheet';
 import { ManageActionSheet } from './ManageActionSheet';
 import type { NotifyFn } from './Snackbar';
 
@@ -14,16 +25,30 @@ interface BottomNavProps {
   onNotify: NotifyFn;
 }
 
+const SETOR_ACTIONS = [
+  { tab: 'ziyadah' as ActiveTab, label: 'Ziyadah', icon: BookPlus },
+  { tab: 'murojaah' as ActiveTab, label: "Muroja'ah", icon: RotateCw },
+  { tab: 'binnadzor' as ActiveTab, label: 'Binnadzor', icon: BookOpenCheck },
+  { tab: 'pembelajaran' as ActiveTab, label: 'Non-Tahfidz', icon: GraduationCap }
+];
+
 export const BottomNav: React.FC<BottomNavProps> = ({
   currentUser,
   activeTab,
-  setActiveTab,
-  santriList,
-  onNotify
+  setActiveTab
 }) => {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [isManageSheetOpen, setIsManageSheetOpen] = useState(false);
   const fabRipple = useRipple<HTMLButtonElement>();
+
+  useEffect(() => {
+    if (!isActionSheetOpen) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsActionSheetOpen(false);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isActionSheetOpen]);
 
   if (!currentUser) return null;
 
@@ -58,8 +83,28 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     );
   }
 
+  const chooseSetor = (tab: ActiveTab) => {
+    setIsActionSheetOpen(false);
+    setActiveTab(tab);
+  };
+
   return (
     <>
+      <AnimatePresence>
+        {isActionSheetOpen && (
+          <motion.button
+            type="button"
+            className="p2-setor-dropup-backdrop md:hidden"
+            aria-label="Tutup menu setoran"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            onClick={() => setIsActionSheetOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
       <div className="p2-bottom-shell md:hidden">
         <nav className="p2-bottom-dock p2-bottom-dock-ustadz" aria-label="Navigasi bawah">
           <NavButton
@@ -77,47 +122,89 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           />
 
           <div className="p2-setor-slot">
+            <AnimatePresence>
+              {isActionSheetOpen && (
+                <motion.div
+                  id="setor-dropup-menu"
+                  className="p2-setor-dropup"
+                  role="menu"
+                  aria-label="Pilih jenis setoran"
+                  initial={{ opacity: 0, y: 18, scale: 0.82 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 12, scale: 0.9 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 30, mass: 0.72 }}
+                >
+                  {SETOR_ACTIONS.map((action, index) => {
+                    const Icon = action.icon;
+                    return (
+                      <motion.button
+                        type="button"
+                        role="menuitem"
+                        key={action.tab}
+                        className="p2-setor-dropup-item"
+                        onClick={() => chooseSetor(action.tab)}
+                        initial={{ opacity: 0, y: 14, scale: 0.82 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.9 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 460,
+                          damping: 28,
+                          mass: 0.62,
+                          delay: index * 0.045
+                        }}
+                      >
+                        <span className="p2-setor-dropup-label">{action.label}</span>
+                        <span className="p2-setor-dropup-icon" aria-hidden="true">
+                          <Icon className="ui-icon-md" />
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <button
               type="button"
               ref={fabRipple.elementRef}
               onClick={(event) => {
                 fabRipple.createRipple(event);
-                setIsActionSheetOpen(true);
+                setIsActionSheetOpen(open => !open);
               }}
-              className={`ripple-container p2-setor-fab ${isSetorActive ? 'is-active' : ''}`}
-              aria-label="Tambah Setoran Baru"
-              aria-haspopup="dialog"
+              className={`ripple-container p2-setor-fab ${isSetorActive ? 'is-active' : ''} ${isActionSheetOpen ? 'is-open' : ''}`}
+              aria-label={isActionSheetOpen ? 'Tutup pilihan setoran' : 'Tambah Setoran Baru'}
+              aria-haspopup="menu"
               aria-expanded={isActionSheetOpen}
-              title="Tambah Setoran Baru"
+              aria-controls="setor-dropup-menu"
+              title={isActionSheetOpen ? 'Tutup pilihan setoran' : 'Tambah Setoran Baru'}
             >
-              <Plus className="ui-icon-md stroke-[2.4]" />
+              {isActionSheetOpen ? <X className="ui-icon-md stroke-[2.4]" /> : <Plus className="ui-icon-md stroke-[2.4]" />}
             </button>
-            <span className={`p2-setor-label ${isSetorActive ? 'is-active' : ''}`}>Setor</span>
+            <span className={`p2-setor-label ${isSetorActive || isActionSheetOpen ? 'is-active' : ''}`}>Setor</span>
           </div>
 
           <NavButton
             label="Kelola"
             icon={Settings2}
             isActive={isManageActive}
-            onClick={() => setIsManageSheetOpen(true)}
+            onClick={() => {
+              setIsActionSheetOpen(false);
+              setIsManageSheetOpen(true);
+            }}
           />
 
           <NavButton
             label="Mushaf"
             icon={BookOpen}
             isActive={activeTab === 'mushaf'}
-            onClick={() => setActiveTab('mushaf')}
+            onClick={() => {
+              setIsActionSheetOpen(false);
+              setActiveTab('mushaf');
+            }}
           />
         </nav>
       </div>
-
-      <SetorActionSheet
-        isOpen={isActionSheetOpen}
-        onClose={() => setIsActionSheetOpen(false)}
-        onSelect={(tab) => setActiveTab(tab)}
-        santriList={santriList}
-        onNotify={onNotify}
-      />
 
       <ManageActionSheet
         isOpen={isManageSheetOpen}
