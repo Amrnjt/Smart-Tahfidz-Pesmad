@@ -8,6 +8,7 @@ on:
       - 'src/responsive-accessibility.css'
       - 'src/santri-experience-finish.css'
       - 'src/chrome-transition-fix.css'
+      - 'src/ustadz-experience-finish.css'
       - 'src/App.tsx'
       - 'src/components/Navbar.tsx'
       - 'src/components/DesktopPrimaryNav.tsx'
@@ -16,6 +17,7 @@ on:
       - 'src/components/MushafQuran.tsx'
       - 'src/components/WaliDashboard.tsx'
       - 'src/components/SantriDashboard.tsx'
+      - 'src/components/UstadzDashboard.tsx'
       - 'src/main.tsx'
       - '.github/workflows/p3-release-polish.yml'
   push:
@@ -128,21 +130,46 @@ jobs:
             exit 1
           fi
 
+      - name: Verify P3.2.3 Ustadz experience contract
+        run: |
+          grep -q "import './ustadz-experience-finish.css'" src/main.tsx
+          grep -q 'p3-ustadz-page' src/components/UstadzDashboard.tsx
+          grep -q 'p323-operator-hero' src/components/UstadzDashboard.tsx
+          grep -q 'getRecencyInfo' src/components/UstadzDashboard.tsx
+          grep -q 'operatorAction' src/components/UstadzDashboard.tsx
+          grep -q 'ustadz-tindak-lanjut' src/components/UstadzDashboard.tsx
+          grep -q 'p323-deferred-surface' src/components/UstadzDashboard.tsx
+          grep -q 'data setoran aktual' src/components/UstadzDashboard.tsx
+          grep -q 'p3-ustadz-page' src/ustadz-experience-finish.css
+          grep -q 'p323-surface-secondary' src/ustadz-experience-finish.css
+          grep -q 'p323-surface-tertiary' src/ustadz-experience-finish.css
+          grep -q 'content-visibility: auto' src/ustadz-experience-finish.css
+          grep -q '@media (max-width: 767px) and (pointer: coarse)' src/ustadz-experience-finish.css
+          grep -q '@media (prefers-reduced-motion: reduce)' src/ustadz-experience-finish.css
+          grep -q '@media (forced-colors: active)' src/ustadz-experience-finish.css
+          if grep -Eq 'position:[[:space:]]*sticky' src/ustadz-experience-finish.css; then
+            echo 'Ustadz finish layer must not create competing sticky chrome.'
+            exit 1
+          fi
+
       - name: Enforce P3 performance budget
         run: |
           release_size=$(wc -c < src/release-polish.css)
           responsive_size=$(wc -c < src/responsive-accessibility.css)
           santri_size=$(wc -c < src/santri-experience-finish.css)
           chrome_transition_size=$(wc -c < src/chrome-transition-fix.css)
+          ustadz_size=$(wc -c < src/ustadz-experience-finish.css)
           echo "release-polish.css bytes: $release_size"
           echo "responsive-accessibility.css bytes: $responsive_size"
           echo "santri-experience-finish.css bytes: $santri_size"
           echo "chrome-transition-fix.css bytes: $chrome_transition_size"
+          echo "ustadz-experience-finish.css bytes: $ustadz_size"
           test "$release_size" -le 24000
           test "$responsive_size" -le 14000
           test "$santri_size" -le 9000
           test "$chrome_transition_size" -le 6000
-          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/release-polish.css src/responsive-accessibility.css src/santri-experience-finish.css src/chrome-transition-fix.css; then
+          test "$ustadz_size" -le 8000
+          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/release-polish.css src/responsive-accessibility.css src/santri-experience-finish.css src/chrome-transition-fix.css src/ustadz-experience-finish.css; then
             echo 'P3 polish contains an expensive global effect.'
             exit 1
           fi
