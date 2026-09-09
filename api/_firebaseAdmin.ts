@@ -16,8 +16,9 @@ function requiredEnv(name: string): string {
 function getAdminConfig() {
   const projectId = requiredEnv('FIREBASE_PROJECT_ID');
   const databaseId = requiredEnv('FIRESTORE_DATABASE_ID');
-  const clientEmail = requiredEnv('FIREBASE_CLIENT_EMAIL');
-  const privateKey = requiredEnv('FIREBASE_PRIVATE_KEY').replace(/\\n/g, '\n');
+  const isEmulator = Boolean(
+    process.env.FIREBASE_AUTH_EMULATOR_HOST || process.env.FIRESTORE_EMULATOR_HOST
+  );
 
   if (
     process.env.VERCEL_ENV === 'preview' &&
@@ -27,12 +28,32 @@ function getAdminConfig() {
     throw new Error('Preview Firebase Admin must use an isolated Firebase project/database.');
   }
 
-  return { projectId, databaseId, clientEmail, privateKey };
+  if (isEmulator) {
+    return {
+      projectId,
+      databaseId,
+      isEmulator: true as const,
+      clientEmail: '',
+      privateKey: ''
+    };
+  }
+
+  return {
+    projectId,
+    databaseId,
+    isEmulator: false as const,
+    clientEmail: requiredEnv('FIREBASE_CLIENT_EMAIL'),
+    privateKey: requiredEnv('FIREBASE_PRIVATE_KEY').replace(/\\n/g, '\n')
+  };
 }
 
 function getAdminApp(config: ReturnType<typeof getAdminConfig>): App {
   const existing = getApps()[0];
   if (existing) return existing;
+
+  if (config.isEmulator) {
+    return initializeApp({ projectId: config.projectId });
+  }
 
   return initializeApp({
     projectId: config.projectId,
