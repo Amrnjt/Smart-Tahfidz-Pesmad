@@ -1,32 +1,102 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function hasRole(roleName) {
+      return isAuthenticated()
+        && ('role' in request.auth.token)
+        && request.auth.token.role == roleName;
+    }
+
+    function isStaff() {
+      return hasRole('Superadmin') || hasRole('Ustadz');
+    }
+
+    function hasLinkedSantri() {
+      return isAuthenticated()
+        && ('idSantri' in request.auth.token)
+        && request.auth.token.idSantri is string
+        && request.auth.token.idSantri.size() > 0;
+    }
+
+    function ownsSantri(santriId) {
+      return hasLinkedSantri() && request.auth.token.idSantri == santriId;
+    }
+
+    function ownsExistingRecord() {
+      return hasLinkedSantri()
+        && ('idSantri' in resource.data)
+        && resource.data.idSantri == request.auth.token.idSantri;
+    }
+
+    function ownsIncomingRecord() {
+      return hasLinkedSantri()
+        && ('idSantri' in request.resource.data)
+        && request.resource.data.idSantri == request.auth.token.idSantri;
+    }
+
     match /users/{userId} {
-      allow read, write: if true;
+      // Staff user lifecycle is handled by the trusted P0.1 server endpoint.
+      // Client reads are limited to staff or the signed-in user's own profile.
+      allow read: if isStaff() || (isAuthenticated() && request.auth.uid == userId);
+      allow create, delete: if false;
+      allow update: if isAuthenticated()
+        && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['notificationPermission']);
     }
+
     match /santri/{santriId} {
-      allow read, write: if true;
+      allow read: if isStaff() || ownsSantri(santriId);
+      allow create, update, delete: if isStaff();
     }
-    match /ziyadah/{ziyadahId} {
-      allow read, write: if true;
+
+    match /ziyadah/{recordId} {
+      allow read: if isStaff() || ownsExistingRecord();
+      allow create, update, delete: if isStaff();
     }
-    match /murojaah/{murojaahId} {
-      allow read, write: if true;
+
+    match /murojaah/{recordId} {
+      allow read: if isStaff() || ownsExistingRecord();
+      allow create, update, delete: if isStaff();
     }
-    match /binnadzor/{binnadzorId} {
-      allow read, write: if true;
+
+    match /binnadzor/{recordId} {
+      allow read: if isStaff() || ownsExistingRecord();
+      allow create, update, delete: if isStaff();
     }
+
+    match /pembelajaran/{recordId} {
+      allow read: if isStaff() || ownsExistingRecord();
+      allow create, update, delete: if isStaff();
+    }
+
     match /kelas/{kelasId} {
-      allow read, write: if true;
+      allow read, create, update, delete: if isStaff();
     }
-    match /pembelajaran/{pembelajaranId} {
-      allow read, write: if true;
+
+    match /pantauan_liburan/{recordId} {
+      allow read: if isStaff() || ownsExistingRecord();
+      allow create: if isStaff() || (hasRole('Wali') && ownsIncomingRecord());
+      allow update: if isStaff() || (hasRole('Wali') && ownsExistingRecord() && ownsIncomingRecord());
+      allow delete: if isStaff() || (hasRole('Wali') && ownsExistingRecord());
     }
-    match /pantauan_liburan/{id} {
-      allow read, write: if true;
+
+    match /app_config/{configId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isStaff();
     }
-    match /app_config/{id} {
-      allow read, write: if true;
+
+    // Credential hashes and migration metadata are server-only.
+    match /auth_credentials/{credentialId} {
+      allow read, write: if false;
+    }
+
+    // Deny every path that has not been explicitly reviewed above.
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
