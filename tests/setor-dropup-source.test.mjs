@@ -27,3 +27,19 @@ test('Setor drop-up uses spring motion and an outside-close backdrop', () => {
   assert.match(bottomNav, /p2-setor-dropup-backdrop/);
   assert.match(bottomNav, /setIsActionSheetOpen\(false\)/);
 });
+
+test('Setor drop-up restores the live Pantauan Liburan switch and monitor access', () => {
+  assert.match(bottomNav, /Pantauan Liburan/);
+  assert.match(bottomNav, /role="switch"/);
+  assert.match(bottomNav, /storageService\.getAppConfig\(\)/);
+  assert.match(bottomNav, /storageService\.setProgramLiburanActive/);
+  assert.match(bottomNav, /PantauanLiburanMonitorModal/);
+  assert.match(bottomNav, /santriList=\{santriList\}/);
+  assert.match(bottomNav, /onNotify=\{onNotify\}/);
+});
+
+test('Setor drop-up centers the menu and uses balanced balloon widths', () => {
+  assert.match(dropupCss, /\.p2-setor-dropup\s*\{[\s\S]*?align-items:\s*center/);
+  assert.match(dropupCss, /\.p2-setor-dropup-item\s*\{[\s\S]*?width:\s*min\(13rem,\s*100%\)/);
+  assert.match(dropupCss, /\.p2-setor-dropup-program\s*\{[\s\S]*?width:\s*min\(14\.25rem,\s*100%\)/);
+});
