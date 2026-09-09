@@ -45,6 +45,9 @@ jobs:
       - name: Firestore emulator role matrix
         run: npm run test:firestore-rules
 
+      - name: Auth runtime emulator integration
+        run: npm run test:auth-runtime
+
       - name: TypeScript check
         run: npm run lint
 
