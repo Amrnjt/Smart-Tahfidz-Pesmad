@@ -115,10 +115,26 @@
   align-items: stretch;
 }
 
-/* Defer lower analytics until they approach the viewport. */
+/*
+ * Charts must stay in normal layout. Recharts ResponsiveContainer reads its
+ * ancestor dimensions; content-visibility:auto can make that measurement 0
+ * while the analytics region is skipped, leaving an apparently blank chart.
+ */
 .p3-ustadz-page .p323-deferred-surface {
-  content-visibility: auto;
-  contain-intrinsic-size: 520px;
+  content-visibility: visible;
+  contain: none;
+  width: 100%;
+  min-width: 0;
+}
+
+.p3-ustadz-page .p323-deferred-surface .recharts-responsive-container {
+  min-width: 0 !important;
+  min-height: 240px;
+}
+
+.p3-ustadz-page .p323-deferred-surface .recharts-wrapper,
+.p3-ustadz-page .p323-deferred-surface .recharts-surface {
+  max-width: 100%;
 }
 
 @media (max-width: 1023px) {
@@ -139,6 +155,10 @@
 
   .p3-ustadz-page .p323-recency {
     white-space: normal;
+  }
+
+  .p3-ustadz-page .p323-deferred-surface .recharts-responsive-container {
+    min-height: 220px;
   }
 }
 
