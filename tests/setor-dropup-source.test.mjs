@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const bottomNav = readFileSync(new URL('../src/components/BottomNav.tsx', import.meta.url), 'utf8');
 const dropupCss = readFileSync(new URL('../src/setor-dropup.css', import.meta.url), 'utf8');
+const manageSheet = readFileSync(new URL('../src/components/ManageActionSheet.tsx', import.meta.url), 'utf8');
 
 test('Setor launcher exposes a mobile drop-up menu above the FAB', () => {
   assert.match(bottomNav, /id="setor-dropup-menu"/);
@@ -42,4 +43,19 @@ test('Setor drop-up centers the menu and uses balanced balloon widths', () => {
   assert.match(dropupCss, /\.p2-setor-dropup\s*\{[\s\S]*?align-items:\s*center/);
   assert.match(dropupCss, /\.p2-setor-dropup-item\s*\{[\s\S]*?width:\s*min\(13rem,\s*100%\)/);
   assert.match(dropupCss, /\.p2-setor-dropup-program\s*\{[\s\S]*?width:\s*min\(14\.25rem,\s*100%\)/);
+});
+
+test('Kelola uses an anchored folder-sheet drop-up instead of a full-width bottom sheet', () => {
+  assert.match(bottomNav, /p2-manage-slot/);
+  assert.match(manageSheet, /p2-manage-folder/);
+  assert.match(manageSheet, /p2-manage-folder-tab/);
+  assert.match(manageSheet, /type: 'spring'/);
+  assert.doesNotMatch(manageSheet, /fixed inset-0 z-50 flex items-end justify-center/);
+});
+
+test('Kelola folder keeps Kelas and Santri destinations', () => {
+  assert.match(manageSheet, /Kelola Kelas/);
+  assert.match(manageSheet, /Kelola Santri/);
+  assert.match(manageSheet, /tab: 'kelas'/);
+  assert.match(manageSheet, /tab: 'santri'/);
 });
