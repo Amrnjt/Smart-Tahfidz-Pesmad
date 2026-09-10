@@ -101,12 +101,14 @@ test('Bedimcode navbar keeps labels visible and transition feedback restrained',
   assert.match(appShellCss, /@media \(hover: hover\) and \(pointer: fine\)[\s\S]*?\.p2-bottom-dock-bedimcode \.p2-bottom-item:hover/);
 });
 
-test('Page transition is scoped to the page content with a short no-scale swap', () => {
+test('Page navigation keeps page content live and uses a short local no-scale entrance', () => {
   assert.match(app, /className="p3-page-content/);
-  assert.match(chromeTransitionCss, /\.ui-app-shell > main#main-content\s*\{[\s\S]*?view-transition-name:\s*none/);
-  assert.match(chromeTransitionCss, /\.p3-page-content\s*\{[\s\S]*?view-transition-name:\s*p2-page/);
-  assert.match(chromeTransitionCss, /--chrome-transition-page-duration:\s*300ms/);
-  assert.match(chromeTransitionCss, /@media \(max-width: 767px\)[\s\S]*?--chrome-transition-page-duration:\s*280ms/);
+  assert.match(chromeTransitionCss, /\.ui-app-shell > main#main-content,[\s\S]*?\.p3-page-content,[\s\S]*?\.p3-chrome-stack\s*\{[\s\S]*?view-transition-name:\s*none/);
+  assert.doesNotMatch(chromeTransitionCss, /view-transition-name:\s*p2-page/);
+  assert.match(chromeTransitionCss, /::view-transition-old\(root\),\s*::view-transition-new\(root\)\s*\{[\s\S]*?opacity:\s*0\s*!important/);
+  assert.match(chromeTransitionCss, /\.p3-page-content\.is-navigation-entering\s*\{[\s\S]*?animation:/);
+  assert.match(chromeTransitionCss, /--chrome-local-page-duration:\s*260ms/);
+  assert.match(chromeTransitionCss, /@media \(max-width: 767px\)[\s\S]*?--chrome-local-page-duration:\s*240ms/);
   assert.doesNotMatch(chromeTransitionCss, /scale\(/);
 });
 
