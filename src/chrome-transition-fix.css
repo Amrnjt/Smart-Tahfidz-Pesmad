@@ -1,31 +1,31 @@
 /* Navbar / menu transition polish
- * Keep app chrome live while only changing page content is snapshotted.
- * Motion stays compositor-friendly: opacity + short translation only.
+ * Native View Transition now owns only the shared active rail visually.
+ * Page content and persistent chrome remain live to avoid full-page snapshot jank.
  */
 
 :root {
-  --chrome-transition-page-duration: 300ms;
+  --chrome-local-page-duration: 260ms;
   --chrome-transition-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* The main layout stays live. Only the changing logged-in page content swaps. */
-.ui-app-shell > main#main-content {
-  view-transition-name: none;
-}
-
-.p3-page-content {
-  view-transition-name: p2-page;
-}
-
-/* Persistent top chrome must remain live; giving it a named snapshot can make
- * sticky header pixels disappear or flash while the browser swaps snapshots. */
+/* Main, page content, and persistent chrome stay live. */
+.ui-app-shell > main#main-content,
+.p3-page-content,
 .p3-chrome-stack {
   view-transition-name: none;
 }
 
-/* The Bedimcode-style mobile indicator is one shared rail. Its named snapshot
- * moves between destinations instead of an old marker disappearing and a new
- * marker appearing independently. */
+/* The browser still creates root snapshots for startViewTransition(). Hide only
+ * those root pixels so the live app remains visible while the named rail morphs. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none !important;
+  opacity: 0 !important;
+  mix-blend-mode: normal;
+  pointer-events: none;
+}
+
+/* The Bedimcode-style mobile indicator is the only visible named snapshot. */
 .p2-bottom-active-rail {
   position: absolute;
   top: -0.25rem;
@@ -41,18 +41,6 @@
   view-transition-name: p2-nav-active;
 }
 
-/* Explicit stacking order inside the browser's View Transition top layer. */
-::view-transition-group(root) {
-  z-index: 0;
-}
-
-::view-transition-group(p2-page) {
-  z-index: 10;
-  animation-duration: var(--chrome-transition-page-duration);
-  animation-timing-function: var(--chrome-transition-ease);
-}
-
-/* Shared rail morphs above the page snapshot. */
 ::view-transition-group(p2-nav-active) {
   z-index: 320;
   animation-duration: 300ms;
@@ -64,40 +52,25 @@
   mix-blend-mode: normal;
 }
 
-/* Page swap: short exit, tiny upward settle, deliberately no scale pulse. */
-::view-transition-old(p2-page) {
-  animation: chrome-page-out 110ms cubic-bezier(0.4, 0, 1, 1) both;
+/* Page motion is local DOM animation, not a page snapshot. */
+.p3-page-content.is-navigation-entering {
+  animation: chrome-local-page-in var(--chrome-local-page-duration) var(--chrome-transition-ease) both;
 }
 
-::view-transition-new(p2-page) {
-  animation: chrome-page-in var(--chrome-transition-page-duration) var(--chrome-transition-ease) both;
-}
-
-@keyframes chrome-page-in {
+@keyframes chrome-local-page-in {
   from {
-    opacity: 0;
-    transform: translateY(5px);
+    opacity: 0.9;
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
-  }
-}
-
-@keyframes chrome-page-out {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(-1px);
   }
 }
 
 @media (max-width: 767px) {
   :root {
-    --chrome-transition-page-duration: 280ms;
+    --chrome-local-page-duration: 240ms;
   }
 
   /* The shared rail is the only mobile owner of p2-nav-active. */
@@ -106,15 +79,8 @@
     view-transition-name: none;
   }
 
-  @keyframes chrome-page-in {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .p3-page-content.is-navigation-entering {
+    will-change: opacity, transform;
   }
 }
 
@@ -125,9 +91,9 @@
     view-transition-name: none !important;
   }
 
-  ::view-transition-group(p2-page),
-  ::view-transition-old(p2-page),
-  ::view-transition-new(p2-page),
+  .p3-page-content.is-navigation-entering,
+  ::view-transition-old(root),
+  ::view-transition-new(root),
   ::view-transition-group(p2-nav-active),
   ::view-transition-old(p2-nav-active),
   ::view-transition-new(p2-nav-active) {
