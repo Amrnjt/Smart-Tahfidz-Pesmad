@@ -17,6 +17,7 @@ const VALID_TABS: ActiveTab[] = [
 const VIEW_ONLY_TABS = new Set<ActiveTab>(['dashboard', 'riwayat', 'mushaf']);
 
 type NativeViewTransition = {
+  ready: Promise<void>;
   finished: Promise<void>;
 };
 
@@ -52,6 +53,26 @@ const resetNavigationScroll = () => {
   window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
 };
 
+let localPageEntranceTimer: number | null = null;
+
+const startLocalPageEntrance = () => {
+  if (typeof document === 'undefined' || typeof window === 'undefined') return;
+  const page = document.querySelector<HTMLElement>('.p3-page-content');
+  if (!page) return;
+
+  page.classList.remove('is-navigation-entering');
+  window.requestAnimationFrame(() => {
+    page.classList.add('is-navigation-entering');
+    if (localPageEntranceTimer !== null) {
+      window.clearTimeout(localPageEntranceTimer);
+    }
+    localPageEntranceTimer = window.setTimeout(() => {
+      page.classList.remove('is-navigation-entering');
+      localPageEntranceTimer = null;
+    }, 300);
+  });
+};
+
 function commitWithViewTransition(update: () => void): void {
   if (typeof document === 'undefined' || typeof window === 'undefined') {
     update();
@@ -63,20 +84,31 @@ function commitWithViewTransition(update: () => void): void {
   if (reduceMotion || !transitionDocument.startViewTransition) {
     update();
     resetNavigationScroll();
+    startLocalPageEntrance();
     return;
   }
 
   let updateRan = false;
   try {
-    transitionDocument.startViewTransition(() => {
+    const transition = transitionDocument.startViewTransition(() => {
       updateRan = true;
       flushSync(update);
-      resetNavigationScroll();
     });
+
+    const settleLivePage = () => {
+      resetNavigationScroll();
+      startLocalPageEntrance();
+    };
+
+    transition.ready.then(() => {
+      resetNavigationScroll();
+      startLocalPageEntrance();
+    }).catch(settleLivePage);
   } catch {
     if (!updateRan) {
       update();
       resetNavigationScroll();
+      startLocalPageEntrance();
     }
   }
 }
