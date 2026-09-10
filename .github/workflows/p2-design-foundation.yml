@@ -94,8 +94,15 @@ jobs:
         run: |
           grep -q 'startViewTransition' src/hooks/useActiveTabNavigation.ts
           grep -q 'flushSync' src/hooks/useActiveTabNavigation.ts
-          grep -q 'view-transition-name: p2-page' src/chrome-transition-fix.css
+          grep -q 'transition.ready' src/hooks/useActiveTabNavigation.ts
+          grep -q 'startLocalPageEntrance' src/hooks/useActiveTabNavigation.ts
           grep -q 'view-transition-name: p2-nav-active' src/chrome-transition-fix.css
+          grep -q 'is-navigation-entering' src/chrome-transition-fix.css
+          grep -q 'view-transition-old(root)' src/chrome-transition-fix.css
+          if grep -q 'view-transition-name: p2-page' src/chrome-transition-fix.css; then
+            echo 'Stage 2 page content must stay live; p2-page snapshots are not allowed.'
+            exit 1
+          fi
           grep -q 'p2-dialog-in' src/motion-finish.css
           grep -q 'p2-record-in' src/motion-finish.css
           MOTION_BYTES=$(wc -c < src/motion-finish.css)
