@@ -60,7 +60,7 @@ const startLocalPageEntrance = () => {
     localPageEntranceTimer = window.setTimeout(() => {
       page.classList.remove('is-navigation-entering');
       localPageEntranceTimer = null;
-    }, 300);
+    }, 360);
   });
 };
 
