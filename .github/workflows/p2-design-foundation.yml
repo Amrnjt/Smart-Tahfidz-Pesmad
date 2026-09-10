@@ -19,6 +19,9 @@ on:
       - 'src/components/WaliDashboard.tsx'
       - 'src/components/SantriDashboard.tsx'
       - 'src/components/ScrollReveal.tsx'
+      - 'src/components/MeasuredChartFrame.tsx'
+      - 'src/components/HafalanStatsChart.tsx'
+      - 'src/components/TrenHafalanBulananChart.tsx'
       - 'src/components/ZiyadahForm.tsx'
       - 'src/components/MurojaahForm.tsx'
       - 'src/components/BinnadzorForm.tsx'
@@ -92,15 +95,19 @@ jobs:
 
       - name: Verify P2 motion finish contract
         run: |
-          grep -q 'startViewTransition' src/hooks/useActiveTabNavigation.ts
-          grep -q 'flushSync' src/hooks/useActiveTabNavigation.ts
-          grep -q 'transition.ready' src/hooks/useActiveTabNavigation.ts
-          grep -q 'startLocalPageEntrance' src/hooks/useActiveTabNavigation.ts
-          grep -q 'view-transition-name: p2-nav-active' src/chrome-transition-fix.css
+          grep -q 'commitLocalNavigation' src/hooks/useActiveTabNavigation.ts
+          grep -q 'flushSync(update);' src/hooks/useActiveTabNavigation.ts
+          grep -q 'resetNavigationScroll();' src/hooks/useActiveTabNavigation.ts
+          grep -q 'startLocalPageEntrance();' src/hooks/useActiveTabNavigation.ts
+          if grep -q 'startViewTransition' src/hooks/useActiveTabNavigation.ts; then
+            echo 'Final navigation must not use Native View Transition snapshots.'
+            exit 1
+          fi
+          grep -q 'view-transition-name: none' src/chrome-transition-fix.css
           grep -q 'is-navigation-entering' src/chrome-transition-fix.css
-          grep -q 'view-transition-old(root)' src/chrome-transition-fix.css
-          if grep -q 'view-transition-name: p2-page' src/chrome-transition-fix.css; then
-            echo 'Stage 2 page content must stay live; p2-page snapshots are not allowed.'
+          grep -q 'chrome-local-page-in' src/chrome-transition-fix.css
+          if grep -Eq 'view-transition-name:[[:space:]]*(p2-page|p2-nav-active)' src/chrome-transition-fix.css; then
+            echo 'Page and navbar must stay live; named native snapshots are not allowed.'
             exit 1
           fi
           grep -q 'p2-dialog-in' src/motion-finish.css
