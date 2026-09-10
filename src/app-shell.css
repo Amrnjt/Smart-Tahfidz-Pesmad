@@ -414,6 +414,68 @@ nav[aria-label="Navigasi utama"] > button svg { stroke-width: 1.9; }
 }
 .p2-setor-label.is-active { color: var(--shell-active-text); }
 
+/* Bedimcode-inspired mobile navbar hierarchy, retaining Smart Tahfidz green-white identity. */
+.p2-bottom-dock-bedimcode {
+  min-height: 4.25rem;
+  padding: 0.25rem 0.3rem;
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.99);
+  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12), 0 2px 7px rgba(15, 23, 42, 0.05);
+}
+
+.p2-bottom-dock-bedimcode .p2-bottom-item {
+  min-height: 3.55rem;
+  border-radius: 0.68rem;
+  background: transparent;
+  color: #64748b;
+  transition:
+    transform 0.2s ease,
+    color 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.p2-bottom-dock-bedimcode .p2-bottom-item.is-active {
+  color: var(--shell-active-text);
+  background: var(--shell-active);
+}
+
+.p2-bottom-dock-bedimcode .p2-bottom-icon-wrap {
+  transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.p2-bottom-dock-bedimcode .p2-bottom-item.is-active .p2-bottom-icon-wrap {
+  transform: translateY(-1px);
+}
+
+.p2-bottom-dock-bedimcode .p2-bottom-label {
+  opacity: 1;
+  font-weight: 700;
+  transition: color 0.3s ease, opacity 0.3s ease;
+}
+
+.p2-bottom-dock-bedimcode .p2-manage-label-row {
+  gap: 0.12rem;
+}
+
+.p2-bottom-dock-bedimcode .p2-manage-toggle-chevron {
+  transition: transform 0.4s ease, opacity 0.3s ease;
+}
+
+.p2-bottom-dock-bedimcode .p2-manage-toggle.is-open {
+  color: var(--brand-deep);
+  background: var(--surface-soft);
+}
+
+.p2-bottom-dock-bedimcode .p2-manage-toggle.is-active.is-open {
+  color: var(--shell-active-text);
+  background: var(--shell-active);
+}
+
+.p2-bottom-dock-bedimcode .p2-setor-label {
+  font-weight: 700;
+  transition: color 0.3s ease;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .p2-sync-control:hover,
   .p2-profile-trigger:hover {
@@ -433,6 +495,15 @@ nav[aria-label="Navigasi utama"] > button svg { stroke-width: 1.9; }
   }
 
   .p2-bottom-item:hover { color: var(--brand-deep); }
+
+  .p2-bottom-dock-bedimcode .p2-bottom-item:hover {
+    color: var(--brand-deep);
+    background: var(--surface-soft);
+  }
+
+  .p2-bottom-dock-bedimcode .p2-bottom-item:hover .p2-bottom-icon-wrap {
+    transform: translateY(-1px);
+  }
 }
 
 .p2-sync-control:active,
@@ -458,6 +529,7 @@ nav[aria-label="Navigasi utama"] > button:active,
   .p2-profile-menu-item,
   nav[aria-label="Navigasi utama"] > button,
   .p2-bottom-item,
+  .p2-bottom-icon-wrap,
   .p2-setor-fab {
     transition-duration: 0.01ms !important;
     transform: none !important;

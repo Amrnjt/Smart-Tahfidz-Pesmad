@@ -12,9 +12,9 @@
   --p2-motion-page: 440ms;
 }
 
-/* Native same-document View Transition target. Header + bottom dock stay stable. */
+/* Page-transition ownership is centralized in chrome-transition-fix.css. */
 .ui-app-shell > main#main-content {
-  view-transition-name: p2-page;
+  view-transition-name: none;
 }
 
 ::view-transition-group(p2-page) {
@@ -42,7 +42,7 @@
 @media (max-width: 767px) {
   .p2-bottom-item.is-active .p2-bottom-icon-wrap,
   .p2-setor-fab.is-active {
-    view-transition-name: p2-nav-active;
+    view-transition-name: none;
   }
 }
 

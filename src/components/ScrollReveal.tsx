@@ -22,11 +22,12 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
     const el = elementRef.current;
     if (!el) return;
 
+    let revealTimer: ReturnType<typeof setTimeout> | null = null;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
           if (delay > 0) {
-            setTimeout(() => setIsVisible(true), delay);
+            revealTimer = setTimeout(() => setIsVisible(true), delay);
           } else {
             setIsVisible(true);
           }
@@ -39,7 +40,10 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
     );
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      if (revealTimer) clearTimeout(revealTimer);
+      observer.disconnect();
+    };
   }, [delay, threshold, once]);
 
   return (

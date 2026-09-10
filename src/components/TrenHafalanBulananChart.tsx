@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import {
-  ResponsiveContainer,
   ComposedChart,
   BarChart,
   Bar,
@@ -35,6 +34,7 @@ import {
   Gauge
 } from 'lucide-react';
 import { Santri, ZiyadahRecord, MurojaahRecord, Kelas } from '../types';
+import { MeasuredChartFrame } from './MeasuredChartFrame';
 import { AnimatedCounter } from './AnimatedCounter';
 
 interface TrenHafalanBulananChartProps {
@@ -758,7 +758,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
             /* Bar Chart View with enhanced mobile and desktop sizes */
             <div className="w-full min-w-0 pt-2 space-y-2">
               <div className="h-96 sm:h-[420px] w-full min-w-0">
-                <ResponsiveContainer width="100%" height="100%">
+                <MeasuredChartFrame>
                   <BarChart
                     data={santriComparisonData}
                     layout="vertical"
@@ -819,7 +819,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                       maxBarSize={16}
                     />
                   </BarChart>
-                </ResponsiveContainer>
+                </MeasuredChartFrame>
               </div>
               <p className="text-center text-xs text-slate-500 font-medium pt-1">
                 💡 Sentuh bilah grafik untuk detail, atau pilih tab <b>"Daftar Peringkat"</b> untuk tampilan kartu santri yang lengkap.
@@ -846,7 +846,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
 
           {/* Recharts Render Area */}
           <div className="h-64 sm:h-80 w-full min-w-0 pt-2">
-            <ResponsiveContainer width="100%" height="100%">
+            <MeasuredChartFrame>
               {visualType === 'bar' ? (
                 /* Bar Chart View */
                 <BarChart
@@ -1075,7 +1075,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                 />
               </AreaChart>
             )}
-          </ResponsiveContainer>
+          </MeasuredChartFrame>
         </div>
       </div>
       )}

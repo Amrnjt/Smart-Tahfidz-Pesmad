@@ -10,21 +10,30 @@ on:
       - 'src/input-workflow.css'
       - 'src/history-experience.css'
       - 'src/motion-finish.css'
+      - 'src/chrome-transition-fix.css'
+      - 'src/setor-dropup.css'
       - 'src/design-system/**'
       - 'src/components/Navbar.tsx'
       - 'src/components/BottomNav.tsx'
       - 'src/components/UstadzDashboard.tsx'
       - 'src/components/WaliDashboard.tsx'
       - 'src/components/SantriDashboard.tsx'
+      - 'src/components/ScrollReveal.tsx'
+      - 'src/components/MeasuredChartFrame.tsx'
+      - 'src/components/HafalanStatsChart.tsx'
+      - 'src/components/TrenHafalanBulananChart.tsx'
       - 'src/components/ZiyadahForm.tsx'
       - 'src/components/MurojaahForm.tsx'
       - 'src/components/BinnadzorForm.tsx'
       - 'src/components/PembelajaranForm.tsx'
       - 'src/components/SetoranFormNav.tsx'
       - 'src/components/SetorActionSheet.tsx'
+      - 'src/components/ManageActionSheet.tsx'
       - 'src/components/HistoryTable.tsx'
       - 'src/hooks/useActiveTabNavigation.ts'
       - 'src/main.tsx'
+      - 'tests/setor-dropup-source.test.mjs'
+      - 'tests/navigation-jank-regression.test.mjs'
       - 'P2_DESIGN_FOUNDATION.md'
       - '.github/workflows/p2-design-foundation.yml'
   push:
@@ -52,6 +61,9 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Verify Setor, Kelola, and navigation regression contracts
+        run: node --test tests/setor-dropup-source.test.mjs tests/navigation-jank-regression.test.mjs
+
       - name: Verify P2 accessibility contract
         run: |
           grep -q 'prefers-reduced-motion: reduce' src/design-foundation.css
@@ -67,6 +79,8 @@ jobs:
           grep -q 'forced-colors: active' src/history-experience.css
           grep -q 'prefers-reduced-motion: reduce' src/motion-finish.css
           grep -q 'forced-colors: active' src/motion-finish.css
+          grep -q 'prefers-reduced-motion: reduce' src/chrome-transition-fix.css
+          grep -q 'forced-colors: active' src/chrome-transition-fix.css
           grep -q 'p2-dashboard-ustadz' src/components/UstadzDashboard.tsx
           grep -q 'p2-dashboard-wali' src/components/WaliDashboard.tsx
           grep -q 'p2-dashboard-santri' src/components/SantriDashboard.tsx
@@ -81,10 +95,21 @@ jobs:
 
       - name: Verify P2 motion finish contract
         run: |
-          grep -q 'startViewTransition' src/hooks/useActiveTabNavigation.ts
-          grep -q 'flushSync' src/hooks/useActiveTabNavigation.ts
-          grep -q 'view-transition-name: p2-page' src/motion-finish.css
-          grep -q 'view-transition-name: p2-nav-active' src/motion-finish.css
+          grep -q 'commitLocalNavigation' src/hooks/useActiveTabNavigation.ts
+          grep -q 'flushSync(update);' src/hooks/useActiveTabNavigation.ts
+          grep -q 'resetNavigationScroll();' src/hooks/useActiveTabNavigation.ts
+          grep -q 'startLocalPageEntrance();' src/hooks/useActiveTabNavigation.ts
+          if grep -q 'startViewTransition' src/hooks/useActiveTabNavigation.ts; then
+            echo 'Final navigation must not use Native View Transition snapshots.'
+            exit 1
+          fi
+          grep -q 'view-transition-name: none' src/chrome-transition-fix.css
+          grep -q 'is-navigation-entering' src/chrome-transition-fix.css
+          grep -q 'chrome-local-page-in' src/chrome-transition-fix.css
+          if grep -Eq 'view-transition-name:[[:space:]]*(p2-page|p2-nav-active)' src/chrome-transition-fix.css; then
+            echo 'Page and navbar must stay live; named native snapshots are not allowed.'
+            exit 1
+          fi
           grep -q 'p2-dialog-in' src/motion-finish.css
           grep -q 'p2-record-in' src/motion-finish.css
           MOTION_BYTES=$(wc -c < src/motion-finish.css)
@@ -95,7 +120,7 @@ jobs:
 
       - name: Reject expensive global effects
         run: |
-          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/design-foundation.css src/app-shell.css src/dashboard-experience.css src/input-workflow.css src/history-experience.css src/motion-finish.css; then
+          if grep -Eq 'backdrop-filter|animation-iteration-count:[[:space:]]*infinite|filter:[[:space:]]*blur' src/design-foundation.css src/app-shell.css src/dashboard-experience.css src/input-workflow.css src/history-experience.css src/motion-finish.css src/chrome-transition-fix.css; then
             echo 'P2 visual system contains an expensive global effect.'
             exit 1
           fi
