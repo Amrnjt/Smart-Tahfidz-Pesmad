@@ -434,29 +434,9 @@ nav[aria-label="Navigasi utama"] > button svg { stroke-width: 1.9; }
     background-color 0.3s ease;
 }
 
-.p2-bottom-dock-bedimcode .p2-bottom-item::before {
-  content: '';
-  position: absolute;
-  top: -0.25rem;
-  left: 50%;
-  width: 1.45rem;
-  height: 0.16rem;
-  border-radius: 999px;
-  background: transparent;
-  opacity: 0;
-  transform: translateX(-50%) scaleX(0.35);
-  transition: opacity 0.24s ease, transform 0.3s ease, background-color 0.3s ease;
-}
-
 .p2-bottom-dock-bedimcode .p2-bottom-item.is-active {
   color: var(--shell-active-text);
   background: var(--shell-active);
-}
-
-.p2-bottom-dock-bedimcode .p2-bottom-item.is-active::before {
-  background: var(--brand-primary);
-  opacity: 1;
-  transform: translateX(-50%) scaleX(1);
 }
 
 .p2-bottom-dock-bedimcode .p2-bottom-icon-wrap {
@@ -479,6 +459,16 @@ nav[aria-label="Navigasi utama"] > button svg { stroke-width: 1.9; }
 
 .p2-bottom-dock-bedimcode .p2-manage-toggle-chevron {
   transition: transform 0.4s ease, opacity 0.3s ease;
+}
+
+.p2-bottom-dock-bedimcode .p2-manage-toggle.is-open {
+  color: var(--brand-deep);
+  background: var(--surface-soft);
+}
+
+.p2-bottom-dock-bedimcode .p2-manage-toggle.is-active.is-open {
+  color: var(--shell-active-text);
+  background: var(--shell-active);
 }
 
 .p2-bottom-dock-bedimcode .p2-setor-label {
