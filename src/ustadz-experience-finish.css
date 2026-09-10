@@ -132,6 +132,15 @@
   min-height: 240px;
 }
 
+/* Stage 2: ScrollReveal measures each Ustadz chart frame with ResizeObserver
+ * and writes stable pixel dimensions. External !important rules beat the
+ * ResponsiveContainer inline percentage size without affecting Wali/Santri. */
+.p3-ustadz-page .p323-deferred-surface .recharts-responsive-container.p323-chart-measured {
+  width: var(--p323-chart-width) !important;
+  height: var(--p323-chart-height) !important;
+  max-width: 100% !important;
+}
+
 .p3-ustadz-page .p323-deferred-surface .recharts-wrapper,
 .p3-ustadz-page .p323-deferred-surface .recharts-surface {
   max-width: 100%;
