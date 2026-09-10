@@ -63,7 +63,18 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     return () => window.removeEventListener('keydown', handleEscape);
   }, [isActionSheetOpen]);
 
+  useEffect(() => {
+    setIsActionSheetOpen(false);
+    setIsManageSheetOpen(false);
+  }, [activeTab]);
+
   if (!currentUser) return null;
+
+  const navigateTo = (tab: ActiveTab) => {
+    setIsActionSheetOpen(false);
+    setIsManageSheetOpen(false);
+    setActiveTab(tab);
+  };
 
   const roleStr = String(currentUser.role || '').trim().toLowerCase();
   const isWali = roleStr === 'wali' || roleStr.includes('wali');
@@ -88,7 +99,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               label={item.label}
               icon={item.icon}
               isActive={activeTab === item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => navigateTo(item.id)}
             />
           ))}
         </nav>
@@ -97,8 +108,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   }
 
   const chooseSetor = (tab: ActiveTab) => {
-    setIsActionSheetOpen(false);
-    setActiveTab(tab);
+    navigateTo(tab);
   };
 
   const openPantauanMonitor = () => {
@@ -153,14 +163,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             label="Beranda"
             icon={LayoutDashboard}
             isActive={activeTab === 'dashboard'}
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => navigateTo('dashboard')}
           />
 
           <NavButton
             label="Riwayat"
             icon={History}
             isActive={activeTab === 'riwayat'}
-            onClick={() => setActiveTab('riwayat')}
+            onClick={() => navigateTo('riwayat')}
           />
 
           <div className="p2-setor-slot">
@@ -273,7 +283,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           <div className="p2-manage-slot">
             <ManageNavButton
               isManageSheetOpen={isManageSheetOpen}
-              isActive={isManageActive || isManageSheetOpen}
+              isActive={isManageActive}
+              isOpen={isManageSheetOpen}
               showActiveRail={isManageActive}
               onClick={() => {
                 setIsActionSheetOpen(false);
@@ -283,7 +294,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             <ManageActionSheet
               isOpen={isManageSheetOpen}
               onClose={() => setIsManageSheetOpen(false)}
-              onSelect={(tab) => setActiveTab(tab)}
+              onSelect={(tab) => navigateTo(tab)}
             />
           </div>
 
@@ -291,11 +302,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             label="Mushaf"
             icon={BookOpen}
             isActive={activeTab === 'mushaf'}
-            onClick={() => {
-              setIsActionSheetOpen(false);
-              setIsManageSheetOpen(false);
-              setActiveTab('mushaf');
-            }}
+            onClick={() => navigateTo('mushaf')}
           />
         </nav>
       </div>
@@ -345,11 +352,12 @@ const NavButton: React.FC<NavButtonProps> = ({ label, icon: Icon, isActive, show
 interface ManageNavButtonProps {
   isManageSheetOpen: boolean;
   isActive: boolean;
+  isOpen: boolean;
   showActiveRail: boolean;
   onClick: () => void;
 }
 
-const ManageNavButton: React.FC<ManageNavButtonProps> = ({ isManageSheetOpen, isActive, showActiveRail, onClick }) => {
+const ManageNavButton: React.FC<ManageNavButtonProps> = ({ isManageSheetOpen, isActive, isOpen, showActiveRail, onClick }) => {
   const ripple = useRipple<HTMLButtonElement>();
 
   return (
@@ -360,11 +368,12 @@ const ManageNavButton: React.FC<ManageNavButtonProps> = ({ isManageSheetOpen, is
         ripple.createRipple(event);
         onClick();
       }}
-      className={`ripple-container p2-bottom-item p2-bottom-item-bedimcode p2-manage-toggle ${isActive ? 'is-active' : ''}`}
+      className={`ripple-container p2-bottom-item p2-bottom-item-bedimcode p2-manage-toggle ${isActive ? 'is-active' : ''} ${isOpen ? 'is-open' : ''}`}
       aria-label={isManageSheetOpen ? 'Tutup menu Kelola' : 'Buka menu Kelola'}
       aria-haspopup="menu"
       aria-expanded={isManageSheetOpen}
       aria-controls="manage-dropdown-menu"
+      aria-current={isActive ? 'page' : undefined}
     >
       {showActiveRail && <span className="p2-bottom-active-rail" aria-hidden="true" />}
       <span className="p2-bottom-icon-wrap">
