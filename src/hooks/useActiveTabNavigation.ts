@@ -52,16 +52,16 @@ const startLocalPageEntrance = () => {
   if (!page) return;
 
   page.classList.remove('is-navigation-entering');
-  window.requestAnimationFrame(() => {
-    page.classList.add('is-navigation-entering');
-    if (localPageEntranceTimer !== null) {
-      window.clearTimeout(localPageEntranceTimer);
-    }
-    localPageEntranceTimer = window.setTimeout(() => {
-      page.classList.remove('is-navigation-entering');
-      localPageEntranceTimer = null;
-    }, 300);
-  });
+  // Restart before paint, including when several tab changes share a frame.
+  void page.offsetWidth;
+  page.classList.add('is-navigation-entering');
+  if (localPageEntranceTimer !== null) {
+    window.clearTimeout(localPageEntranceTimer);
+  }
+  localPageEntranceTimer = window.setTimeout(() => {
+    page.classList.remove('is-navigation-entering');
+    localPageEntranceTimer = null;
+  }, 300);
 };
 
 function commitLocalNavigation(update: () => void): void {

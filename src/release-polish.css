@@ -11,8 +11,8 @@
 }
 
 /* P3.1 — Persistent app chrome.
- * Top bar + desktop primary navigation stay outside the page View Transition.
- * Only the page content moves; the active navigation pill can morph in place.
+ * Top bar + desktop primary navigation stay outside local page animations.
+ * Only page content enters; navigation stays mounted.
  */
 .p3-chrome-stack {
   position: sticky;
@@ -57,13 +57,6 @@
   min-height: min(62vh, 48rem);
 }
 
-/* Prevent the browser's default whole-document crossfade.
- * Page content and active navigation already have explicit named transitions. */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none;
-  mix-blend-mode: normal;
-}
 
 /* Management screens: make the page intro feel like the same product shell as P2. */
 .p3-management-page > div:first-child {

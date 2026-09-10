@@ -20,7 +20,6 @@ function loadNavigation(globals = {}) {
 test('navigation commits once before resetting scroll, without a native snapshot', () => {
   const events = [];
   const classes = new Set();
-  let nextFrame;
   let finish;
   const page = { classList: { add: value => classes.add(value), remove: value => classes.delete(value) } };
   const commit = loadNavigation({
@@ -30,14 +29,12 @@ test('navigation commits once before resetting scroll, without a native snapshot
     },
     window: {
       scrollTo: options => events.push(['scroll', options.top, options.left, options.behavior]),
-      requestAnimationFrame: callback => { nextFrame = callback; },
       setTimeout: callback => { finish = callback; return 1; },
       clearTimeout() {}
     }
   });
   commit(() => events.push(['update']));
   assert.deepEqual(events, [['update'], ['scroll', 0, 0, 'auto']]);
-  nextFrame();
   assert.ok(classes.has('is-navigation-entering'));
   finish();
   assert.equal(classes.has('is-navigation-entering'), false);

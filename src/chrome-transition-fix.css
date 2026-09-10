@@ -7,6 +7,7 @@
 .ui-app-shell > main#main-content,
 .p3-page-content,
 .p3-chrome-stack,
+nav[aria-label='Navigasi utama'] button[aria-current='page'],
 .p2-bottom-active-rail,
 .p2-bottom-item.is-active .p2-bottom-icon-wrap,
 .p2-setor-fab.is-active {
