@@ -19,6 +19,7 @@ on:
       - 'src/components/WaliDashboard.tsx'
       - 'src/components/SantriDashboard.tsx'
       - 'src/components/UstadzDashboard.tsx'
+      - 'src/components/ScrollReveal.tsx'
       - 'src/main.tsx'
       - '.github/workflows/p3-release-polish.yml'
   push:
@@ -73,9 +74,11 @@ jobs:
       - name: Verify navbar transition layering
         run: |
           grep -q "import './chrome-transition-fix.css'" src/main.tsx
-          grep -q 'view-transition-name: p3-app-chrome' src/chrome-transition-fix.css
-          grep -q 'view-transition-group(p3-app-chrome)' src/chrome-transition-fix.css
-          grep -q 'z-index: 300' src/chrome-transition-fix.css
+          grep -A4 '^\.p3-chrome-stack' src/chrome-transition-fix.css | grep -q 'view-transition-name: none'
+          if grep -q 'p3-app-chrome' src/chrome-transition-fix.css; then
+            echo 'Persistent chrome must remain live and must not own a View Transition snapshot.'
+            exit 1
+          fi
           grep -q 'view-transition-group(p2-nav-active)' src/chrome-transition-fix.css
           grep -q 'z-index: 320' src/chrome-transition-fix.css
           grep -q 'chrome-page-in' src/chrome-transition-fix.css
@@ -141,6 +144,7 @@ jobs:
           grep -q 'ustadz-tindak-lanjut' src/components/UstadzDashboard.tsx
           grep -q 'p323-deferred-surface' src/components/UstadzDashboard.tsx
           grep -q 'data setoran aktual' src/components/UstadzDashboard.tsx
+          grep -q 'revealImmediately' src/components/ScrollReveal.tsx
           grep -q 'p3-ustadz-page' src/ustadz-experience-finish.css
           grep -q 'p323-surface-secondary' src/ustadz-experience-finish.css
           grep -q 'p323-surface-tertiary' src/ustadz-experience-finish.css
