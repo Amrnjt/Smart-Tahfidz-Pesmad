@@ -23,6 +23,7 @@ test('navigation commits once before resetting scroll, without a native snapshot
   const classes = new Set();
   let nextFrame;
   let finish;
+  let cleanupDelay = 0;
   const page = { classList: { add: value => classes.add(value), remove: value => classes.delete(value) } };
   const commit = loadNavigation({
     document: {
@@ -32,7 +33,7 @@ test('navigation commits once before resetting scroll, without a native snapshot
     window: {
       scrollTo: options => events.push(['scroll', options.top, options.left, options.behavior]),
       requestAnimationFrame: callback => { nextFrame = callback; },
-      setTimeout: callback => { finish = callback; return 1; },
+      setTimeout: (callback, delay) => { finish = callback; cleanupDelay = delay; return 1; },
       clearTimeout() {}
     }
   });
@@ -40,6 +41,7 @@ test('navigation commits once before resetting scroll, without a native snapshot
   assert.deepEqual(events, [['update'], ['scroll', 0, 0, 'auto']]);
   nextFrame();
   assert.ok(classes.has('is-navigation-entering'));
+  assert.ok(cleanupDelay >= 320, `cleanup delay ${cleanupDelay}ms must not cut off the 320ms transition`);
   finish();
   assert.equal(classes.has('is-navigation-entering'), false);
 });
