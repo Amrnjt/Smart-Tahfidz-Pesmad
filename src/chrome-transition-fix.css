@@ -40,11 +40,6 @@
   view-transition-name: p2-nav-active;
 }
 
-/* Retire the previous per-item pseudo marker so there is only one visual rail. */
-.p2-bottom-dock-bedimcode .p2-bottom-item::before {
-  content: none;
-}
-
 /* Explicit stacking order inside the browser's View Transition top layer. */
 ::view-transition-group(root) {
   z-index: 0;
@@ -115,8 +110,7 @@
     --chrome-transition-page-duration: 280ms;
   }
 
-  /* motion-finish.css previously named the active icon/FAB itself. The rail is
-   * now the sole mobile owner of p2-nav-active, avoiding competing snapshots. */
+  /* The shared rail is the only mobile owner of p2-nav-active. */
   .p2-bottom-item.is-active .p2-bottom-icon-wrap,
   .p2-setor-fab.is-active {
     view-transition-name: none;
