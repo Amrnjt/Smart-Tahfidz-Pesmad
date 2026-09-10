@@ -20,6 +20,11 @@ on:
       - 'src/components/SantriDashboard.tsx'
       - 'src/components/UstadzDashboard.tsx'
       - 'src/components/ScrollReveal.tsx'
+      - 'src/components/MeasuredChartFrame.tsx'
+      - 'src/components/HafalanStatsChart.tsx'
+      - 'src/components/TrenHafalanBulananChart.tsx'
+      - 'src/hooks/useActiveTabNavigation.ts'
+      - 'tests/navigation-jank-regression.test.mjs'
       - 'src/main.tsx'
       - '.github/workflows/p3-release-polish.yml'
   push:
@@ -76,18 +81,20 @@ jobs:
           grep -q "import './chrome-transition-fix.css'" src/main.tsx
           grep -q 'p3-chrome-stack' src/chrome-transition-fix.css
           grep -q 'view-transition-name: none' src/chrome-transition-fix.css
-          if grep -q 'p3-app-chrome' src/chrome-transition-fix.css; then
-            echo 'Persistent chrome must remain live and must not own a View Transition snapshot.'
+          grep -q 'commitLocalNavigation' src/hooks/useActiveTabNavigation.ts
+          grep -q 'startLocalPageEntrance' src/hooks/useActiveTabNavigation.ts
+          if grep -q 'startViewTransition' src/hooks/useActiveTabNavigation.ts; then
+            echo 'Final tab navigation must not use Native View Transition.'
             exit 1
           fi
-          if grep -q 'view-transition-name: p2-page' src/chrome-transition-fix.css; then
-            echo 'Stage 2 page content must stay live and must not own a page snapshot.'
+          if grep -Eq 'view-transition-name:[[:space:]]*(p2-page|p2-nav-active)' src/chrome-transition-fix.css; then
+            echo 'Page and navbar must stay live and must not own native snapshots.'
             exit 1
           fi
-          grep -q 'view-transition-old(root)' src/chrome-transition-fix.css
-          grep -q 'opacity: 0 !important' src/chrome-transition-fix.css
-          grep -q 'view-transition-group(p2-nav-active)' src/chrome-transition-fix.css
-          grep -q 'z-index: 320' src/chrome-transition-fix.css
+          if grep -Eq '::view-transition-(group|old|new)\(' src/chrome-transition-fix.css; then
+            echo 'Final chrome layer must not render View Transition snapshot pseudo-elements.'
+            exit 1
+          fi
           grep -q 'chrome-local-page-in' src/chrome-transition-fix.css
           grep -q 'is-navigation-entering' src/chrome-transition-fix.css
           grep -q '@media (prefers-reduced-motion: reduce)' src/chrome-transition-fix.css
@@ -151,21 +158,18 @@ jobs:
           grep -q 'ustadz-tindak-lanjut' src/components/UstadzDashboard.tsx
           grep -q 'p323-deferred-surface' src/components/UstadzDashboard.tsx
           grep -q 'data setoran aktual' src/components/UstadzDashboard.tsx
-          grep -q 'revealImmediately' src/components/ScrollReveal.tsx
-          grep -q 'ResizeObserver' src/components/ScrollReveal.tsx
-          grep -q 'MutationObserver' src/components/ScrollReveal.tsx
-          grep -q 'p323-chart-measured' src/components/ScrollReveal.tsx
-          grep -q -- '--p323-chart-width' src/components/ScrollReveal.tsx
-          grep -q -- '--p323-chart-height' src/components/ScrollReveal.tsx
+          grep -q 'MeasuredChartFrame' src/components/HafalanStatsChart.tsx
+          grep -q 'MeasuredChartFrame' src/components/TrenHafalanBulananChart.tsx
+          grep -q 'ResizeObserver' src/components/MeasuredChartFrame.tsx
+          grep -q 'p323-chart-frame' src/components/MeasuredChartFrame.tsx
+          grep -q 'Menyiapkan grafik' src/components/MeasuredChartFrame.tsx
           grep -q 'p3-ustadz-page' src/ustadz-experience-finish.css
           grep -q 'p323-surface-secondary' src/ustadz-experience-finish.css
           grep -q 'p323-surface-tertiary' src/ustadz-experience-finish.css
           grep -q 'content-visibility: visible' src/ustadz-experience-finish.css
-          grep -q 'recharts-responsive-container' src/ustadz-experience-finish.css
-          grep -q 'p323-chart-measured' src/ustadz-experience-finish.css
-          grep -q -- '--p323-chart-width' src/ustadz-experience-finish.css
-          grep -q -- '--p323-chart-height' src/ustadz-experience-finish.css
-          grep -q 'min-height: 240px' src/ustadz-experience-finish.css
+          grep -q 'p323-hero-content' src/ustadz-experience-finish.css
+          grep -q 'p323-today-card' src/ustadz-experience-finish.css
+          grep -q 'p323-rhythm-card' src/ustadz-experience-finish.css
           grep -q '@media (max-width: 767px) and (pointer: coarse)' src/ustadz-experience-finish.css
           grep -q '@media (prefers-reduced-motion: reduce)' src/ustadz-experience-finish.css
           grep -q '@media (forced-colors: active)' src/ustadz-experience-finish.css
