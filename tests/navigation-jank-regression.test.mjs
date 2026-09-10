@@ -9,7 +9,7 @@ const ustadzDashboard = readFileSync(new URL('../src/components/UstadzDashboard.
 const ustadzCss = readFileSync(new URL('../src/ustadz-experience-finish.css', import.meta.url), 'utf8');
 
 test('stage 2 keeps page content and root pixels out of the visible Native View Transition', () => {
-  assert.match(chromeTransitionCss, /\.p3-page-content\s*\{[\s\S]*?view-transition-name:\s*none/);
+  assert.match(chromeTransitionCss, /\.ui-app-shell > main#main-content,[\s\S]*?\.p3-page-content,[\s\S]*?\.p3-chrome-stack\s*\{[\s\S]*?view-transition-name:\s*none/);
   assert.doesNotMatch(chromeTransitionCss, /view-transition-name:\s*p2-page/);
   assert.match(chromeTransitionCss, /::view-transition-old\(root\),\s*::view-transition-new\(root\)\s*\{[\s\S]*?opacity:\s*0\s*!important/);
   assert.match(chromeTransitionCss, /\.p2-bottom-active-rail\s*\{[\s\S]*?view-transition-name:\s*p2-nav-active/);
