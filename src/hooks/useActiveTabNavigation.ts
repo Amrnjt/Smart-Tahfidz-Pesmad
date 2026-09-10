@@ -47,6 +47,11 @@ function urlForTab(tab: ActiveTab): string {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
+const resetNavigationScroll = () => {
+  if (typeof window === 'undefined') return;
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+};
+
 function commitWithViewTransition(update: () => void): void {
   if (typeof document === 'undefined' || typeof window === 'undefined') {
     update();
@@ -57,6 +62,7 @@ function commitWithViewTransition(update: () => void): void {
   const transitionDocument = document as ViewTransitionDocument;
   if (reduceMotion || !transitionDocument.startViewTransition) {
     update();
+    resetNavigationScroll();
     return;
   }
 
@@ -65,9 +71,13 @@ function commitWithViewTransition(update: () => void): void {
     transitionDocument.startViewTransition(() => {
       updateRan = true;
       flushSync(update);
+      resetNavigationScroll();
     });
   } catch {
-    if (!updateRan) update();
+    if (!updateRan) {
+      update();
+      resetNavigationScroll();
+    }
   }
 }
 
