@@ -3,6 +3,7 @@ import { User, ActiveTab } from '../types';
 import { LogOut, MapPin, RefreshCw, BookOpen, ChevronDown, Cloud } from 'lucide-react';
 import { PesmadLogo } from './PesmadLogo';
 import { useRipple } from '../hooks/useRipple';
+import { useDropdownTransition } from '../hooks/useDropdownTransition';
 
 interface NavbarProps {
   currentUser: User | null;
@@ -26,6 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const profileTriggerRef = useRef<HTMLButtonElement>(null);
+  const profileTransition = useDropdownTransition(showProfileMenu);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -170,12 +172,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                     <ChevronDown className={`ui-icon-xs text-slate-400 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {showProfileMenu && (
+                  {profileTransition.isMounted && (
                     <div
                       id="profile-menu-popover"
                       role="region"
                       aria-label="Opsi akun pengguna"
-                      className="p2-profile-popover ui-motion-pop"
+                      className={`p2-profile-popover t-dropdown ${profileTransition.transitionClassName}`}
+                      data-origin="top-right"
+                      aria-hidden={!showProfileMenu}
                     >
                       <div className="p2-profile-popover-head">
                         <span className={`p2-profile-avatar p2-profile-avatar-lg ${roleStyle.avatar}`}>{userInitials}</span>

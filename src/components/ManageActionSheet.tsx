@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { School, Users } from 'lucide-react';
 import type { ActiveTab } from '../types';
+import { useDropdownTransition } from '../hooks/useDropdownTransition';
 
 interface ManageActionSheetProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ const actions: Array<{
 ];
 
 export const ManageActionSheet: React.FC<ManageActionSheetProps> = ({ isOpen, onClose, onSelect }) => {
+  const dropdownTransition = useDropdownTransition(isOpen);
   useEffect(() => {
     if (!isOpen) return;
     const handleEscape = (event: KeyboardEvent) => {
@@ -40,20 +42,22 @@ export const ManageActionSheet: React.FC<ManageActionSheetProps> = ({ isOpen, on
     onClose();
   };
 
+  if (!dropdownTransition.isMounted) return null;
+
   return (
     <>
-      {isOpen && (
-        <button
-          type="button"
-          className="p2-manage-dropdown-backdrop"
-          aria-label="Tutup menu Kelola"
-          onClick={onClose}
-        />
-      )}
+      <button
+        type="button"
+        className={`p2-manage-dropdown-backdrop t-dropdown-backdrop ${dropdownTransition.transitionClassName}`}
+        aria-label="Tutup menu Kelola"
+        onClick={onClose}
+        tabIndex={isOpen ? 0 : -1}
+      />
 
       <div
         id="manage-dropdown-menu"
-        className={`p2-manage-dropdown ${isOpen ? 'is-open' : ''}`}
+        className={`p2-manage-dropdown t-dropdown ${dropdownTransition.transitionClassName}`}
+        data-origin="bottom-center"
         role="menu"
         aria-label="Pilihan Kelola"
         aria-hidden={!isOpen}

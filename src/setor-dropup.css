@@ -1,3 +1,65 @@
+:root {
+  --dropdown-open-dur: 250ms;
+  --dropdown-close-dur: 150ms;
+  --dropdown-pre-scale: 0.97;
+  --dropdown-closing-scale: 0.99;
+  --dropdown-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.t-dropdown {
+  transform-origin: top left;
+  transform: scale(var(--dropdown-pre-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--dropdown-open-dur) var(--dropdown-ease),
+    opacity   var(--dropdown-open-dur) var(--dropdown-ease);
+  will-change: transform, opacity;
+}
+.t-dropdown[data-origin="top-right"]     { transform-origin: top right; }
+.t-dropdown[data-origin="top-center"]    { transform-origin: top center; }
+.t-dropdown[data-origin="bottom-left"]   { transform-origin: bottom left; }
+.t-dropdown[data-origin="bottom-center"] { transform-origin: bottom center; }
+.t-dropdown[data-origin="bottom-right"]  { transform-origin: bottom right; }
+.t-dropdown.is-open {
+  transform: scale(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+.t-dropdown.is-closing {
+  transform: scale(var(--dropdown-closing-scale));
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform var(--dropdown-close-dur) var(--dropdown-ease),
+    opacity   var(--dropdown-close-dur) var(--dropdown-ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-dropdown { transition: none !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-dropdown-backdrop { transition: none !important; }
+}
+
+.t-dropdown-backdrop {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dropdown-open-dur) var(--dropdown-ease);
+}
+
+.t-dropdown-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.t-dropdown-backdrop.is-closing {
+  opacity: 0;
+  pointer-events: none;
+  transition-duration: var(--dropdown-close-dur);
+}
+
 /* Mobile Setor launcher — centered above the central FAB with a live Pantauan switch. */
 .p2-setor-dropup-backdrop {
   position: fixed;
@@ -24,7 +86,6 @@
   gap: 0.55rem;
   transform-origin: center bottom;
   translate: -50% 0;
-  pointer-events: auto;
 }
 
 .p2-setor-dropup-program {
@@ -245,22 +306,8 @@
   bottom: calc(100% + 1.05rem);
   z-index: 46;
   width: min(13.5rem, calc(100vw - 1rem));
-  max-height: 0;
   overflow: hidden;
-  opacity: 0;
-  pointer-events: none;
   translate: -50% 0;
-  transform: translateY(0.72rem);
-  transform-origin: center bottom;
-  transition: max-height .4s ease-out, opacity .2s ease-out, transform .4s cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.p2-manage-dropdown.is-open {
-  max-height: 8rem;
-  opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0);
-  transition: max-height .4s ease-in, opacity .2s ease-in, transform .4s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .p2-manage-dropdown-list {
@@ -288,28 +335,11 @@
   box-shadow:
     0 12px 30px rgba(15, 23, 42, 0.12),
     0 2px 8px rgba(15, 23, 42, 0.05);
-  opacity: 0;
-  transform: translateY(0.72rem) scale(0.94);
-  transform-origin: center bottom;
   transition:
-    opacity .24s ease-out,
-    transform .34s cubic-bezier(0.2, 0.8, 0.2, 1),
     border-color .2s ease,
-    background-color .2s ease;
+    background-color .2s ease,
+    transform var(--dropdown-close-dur) var(--dropdown-ease);
   -webkit-tap-highlight-color: transparent;
-}
-
-.p2-manage-dropdown.is-open .p2-manage-dropdown-link {
-  opacity: 1;
-  transform: translateY(0) scale(1);
-}
-
-.p2-manage-dropdown.is-open .p2-manage-dropdown-link:nth-child(1) {
-  transition-delay: .035s;
-}
-
-.p2-manage-dropdown.is-open .p2-manage-dropdown-link:nth-child(2) {
-  transition-delay: .095s;
 }
 
 .p2-manage-dropdown.is-open .p2-manage-dropdown-link:active {

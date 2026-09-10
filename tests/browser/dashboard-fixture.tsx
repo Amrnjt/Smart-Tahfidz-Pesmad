@@ -4,6 +4,7 @@ import { UstadzDashboard } from '../../src/components/UstadzDashboard';
 import { useActiveTabNavigation } from '../../src/hooks/useActiveTabNavigation';
 import { BottomNav } from '../../src/components/BottomNav';
 import { DesktopPrimaryNav } from '../../src/components/DesktopPrimaryNav';
+import { Navbar } from '../../src/components/Navbar';
 import '../../src/index.css';
 import '../../src/design-foundation.css';
 import '../../src/app-shell.css';
@@ -27,6 +28,7 @@ function Fixture() {
   const [tab, navigate] = useActiveTabNavigation(user);
   return <div className="ui-app-shell">
     <div className="p3-chrome-stack">
+      <Navbar currentUser={user} activeTab={tab} setActiveTab={navigate} onLogout={() => {}} />
       <DesktopPrimaryNav activeTab={tab} setActiveTab={navigate} isUstadz isSetorMenuOpen={false} onOpenSetorMenu={() => {}} />
     </div>
     <BottomNav currentUser={user} activeTab={tab} setActiveTab={navigate} santriList={santri} onNotify={() => {}} />

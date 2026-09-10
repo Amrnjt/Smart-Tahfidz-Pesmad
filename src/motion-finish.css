@@ -92,11 +92,6 @@ nav[aria-label='Navigasi utama'] button[aria-current='page'] {
   transform: scale(1.06) rotate(-2deg);
 }
 
-.p2-profile-popover {
-  transform-origin: top right;
-  animation: p2-popover-in 300ms var(--p2-motion-spring) both;
-}
-
 .p2-profile-menu-item {
   transition:
     transform var(--p2-motion-fast) var(--p2-motion-spring),
@@ -327,21 +322,6 @@ form[aria-busy='true']:has(.ui-form-identity) .ui-form-actions {
 .ui-dialog-panel,
 .p2-history-record:nth-child(-n+8) {
   backface-visibility: hidden;
-}
-
-@keyframes p2-popover-in {
-  0% {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.96);
-  }
-  70% {
-    opacity: 1;
-    transform: translateY(1px) scale(1.008);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
 }
 
 @keyframes p2-overlay-in {

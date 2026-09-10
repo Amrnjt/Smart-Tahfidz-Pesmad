@@ -95,6 +95,39 @@ test('mobile Setor and Kelola preserve routes, active rail, and close on navigat
   assert.equal(await nav.locator('.p2-bottom-active-rail').count(), 1);
 });
 
+test('anchored dropdowns use origin-aware open and quicker close transitions', async t => {
+  const page = await open(t, 390);
+  const nav = page.getByRole('navigation', { name: 'Navigasi bawah', exact: true });
+
+  await nav.getByRole('button', { name: 'Tambah Setoran Baru', exact: true }).click();
+  const setor = page.locator('#setor-dropup-menu');
+  await setor.waitFor({ state: 'visible' });
+  assert.equal(await setor.getAttribute('data-origin'), 'bottom-center');
+  assert.ok(await setor.evaluate(el => el.classList.contains('t-dropdown') && el.classList.contains('is-open')));
+  assert.match(await setor.evaluate(el => getComputedStyle(el).transitionDuration), /0\.25s/);
+  await nav.getByRole('button', { name: 'Tutup pilihan setoran', exact: true }).click();
+  await setor.waitFor({ state: 'attached' });
+  assert.ok(await setor.evaluate(el => el.classList.contains('is-closing')));
+  assert.match(await setor.evaluate(el => getComputedStyle(el).transitionDuration), /0\.15s/);
+  await setor.waitFor({ state: 'detached' });
+
+  await nav.getByRole('button', { name: 'Buka menu Kelola', exact: true }).click();
+  const manage = page.locator('#manage-dropdown-menu');
+  assert.equal(await manage.getAttribute('data-origin'), 'bottom-center');
+  assert.ok(await manage.evaluate(el => el.classList.contains('t-dropdown') && el.classList.contains('is-open')));
+  await page.keyboard.press('Escape');
+  assert.ok(await manage.evaluate(el => el.classList.contains('is-closing')));
+  await manage.waitFor({ state: 'detached' });
+
+  await page.getByRole('button', { name: 'Menu pengguna', exact: true }).click();
+  const profile = page.locator('#profile-menu-popover');
+  assert.equal(await profile.getAttribute('data-origin'), 'top-right');
+  assert.ok(await profile.evaluate(el => el.classList.contains('t-dropdown') && el.classList.contains('is-open')));
+  await page.getByRole('button', { name: 'Menu pengguna', exact: true }).click();
+  assert.ok(await profile.evaluate(el => el.classList.contains('is-closing')));
+  await profile.waitFor({ state: 'detached' });
+});
+
 test('Ustadz charts paint real data and fit their frames after switching and resizing', async t => {
   const page = await open(t, 390);
   for (const width of [390, 1280, 768]) {
@@ -127,6 +160,11 @@ test('Ustadz charts stop rendering at zero dimensions and recover when shown', a
 
 test('reduced motion switches pages without a page entrance animation', async t => {
   const page = await open(t, 390, 'reduce');
+  await page.getByRole('button', { name: 'Menu pengguna', exact: true }).click();
+  const profile = page.locator('#profile-menu-popover');
+  assert.equal(await profile.evaluate(el => getComputedStyle(el).transitionDuration), '0s');
+  await page.getByRole('button', { name: 'Menu pengguna', exact: true }).click();
+  await profile.waitFor({ state: 'detached' });
   await page.getByRole('button', { name: 'Riwayat uji', exact: true }).click();
   await page.waitForFunction(() => document.querySelector('[data-tab="riwayat"]'));
   assert.equal(await page.locator('.p3-page-content').evaluate(el => getComputedStyle(el).animationName), 'none');

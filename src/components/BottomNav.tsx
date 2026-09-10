@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
 import { User, ActiveTab, Santri } from '../types';
 import {
   LayoutDashboard,
@@ -20,6 +19,7 @@ import { ManageActionSheet } from './ManageActionSheet';
 import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
 import { storageService } from '../services/storageService';
 import type { NotifyFn } from './Snackbar';
+import { useDropdownTransition } from '../hooks/useDropdownTransition';
 
 interface BottomNavProps {
   currentUser: User | null;
@@ -49,6 +49,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   const [programLiburanActive, setProgramLiburanActive] = useState(false);
   const [isProgramToggling, setIsProgramToggling] = useState(false);
   const fabRipple = useRipple<HTMLButtonElement>();
+  const setorTransition = useDropdownTransition(isActionSheetOpen);
 
   useEffect(() => {
     if (!isActionSheetOpen) return;
@@ -142,20 +143,15 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
   return (
     <>
-      <AnimatePresence>
-        {isActionSheetOpen && (
-          <motion.button
-            type="button"
-            className="p2-setor-dropup-backdrop md:hidden"
-            aria-label="Tutup menu setoran"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.16 }}
-            onClick={() => setIsActionSheetOpen(false)}
-          />
-        )}
-      </AnimatePresence>
+      {setorTransition.isMounted && (
+        <button
+          type="button"
+          className={`p2-setor-dropup-backdrop t-dropdown-backdrop ${setorTransition.transitionClassName} md:hidden`}
+          aria-label="Tutup menu setoran"
+          onClick={() => setIsActionSheetOpen(false)}
+          tabIndex={isActionSheetOpen ? 0 : -1}
+        />
+      )}
 
       <div className="p2-bottom-shell md:hidden">
         <nav className="p2-bottom-dock p2-bottom-dock-bedimcode p2-bottom-dock-ustadz" aria-label="Navigasi bawah">
@@ -176,26 +172,19 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           <div className="p2-setor-slot">
             {isSetorActive && <span className="p2-bottom-active-rail" aria-hidden="true" />}
 
-            <AnimatePresence>
-              {isActionSheetOpen && (
-                <motion.div
+            {setorTransition.isMounted && (
+                <div
                   id="setor-dropup-menu"
-                  className="p2-setor-dropup"
+                  className={`p2-setor-dropup t-dropdown ${setorTransition.transitionClassName}`}
+                  data-origin="bottom-center"
                   role="menu"
                   aria-label="Pilih jenis setoran"
-                  initial={{ opacity: 0, y: 18, scale: 0.82 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 12, scale: 0.9 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 30, mass: 0.72 }}
+                  aria-hidden={!isActionSheetOpen}
                 >
-                  <motion.div
+                  <div
                     className="p2-setor-dropup-program"
                     role="group"
                     aria-label="Program Pantauan Liburan"
-                    initial={{ opacity: 0, y: 14, scale: 0.82 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.9 }}
-                    transition={{ type: 'spring', stiffness: 460, damping: 28, mass: 0.62 }}
                   >
                     <button
                       type="button"
@@ -227,38 +216,28 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                     >
                       <span className="p2-setor-program-switch-thumb" aria-hidden="true" />
                     </button>
-                  </motion.div>
+                  </div>
 
-                  {SETOR_ACTIONS.map((action, index) => {
+                  {SETOR_ACTIONS.map((action) => {
                     const Icon = action.icon;
                     return (
-                      <motion.button
+                      <button
                         type="button"
                         role="menuitem"
                         key={action.tab}
                         className="p2-setor-dropup-item"
                         onClick={() => chooseSetor(action.tab)}
-                        initial={{ opacity: 0, y: 14, scale: 0.82 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.9 }}
-                        transition={{
-                          type: 'spring',
-                          stiffness: 460,
-                          damping: 28,
-                          mass: 0.62,
-                          delay: (index + 1) * 0.045
-                        }}
+                        tabIndex={isActionSheetOpen ? 0 : -1}
                       >
                         <span className="p2-setor-dropup-label">{action.label}</span>
                         <span className="p2-setor-dropup-icon" aria-hidden="true">
                           <Icon className="ui-icon-md" />
                         </span>
-                      </motion.button>
+                      </button>
                     );
                   })}
-                </motion.div>
+                </div>
               )}
-            </AnimatePresence>
 
             <button
               type="button"

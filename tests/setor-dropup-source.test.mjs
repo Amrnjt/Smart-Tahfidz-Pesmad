@@ -9,6 +9,7 @@ const appShellCss = readFileSync(new URL('../src/app-shell.css', import.meta.url
 const motionFinishCss = readFileSync(new URL('../src/motion-finish.css', import.meta.url), 'utf8');
 const chromeTransitionCss = readFileSync(new URL('../src/chrome-transition-fix.css', import.meta.url), 'utf8');
 const manageSheet = readFileSync(new URL('../src/components/ManageActionSheet.tsx', import.meta.url), 'utf8');
+const dropdownHook = readFileSync(new URL('../src/hooks/useDropdownTransition.ts', import.meta.url), 'utf8');
 
 test('Setor launcher exposes a mobile drop-up menu above the FAB', () => {
   assert.match(bottomNav, /id="setor-dropup-menu"/);
@@ -27,10 +28,14 @@ test('Setor drop-up keeps the four primary setoran routes', () => {
   }
 });
 
-test('Setor drop-up uses spring motion and an outside-close backdrop', () => {
-  assert.match(bottomNav, /type: 'spring'/);
+test('Setor drop-up uses the origin-aware transitions.dev lifecycle and an outside-close backdrop', () => {
+  assert.match(bottomNav, /p2-setor-dropup t-dropdown/);
+  assert.match(bottomNav, /data-origin="bottom-center"/);
+  assert.match(bottomNav, /setorTransition\.transitionClassName/);
   assert.match(bottomNav, /p2-setor-dropup-backdrop/);
   assert.match(bottomNav, /setIsActionSheetOpen\(false\)/);
+  assert.match(dropdownHook, /--dropdown-close-dur/);
+  assert.match(dropdownHook, /setIsMounted\(false\)/);
 });
 
 test('Setor drop-up restores the live Pantauan Liburan switch and monitor access', () => {
@@ -55,10 +60,10 @@ test('Kelola keeps the Bedimcode open-close mechanism but renders separate float
   assert.match(manageSheet, /role="menu"/);
   assert.doesNotMatch(manageSheet, /p2-manage-dropdown-subtitle/);
   assert.doesNotMatch(manageSheet, /p2-manage-dropdown-chevron/);
-  assert.match(dropupCss, /\.p2-manage-dropdown\s*\{[\s\S]*?max-height:\s*0/);
   assert.match(dropupCss, /\.p2-manage-dropdown\s*\{[\s\S]*?overflow:\s*hidden/);
-  assert.match(dropupCss, /transition:\s*max-height\s*\.4s/);
-  assert.match(dropupCss, /\.p2-manage-dropdown\.is-open\s*\{[\s\S]*?max-height:/);
+  assert.match(manageSheet, /p2-manage-dropdown t-dropdown/);
+  assert.match(manageSheet, /data-origin="bottom-center"/);
+  assert.match(manageSheet, /dropdownTransition\.transitionClassName/);
   assert.match(dropupCss, /\.p2-manage-dropdown-list\s*\{[\s\S]*?display:\s*flex/);
   assert.match(dropupCss, /\.p2-manage-dropdown-list\s*\{[\s\S]*?align-items:\s*center/);
   assert.match(dropupCss, /\.p2-manage-dropdown-list\s*\{[\s\S]*?gap:/);
@@ -67,12 +72,12 @@ test('Kelola keeps the Bedimcode open-close mechanism but renders separate float
   assert.match(dropupCss, /\.p2-manage-dropdown-link\s*\{[\s\S]*?box-shadow:/);
 });
 
-test('Kelola floating bars stay centered and animate upward with stagger', () => {
+test('Kelola floating bars stay centered and move as one anchored surface', () => {
   assert.match(dropupCss, /\.p2-manage-dropdown\s*\{[\s\S]*?left:\s*50%/);
   assert.match(dropupCss, /\.p2-manage-dropdown\s*\{[\s\S]*?translate:\s*-50%\s+0/);
-  assert.match(dropupCss, /\.p2-manage-dropdown-link\s*\{[\s\S]*?transform:\s*translateY\(/);
-  assert.match(dropupCss, /\.p2-manage-dropdown\.is-open\s+\.p2-manage-dropdown-link/);
-  assert.match(dropupCss, /nth-child\(2\)/);
+  assert.match(dropupCss, /\.t-dropdown\s*\{[\s\S]*?scale\(var\(--dropdown-pre-scale\)\)/);
+  assert.match(dropupCss, /\.t-dropdown\.is-closing\s*\{[\s\S]*?--dropdown-close-dur/);
+  assert.doesNotMatch(dropupCss, /\.p2-manage-dropdown\.is-open\s+\.p2-manage-dropdown-link:nth-child/);
 });
 
 test('Kelola keeps Kelas and Santri destinations and rotates a dropdown chevron', () => {
