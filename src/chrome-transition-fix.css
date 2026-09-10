@@ -1,31 +1,18 @@
-/* Navbar / menu transition polish
- * Native View Transition now owns only the shared active rail visually.
- * Page content and persistent chrome remain live to avoid full-page snapshot jank.
- */
-
+/* Page transitions animate live content; navigation stays mounted. */
 :root {
   --chrome-local-page-duration: 260ms;
   --chrome-transition-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Main, page content, and persistent chrome stay live. */
 .ui-app-shell > main#main-content,
 .p3-page-content,
-.p3-chrome-stack {
+.p3-chrome-stack,
+.p2-bottom-active-rail,
+.p2-bottom-item.is-active .p2-bottom-icon-wrap,
+.p2-setor-fab.is-active {
   view-transition-name: none;
 }
 
-/* The browser still creates root snapshots for startViewTransition(). Hide only
- * those root pixels so the live app remains visible while the named rail morphs. */
-::view-transition-old(root),
-::view-transition-new(root) {
-  animation: none !important;
-  opacity: 0 !important;
-  mix-blend-mode: normal;
-  pointer-events: none;
-}
-
-/* The Bedimcode-style mobile indicator is the only visible named snapshot. */
 .p2-bottom-active-rail {
   position: absolute;
   top: -0.25rem;
@@ -38,77 +25,25 @@
   box-shadow: 0 4px 12px rgba(5, 150, 105, 0.2);
   transform: translateX(-50%);
   pointer-events: none;
-  view-transition-name: p2-nav-active;
 }
 
-::view-transition-group(p2-nav-active) {
-  z-index: 320;
-  animation-duration: 300ms;
-  animation-timing-function: var(--chrome-transition-ease);
-}
-
-::view-transition-old(p2-nav-active),
-::view-transition-new(p2-nav-active) {
-  mix-blend-mode: normal;
-}
-
-/* Page motion is local DOM animation, not a page snapshot. */
 .p3-page-content.is-navigation-entering {
   animation: chrome-local-page-in var(--chrome-local-page-duration) var(--chrome-transition-ease) both;
 }
 
 @keyframes chrome-local-page-in {
-  from {
-    opacity: 0.9;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0.9; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 767px) {
-  :root {
-    --chrome-local-page-duration: 240ms;
-  }
-
-  /* The shared rail is the only mobile owner of p2-nav-active. */
-  .p2-bottom-item.is-active .p2-bottom-icon-wrap,
-  .p2-setor-fab.is-active {
-    view-transition-name: none;
-  }
-
-  .p3-page-content.is-navigation-entering {
-    will-change: opacity, transform;
-  }
+  :root { --chrome-local-page-duration: 240ms; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .p3-chrome-stack,
-  .p3-page-content,
-  .p2-bottom-active-rail {
-    view-transition-name: none !important;
-  }
-
-  .p3-page-content.is-navigation-entering,
-  ::view-transition-old(root),
-  ::view-transition-new(root),
-  ::view-transition-group(p2-nav-active),
-  ::view-transition-old(p2-nav-active),
-  ::view-transition-new(p2-nav-active) {
-    animation: none !important;
-  }
+  .p3-page-content.is-navigation-entering { animation: none !important; }
 }
 
 @media (forced-colors: active) {
-  .p2-bottom-active-rail {
-    background: CanvasText;
-    box-shadow: none;
-  }
-
-  ::view-transition-old(p2-nav-active),
-  ::view-transition-new(p2-nav-active) {
-    mix-blend-mode: normal;
-  }
+  .p2-bottom-active-rail { background: CanvasText; box-shadow: none; }
 }

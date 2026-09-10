@@ -127,23 +127,32 @@
   min-width: 0;
 }
 
-.p3-ustadz-page .p323-deferred-surface .recharts-responsive-container {
-  min-width: 0 !important;
-  min-height: 240px;
-}
-
-/* Stage 2: ScrollReveal measures each Ustadz chart frame with ResizeObserver
- * and writes stable pixel dimensions. External !important rules beat the
- * ResponsiveContainer inline percentage size without affecting Wali/Santri. */
-.p3-ustadz-page .p323-deferred-surface .recharts-responsive-container.p323-chart-measured {
-  width: var(--p323-chart-width) !important;
-  height: var(--p323-chart-height) !important;
-  max-width: 100% !important;
-}
-
 .p3-ustadz-page .p323-deferred-surface .recharts-wrapper,
 .p3-ustadz-page .p323-deferred-surface .recharts-surface {
   max-width: 100%;
+}
+
+@media (min-width: 1024px) {
+  .p3-ustadz-page .p323-operator-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(12rem, 15rem);
+    grid-template-rows: auto auto 1fr auto;
+    gap: 1.25rem;
+    padding: 1.5rem;
+  }
+
+  /* Flatten layout-only wrappers so both cards use explicit, non-overlapping rows. */
+  .p3-ustadz-page .p323-hero-content,
+  .p3-ustadz-page .p323-hero-header {
+    display: contents;
+  }
+
+  .p3-ustadz-page .p323-hero-header > div { grid-area: 1 / 1; }
+  .p3-ustadz-page .p323-today-card { grid-area: 1 / 2; width: 100%; }
+  .p3-ustadz-page .p323-rhythm-card { grid-area: 2 / 2 / 4 / 3; align-self: start; }
+  .p3-ustadz-page .p323-hero-summary { grid-area: 2 / 1; margin-top: 0; min-width: 0; }
+  .p3-ustadz-page .p323-hero-actions { grid-area: 3 / 1; margin-top: 0; min-width: 0; }
+  .p3-ustadz-page .p323-hero-breakdown { grid-area: 4 / 1 / 5 / 3; }
 }
 
 @media (max-width: 1023px) {
@@ -166,9 +175,6 @@
     white-space: normal;
   }
 
-  .p3-ustadz-page .p323-deferred-surface .recharts-responsive-container {
-    min-height: 220px;
-  }
 }
 
 /* Mid-range Android/touch-first restraint: remove decorative paint and flatten shadows. */

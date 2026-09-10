@@ -16,15 +16,6 @@ const VALID_TABS: ActiveTab[] = [
 
 const VIEW_ONLY_TABS = new Set<ActiveTab>(['dashboard', 'riwayat', 'mushaf']);
 
-type NativeViewTransition = {
-  ready: Promise<void>;
-  finished: Promise<void>;
-};
-
-type ViewTransitionDocument = Document & {
-  startViewTransition?: (updateCallback: () => void | Promise<void>) => NativeViewTransition;
-};
-
 function readUrlTab(): ActiveTab {
   if (typeof window === 'undefined') return 'dashboard';
   const raw = new URLSearchParams(window.location.search).get('tab')?.trim().toLowerCase() || '';
@@ -73,44 +64,15 @@ const startLocalPageEntrance = () => {
   });
 };
 
-function commitWithViewTransition(update: () => void): void {
+function commitLocalNavigation(update: () => void): void {
   if (typeof document === 'undefined' || typeof window === 'undefined') {
     update();
     return;
   }
 
-  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-  const transitionDocument = document as ViewTransitionDocument;
-  if (reduceMotion || !transitionDocument.startViewTransition) {
-    update();
-    resetNavigationScroll();
-    startLocalPageEntrance();
-    return;
-  }
-
-  let updateRan = false;
-  try {
-    const transition = transitionDocument.startViewTransition(() => {
-      updateRan = true;
-      flushSync(update);
-    });
-
-    const settleLivePage = () => {
-      resetNavigationScroll();
-      startLocalPageEntrance();
-    };
-
-    transition.ready.then(() => {
-      resetNavigationScroll();
-      startLocalPageEntrance();
-    }).catch(settleLivePage);
-  } catch {
-    if (!updateRan) {
-      update();
-      resetNavigationScroll();
-      startLocalPageEntrance();
-    }
-  }
+  flushSync(update);
+  resetNavigationScroll();
+  startLocalPageEntrance();
 }
 
 export function useActiveTabNavigation(user: User | null): [ActiveTab, (tab: ActiveTab) => void] {
@@ -127,7 +89,7 @@ export function useActiveTabNavigation(user: User | null): [ActiveTab, (tab: Act
     }
 
     if (nextTab === activeTab) return;
-    commitWithViewTransition(() => setActiveTabState(nextTab));
+    commitLocalNavigation(() => setActiveTabState(nextTab));
   }, [activeTab, user]);
 
   useEffect(() => {
@@ -142,7 +104,7 @@ export function useActiveTabNavigation(user: User | null): [ActiveTab, (tab: Act
         setActiveTabState(nextTab);
         isInitialSync = false;
       } else {
-        commitWithViewTransition(() => setActiveTabState(nextTab));
+        commitLocalNavigation(() => setActiveTabState(nextTab));
       }
 
       const currentTab = new URLSearchParams(window.location.search).get('tab');

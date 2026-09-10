@@ -103,19 +103,19 @@ test('Bedimcode navbar keeps labels visible and transition feedback restrained',
 
 test('Page navigation keeps page content live and uses a short local no-scale entrance', () => {
   assert.match(app, /className="p3-page-content/);
-  assert.match(chromeTransitionCss, /\.ui-app-shell > main#main-content,[\s\S]*?\.p3-page-content,[\s\S]*?\.p3-chrome-stack\s*\{[\s\S]*?view-transition-name:\s*none/);
+  assert.doesNotMatch(chromeTransitionCss, /view-transition-name:\s*(?!none)[\w-]+/);
   assert.doesNotMatch(chromeTransitionCss, /view-transition-name:\s*p2-page/);
-  assert.match(chromeTransitionCss, /::view-transition-old\(root\),\s*::view-transition-new\(root\)\s*\{[\s\S]*?opacity:\s*0\s*!important/);
+  assert.doesNotMatch(chromeTransitionCss, /::view-transition-/);
   assert.match(chromeTransitionCss, /\.p3-page-content\.is-navigation-entering\s*\{[\s\S]*?animation:/);
   assert.match(chromeTransitionCss, /--chrome-local-page-duration:\s*260ms/);
   assert.match(chromeTransitionCss, /@media \(max-width: 767px\)[\s\S]*?--chrome-local-page-duration:\s*240ms/);
   assert.doesNotMatch(chromeTransitionCss, /scale\(/);
 });
 
-test('Bottom navbar uses one shared active rail for view-transition continuity', () => {
+test('Bottom navbar keeps one active rail without native snapshots', () => {
   assert.match(bottomNav, /p2-bottom-active-rail/);
   assert.match(bottomNav, /showActiveRail/);
-  assert.match(chromeTransitionCss, /\.p2-bottom-active-rail\s*\{[\s\S]*?view-transition-name:\s*p2-nav-active/);
+  assert.doesNotMatch(chromeTransitionCss, /view-transition-name:\s*p2-nav-active/);
   assert.match(chromeTransitionCss, /\.p2-bottom-item\.is-active \.p2-bottom-icon-wrap,[\s\S]*?view-transition-name:\s*none/);
 });
 
@@ -141,5 +141,5 @@ test('Navbar hardening leaves a single mobile active-indicator owner', () => {
   assert.doesNotMatch(appShellCss, /\.p2-bottom-dock-bedimcode \.p2-bottom-item\.is-active::before/);
   assert.doesNotMatch(motionFinishCss, /\.p2-bottom-item\.is-active \.p2-bottom-icon-wrap,\s*\.p2-setor-fab\.is-active\s*\{\s*view-transition-name:\s*p2-nav-active;/);
   assert.doesNotMatch(motionFinishCss, /\.ui-app-shell > main#main-content\s*\{\s*view-transition-name:\s*p2-page;/);
-  assert.match(chromeTransitionCss, /\.p2-bottom-active-rail\s*\{[\s\S]*?view-transition-name:\s*p2-nav-active/);
+  assert.doesNotMatch(chromeTransitionCss, /view-transition-name:\s*p2-nav-active/);
 });

@@ -30,7 +30,6 @@ import {
 import { formatTanggalWaktu, getTodayInputFormat } from '../utils/dateFormatter';
 import { HafalanStatsChart } from './HafalanStatsChart';
 import { TrenHafalanBulananChart } from './TrenHafalanBulananChart';
-import { ScrollReveal } from './ScrollReveal';
 import { PesmadLogo } from './PesmadLogo';
 
 interface UstadzDashboardProps {
@@ -324,7 +323,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
       <section aria-label="Pusat kerja Ustadz" className="p323-briefing-grid grid grid-cols-1 gap-4 lg:grid-cols-5">
         <div className="p323-operator-hero relative isolate overflow-hidden rounded-2xl border border-emerald-800 bg-emerald-950 text-white shadow-[0_18px_48px_-32px_rgba(6,78,59,0.8)] lg:col-span-3">
           <div aria-hidden="true" className="pointer-events-none absolute -right-10 top-12 hidden h-60 w-48 rounded-t-[999px] border border-emerald-700/50 lg:block" />
-          <div className="p323-rhythm-card absolute right-5 top-20 hidden w-60 rounded-2xl border border-emerald-800 bg-emerald-900/60 p-4 shadow-[0_16px_34px_-28px_rgba(0,0,0,0.7)] lg:block">
+          <div className="p323-rhythm-card hidden min-w-0 rounded-2xl border border-emerald-800 bg-emerald-900/60 p-4 shadow-[0_16px_34px_-28px_rgba(0,0,0,0.7)] lg:block">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="p323-kicker text-emerald-300">Ritme 7 hari</p>
@@ -362,8 +361,8 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           </div>
           <div aria-hidden="true" className="pointer-events-none absolute -bottom-16 -right-8 h-40 w-40 rounded-full border border-emerald-800/70" />
 
-          <div className="relative z-10 p-5 sm:p-6 lg:p-7">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="p323-hero-content relative z-10 p-5 sm:p-6 lg:p-7">
+            <div className="p323-hero-header flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex min-w-0 items-center gap-3">
                 <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl border border-emerald-700 bg-white p-1.5 shadow-sm">
                   <PesmadLogo size="md" className="h-full w-full" />
@@ -377,7 +376,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveTab('riwayat')}
-                className="group flex min-h-14 items-center gap-3 self-start rounded-xl border border-emerald-700 bg-emerald-900/70 px-3.5 py-2.5 text-left transition-[border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-emerald-500 hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 sm:self-auto"
+                className="p323-today-card group flex min-h-14 items-center gap-3 self-start rounded-xl border border-emerald-700 bg-emerald-900/70 px-3.5 py-2.5 text-left transition-[border-color,background-color,transform] duration-200 hover:-translate-y-0.5 hover:border-emerald-500 hover:bg-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 sm:self-auto"
                 aria-label={`${todayActivities.length} setoran hari ini. Buka riwayat setoran`}
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-700 bg-emerald-950 text-emerald-200">
@@ -392,7 +391,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
               </button>
             </div>
 
-            <div className="mt-7 max-w-2xl lg:max-w-[72%]">
+            <div className="p323-hero-summary mt-7 max-w-2xl">
               <p className="p323-kicker text-emerald-300">Dashboard Ustadz</p>
               <h1 className="p323-display mt-1 max-w-xl text-white">
                 Assalamu'alaikum, {currentUser.nama}
@@ -419,7 +418,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
               </p>
             </div>
 
-            <div className="mt-6 max-w-2xl">
+            <div className="p323-hero-actions mt-6 max-w-2xl">
               <p className="p323-meta text-emerald-100/75">{operatorAction.description}</p>
               <div className="mt-2 flex flex-wrap gap-2.5">
                 <button
@@ -450,7 +449,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
             </div>
           </div>
 
-          <div className="relative z-10 grid grid-cols-2 gap-px border-t border-emerald-800 bg-emerald-800 sm:grid-cols-4">
+          <div className="p323-hero-breakdown relative z-10 grid grid-cols-2 gap-px border-t border-emerald-800 bg-emerald-800 sm:grid-cols-4">
             {dailyBreakdownWithShare.map((item) => {
               const style = categoryStyles[item.label];
               const Icon = style.icon;
@@ -561,7 +560,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
         </button>
       </section>
 
-      <ScrollReveal delay={80} className="p323-deferred-surface space-y-3">
+      <section aria-label="Analitik hafalan" className="p323-deferred-surface space-y-3">
         <div id="dashboard-analytics" className="scroll-mt-24 flex flex-col gap-3 px-1 sm:flex-row sm:items-end sm:justify-between">
           <div className="max-w-2xl">
             <p className="p323-kicker text-slate-500">Insight</p>
@@ -611,7 +610,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
             kelasList={kelasList}
           />
         )}
-      </ScrollReveal>
+      </section>
 
     </div>
   );
