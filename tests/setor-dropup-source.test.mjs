@@ -6,6 +6,7 @@ const app = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8');
 const bottomNav = readFileSync(new URL('../src/components/BottomNav.tsx', import.meta.url), 'utf8');
 const dropupCss = readFileSync(new URL('../src/setor-dropup.css', import.meta.url), 'utf8');
 const appShellCss = readFileSync(new URL('../src/app-shell.css', import.meta.url), 'utf8');
+const motionFinishCss = readFileSync(new URL('../src/motion-finish.css', import.meta.url), 'utf8');
 const chromeTransitionCss = readFileSync(new URL('../src/chrome-transition-fix.css', import.meta.url), 'utf8');
 const manageSheet = readFileSync(new URL('../src/components/ManageActionSheet.tsx', import.meta.url), 'utf8');
 
@@ -114,4 +115,29 @@ test('Bottom navbar uses one shared active rail for view-transition continuity',
   assert.match(bottomNav, /showActiveRail/);
   assert.match(chromeTransitionCss, /\.p2-bottom-active-rail\s*\{[\s\S]*?view-transition-name:\s*p2-nav-active/);
   assert.match(chromeTransitionCss, /\.p2-bottom-item\.is-active \.p2-bottom-icon-wrap,[\s\S]*?view-transition-name:\s*none/);
+});
+
+test('Navbar hardening closes both launchers before every page navigation', () => {
+  assert.match(bottomNav, /const navigateTo = \(tab: ActiveTab\) => \{[\s\S]*?setIsActionSheetOpen\(false\);[\s\S]*?setIsManageSheetOpen\(false\);[\s\S]*?setActiveTab\(tab\);[\s\S]*?\};/);
+  assert.match(bottomNav, /onClick=\{\(\) => navigateTo\('dashboard'\)\}/);
+  assert.match(bottomNav, /onClick=\{\(\) => navigateTo\('riwayat'\)\}/);
+  assert.match(bottomNav, /onClick=\{\(\) => navigateTo\('mushaf'\)\}/);
+  assert.match(bottomNav, /onSelect=\{\(tab\) => navigateTo\(tab\)\}/);
+  assert.match(bottomNav, /useEffect\(\(\) => \{[\s\S]*?setIsActionSheetOpen\(false\);[\s\S]*?setIsManageSheetOpen\(false\);[\s\S]*?\}, \[activeTab\]\);/);
+});
+
+test('Navbar hardening separates Kelola open-state from page active-state', () => {
+  assert.match(bottomNav, /isActive=\{isManageActive\}/);
+  assert.match(bottomNav, /isOpen=\{isManageSheetOpen\}/);
+  assert.match(bottomNav, /aria-current=\{isActive \? 'page' : undefined\}/);
+  assert.match(bottomNav, /p2-manage-toggle[^`]*\$\{isOpen \? 'is-open' : ''\}/);
+  assert.match(appShellCss, /\.p2-bottom-dock-bedimcode \.p2-manage-toggle\.is-open\s*\{/);
+});
+
+test('Navbar hardening leaves a single mobile active-indicator owner', () => {
+  assert.doesNotMatch(appShellCss, /\.p2-bottom-dock-bedimcode \.p2-bottom-item::before/);
+  assert.doesNotMatch(appShellCss, /\.p2-bottom-dock-bedimcode \.p2-bottom-item\.is-active::before/);
+  assert.doesNotMatch(motionFinishCss, /\.p2-bottom-item\.is-active \.p2-bottom-icon-wrap,\s*\.p2-setor-fab\.is-active\s*\{\s*view-transition-name:\s*p2-nav-active;/);
+  assert.doesNotMatch(motionFinishCss, /\.ui-app-shell > main#main-content\s*\{\s*view-transition-name:\s*p2-page;/);
+  assert.match(chromeTransitionCss, /\.p2-bottom-active-rail\s*\{[\s\S]*?view-transition-name:\s*p2-nav-active/);
 });
