@@ -74,15 +74,22 @@ jobs:
       - name: Verify navbar transition layering
         run: |
           grep -q "import './chrome-transition-fix.css'" src/main.tsx
-          grep -A4 '^\.p3-chrome-stack' src/chrome-transition-fix.css | grep -q 'view-transition-name: none'
+          grep -q 'p3-chrome-stack' src/chrome-transition-fix.css
+          grep -q 'view-transition-name: none' src/chrome-transition-fix.css
           if grep -q 'p3-app-chrome' src/chrome-transition-fix.css; then
             echo 'Persistent chrome must remain live and must not own a View Transition snapshot.'
             exit 1
           fi
+          if grep -q 'view-transition-name: p2-page' src/chrome-transition-fix.css; then
+            echo 'Stage 2 page content must stay live and must not own a page snapshot.'
+            exit 1
+          fi
+          grep -q 'view-transition-old(root)' src/chrome-transition-fix.css
+          grep -q 'opacity: 0 !important' src/chrome-transition-fix.css
           grep -q 'view-transition-group(p2-nav-active)' src/chrome-transition-fix.css
           grep -q 'z-index: 320' src/chrome-transition-fix.css
-          grep -q 'chrome-page-in' src/chrome-transition-fix.css
-          grep -q 'chrome-page-out' src/chrome-transition-fix.css
+          grep -q 'chrome-local-page-in' src/chrome-transition-fix.css
+          grep -q 'is-navigation-entering' src/chrome-transition-fix.css
           grep -q '@media (prefers-reduced-motion: reduce)' src/chrome-transition-fix.css
           grep -q '@media (forced-colors: active)' src/chrome-transition-fix.css
 
@@ -145,11 +152,19 @@ jobs:
           grep -q 'p323-deferred-surface' src/components/UstadzDashboard.tsx
           grep -q 'data setoran aktual' src/components/UstadzDashboard.tsx
           grep -q 'revealImmediately' src/components/ScrollReveal.tsx
+          grep -q 'ResizeObserver' src/components/ScrollReveal.tsx
+          grep -q 'MutationObserver' src/components/ScrollReveal.tsx
+          grep -q 'p323-chart-measured' src/components/ScrollReveal.tsx
+          grep -q -- '--p323-chart-width' src/components/ScrollReveal.tsx
+          grep -q -- '--p323-chart-height' src/components/ScrollReveal.tsx
           grep -q 'p3-ustadz-page' src/ustadz-experience-finish.css
           grep -q 'p323-surface-secondary' src/ustadz-experience-finish.css
           grep -q 'p323-surface-tertiary' src/ustadz-experience-finish.css
           grep -q 'content-visibility: visible' src/ustadz-experience-finish.css
           grep -q 'recharts-responsive-container' src/ustadz-experience-finish.css
+          grep -q 'p323-chart-measured' src/ustadz-experience-finish.css
+          grep -q -- '--p323-chart-width' src/ustadz-experience-finish.css
+          grep -q -- '--p323-chart-height' src/ustadz-experience-finish.css
           grep -q 'min-height: 240px' src/ustadz-experience-finish.css
           grep -q '@media (max-width: 767px) and (pointer: coarse)' src/ustadz-experience-finish.css
           grep -q '@media (prefers-reduced-motion: reduce)' src/ustadz-experience-finish.css
