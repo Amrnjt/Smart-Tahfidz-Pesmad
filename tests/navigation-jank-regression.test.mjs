@@ -7,6 +7,7 @@ import ts from 'typescript';
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL('../src/hooks/useActiveTabNavigation.ts', import.meta.url), 'utf8');
+const transitionCss = readFileSync(new URL('../src/chrome-transition-fix.css', import.meta.url), 'utf8');
 const compiled = ts.transpileModule(source + '\nexport { commitLocalNavigation };', {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 }).outputText;
@@ -59,4 +60,9 @@ test('navigation commits once outside the browser without accessing DOM APIs', (
   let updates = 0;
   loadNavigation()(() => updates++);
   assert.equal(updates, 1);
+});
+
+test('page transition uses the approved smoother desktop and mobile durations', () => {
+  assert.match(transitionCss, /--chrome-local-page-duration:\s*320ms;/);
+  assert.match(transitionCss, /@media \(max-width: 767px\)[\s\S]*--chrome-local-page-duration:\s*300ms;/);
 });
