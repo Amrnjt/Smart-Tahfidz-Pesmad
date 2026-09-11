@@ -9,6 +9,10 @@
   --p2-motion-exit: cubic-bezier(0.4, 0, 1, 1);
   --p2-motion-fast: 180ms;
   --p2-motion-medium: 320ms;
+  --icon-swap-dur: 250ms;
+  --icon-swap-blur: 2px;
+  --icon-swap-start-scale: 0.25;
+  --icon-swap-ease: ease-in-out;
 }
 
 /* Desktop active tab behaves like a soft magnetic pill. */
@@ -66,12 +70,29 @@ nav[aria-label='Navigasi utama'] button[aria-current='page'] {
   transform: translateY(-2px) scale(1.02);
 }
 
-.p2-setor-fab[aria-expanded='true'] svg {
-  transform: rotate(45deg);
+.t-icon-swap {
+  position: relative;
+  display: inline-grid;
 }
-
-.p2-setor-fab svg {
-  transition: transform 320ms var(--p2-motion-spring);
+.t-icon-swap .t-icon {
+  grid-area: 1 / 1;
+  transition:
+    opacity   var(--icon-swap-dur) var(--icon-swap-ease),
+    filter    var(--icon-swap-dur) var(--icon-swap-ease),
+    transform var(--icon-swap-dur) var(--icon-swap-ease);
+  will-change: opacity, filter, transform;
+}
+.t-icon-swap[data-state="a"] .t-icon[data-icon="a"],
+.t-icon-swap[data-state="b"] .t-icon[data-icon="b"] {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+.t-icon-swap[data-state="a"] .t-icon[data-icon="b"],
+.t-icon-swap[data-state="b"] .t-icon[data-icon="a"] {
+  opacity: 0;
+  filter: blur(var(--icon-swap-blur));
+  transform: scale(var(--icon-swap-start-scale));
 }
 
 /* App chrome microinteractions. */
@@ -408,6 +429,7 @@ form[aria-busy='true']:has(.ui-form-identity) .ui-form-actions {
 
 /* Respect reduced motion for local animations. */
 @media (prefers-reduced-motion: reduce) {
+  .t-icon-swap .t-icon { transition: none !important; }
   .p2-dashboard-ustadz > *,
   .p2-dashboard-wali > *,
   .p2-dashboard-santri > *,

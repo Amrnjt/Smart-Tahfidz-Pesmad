@@ -254,7 +254,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               aria-controls="setor-dropup-menu"
               title={isActionSheetOpen ? 'Tutup pilihan setoran' : 'Tambah Setoran Baru'}
             >
-              {isActionSheetOpen ? <X className="ui-icon-md stroke-[2.4]" /> : <Plus className="ui-icon-md stroke-[2.4]" />}
+              <span className="t-icon-swap" data-state={isActionSheetOpen ? 'b' : 'a'} aria-hidden="true">
+                <span className="t-icon" data-icon="a">
+                  <Plus className="ui-icon-md stroke-[2.4]" />
+                </span>
+                <span className="t-icon" data-icon="b">
+                  <X className="ui-icon-md stroke-[2.4]" />
+                </span>
+              </span>
             </button>
             <span className={`p2-setor-label ${isSetorActive || isActionSheetOpen ? 'is-active' : ''}`}>Setor</span>
           </div>

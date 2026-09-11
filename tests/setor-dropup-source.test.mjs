@@ -16,7 +16,11 @@ test('Setor launcher exposes a mobile drop-up menu above the FAB', () => {
   assert.match(bottomNav, /aria-controls="setor-dropup-menu"/);
   assert.match(bottomNav, /aria-haspopup="menu"/);
   assert.match(bottomNav, /p2-setor-dropup-item/);
-  assert.match(bottomNav, /isActionSheetOpen \? <X/);
+  assert.match(bottomNav, /className="t-icon-swap" data-state=\{isActionSheetOpen \? 'b' : 'a'\}/);
+  assert.match(bottomNav, /<span className="t-icon" data-icon="a">/);
+  assert.match(bottomNav, /<span className="t-icon" data-icon="b">/);
+  assert.match(motionFinishCss, /\.t-icon-swap \.t-icon\s*\{/);
+  assert.match(motionFinishCss, /prefers-reduced-motion:\s*reduce[\s\S]*\.t-icon-swap \.t-icon/);
   assert.match(dropupCss, /\.p2-setor-dropup\s*\{/);
   assert.match(dropupCss, /bottom:\s*calc\(/);
   assert.match(dropupCss, /transform-origin:\s*center bottom/);
