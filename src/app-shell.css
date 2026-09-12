@@ -264,70 +264,61 @@
   font-weight: 700;
 }
 
-/* Existing desktop navigation becomes a floating navigation dock. */
+/* Desktop floating segmented navigation capsule. */
 nav[aria-label="Navigasi utama"] {
   width: fit-content;
   max-width: 100%;
   margin-inline: auto;
-  padding: 0.3rem !important;
-  gap: 0.18rem !important;
+  padding: 0.35rem;
+  gap: 0.25rem;
   overflow-x: auto;
-  border: 1px solid var(--shell-dock-border) !important;
-  border-radius: var(--radius-pill);
-  background: var(--shell-dock) !important;
-  box-shadow: var(--shadow-card);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 1.15rem;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.03);
   scrollbar-width: none;
 }
 
 nav[aria-label="Navigasi utama"]::-webkit-scrollbar { display: none; }
 
 nav[aria-label="Navigasi utama"] > button {
-  min-height: 44px !important;
-  margin: 0 !important;
-  padding-inline: 0.9rem !important;
-  border: 1px solid transparent !important;
-  border-radius: var(--radius-pill) !important;
-  background: transparent !important;
-  color: var(--content-secondary) !important;
-  font-weight: 700 !important;
+  min-height: 40px;
+  margin: 0;
+  padding-inline: 0.85rem;
+  border-radius: 0.85rem;
+  font-weight: 700;
   white-space: nowrap;
   transition:
     transform var(--duration-micro) var(--ease-standard),
     color var(--duration-fast) var(--ease-standard),
     background-color var(--duration-fast) var(--ease-standard),
-    border-color var(--duration-fast) var(--ease-standard) !important;
+    border-color var(--duration-fast) var(--ease-standard);
 }
 
-nav[aria-label="Navigasi utama"] > button[aria-current="page"] {
-  color: var(--shell-active-text) !important;
-  background: var(--shell-active) !important;
-  border-color: rgba(16, 185, 129, 0.16) !important;
-}
+nav[aria-label="Navigasi utama"] > button svg { stroke-width: 2; }
 
-nav[aria-label="Navigasi utama"] > button svg { stroke-width: 1.9; }
-
-/* Floating bottom navigation */
+/* Floating bottom navigation dock */
 .p2-bottom-shell {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 0;
+  bottom: 0.75rem;
   z-index: 45;
-  padding: 0 0.75rem calc(0.65rem + var(--safe-bottom));
+  padding: 0 0.75rem calc(0.25rem + var(--safe-bottom));
   pointer-events: none;
 }
 
 .p2-bottom-dock {
   width: min(100%, 28rem);
-  min-height: 4.45rem;
+  min-height: 4.25rem;
   margin-inline: auto;
   display: grid;
-  align-items: end;
+  align-items: center;
   padding: 0.35rem 0.45rem;
-  border: 1px solid var(--shell-dock-border);
-  border-radius: 1.45rem;
-  background: var(--shell-dock);
-  box-shadow: 0 14px 40px rgba(15, 23, 42, 0.15), 0 2px 8px rgba(15, 23, 42, 0.06);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 1.625rem;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.06);
   pointer-events: auto;
 }
 
@@ -337,14 +328,14 @@ nav[aria-label="Navigasi utama"] > button svg { stroke-width: 1.9; }
 .p2-bottom-item {
   position: relative;
   min-width: 0;
-  min-height: 3.55rem;
+  min-height: 3.5rem;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.16rem;
-  padding: 0.2rem 0.15rem;
-  border-radius: 1rem;
+  padding: 0.25rem 0.2rem;
+  border-radius: 0.95rem;
   color: #64748b;
   font-weight: 650;
   transition:
@@ -354,8 +345,8 @@ nav[aria-label="Navigasi utama"] > button svg { stroke-width: 1.9; }
 }
 
 .p2-bottom-item.is-active {
-  color: var(--shell-active-text);
-  background: var(--shell-active);
+  color: var(--brand-strong);
+  background: var(--brand-subtle);
 }
 
 .p2-bottom-icon-wrap {
@@ -371,8 +362,8 @@ nav[aria-label="Navigasi utama"] > button svg { stroke-width: 1.9; }
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: center;
-  font-size: 0.64rem;
-  line-height: 0.82rem;
+  font-size: 0.65rem;
+  line-height: 0.85rem;
   letter-spacing: -0.01em;
 }
 
@@ -389,54 +380,54 @@ nav[aria-label="Navigasi utama"] > button svg { stroke-width: 1.9; }
 
 .p2-setor-fab {
   position: absolute;
-  top: -1.1rem;
+  top: -1.15rem;
   width: 3.35rem;
   height: 3.35rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 1.12rem;
+  border-radius: 1.15rem;
   color: #ffffff;
-  background: linear-gradient(145deg, #047857, #065f46);
-  border: 4px solid #ffffff;
-  box-shadow: 0 12px 26px rgba(4, 120, 87, 0.26), 0 3px 8px rgba(15, 23, 42, 0.12);
+  background: linear-gradient(135deg, #047857, #065f46);
+  border: 3.5px solid #ffffff;
+  box-shadow: 0 10px 24px rgba(4, 120, 87, 0.32), 0 2px 6px rgba(15, 23, 42, 0.08);
   transition:
     transform var(--duration-micro) var(--ease-standard),
     background-color var(--duration-fast) var(--ease-standard);
 }
 
-.p2-setor-fab.is-active { background: linear-gradient(145deg, #064e3b, #043c30); }
+.p2-setor-fab.is-active { background: linear-gradient(135deg, #064e3b, #043c30); }
 .p2-setor-label {
   color: #64748b;
-  font-size: 0.64rem;
-  line-height: 0.82rem;
+  font-size: 0.65rem;
+  line-height: 0.85rem;
   font-weight: 750;
 }
-.p2-setor-label.is-active { color: var(--shell-active-text); }
+.p2-setor-label.is-active { color: #065f46; }
 
-/* Bedimcode-inspired mobile navbar hierarchy, retaining Smart Tahfidz green-white identity. */
+/* Floating mobile dock */
 .p2-bottom-dock-bedimcode {
   min-height: 4.25rem;
-  padding: 0.25rem 0.3rem;
-  border-radius: 0.95rem;
-  background: rgba(255, 255, 255, 0.99);
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.12), 0 2px 7px rgba(15, 23, 42, 0.05);
+  padding: 0.3rem 0.35rem;
+  border-radius: 1.625rem;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 12px 36px rgba(15, 23, 42, 0.12), 0 2px 8px rgba(15, 23, 42, 0.05);
 }
 
 .p2-bottom-dock-bedimcode .p2-bottom-item {
-  min-height: 3.55rem;
-  border-radius: 0.68rem;
+  min-height: 3.5rem;
+  border-radius: 0.95rem;
   background: transparent;
   color: #64748b;
   transition:
     transform 0.2s ease,
-    color 0.3s ease,
-    background-color 0.3s ease;
+    color 0.25s ease,
+    background-color 0.25s ease;
 }
 
 .p2-bottom-dock-bedimcode .p2-bottom-item.is-active {
-  color: var(--shell-active-text);
-  background: var(--shell-active);
+  color: #065f46;
+  background: #ecfdf5;
 }
 
 .p2-bottom-dock-bedimcode .p2-bottom-icon-wrap {

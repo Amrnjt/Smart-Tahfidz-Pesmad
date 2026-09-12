@@ -188,6 +188,7 @@ export default function App() {
           onLogout={handleLogout}
           onRefresh={handleManualRefresh}
           isRefreshing={isSyncing}
+          syncState={syncState}
         />
 
         {currentUser && (
