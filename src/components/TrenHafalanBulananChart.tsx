@@ -498,65 +498,65 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
       </div>
 
       {/* KPI Highlight Bento Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 w-full min-w-0">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 w-full min-w-0">
         {/* Card 1: Total Ayat Dihafal */}
-        <div className="bg-emerald-50 p-3.5 sm:p-4 rounded-2xl border border-emerald-200/70 shadow-2xs">
+        <div className="bg-emerald-50 p-3 sm:p-3.5 rounded-2xl border border-emerald-200/70 shadow-2xs h-[116px] sm:h-[124px] max-h-[124px] sm:max-h-[132px] overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs sm:text-xs font-semibold text-emerald-800">
+            <span className="text-[11px] sm:text-xs font-semibold text-emerald-800 truncate">
               Total Ayat Dihafal
             </span>
             <span className="p-1 rounded-lg bg-emerald-200/60 text-emerald-900">
               <BookOpen className="w-3.5 h-3.5" />
             </span>
           </div>
-          <h4 className="text-xl sm:text-2xl font-black text-emerald-950 mt-1">
+          <h4 className="text-xl sm:text-2xl font-black text-emerald-950 mt-0.5 leading-none">
             <AnimatedCounter value={stats.totalAyatPeriod} /> <span className="text-xs sm:text-sm font-bold text-emerald-800">Ayat</span>
           </h4>
-          <p className="text-xs sm:text-xs text-emerald-700/90 mt-0.5">
+          <p className="text-[10px] sm:text-xs text-emerald-700/90 truncate">
             Dari {stats.totalSesiPeriod} sesi Ziyadah ({timeRangeMonths} bulan)
           </p>
         </div>
 
         {/* Card 2: Rata-Rata Bulanan */}
-        <div className="bg-teal-50 p-3.5 sm:p-4 rounded-2xl border border-teal-200/70 shadow-2xs">
+        <div className="bg-teal-50 p-3 sm:p-3.5 rounded-2xl border border-teal-200/70 shadow-2xs h-[116px] sm:h-[124px] max-h-[124px] sm:max-h-[132px] overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs sm:text-xs font-semibold text-teal-800">
+            <span className="text-[11px] sm:text-xs font-semibold text-teal-800 truncate">
               Rata-rata Bulanan
             </span>
             <span className="p-1 rounded-lg bg-teal-200/60 text-teal-900">
               <Target className="w-3.5 h-3.5" />
             </span>
           </div>
-          <h4 className="text-xl sm:text-2xl font-black text-teal-950 mt-1">
+          <h4 className="text-xl sm:text-2xl font-black text-teal-950 mt-0.5 leading-none">
             <AnimatedCounter value={stats.avgAyatPerMonth} /> <span className="text-xs sm:text-sm font-bold text-teal-800">Ayat/Bln</span>
           </h4>
-          <p className="text-xs sm:text-xs text-teal-700/90 mt-0.5">
+          <p className="text-[10px] sm:text-xs text-teal-700/90 truncate">
             Target standar: ~30-50 ayat/bln
           </p>
         </div>
 
         {/* Card 3: Bulan Puncak */}
-        <div className="bg-amber-50 p-3.5 sm:p-4 rounded-2xl border border-amber-200/70 shadow-2xs">
+        <div className="bg-amber-50 p-3 sm:p-3.5 rounded-2xl border border-amber-200/70 shadow-2xs h-[116px] sm:h-[124px] max-h-[124px] sm:max-h-[132px] overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs sm:text-xs font-semibold text-amber-800">
+            <span className="text-[11px] sm:text-xs font-semibold text-amber-800 truncate">
               Bulan Terproduktif
             </span>
             <span className="p-1 rounded-lg bg-amber-200/60 text-amber-900">
               <Award className="w-3.5 h-3.5" />
             </span>
           </div>
-          <h4 className="text-base sm:text-lg font-black text-amber-950 mt-1 truncate">
+          <h4 className="text-base sm:text-lg font-black text-amber-950 mt-0.5 truncate leading-tight">
             {stats.peakMonth ? stats.peakMonth.fullBulan : '-'}
           </h4>
-          <p className="text-xs sm:text-xs text-amber-800 font-semibold mt-0.5">
+          <p className="text-[10px] sm:text-xs text-amber-800 font-semibold truncate">
             Capaian: {stats.peakMonth ? `${stats.peakMonth.totalAyat} Ayat` : '0 Ayat'}
           </p>
         </div>
 
         {/* Card 4: MoM Growth */}
-        <div className="bg-slate-50 p-3.5 sm:p-4 rounded-2xl border border-indigo-100 shadow-2xs">
+        <div className="bg-slate-50 p-3 sm:p-3.5 rounded-2xl border border-indigo-100 shadow-2xs h-[116px] sm:h-[124px] max-h-[124px] sm:max-h-[132px] overflow-hidden flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs sm:text-xs font-semibold text-slate-700">
+            <span className="text-[11px] sm:text-xs font-semibold text-slate-700 truncate">
               Tren vs Bulan Lalu
             </span>
             <span className={`p-1 rounded-lg ${
@@ -575,8 +575,8 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
               )}
             </span>
           </div>
-          <div className="flex items-baseline gap-1.5 mt-1">
-            <h4 className={`text-xl sm:text-2xl font-black ${
+          <div className="flex items-baseline gap-1.5 mt-0.5">
+            <h4 className={`text-xl sm:text-2xl font-black leading-none ${
               stats.momDirection === 'up'
                 ? 'text-emerald-700'
                 : stats.momDirection === 'down'
@@ -587,7 +587,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
             </h4>
             <span className="text-xs font-semibold text-slate-500">MoM</span>
           </div>
-          <p className="text-xs sm:text-xs text-slate-500 mt-0.5 truncate">
+          <p className="text-[10px] sm:text-xs text-slate-500 truncate">
             Periode {stats.currentMonthName}
           </p>
         </div>
