@@ -58,6 +58,70 @@ const toneStyles: Record<
   },
 };
 
+/**
+ * Helper to determine if a trend status is neutral (e.g., 'sama dengan kemarin', '0 dari kemarin', 'stagnan', 'tetap', 'stabil')
+ * Guarantees neutral status indicators always render in calm slate-based colors instead of red.
+ */
+export function isNeutralTrendStatus(
+  trend?: string,
+  trendPositive?: boolean | null
+): boolean {
+  // Explicitly neutral if trendPositive is null
+  if (trendPositive === null) {
+    return true;
+  }
+
+  if (!trend) {
+    return trendPositive === undefined;
+  }
+
+  const clean = trend.toLowerCase().trim();
+
+  // Neutral or unchanged phrasing
+  if (
+    clean.includes('sama') || // 'sama dengan kemarin', 'tetap sama', 'sama seperti kemarin'
+    clean.includes('stagnan') ||
+    clean.includes('tetap') ||
+    clean.includes('stabil') ||
+    clean.includes('netral') ||
+    clean.includes('seimbang') ||
+    clean.includes('imbang') ||
+    clean.includes('tidak ada perubahan') ||
+    clean.includes('tidak berubah') ||
+    clean.includes('tak berubah') ||
+    clean.includes('tanpa perubahan') ||
+    clean.includes('flat')
+  ) {
+    return true;
+  }
+
+  // Zero delta patterns (e.g., '0 dari kemarin', '+0 dari kemarin', '-0 dari kemarin', '0%', '+0', '-0')
+  if (
+    /(^|\s)[+-]?0(\.0+)?(\s*(dari|vs|dibanding|kemarin|%|setoran|santri|$))/i.test(clean) ||
+    clean === '0' ||
+    clean === '+0' ||
+    clean === '-0'
+  ) {
+    return true;
+  }
+
+  // Mentions 'kemarin' without any positive or negative non-zero digits
+  if (clean.includes('kemarin') && !/[1-9]/.test(clean)) {
+    return true;
+  }
+
+  // If trendPositive is undefined and text does not clearly indicate a direction
+  if (trendPositive === undefined) {
+    const hasPositiveSign = clean.startsWith('+') || clean.includes('naik') || clean.includes('meningkat');
+    const hasNegativeSign = clean.startsWith('-') || clean.includes('turun') || clean.includes('menurun');
+    if (!hasPositiveSign && !hasNegativeSign) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export const CompactBentoKpiCard: React.FC<CompactBentoKpiCardProps> = ({
   label,
   value,
@@ -76,45 +140,41 @@ export const CompactBentoKpiCard: React.FC<CompactBentoKpiCardProps> = ({
 
   const hasProgress = typeof progressPercent === 'number';
 
-  // Neutral status detection: 'sama dengan kemarin', 0 delta, or undefined trendPositive must be slate
-  const isNeutralTrend =
-    trendPositive === undefined ||
-    trendPositive === null ||
-    trend?.toLowerCase().includes('sama') ||
-    trend?.toLowerCase().includes('stagnan');
+  // Neutral status detection: 'sama dengan kemarin', 0 delta, or neutral indicator must always be calm slate
+  const isNeutralTrend = isNeutralTrendStatus(trend, trendPositive);
 
   const trendColorClass = isNeutralTrend
     ? 'text-slate-500 font-medium'
-    : trendPositive === true
+    : trendPositive === true || (trendPositive === undefined && (trend?.trim().startsWith('+') || trend?.toLowerCase().includes('naik') || trend?.toLowerCase().includes('meningkat')))
     ? 'text-emerald-700 font-bold'
     : 'text-rose-600 font-bold';
 
   const cardContent = (
-    <div className="flex h-full flex-col justify-between p-3 md:px-3.5 md:py-3 lg:px-4 lg:py-3.5 overflow-hidden select-none">
-      {/* 1. Baris Atas: [Icon + Label] di kiri (menyatu) & [Badge kecil] di kanan */}
-      <div className="flex items-center justify-between gap-1.5 min-w-0">
-        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-          <span
-            className={`flex h-6 w-6 sm:h-6.5 sm:w-6.5 md:h-7 md:w-7 flex-shrink-0 items-center justify-center rounded-lg border ${tone.ring} ${tone.bg} ${tone.text} shadow-2xs`}
-          >
-            <Icon className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 stroke-[2.2]" aria-hidden="true" />
-          </span>
-          <p className="truncate text-[10px] sm:text-[10.5px] md:text-[11px] font-bold tracking-wider text-slate-500 uppercase leading-none">
-            {label}
-          </p>
-        </div>
+    <div className="flex h-full flex-col justify-between p-3 md:p-3.5 lg:p-4 overflow-hidden select-none">
+      {/* 1. Baris Atas: Grid dengan [Icon], [Label], dan [Badge] yang menyatu rapat */}
+      <div className="grid grid-cols-[auto_1fr_auto] items-center gap-1.5 sm:gap-2 min-w-0 w-full">
+        <span
+          className={`flex h-6 w-6 sm:h-6.5 sm:w-6.5 md:h-7 md:w-7 flex-shrink-0 items-center justify-center rounded-lg border ${tone.ring} ${tone.bg} ${tone.text} shadow-2xs`}
+        >
+          <Icon className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 stroke-[2.2]" aria-hidden="true" />
+        </span>
+        <p className="truncate text-[10px] sm:text-[10.5px] md:text-[11px] font-bold tracking-wider text-slate-500 uppercase leading-none">
+          {label}
+        </p>
 
-        {badge && (
-          <span className="flex-shrink-0 rounded-md bg-slate-100/90 px-1.5 py-0.5 text-[9px] sm:text-[9.5px] font-semibold text-slate-500 border border-slate-200/50 leading-none">
+        {badge ? (
+          <span className="justify-self-end flex-shrink-0 rounded-md bg-slate-100/90 px-1.5 py-0.5 text-[9px] sm:text-[9.5px] font-semibold text-slate-500 border border-slate-200/50 leading-none">
             {badge}
           </span>
+        ) : (
+          <span className="w-0" aria-hidden="true" />
         )}
       </div>
 
-      {/* 2. Bagian Tengah: Angka Utama + Info Ringkas / Persentase */}
-      <div className="flex items-baseline justify-between gap-1.5 min-w-0 pt-1 pb-0.5">
+      {/* 2. Bagian Tengah: Angka Utama (24-28px) + Info Ringkas / Persentase */}
+      <div className="flex items-baseline justify-between gap-1.5 min-w-0 pt-0.5">
         <div className="flex items-baseline gap-1 min-w-0">
-          <span className="text-2xl sm:text-[24px] md:text-[25px] lg:text-[27px] font-black tracking-tight text-slate-900 tabular-nums leading-none">
+          <span className="text-2xl sm:text-[24px] md:text-[26px] lg:text-[28px] font-black tracking-tight text-slate-900 tabular-nums leading-none">
             <AnimatedCounter value={value} duration={700} />
           </span>
           {suffix && (
@@ -132,8 +192,8 @@ export const CompactBentoKpiCard: React.FC<CompactBentoKpiCardProps> = ({
         )}
       </div>
 
-      {/* 3. Bagian Bawah: Progress Bar ramping / Trend / Subtitle dengan baseline yang selaras */}
-      <div className="min-w-0 pt-0.5">
+      {/* 3. Bagian Bawah: Footer dengan baseline yang seragam dan rapat */}
+      <div className="min-w-0 h-3.5 flex items-center">
         {hasProgress ? (
           <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100 border border-slate-100/80">
             <div
@@ -150,7 +210,7 @@ export const CompactBentoKpiCard: React.FC<CompactBentoKpiCardProps> = ({
             {subtitle}
           </p>
         ) : (
-          <div className="h-3" aria-hidden="true" />
+          <div className="h-1" aria-hidden="true" />
         )}
       </div>
     </div>
@@ -165,7 +225,7 @@ export const CompactBentoKpiCard: React.FC<CompactBentoKpiCardProps> = ({
           createRipple(e);
           onClick();
         }}
-        className="ripple-container ui-bento-card ui-bento-card-interactive group flex flex-col justify-between w-full h-[106px] sm:h-[110px] md:h-[108px] lg:h-[110px] overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 cursor-pointer"
+        className="ripple-container ui-bento-card ui-bento-card-interactive group flex flex-col justify-between w-full h-[106px] sm:h-[110px] md:h-[108px] lg:h-[112px] overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 cursor-pointer"
         aria-label={`${label}: ${value}`}
       >
         {cardContent}
@@ -174,7 +234,7 @@ export const CompactBentoKpiCard: React.FC<CompactBentoKpiCardProps> = ({
   }
 
   return (
-    <div className="ui-bento-card flex flex-col justify-between w-full h-[106px] sm:h-[110px] md:h-[108px] lg:h-[110px] overflow-hidden">
+    <div className="ui-bento-card flex flex-col justify-between w-full h-[106px] sm:h-[110px] md:h-[108px] lg:h-[112px] overflow-hidden">
       {cardContent}
     </div>
   );

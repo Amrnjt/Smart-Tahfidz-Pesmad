@@ -318,7 +318,14 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       }))
     ];
     items.sort((a, b) => parseDateSafe(b.timestamp).getTime() - parseDateSafe(a.timestamp).getTime());
-    return items;
+    const seen = new Set<string>();
+    const deduplicated = items.filter((item) => {
+      const composite = `${item.type}-${item.id}`;
+      if (seen.has(composite)) return false;
+      seen.add(composite);
+      return true;
+    });
+    return deduplicated;
   }, [filteredZiyadah, filteredMurojaah, filteredBinnadzor, filteredPembelajaran]);
 
   // Build month list from data
@@ -1532,7 +1539,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   : { label: 'Pembelajaran', dot: 'bg-amber-500', text: 'text-amber-700' };
 
               return (
-                <div key={item.id} data-selected={isSelected ? 'true' : 'false'} className={`p2-history-record transition-colors ${isSelected ? 'bg-emerald-50/40' : 'bg-white hover:bg-slate-50/70'}`}>
+                <div key={`${item.type}-${item.id}`} data-selected={isSelected ? 'true' : 'false'} className={`p2-history-record transition-colors ${isSelected ? 'bg-emerald-50/40' : 'bg-white hover:bg-slate-50/70'}`}>
                   {/* MOBILE VIEW — compact editorial list */}
                   <div className="p2-history-mobile-row lg:hidden px-4 py-3.5">
                     <div className="flex items-start gap-2.5">

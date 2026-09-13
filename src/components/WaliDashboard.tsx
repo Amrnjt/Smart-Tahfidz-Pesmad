@@ -173,7 +173,7 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   const santriBinnadzor = binnadzorRecords.filter(record => record.idSantri === targetSantri.idSantri);
   const santriPembelajaran = pembelajaranRecords.filter(record => record.idSantri === targetSantri.idSantri);
 
-  const activities: WaliActivity[] = [
+  const rawActivities: WaliActivity[] = [
     ...santriZiyadah.map(record => ({
       id: record.id,
       timestamp: record.timestamp,
@@ -210,7 +210,17 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
       catatan: (record.catatanBimbingan || record.catatan || '').trim(),
       inputBy: record.inputBy
     }))
-  ].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+  ];
+
+  const seenWaliActivityIds = new Set<string>();
+  const activities: WaliActivity[] = rawActivities
+    .filter(record => {
+      const key = `${record.category}-${record.id}`;
+      if (seenWaliActivityIds.has(key)) return false;
+      seenWaliActivityIds.add(key);
+      return true;
+    })
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
   const latestActivity = activities[0];
   const latestNote = activities.find(activity => Boolean(activity.catatan));

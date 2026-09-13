@@ -82,7 +82,7 @@ export function installCloudCommitGate(): void {
 
     await setDoc(doc(db, COLLECTIONS.ZIYADAH, newRecord.id), cleanForFirestore(newRecord));
 
-    const records = storageService.getZiyadahRecords();
+    const records = storageService.getZiyadahRecords().filter((r) => r.id !== newRecord.id);
     records.unshift(newRecord);
     writeArrayCache(STORAGE_KEYS.ZIYADAH, records);
     return newRecord;
@@ -101,7 +101,7 @@ export function installCloudCommitGate(): void {
 
     await setDoc(doc(db, COLLECTIONS.MUROJAAH, newRecord.id), cleanForFirestore(newRecord));
 
-    const records = storageService.getMurojaahRecords();
+    const records = storageService.getMurojaahRecords().filter((r) => r.id !== newRecord.id);
     records.unshift(newRecord);
     writeArrayCache(STORAGE_KEYS.MUROJAAH, records);
     return newRecord;
@@ -120,7 +120,7 @@ export function installCloudCommitGate(): void {
 
     await setDoc(doc(db, COLLECTIONS.BINNADZOR, newRecord.id), cleanForFirestore(newRecord));
 
-    const records = storageService.getBinnadzorRecords();
+    const records = storageService.getBinnadzorRecords().filter((r) => r.id !== newRecord.id);
     records.unshift(newRecord);
     writeArrayCache(STORAGE_KEYS.BINNADZOR, records);
     return newRecord;
@@ -139,7 +139,7 @@ export function installCloudCommitGate(): void {
 
     await setDoc(doc(db, COLLECTIONS.PEMBELAJARAN, newRecord.id), cleanForFirestore(newRecord));
 
-    const records = storageService.getPembelajaranRecords();
+    const records = storageService.getPembelajaranRecords().filter((r) => r.id !== newRecord.id);
     records.unshift(newRecord);
     writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, records);
     return newRecord;

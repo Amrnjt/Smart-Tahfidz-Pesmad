@@ -93,9 +93,18 @@ export const CompactActivityFeed: React.FC<CompactActivityFeedProps> = ({
 }) => {
   const { elementRef, createRipple } = useRipple<HTMLButtonElement>();
 
-  // Determine date grouping for activities
+  // Determine date grouping for activities (guaranteed unique by id)
   const displayedActivities = useMemo(() => {
-    return activities.slice(0, maxItems);
+    const seen = new Set<string>();
+    const unique: ActivityItem[] = [];
+    for (const a of activities) {
+      const key = a.id || `${a.category}-${a.timestamp}-${a.idSantri || ''}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(a);
+      if (unique.length >= maxItems) break;
+    }
+    return unique;
   }, [activities, maxItems]);
 
   const groupedActivities = useMemo(() => {
@@ -186,7 +195,7 @@ export const CompactActivityFeed: React.FC<CompactActivityFeedProps> = ({
                   {/* Very subtle vertical line connecting items */}
                   <div className="absolute left-[18px] top-2 bottom-2 w-px bg-slate-100" aria-hidden="true" />
 
-                  {group.items.map((activity) => {
+                  {group.items.map((activity, itemIdx) => {
                     const meta = categoryMeta[activity.category] || categoryMeta.Ziyadah;
                     const parsedDate = parseDateSafe(activity.timestamp);
                     const timeOnly = formatTimeOnly(parsedDate);
@@ -194,7 +203,7 @@ export const CompactActivityFeed: React.FC<CompactActivityFeedProps> = ({
 
                     return (
                       <div
-                        key={activity.id}
+                        key={`${activity.category}-${activity.id}-${itemIdx}`}
                         className="group relative flex items-center justify-between gap-2.5 p-1.5 sm:p-2 rounded-xl transition-colors hover:bg-emerald-50/40 border border-transparent hover:border-emerald-100/60"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">

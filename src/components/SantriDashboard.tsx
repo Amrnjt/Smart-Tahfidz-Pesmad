@@ -174,7 +174,7 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   const santriBinnadzor = binnadzorRecords.filter(record => record.idSantri === currentSantri.idSantri);
   const santriPembelajaran = pembelajaranRecords.filter(record => record.idSantri === currentSantri.idSantri);
 
-  const activities: SantriActivity[] = [
+  const rawActivities: SantriActivity[] = [
     ...santriZiyadah.map(record => ({
       id: record.id,
       timestamp: record.timestamp,
@@ -211,7 +211,17 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
       catatan: (record.catatanBimbingan || record.catatan || '').trim(),
       inputBy: record.inputBy
     }))
-  ].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+  ];
+
+  const seenSantriActivityIds = new Set<string>();
+  const activities: SantriActivity[] = rawActivities
+    .filter(record => {
+      const key = `${record.category}-${record.id}`;
+      if (seenSantriActivityIds.has(key)) return false;
+      seenSantriActivityIds.add(key);
+      return true;
+    })
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
   const latestActivity = activities[0];
   const latestFeedback = activities.find(activity => Boolean(activity.catatan));

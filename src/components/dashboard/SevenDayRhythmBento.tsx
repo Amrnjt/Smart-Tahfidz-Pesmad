@@ -47,15 +47,15 @@ export const SevenDayRhythmBento: React.FC<SevenDayRhythmBentoProps> = ({
 
   // Momentum pill styling & icon
   const momentumMeta = useMemo(() => {
-    const text = momentumLabel.toLowerCase();
-    if (text.includes('meningkat') || text.includes('naik') || text.includes('tinggi')) {
+    const text = momentumLabel.toLowerCase().trim();
+    if (text.includes('+') || text.includes('meningkat') || text.includes('naik') || text.includes('tinggi')) {
       return {
         icon: TrendingUp,
         tone: 'bg-emerald-50 text-emerald-800 border-emerald-200/90',
         iconColor: 'text-emerald-600',
       };
     }
-    if (text.includes('menurun') || text.includes('turun') || text.includes('rendah')) {
+    if (text.startsWith('-') || text.includes('menurun') || text.includes('turun') || text.includes('rendah')) {
       return {
         icon: TrendingDown,
         tone: 'bg-amber-50 text-amber-800 border-amber-200/90',

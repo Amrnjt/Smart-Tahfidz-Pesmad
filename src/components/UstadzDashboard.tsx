@@ -73,7 +73,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   const santriById = new Map<string, Santri>(santriList.map(santri => [santri.idSantri, santri]));
   const resolveName = (idSantri: string, fallback?: string) => fallback || santriById.get(idSantri)?.namaSantri || idSantri;
 
-  const activities: DashboardActivity[] = [
+  const rawActivities: DashboardActivity[] = [
     ...ziyadahRecords.map(record => ({
       id: record.id,
       timestamp: record.timestamp,
@@ -110,7 +110,17 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
       material: record.materiPokok || record.materi || record.jilidAtauKategori || record.namaKelas || 'Pembelajaran',
       nilai: record.nilai
     }))
-  ].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+  ];
+
+  const seenActivityIds = new Set<string>();
+  const activities: DashboardActivity[] = rawActivities
+    .filter(record => {
+      const key = `${record.category}-${record.id}`;
+      if (seenActivityIds.has(key)) return false;
+      seenActivityIds.add(key);
+      return true;
+    })
+    .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
   const todayActivities = activities.filter(record => record.timestamp.startsWith(today));
   const attentionActivities = activities.filter(record => record.nilai === 'Kurang' || record.nilai === 'Mengulang');
