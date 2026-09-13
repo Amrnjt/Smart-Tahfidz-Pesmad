@@ -55,6 +55,23 @@ function cleanForFirestore<T>(data: T): T {
   return JSON.parse(JSON.stringify(data));
 }
 
+function deduplicateById<T extends { id?: string; idSantri?: string }>(items: T[]): T[] {
+  const seen = new Set<string>();
+  const result: T[] = [];
+  for (const item of items) {
+    const key = item.id || (item as any).idSantri;
+    if (key) {
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push(item);
+      }
+    } else {
+      result.push(item);
+    }
+  }
+  return result;
+}
+
 function readArrayCache<T>(key: string): T[] {
   const data = localStorage.getItem(key);
   if (!data) return [];
@@ -167,34 +184,55 @@ export const storageService = {
   },
 
   getSantriList(): Santri[] {
-    return readArrayCache<Santri>(STORAGE_KEYS.SANTRI).map((s) => ({
+    const raw = readArrayCache<Santri>(STORAGE_KEYS.SANTRI);
+    const deduplicated = deduplicateById(raw);
+    if (deduplicated.length !== raw.length) {
+      writeArrayCache(STORAGE_KEYS.SANTRI, deduplicated);
+    }
+    return deduplicated.map((s) => ({
       ...s,
       kelas: normalizeKelas(s.kelas)
     }));
   },
 
   getZiyadahRecords(): ZiyadahRecord[] {
-    const records = readArrayCache<ZiyadahRecord>(STORAGE_KEYS.ZIYADAH);
+    const raw = readArrayCache<ZiyadahRecord>(STORAGE_KEYS.ZIYADAH);
+    const deduplicated = deduplicateById(raw);
+    if (deduplicated.length !== raw.length) {
+      writeArrayCache(STORAGE_KEYS.ZIYADAH, deduplicated);
+    }
     const deletedIds = this.getDeletedRecordIds();
-    return deletedIds.size > 0 ? records.filter((r) => !deletedIds.has(r.id)) : records;
+    return deletedIds.size > 0 ? deduplicated.filter((r) => !deletedIds.has(r.id)) : deduplicated;
   },
 
   getMurojaahRecords(): MurojaahRecord[] {
-    const records = readArrayCache<MurojaahRecord>(STORAGE_KEYS.MUROJAAH);
+    const raw = readArrayCache<MurojaahRecord>(STORAGE_KEYS.MUROJAAH);
+    const deduplicated = deduplicateById(raw);
+    if (deduplicated.length !== raw.length) {
+      writeArrayCache(STORAGE_KEYS.MUROJAAH, deduplicated);
+    }
     const deletedIds = this.getDeletedRecordIds();
-    return deletedIds.size > 0 ? records.filter((r) => !deletedIds.has(r.id)) : records;
+    return deletedIds.size > 0 ? deduplicated.filter((r) => !deletedIds.has(r.id)) : deduplicated;
   },
 
   getBinnadzorRecords(): BinnadzorRecord[] {
-    const records = readArrayCache<BinnadzorRecord>(STORAGE_KEYS.BINNADZOR);
+    const raw = readArrayCache<BinnadzorRecord>(STORAGE_KEYS.BINNADZOR);
+    const deduplicated = deduplicateById(raw);
+    if (deduplicated.length !== raw.length) {
+      writeArrayCache(STORAGE_KEYS.BINNADZOR, deduplicated);
+    }
     const deletedIds = this.getDeletedRecordIds();
-    return deletedIds.size > 0 ? records.filter((r) => !deletedIds.has(r.id)) : records;
+    return deletedIds.size > 0 ? deduplicated.filter((r) => !deletedIds.has(r.id)) : deduplicated;
   },
 
   getPembelajaranRecords(): PembelajaranRecord[] {
-    const records = readArrayCache<PembelajaranRecord>(STORAGE_KEYS.PEMBELAJARAN);
+    const raw = readArrayCache<PembelajaranRecord>(STORAGE_KEYS.PEMBELAJARAN);
+    const deduplicated = deduplicateById(raw);
+    if (deduplicated.length !== raw.length) {
+      writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, deduplicated);
+    }
     const deletedIds = this.getDeletedRecordIds();
-    return deletedIds.size > 0 ? records.filter((r) => !deletedIds.has(r.id)) : records;
+    return deletedIds.size > 0 ? deduplicated.filter((r) => !deletedIds.has(r.id)) : deduplicated;
   },
 
   getKelasList(): Kelas[] {
@@ -413,8 +451,9 @@ export const storageService = {
       namaSantri: santri?.namaSantri || record.idSantri
     };
 
-    records.unshift(newRecord);
-    writeArrayCache(STORAGE_KEYS.ZIYADAH, records);
+    const nextRecords = records.filter(r => r.id !== newRecord.id);
+    nextRecords.unshift(newRecord);
+    writeArrayCache(STORAGE_KEYS.ZIYADAH, nextRecords);
 
     try {
       await setDoc(doc(db, COLLECTIONS.ZIYADAH, newRecord.id), cleanForFirestore(newRecord));
@@ -443,8 +482,9 @@ export const storageService = {
       namaSantri: santri?.namaSantri || record.idSantri
     };
 
-    records.unshift(newRecord);
-    writeArrayCache(STORAGE_KEYS.MUROJAAH, records);
+    const nextRecords = records.filter(r => r.id !== newRecord.id);
+    nextRecords.unshift(newRecord);
+    writeArrayCache(STORAGE_KEYS.MUROJAAH, nextRecords);
 
     try {
       await setDoc(doc(db, COLLECTIONS.MUROJAAH, newRecord.id), cleanForFirestore(newRecord));
@@ -473,8 +513,9 @@ export const storageService = {
       namaSantri: santri?.namaSantri || record.idSantri
     };
 
-    records.unshift(newRecord);
-    writeArrayCache(STORAGE_KEYS.BINNADZOR, records);
+    const nextRecords = records.filter(r => r.id !== newRecord.id);
+    nextRecords.unshift(newRecord);
+    writeArrayCache(STORAGE_KEYS.BINNADZOR, nextRecords);
 
     try {
       await setDoc(doc(db, COLLECTIONS.BINNADZOR, newRecord.id), cleanForFirestore(newRecord));
@@ -503,8 +544,9 @@ export const storageService = {
       namaSantri: santri?.namaSantri || record.idSantri
     };
 
-    records.unshift(newRecord);
-    writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, records);
+    const nextRecords = records.filter(r => r.id !== newRecord.id);
+    nextRecords.unshift(newRecord);
+    writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, nextRecords);
 
     try {
       await setDoc(doc(db, COLLECTIONS.PEMBELAJARAN, newRecord.id), cleanForFirestore(newRecord));
@@ -600,49 +642,69 @@ export const storageService = {
 
       const ziyadahSnap = await getDocs(collection(db, COLLECTIONS.ZIYADAH));
       const ziyadahRecords: ZiyadahRecord[] = [];
+      const ziyadahSeen = new Set<string>();
       ziyadahSnap.forEach((docSnap) => {
         const data = docSnap.data() as ZiyadahRecord;
         const id = data.id || docSnap.id;
-        if (id && !deletedIds.has(id)) ziyadahRecords.push({ ...data, id });
+        if (id && !deletedIds.has(id) && !ziyadahSeen.has(id)) {
+          ziyadahSeen.add(id);
+          ziyadahRecords.push({ ...data, id });
+        }
       });
       ziyadahRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
       writeArrayCache(STORAGE_KEYS.ZIYADAH, ziyadahRecords);
 
       const murojaahSnap = await getDocs(collection(db, COLLECTIONS.MUROJAAH));
       const murojaahRecords: MurojaahRecord[] = [];
+      const murojaahSeen = new Set<string>();
       murojaahSnap.forEach((docSnap) => {
         const data = docSnap.data() as MurojaahRecord;
         const id = data.id || docSnap.id;
-        if (id && !deletedIds.has(id)) murojaahRecords.push({ ...data, id });
+        if (id && !deletedIds.has(id) && !murojaahSeen.has(id)) {
+          murojaahSeen.add(id);
+          murojaahRecords.push({ ...data, id });
+        }
       });
       murojaahRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
       writeArrayCache(STORAGE_KEYS.MUROJAAH, murojaahRecords);
 
       const binnadzorSnap = await getDocs(collection(db, COLLECTIONS.BINNADZOR));
       const binnadzorRecords: BinnadzorRecord[] = [];
+      const binnadzorSeen = new Set<string>();
       binnadzorSnap.forEach((docSnap) => {
         const data = docSnap.data() as BinnadzorRecord;
         const id = data.id || docSnap.id;
-        if (id && !deletedIds.has(id)) binnadzorRecords.push({ ...data, id });
+        if (id && !deletedIds.has(id) && !binnadzorSeen.has(id)) {
+          binnadzorSeen.add(id);
+          binnadzorRecords.push({ ...data, id });
+        }
       });
       binnadzorRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
       writeArrayCache(STORAGE_KEYS.BINNADZOR, binnadzorRecords);
 
       const pembelajaranSnap = await getDocs(collection(db, COLLECTIONS.PEMBELAJARAN));
       const pembelajaranRecords: PembelajaranRecord[] = [];
+      const pembelajaranSeen = new Set<string>();
       pembelajaranSnap.forEach((docSnap) => {
         const data = docSnap.data() as PembelajaranRecord;
         const id = data.id || docSnap.id;
-        if (id && !deletedIds.has(id)) pembelajaranRecords.push({ ...data, id });
+        if (id && !deletedIds.has(id) && !pembelajaranSeen.has(id)) {
+          pembelajaranSeen.add(id);
+          pembelajaranRecords.push({ ...data, id });
+        }
       });
       pembelajaranRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
       writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, pembelajaranRecords);
 
       const kelasSnap = await getDocs(collection(db, COLLECTIONS.KELAS));
       const kelasList: Kelas[] = [];
+      const kelasSeen = new Set<string>();
       kelasSnap.forEach((docSnap) => {
         const k = docSnap.data() as Kelas;
-        if (k && k.id) kelasList.push({ ...k, tipeKelas: normalizeTipeKelas(k.tipeKelas) });
+        if (k && k.id && !kelasSeen.has(k.id)) {
+          kelasSeen.add(k.id);
+          kelasList.push({ ...k, tipeKelas: normalizeTipeKelas(k.tipeKelas) });
+        }
       });
       writeArrayCache(STORAGE_KEYS.KELAS, kelasList);
 

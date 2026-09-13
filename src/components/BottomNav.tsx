@@ -1,9 +1,19 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { User, ActiveTab, Santri } from '../types';
-import { LayoutDashboard, History, Plus, BookOpen, Settings2 } from 'lucide-react';
+import {
+  LayoutDashboard,
+  History,
+  Plus,
+  X,
+  BookOpen,
+  Settings2,
+  ChevronDown
+} from 'lucide-react';
 import { useRipple } from '../hooks/useRipple';
-import { SetorActionSheet } from './SetorActionSheet';
 import { ManageActionSheet } from './ManageActionSheet';
+import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
+import { SETOR_ACTIONS } from '../config/setorActions';
 import type { NotifyFn } from './Snackbar';
 
 interface BottomNavProps {
@@ -23,34 +33,69 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 }) => {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [isManageSheetOpen, setIsManageSheetOpen] = useState(false);
+  const [showMonitorModal, setShowMonitorModal] = useState(false);
   const fabRipple = useRipple<HTMLButtonElement>();
 
+  useEffect(() => {
+    if (!isActionSheetOpen) return;
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsActionSheetOpen(false);
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isActionSheetOpen]);
+
+  useEffect(() => {
+    setIsActionSheetOpen(false);
+    setIsManageSheetOpen(false);
+  }, [activeTab]);
+
   if (!currentUser) return null;
+
+  const navigateTo = (tab: ActiveTab) => {
+    setIsActionSheetOpen(false);
+    setIsManageSheetOpen(false);
+    setActiveTab(tab);
+  };
 
   const roleStr = String(currentUser.role || '').trim().toLowerCase();
   const isWali = roleStr === 'wali' || roleStr.includes('wali');
   const isSantri = roleStr === 'santri';
   const isUstadz = !isWali && !isSantri;
-  const isSetorActive = activeTab === 'ziyadah' || activeTab === 'murojaah' || activeTab === 'binnadzor' || activeTab === 'pembelajaran';
+  const isSetorActive =
+    activeTab === 'ziyadah' ||
+    activeTab === 'murojaah' ||
+    activeTab === 'binnadzor' ||
+    activeTab === 'pembelajaran';
   const isManageActive = activeTab === 'kelas' || activeTab === 'santri';
 
+  // 1. Wali & Santri 3-Item Layout
   if (!isUstadz) {
     const items = [
-      { id: 'dashboard' as ActiveTab, label: isWali ? 'Anak Saya' : 'Hafalan', icon: LayoutDashboard },
+      {
+        id: 'dashboard' as ActiveTab,
+        label: isWali ? 'Anak Saya' : 'Hafalan',
+        icon: LayoutDashboard
+      },
       { id: 'riwayat' as ActiveTab, label: 'Riwayat', icon: History },
       { id: 'mushaf' as ActiveTab, label: 'Mushaf', icon: BookOpen }
     ];
 
     return (
-      <div className="p2-bottom-shell md:hidden">
-        <nav aria-label="Navigasi bawah" className="p2-bottom-dock p2-bottom-dock-compact">
+      <div className="fixed left-0 right-0 bottom-2.5 sm:bottom-3 z-40 px-3 pointer-events-none md:hidden select-none">
+        <nav
+          aria-label="Navigasi bawah"
+          className="pointer-events-auto w-full max-w-[320px] mx-auto grid grid-cols-3 items-center p-1.5 rounded-[26px] bg-white/98 backdrop-blur-md border border-slate-200/95 shadow-[0_12px_36px_rgba(15,23,42,0.12),0_2px_8px_rgba(15,23,42,0.06)]"
+          style={{ paddingBottom: 'max(0.375rem, env(safe-area-inset-bottom))' }}
+        >
           {items.map(item => (
             <NavButton
               key={item.id}
               label={item.label}
               icon={item.icon}
               isActive={activeTab === item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={() => navigateTo(item.id)}
             />
           ))}
         </nav>
@@ -58,71 +103,177 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     );
   }
 
+  // 2. Ustadz / Admin 5-Item Layout with Elevated Center Setor Action
+  const chooseSetor = (tab: ActiveTab) => {
+    navigateTo(tab);
+  };
+
   return (
     <>
-      <div className="p2-bottom-shell md:hidden">
-        <nav className="p2-bottom-dock p2-bottom-dock-ustadz" aria-label="Navigasi bawah">
+      {/* Backdrop for Setor Dropup Menu */}
+      <AnimatePresence>
+        {isActionSheetOpen && (
+          <motion.button
+            type="button"
+            className="p2-setor-dropup-backdrop md:hidden"
+            aria-label="Tutup menu setoran"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.16 }}
+            onClick={() => setIsActionSheetOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Floating Mobile Navigation Dock */}
+      <div className={`fixed left-0 right-0 bottom-2.5 sm:bottom-3 ${isActionSheetOpen ? 'z-50' : 'z-40'} px-3 pointer-events-none md:hidden select-none`}>
+        <nav
+          className="pointer-events-auto w-full max-w-[390px] mx-auto grid grid-cols-5 items-center px-1.5 py-1 rounded-[26px] bg-white/98 backdrop-blur-md border border-slate-200/95 shadow-[0_12px_36px_rgba(15,23,42,0.12),0_2px_8px_rgba(15,23,42,0.06)]"
+          aria-label="Navigasi bawah"
+          style={{ paddingBottom: 'max(0.35rem, env(safe-area-inset-bottom))' }}
+        >
+          {/* 1. Beranda */}
           <NavButton
             label="Beranda"
             icon={LayoutDashboard}
             isActive={activeTab === 'dashboard'}
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => navigateTo('dashboard')}
           />
 
+          {/* 2. Riwayat */}
           <NavButton
             label="Riwayat"
             icon={History}
             isActive={activeTab === 'riwayat'}
-            onClick={() => setActiveTab('riwayat')}
+            onClick={() => navigateTo('riwayat')}
           />
 
-          <div className="p2-setor-slot">
+          {/* 3. CENTER SETOR (ELEVATED ACTION) */}
+          <div className="relative flex flex-col items-center justify-end -mt-5">
+            {/* Dropup Action Sheet */}
+            <AnimatePresence>
+              {isActionSheetOpen && (
+                <motion.div
+                  id="setor-dropup-menu"
+                  className="p2-setor-dropup"
+                  role="menu"
+                  aria-label="Pilih jenis setoran"
+                  initial={{ opacity: 0, y: 18, scale: 0.82 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 12, scale: 0.9 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 30, mass: 0.72 }}
+                >
+                  {/* Setor Options (Ziyadah, Muroja'ah, Binnadzor, Non-Tahfidz) */}
+                  {SETOR_ACTIONS.map((action, index) => {
+                    const Icon = action.icon;
+                    return (
+                      <motion.button
+                        type="button"
+                        role="menuitem"
+                        key={action.tab}
+                        className="p2-setor-dropup-item"
+                        onClick={() => chooseSetor(action.tab)}
+                        initial={{ opacity: 0, y: 14, scale: 0.82 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.9 }}
+                        transition={{
+                          type: 'spring',
+                          stiffness: 460,
+                          damping: 28,
+                          mass: 0.62,
+                          delay: index * 0.04
+                        }}
+                      >
+                        <span className="p2-setor-dropup-label">{action.title}</span>
+                        <span className="p2-setor-dropup-icon" aria-hidden="true">
+                          <Icon className="w-4 h-4" />
+                        </span>
+                      </motion.button>
+                    );
+                  })}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Signature Elevated FAB */}
             <button
               type="button"
               ref={fabRipple.elementRef}
               onClick={(event) => {
                 fabRipple.createRipple(event);
-                setIsActionSheetOpen(true);
+                setIsManageSheetOpen(false);
+                setIsActionSheetOpen(open => !open);
               }}
-              className={`ripple-container p2-setor-fab ${isSetorActive ? 'is-active' : ''}`}
-              aria-label="Tambah Setoran Baru"
-              aria-haspopup="dialog"
+              className={`ripple-container relative w-[52px] h-[52px] rounded-2xl flex items-center justify-center text-white border-[3.5px] border-white transition-transform active:scale-95 cursor-pointer shadow-[0_10px_24px_rgba(4,120,87,0.32),0_2px_6px_rgba(15,23,42,0.08)] ${
+                isActionSheetOpen
+                  ? 'bg-gradient-to-tr from-emerald-900 to-emerald-800 rotate-90'
+                  : isSetorActive
+                  ? 'bg-gradient-to-tr from-emerald-800 to-emerald-700'
+                  : 'bg-gradient-to-tr from-emerald-700 to-emerald-600 hover:from-emerald-800 hover:to-emerald-700'
+              }`}
+              aria-label={isActionSheetOpen ? 'Tutup pilihan setoran' : 'Tambah Setoran Baru'}
+              aria-haspopup="menu"
               aria-expanded={isActionSheetOpen}
-              title="Tambah Setoran Baru"
+              aria-controls="setor-dropup-menu"
+              title={isActionSheetOpen ? 'Tutup pilihan setoran' : 'Tambah Setoran Baru'}
             >
-              <Plus className="ui-icon-md stroke-[2.4]" />
+              {isActionSheetOpen ? (
+                <X className="w-6 h-6 stroke-[2.5]" />
+              ) : (
+                <Plus className="w-6 h-6 stroke-[2.5]" />
+              )}
             </button>
-            <span className={`p2-setor-label ${isSetorActive ? 'is-active' : ''}`}>Setor</span>
+
+            {/* Label below Setor */}
+            <span
+              className={`mt-1 text-[10px] font-extrabold tracking-tight transition-colors ${
+                isSetorActive || isActionSheetOpen ? 'text-emerald-800' : 'text-slate-600'
+              }`}
+            >
+              Setor
+            </span>
           </div>
 
-          <NavButton
-            label="Kelola"
-            icon={Settings2}
-            isActive={isManageActive}
-            onClick={() => setIsManageSheetOpen(true)}
-          />
+          {/* 4. Kelola (with anchored mini popover for Kelas, Santri & Pantauan Liburan) */}
+          <div className="relative flex flex-col items-center">
+            <ManageNavButton
+              isManageSheetOpen={isManageSheetOpen}
+              isActive={isManageActive}
+              isOpen={isManageSheetOpen}
+              onClick={() => {
+                setIsActionSheetOpen(false);
+                setIsManageSheetOpen(open => !open);
+              }}
+            />
+            <ManageActionSheet
+              isOpen={isManageSheetOpen}
+              onClose={() => setIsManageSheetOpen(false)}
+              onSelect={(tab) => navigateTo(tab)}
+              onOpenPantauanLiburan={() => {
+                setIsManageSheetOpen(false);
+                setShowMonitorModal(true);
+              }}
+              activeTab={activeTab}
+            />
+          </div>
 
+          {/* 5. Mushaf */}
           <NavButton
             label="Mushaf"
             icon={BookOpen}
             isActive={activeTab === 'mushaf'}
-            onClick={() => setActiveTab('mushaf')}
+            onClick={() => navigateTo('mushaf')}
           />
         </nav>
       </div>
 
-      <SetorActionSheet
-        isOpen={isActionSheetOpen}
-        onClose={() => setIsActionSheetOpen(false)}
-        onSelect={(tab) => setActiveTab(tab)}
+      {/* Pantauan Liburan Monitor Modal */}
+      <PantauanLiburanMonitorModal
+        isOpen={showMonitorModal}
+        onClose={() => setShowMonitorModal(false)}
         santriList={santriList}
         onNotify={onNotify}
-      />
-
-      <ManageActionSheet
-        isOpen={isManageSheetOpen}
-        onClose={() => setIsManageSheetOpen(false)}
-        onSelect={(tab) => setActiveTab(tab)}
       />
     </>
   );
@@ -146,14 +297,75 @@ const NavButton: React.FC<NavButtonProps> = ({ label, icon: Icon, isActive, onCl
         ripple.createRipple(event);
         onClick();
       }}
-      className={`ripple-container p2-bottom-item ${isActive ? 'is-active' : ''}`}
+      className={`ripple-container relative min-h-[48px] py-1 px-1 rounded-xl flex flex-col items-center justify-center gap-1 transition-all duration-200 cursor-pointer ${
+        isActive
+          ? 'bg-emerald-50/90 text-emerald-800 font-bold'
+          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 font-semibold'
+      }`}
       aria-label={label}
       aria-current={isActive ? 'page' : undefined}
     >
-      <span className="p2-bottom-icon-wrap">
-        <Icon className="ui-icon-md" />
+      <span className="flex items-center justify-center">
+        <Icon className={`w-5 h-5 ${isActive ? 'text-emerald-700 stroke-[2.2]' : 'text-slate-500'}`} />
       </span>
-      <span className="p2-bottom-label">{label}</span>
+      <span className="text-[10px] leading-tight truncate max-w-[58px] text-center tracking-tight">
+        {label}
+      </span>
+    </button>
+  );
+};
+
+interface ManageNavButtonProps {
+  isManageSheetOpen: boolean;
+  isActive: boolean;
+  isOpen: boolean;
+  onClick: () => void;
+}
+
+const ManageNavButton: React.FC<ManageNavButtonProps> = ({
+  isManageSheetOpen,
+  isActive,
+  isOpen,
+  onClick
+}) => {
+  const ripple = useRipple<HTMLButtonElement>();
+
+  return (
+    <button
+      type="button"
+      id="kelola-nav-button"
+      ref={ripple.elementRef}
+      onClick={(event) => {
+        ripple.createRipple(event);
+        onClick();
+      }}
+      className={`ripple-container relative w-full min-h-[48px] py-1 px-1 rounded-xl flex flex-col items-center justify-center gap-1 transition-all duration-200 cursor-pointer ${
+        isActive || isOpen
+          ? 'bg-emerald-50/90 text-emerald-800 font-bold'
+          : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50/80 font-semibold'
+      }`}
+      aria-label={isManageSheetOpen ? 'Tutup menu Kelola' : 'Buka menu Kelola'}
+      aria-haspopup="menu"
+      aria-expanded={isManageSheetOpen}
+      aria-controls="manage-popover-menu"
+      aria-current={isActive ? 'page' : undefined}
+    >
+      <span className="flex items-center justify-center">
+        <Settings2
+          className={`w-5 h-5 ${
+            isActive || isOpen ? 'text-emerald-700 stroke-[2.2]' : 'text-slate-500'
+          }`}
+        />
+      </span>
+      <span className="flex items-center justify-center gap-0.5 text-[10px] leading-tight truncate max-w-[58px] tracking-tight">
+        <span>Kelola</span>
+        <ChevronDown
+          className={`w-2.5 h-2.5 transition-transform duration-200 ${
+            isManageSheetOpen ? 'rotate-180 text-emerald-700' : 'text-slate-400'
+          }`}
+          aria-hidden="true"
+        />
+      </span>
     </button>
   );
 };

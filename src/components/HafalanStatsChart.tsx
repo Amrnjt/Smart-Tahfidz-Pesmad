@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
+import { MeasuredChartFrame } from './MeasuredChartFrame';
 import { AnimatedCounter } from './AnimatedCounter';
 import { ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri, Kelas } from '../types';
 import {
-  ResponsiveContainer,
   BarChart,
   Bar,
   XAxis,
@@ -341,7 +341,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
           </div>
 
           <div className="h-60 sm:h-72 w-full min-w-0 pt-2">
-            <ResponsiveContainer width="100%" height="100%">
+            <MeasuredChartFrame>
               {chartType === 'bar' ? (
                 <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -485,7 +485,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                   />
                 </AreaChart>
               )}
-            </ResponsiveContainer>
+            </MeasuredChartFrame>
           </div>
         </div>
 
@@ -509,7 +509,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
               </div>
             ) : (
               <div className="h-40 sm:h-44 w-full relative mt-2">
-                <ResponsiveContainer width="100%" height="100%">
+                <MeasuredChartFrame>
                   <PieChart>
                     <Pie
                       data={predikatData}
@@ -536,7 +536,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                       }}
                     />
                   </PieChart>
-                </ResponsiveContainer>
+                </MeasuredChartFrame>
                 
                 {/* Center Label with Animated Counter */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">

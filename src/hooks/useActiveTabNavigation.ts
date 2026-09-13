@@ -16,14 +16,6 @@ const VALID_TABS: ActiveTab[] = [
 
 const VIEW_ONLY_TABS = new Set<ActiveTab>(['dashboard', 'riwayat', 'mushaf']);
 
-type NativeViewTransition = {
-  finished: Promise<void>;
-};
-
-type ViewTransitionDocument = Document & {
-  startViewTransition?: (updateCallback: () => void | Promise<void>) => NativeViewTransition;
-};
-
 function readUrlTab(): ActiveTab {
   if (typeof window === 'undefined') return 'dashboard';
   const raw = new URLSearchParams(window.location.search).get('tab')?.trim().toLowerCase() || '';
@@ -47,28 +39,40 @@ function urlForTab(tab: ActiveTab): string {
   return `${url.pathname}${url.search}${url.hash}`;
 }
 
-function commitWithViewTransition(update: () => void): void {
+const resetNavigationScroll = () => {
+  if (typeof window === 'undefined') return;
+  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+};
+
+let localPageEntranceTimer: number | null = null;
+
+const startLocalPageEntrance = () => {
+  if (typeof document === 'undefined' || typeof window === 'undefined') return;
+  const page = document.querySelector<HTMLElement>('.p3-page-content');
+  if (!page) return;
+
+  page.classList.remove('is-navigation-entering');
+  window.requestAnimationFrame(() => {
+    page.classList.add('is-navigation-entering');
+    if (localPageEntranceTimer !== null) {
+      window.clearTimeout(localPageEntranceTimer);
+    }
+    localPageEntranceTimer = window.setTimeout(() => {
+      page.classList.remove('is-navigation-entering');
+      localPageEntranceTimer = null;
+    }, 300);
+  });
+};
+
+function commitLocalNavigation(update: () => void): void {
   if (typeof document === 'undefined' || typeof window === 'undefined') {
     update();
     return;
   }
 
-  const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-  const transitionDocument = document as ViewTransitionDocument;
-  if (reduceMotion || !transitionDocument.startViewTransition) {
-    update();
-    return;
-  }
-
-  let updateRan = false;
-  try {
-    transitionDocument.startViewTransition(() => {
-      updateRan = true;
-      flushSync(update);
-    });
-  } catch {
-    if (!updateRan) update();
-  }
+  flushSync(update);
+  resetNavigationScroll();
+  startLocalPageEntrance();
 }
 
 export function useActiveTabNavigation(user: User | null): [ActiveTab, (tab: ActiveTab) => void] {
@@ -85,7 +89,7 @@ export function useActiveTabNavigation(user: User | null): [ActiveTab, (tab: Act
     }
 
     if (nextTab === activeTab) return;
-    commitWithViewTransition(() => setActiveTabState(nextTab));
+    commitLocalNavigation(() => setActiveTabState(nextTab));
   }, [activeTab, user]);
 
   useEffect(() => {
@@ -100,7 +104,7 @@ export function useActiveTabNavigation(user: User | null): [ActiveTab, (tab: Act
         setActiveTabState(nextTab);
         isInitialSync = false;
       } else {
-        commitWithViewTransition(() => setActiveTabState(nextTab));
+        commitLocalNavigation(() => setActiveTabState(nextTab));
       }
 
       const currentTab = new URLSearchParams(window.location.search).get('tab');

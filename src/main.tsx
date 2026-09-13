@@ -18,6 +18,7 @@ import './santri-experience-finish.css';
 import './chrome-transition-fix.css';
 import './ustadz-experience-finish.css';
 import './setoran-workflow-finish.css';
+import './setor-dropup.css';
 
 // P0.3: generic Cloud commit semantics first.
 installCloudCommitGate();

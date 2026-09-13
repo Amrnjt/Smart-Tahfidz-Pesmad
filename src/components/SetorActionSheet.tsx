@@ -1,53 +1,34 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ActiveTab, Santri } from '../types';
-import {
-  BookPlus,
-  RotateCw,
-  BookOpenCheck,
-  BookOpen,
-  X,
-  ChevronRight,
-  GraduationCap,
-  Eye
-} from 'lucide-react';
-import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
-import type { NotifyFn } from './Snackbar';
+import React, { useLayoutEffect } from 'react';
+import { ActiveTab } from '../types';
+import { X, ChevronRight } from 'lucide-react';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
+import { SETOR_ACTIONS } from '../config/setorActions';
 
 interface SetorActionSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (tab: ActiveTab) => void;
-  santriList?: Santri[];
-  onNotify: NotifyFn;
 }
 
 export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
   isOpen,
   onClose,
-  onSelect,
-  santriList = [],
-  onNotify
+  onSelect
 }) => {
-  const [showMonitorModal, setShowMonitorModal] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
-  const closingRef = useRef(false);
-  const pendingTab = useRef<ActiveTab | undefined>(undefined);
-  const requestClose = (tab?: ActiveTab) => {
-    if (closingRef.current) return;
-    closingRef.current = true;
-    pendingTab.current = tab;
-    setIsClosing(true);
+  const handleSelectTab = (tab: ActiveTab) => {
+    onSelect(tab);
+    onClose();
   };
-  const dialogRef = useAccessibleDialog(isOpen, () => requestClose());
+
+  const handleDismiss = () => {
+    onClose();
+  };
+
+  const dialogRef = useAccessibleDialog(isOpen, handleDismiss);
 
   useLayoutEffect(() => {
-    if (!isOpen) {
-      closingRef.current = false;
-      pendingTab.current = undefined;
-      setIsClosing(false);
-      return;
-    }
+    if (!isOpen) return;
+
     const root = document.documentElement;
     const previousGutter = root.style.scrollbarGutter;
     root.style.scrollbarGutter = 'stable';
@@ -61,66 +42,13 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
     return () => { root.style.scrollbarGutter = previousGutter; };
   }, [isOpen, dialogRef]);
 
-  useEffect(() => {
-    if (!isOpen || !isClosing) return;
-    let cancelled = false;
-    // Follow the actual CSS exit, including cancellation and reduced motion.
-    const animations = dialogRef.current?.getAnimations() ?? [];
-    Promise.allSettled(animations.map(animation => animation.finished)).then(() => {
-      if (cancelled) return;
-      const tab = pendingTab.current;
-      if (tab !== undefined) onSelect(tab);
-      onClose();
-    });
-    return () => { cancelled = true; };
-  }, [isOpen, isClosing, onClose, onSelect, dialogRef]);
-
   if (!isOpen) return null;
 
-  const actions = [
-    {
-      tab: 'ziyadah' as ActiveTab,
-      title: 'Ziyadah',
-      subtitle: 'Hafalan baru',
-      badge: 'Bil-Ghoib',
-      badgeColor: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      icon: BookPlus,
-      iconBg: 'bg-emerald-600 text-white'
-    },
-    {
-      tab: 'murojaah' as ActiveTab,
-      title: "Muroja'ah",
-      subtitle: 'Pengulangan hafalan',
-      badge: 'Pengulangan',
-      badgeColor: 'bg-teal-50 text-teal-700 border-teal-200',
-      icon: RotateCw,
-      iconBg: 'bg-teal-600 text-white'
-    },
-    {
-      tab: 'binnadzor' as ActiveTab,
-      title: 'Binnadzor',
-      subtitle: 'Tilawah, tajwid & makhraj',
-      badge: 'Bin-Nadzor',
-      badgeColor: 'bg-indigo-50 text-indigo-700 border-indigo-200',
-      icon: BookOpenCheck,
-      iconBg: 'bg-indigo-600 text-white'
-    },
-    {
-      tab: 'pembelajaran' as ActiveTab,
-      title: 'Non-Tahfidz',
-      subtitle: 'Jilid Ummi & kelas istimewa',
-      badge: 'Pembelajaran',
-      badgeColor: 'bg-amber-50 text-amber-800 border-amber-200',
-      icon: GraduationCap,
-      iconBg: 'bg-amber-600 text-white'
-    }
-  ];
-
   return (
-    <div className="setor-sheet-root fixed inset-0 z-50 flex items-end justify-center md:p-6" data-state={isClosing ? 'closing' : 'open'}>
+    <div className="setor-sheet-root fixed inset-0 z-50 flex items-end justify-center md:p-6" data-state="open">
       <div
         className="setor-sheet-backdrop fixed inset-0 bg-slate-950/35"
-        onClick={() => requestClose()}
+        onClick={handleDismiss}
         aria-hidden="true"
       />
 
@@ -144,7 +72,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
           </div>
           <button
             type="button"
-            onClick={() => requestClose()}
+            onClick={handleDismiss}
             className="min-h-11 min-w-11 -mr-1 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer flex-shrink-0"
             aria-label="Tutup"
           >
@@ -153,25 +81,19 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
         </div>
 
         <section aria-labelledby="setor-primary-actions-title" className="py-3">
-          <div className="mb-2 px-0.5">
-            <h3 id="setor-primary-actions-title" className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
-              Jenis setoran
-            </h3>
-          </div>
-
           <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
-            {actions.map((act) => {
+            {SETOR_ACTIONS.map((act) => {
               const Icon = act.icon;
 
               return (
                 <button
                   type="button"
                   key={act.tab}
-                  onClick={() => requestClose(act.tab)}
+                  onClick={() => handleSelectTab(act.tab)}
                   className="setor-sheet-action w-full min-h-[58px] px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-2.5 text-left cursor-pointer group md:min-h-[72px] md:p-3"
                 >
                   <div
-                    className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${act.iconBg}`}
+                    className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${act.colorClasses.iconBg}`}
                   >
                     <Icon className="w-[19px] h-[19px]" />
                   </div>
@@ -181,11 +103,13 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
                       <span className="text-sm font-bold text-slate-900 truncate">
                         {act.title}
                       </span>
-                      <span
-                        className={`text-xs leading-4 font-semibold px-1.5 rounded-md border whitespace-nowrap flex-shrink-0 ${act.badgeColor}`}
-                      >
-                        {act.badge}
-                      </span>
+                      {act.badge && (
+                        <span
+                          className={`text-xs leading-4 font-semibold px-1.5 rounded-md border whitespace-nowrap flex-shrink-0 ${act.colorClasses.badgeBg} ${act.colorClasses.badgeText} ${act.colorClasses.badgeBorder}`}
+                        >
+                          {act.badge}
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-slate-500 leading-4">
                       {act.subtitle}
@@ -198,60 +122,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
             })}
           </div>
         </section>
-
-        <section aria-labelledby="setor-supporting-actions-title" className="border-t border-slate-100 py-3">
-          <div className="mb-2 px-0.5">
-            <h3 id="setor-supporting-actions-title" className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
-              Fitur pendukung
-            </h3>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => { if (!closingRef.current) setShowMonitorModal(true); }}
-            aria-haspopup="dialog"
-            aria-expanded={showMonitorModal}
-            className="group flex min-h-12 w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:border-slate-300 hover:bg-slate-100"
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-700 border border-slate-200">
-              <Eye className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-slate-800">Kelola Pantauan Liburan</span>
-              <span className="mt-0.5 block text-xs text-slate-500">Aktif/nonaktifkan program dan lihat rekap Wali</span>
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-          </button>
-        </section>
-
-        <div className="pt-1.5 border-t border-slate-100 flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => requestClose('mushaf')}
-            className="min-h-11 flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-50 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
-          >
-            <BookOpen className="w-4 h-4" />
-            <span>Mushaf Digital</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => requestClose()}
-            className="min-h-11 px-4 rounded-lg bg-slate-100 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition cursor-pointer"
-          >
-            Tutup
-          </button>
-        </div>
       </div>
-
-      {showMonitorModal && (
-        <PantauanLiburanMonitorModal
-          isOpen={showMonitorModal}
-          onClose={() => setShowMonitorModal(false)}
-          santriList={santriList}
-          onNotify={onNotify}
-        />
-      )}
     </div>
   );
 };
