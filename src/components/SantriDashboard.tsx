@@ -25,7 +25,6 @@ import { formatTanggalWaktu } from '../utils/dateFormatter';
 import { ScrollReveal } from './ScrollReveal';
 import { CompactDashboardHero, HeroAction } from './dashboard/CompactDashboardHero';
 import { CompactBentoKpiCard } from './dashboard/CompactBentoKpiCard';
-import { CompactQuickActions } from './dashboard/CompactQuickActions';
 import { CompactTrenBulananChart } from './dashboard/CompactTrenBulananChart';
 import { CompactActivityFeed } from './dashboard/CompactActivityFeed';
 
@@ -347,13 +346,7 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
         />
       </section>
 
-      {/* 3. QUICK ACTIONS BENTO STRIP */}
-      <CompactQuickActions
-        userRole="Santri"
-        setActiveTab={setActiveTab}
-      />
-
-      {/* 4. MIDDLE BENTO ROW: Setoran Terakhir & Feedback Ustadz */}
+      {/* 3. MIDDLE BENTO ROW: Setoran Terakhir & Feedback Ustadz */}
       <section
         aria-label="Konteks Belajar Santri"
         className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:gap-4"

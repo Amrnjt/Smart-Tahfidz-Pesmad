@@ -29,7 +29,6 @@ import { storageService } from '../services/storageService';
 import type { NotifyFn } from './Snackbar';
 import { CompactDashboardHero, HeroAction } from './dashboard/CompactDashboardHero';
 import { CompactBentoKpiCard } from './dashboard/CompactBentoKpiCard';
-import { CompactQuickActions } from './dashboard/CompactQuickActions';
 import { CompactTrenBulananChart } from './dashboard/CompactTrenBulananChart';
 import { CompactActivityFeed } from './dashboard/CompactActivityFeed';
 
@@ -344,15 +343,7 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
         />
       </section>
 
-      {/* 3. QUICK ACTIONS BENTO STRIP */}
-      <CompactQuickActions
-        userRole="Wali"
-        setActiveTab={setActiveTab}
-        programLiburanActive={programLiburanActive}
-        onJumpToPantauanLiburan={jumpToPantauanLiburan}
-      />
-
-      {/* 4. MIDDLE BENTO ROW: Setoran Terakhir & Catatan Ustadz */}
+      {/* 3. MIDDLE BENTO ROW: Setoran Terakhir & Catatan Ustadz */}
       <section
         aria-label="Konteks Belajar Santri"
         className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:gap-4"

@@ -26,7 +26,6 @@ import { getTodayInputFormat } from '../utils/dateFormatter';
 import { HafalanStatsChart } from './HafalanStatsChart';
 import { CompactDashboardHero, HeroAction } from './dashboard/CompactDashboardHero';
 import { CompactBentoKpiCard } from './dashboard/CompactBentoKpiCard';
-import { CompactQuickActions } from './dashboard/CompactQuickActions';
 import { CompactAttentionBento, AttentionItem } from './dashboard/CompactAttentionBento';
 import { SevenDayRhythmBento } from './dashboard/SevenDayRhythmBento';
 import { QualityRingBento } from './dashboard/QualityRingBento';
@@ -286,22 +285,13 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
         />
       </section>
 
-      {/* 3. QUICK ACTIONS BENTO STRIP */}
-      <CompactQuickActions
-        userRole={currentUser.role || 'Ustadz'}
-        setActiveTab={setActiveTab}
-        onOpenSetorMenu={onOpenSetorMenu}
-        onJumpToAttention={jumpToAttention}
-        attentionCount={todayAttention.length}
-      />
-
-      {/* 4. MIDDLE BENTO ROW: 7-Day Velocity & Attention & Quality */}
+      {/* 3. INSIGHT BENTO ROW: 7-Day Velocity & Quality (5 : 3 desktop ratio) */}
       <section
-        aria-label="Operasional & Evaluasi"
-        className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:gap-4"
+        aria-label="Ritme dan Kualitas Setoran"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-3 sm:gap-4 items-stretch"
       >
-        {/* 7-Day Rhythm Pulse */}
-        <div className="lg:col-span-5">
+        {/* 7-Day Rhythm Pulse (± 5/8 desktop) */}
+        <div className="md:col-span-1 lg:col-span-5">
           <SevenDayRhythmBento
             pulse={sevenDayPulse}
             todayKey={today}
@@ -311,19 +301,8 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           />
         </div>
 
-        {/* Attention / Tindak Lanjut Card */}
-        <div className="lg:col-span-4">
-          <CompactAttentionBento
-            todayAttentionCount={todayAttention.length}
-            totalAttentionCount={attentionActivities.length}
-            items={attentionItems}
-            onViewAll={() => setActiveTab('riwayat')}
-            className="h-full"
-          />
-        </div>
-
-        {/* Quality & Additional Summary */}
-        <div className="flex flex-col gap-3 sm:col-span-2 lg:col-span-3">
+        {/* Quality & Additional Summary (± 3/8 desktop) */}
+        <div className="md:col-span-1 lg:col-span-3 flex flex-col gap-3">
           <QualityRingBento
             percent={sangatBaikPercent}
             count={sangatBaikCount}
@@ -352,6 +331,14 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           </button>
         </div>
       </section>
+
+      {/* 4. PERHATIAN & TINDAK LANJUT EVALUASI */}
+      <CompactAttentionBento
+        todayAttentionCount={todayAttention.length}
+        totalAttentionCount={attentionActivities.length}
+        items={attentionItems}
+        onViewAll={() => setActiveTab('riwayat')}
+      />
 
       {/* 5. TREN & AKTIVITAS BENTO SECTION */}
       <ScrollReveal delay={50} className="space-y-3">
