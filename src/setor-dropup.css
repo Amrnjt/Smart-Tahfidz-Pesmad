@@ -2,10 +2,11 @@
 .p2-setor-dropup-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 44;
+  z-index: 38;
   border: 0;
-  background: rgba(15, 23, 42, 0.08);
+  background: rgba(15, 23, 42, 0.18);
   -webkit-tap-highlight-color: transparent;
+  pointer-events: auto;
 }
 
 .p2-setor-slot {
@@ -16,7 +17,7 @@
   position: absolute;
   left: 50%;
   bottom: calc(100% + 1.35rem);
-  z-index: 3;
+  z-index: 50;
   width: min(14.25rem, calc(100vw - 1.5rem));
   display: flex;
   flex-direction: column;
@@ -42,6 +43,7 @@
     0 14px 32px rgba(15, 23, 42, 0.14),
     0 2px 8px rgba(15, 23, 42, 0.05);
   -webkit-tap-highlight-color: transparent;
+  pointer-events: auto;
 }
 
 .p2-setor-program-info {
@@ -157,6 +159,8 @@
     0 2px 8px rgba(15, 23, 42, 0.05);
   white-space: nowrap;
   -webkit-tap-highlight-color: transparent;
+  pointer-events: auto;
+  cursor: pointer;
 }
 
 .p2-setor-dropup-item:active,

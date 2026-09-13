@@ -13,11 +13,9 @@ import {
 import {
   AlertTriangle,
   ArrowRight,
-  BookOpen,
   BookPlus,
   CalendarCheck,
   ChartBar as BarChart3,
-  CirclePlus as PlusCircle,
   RotateCw,
   TrendingUp,
   Users
@@ -167,36 +165,43 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
     });
   };
 
-  // Prepare Hero Actions (1-2 primary CTAs)
-  const heroActions: HeroAction[] = todayAttention.length > 0
-    ? [
-        {
-          label: `Tinjau ${todayAttention.length} Tindak Lanjut`,
-          onClick: jumpToAttention,
-          icon: AlertTriangle,
-          variant: 'amber'
-        },
-        {
-          label: 'Mulai Setor',
-          onClick: onOpenSetorMenu,
-          icon: PlusCircle,
-          variant: 'secondary'
-        }
-      ]
-    : [
-        {
-          label: 'Mulai Setor',
-          onClick: onOpenSetorMenu,
-          icon: PlusCircle,
-          variant: 'primary'
-        },
-        {
-          label: 'Buka Mushaf',
-          onClick: () => setActiveTab('mushaf'),
-          icon: BookOpen,
-          variant: 'secondary'
-        }
-      ];
+  // Daily Command Hero Context
+  const todayActiveSantriCount = new Set(todayActivities.map(a => a.idSantri)).size;
+  const dailySummary = todayActivities.length > 0
+    ? `${todayActivities.length} setoran tercatat hari ini dari ${todayActiveSantriCount} santri aktif.`
+    : 'Pantau setoran dan evaluasi perkembangan hafalan santri hari ini.';
+
+  const statusNotice = todayAttention.length > 0
+    ? {
+        text: `${todayAttention.length} setoran perlu tindak lanjut hari ini.`,
+        type: 'attention' as const,
+      }
+    : {
+        text: 'Semua setoran hari ini dalam kondisi baik.',
+        type: 'positive' as const,
+      };
+
+  // Primary CTA: conditional Tinjau Tindak Lanjut
+  const primaryHeroAction: HeroAction | null = todayAttention.length > 0
+    ? {
+        label: `Tinjau ${todayAttention.length} Tindak Lanjut`,
+        onClick: jumpToAttention,
+        icon: AlertTriangle,
+        variant: 'amber',
+        ariaLabel: `Tinjau ${todayAttention.length} setoran yang perlu tindak lanjut`,
+      }
+    : null;
+
+  // Calm secondary action when all is good
+  const secondaryHeroAction: HeroAction | null = todayAttention.length === 0
+    ? {
+        label: 'Lihat Riwayat',
+        onClick: () => setActiveTab('riwayat'),
+        icon: CalendarCheck,
+        variant: 'secondary',
+        ariaLabel: 'Buka riwayat setoran hari ini',
+      }
+    : null;
 
   const attentionItems: AttentionItem[] = attentionActivities.map(item => ({
     id: item.id,
@@ -210,32 +215,31 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-3 sm:space-y-4 lg:space-y-5">
-      {/* 1. COMPACT DASHBOARD HERO (Contextual, Height: Mobile 150-185px, Desktop 210-250px) */}
+      {/* 1. DAILY COMMAND HERO (Contextual, Height: Mobile 150-180px, Desktop 205-240px) */}
       <CompactDashboardHero
         userName={currentUser.nama}
         greeting="Assalamu'alaikum"
         roleBadge={`Dashboard ${currentUser.role || 'Ustadz'}`}
-        subtext="Catat setoran & pantau perkembangan hafalan santri hari ini."
+        subtext={dailySummary}
+        statusNotice={statusNotice}
+        primaryAction={primaryHeroAction}
+        secondaryAction={secondaryHeroAction}
         summaryPill={
           <button
             type="button"
             onClick={() => setActiveTab('riwayat')}
-            className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-950/60 px-2.5 py-1 text-left transition-colors hover:bg-emerald-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/25 bg-emerald-950/60 px-2.5 py-1 text-left transition-colors hover:bg-emerald-900/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
             aria-label={`${todayActivities.length} setoran hari ini. Buka riwayat`}
+            title="Buka riwayat setoran hari ini"
           >
-            <CalendarCheck className="h-4 w-4 text-emerald-300" />
-            <div className="min-w-0">
-              <span className="block text-[10px] text-emerald-300 font-medium leading-none">
-                Hari Ini
-              </span>
-              <strong className="text-sm font-[800] text-white leading-tight">
-                {todayActivities.length}
-              </strong>
-            </div>
-            <ArrowRight className="h-3 w-3 text-emerald-400" />
+            <CalendarCheck className="h-3.5 w-3.5 text-emerald-300 flex-shrink-0" />
+            <span className="text-[11px] font-bold text-white leading-none">
+              {todayActivities.length}{' '}
+              <span className="font-normal text-emerald-200/80">Hari Ini</span>
+            </span>
+            <ArrowRight className="h-3 w-3 text-emerald-400/80" />
           </button>
         }
-        actions={heroActions}
       />
 
       {/* 2. COMPACT BENTO KPI GRID (2 columns on mobile, 4 columns on desktop) */}

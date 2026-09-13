@@ -30,24 +30,21 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
   onNotify
 }) => {
   const [showMonitorModal, setShowMonitorModal] = useState(false);
-  const [isClosing, setIsClosing] = useState(false);
-  const closingRef = useRef(false);
-  const pendingTab = useRef<ActiveTab | undefined>(undefined);
-  const requestClose = (tab?: ActiveTab) => {
-    if (closingRef.current) return;
-    closingRef.current = true;
-    pendingTab.current = tab;
-    setIsClosing(true);
+
+  const handleSelectTab = (tab: ActiveTab) => {
+    onSelect(tab);
+    onClose();
   };
-  const dialogRef = useAccessibleDialog(isOpen, () => requestClose());
+
+  const handleDismiss = () => {
+    onClose();
+  };
+
+  const dialogRef = useAccessibleDialog(isOpen, handleDismiss);
 
   useLayoutEffect(() => {
-    if (!isOpen) {
-      closingRef.current = false;
-      pendingTab.current = undefined;
-      setIsClosing(false);
-      return;
-    }
+    if (!isOpen) return;
+
     const root = document.documentElement;
     const previousGutter = root.style.scrollbarGutter;
     root.style.scrollbarGutter = 'stable';
@@ -60,20 +57,6 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
     }
     return () => { root.style.scrollbarGutter = previousGutter; };
   }, [isOpen, dialogRef]);
-
-  useEffect(() => {
-    if (!isOpen || !isClosing) return;
-    let cancelled = false;
-    // Follow the actual CSS exit, including cancellation and reduced motion.
-    const animations = dialogRef.current?.getAnimations() ?? [];
-    Promise.allSettled(animations.map(animation => animation.finished)).then(() => {
-      if (cancelled) return;
-      const tab = pendingTab.current;
-      if (tab !== undefined) onSelect(tab);
-      onClose();
-    });
-    return () => { cancelled = true; };
-  }, [isOpen, isClosing, onClose, onSelect, dialogRef]);
 
   if (!isOpen) return null;
 
@@ -117,10 +100,10 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
   ];
 
   return (
-    <div className="setor-sheet-root fixed inset-0 z-50 flex items-end justify-center md:p-6" data-state={isClosing ? 'closing' : 'open'}>
+    <div className="setor-sheet-root fixed inset-0 z-50 flex items-end justify-center md:p-6" data-state="open">
       <div
         className="setor-sheet-backdrop fixed inset-0 bg-slate-950/35"
-        onClick={() => requestClose()}
+        onClick={handleDismiss}
         aria-hidden="true"
       />
 
@@ -144,7 +127,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
           </div>
           <button
             type="button"
-            onClick={() => requestClose()}
+            onClick={handleDismiss}
             className="min-h-11 min-w-11 -mr-1 flex items-center justify-center rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer flex-shrink-0"
             aria-label="Tutup"
           >
@@ -167,7 +150,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
                 <button
                   type="button"
                   key={act.tab}
-                  onClick={() => requestClose(act.tab)}
+                  onClick={() => handleSelectTab(act.tab)}
                   className="setor-sheet-action w-full min-h-[58px] px-3 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300 transition-colors flex items-center gap-2.5 text-left cursor-pointer group md:min-h-[72px] md:p-3"
                 >
                   <div
@@ -208,10 +191,10 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
 
           <button
             type="button"
-            onClick={() => { if (!closingRef.current) setShowMonitorModal(true); }}
+            onClick={() => setShowMonitorModal(true)}
             aria-haspopup="dialog"
             aria-expanded={showMonitorModal}
-            className="group flex min-h-12 w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:border-slate-300 hover:bg-slate-100"
+            className="group flex min-h-12 w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:border-slate-300 hover:bg-slate-100 cursor-pointer"
           >
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-700 border border-slate-200">
               <Eye className="h-4 w-4" aria-hidden="true" />
@@ -227,7 +210,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
         <div className="pt-1.5 border-t border-slate-100 flex items-center gap-2">
           <button
             type="button"
-            onClick={() => requestClose('mushaf')}
+            onClick={() => handleSelectTab('mushaf')}
             className="min-h-11 flex-1 inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-50 text-xs font-semibold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
           >
             <BookOpen className="w-4 h-4" />
@@ -236,7 +219,7 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
 
           <button
             type="button"
-            onClick={() => requestClose()}
+            onClick={handleDismiss}
             className="min-h-11 px-4 rounded-lg bg-slate-100 text-xs font-semibold text-slate-600 hover:bg-slate-200 transition cursor-pointer"
           >
             Tutup

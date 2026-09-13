@@ -291,6 +291,12 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
             ? `Target hafalan: ${currentSantri.targetHafalan}`
             : 'Tingkatkan kualitas & kelancaran hafalan setiap hari.'
         }
+        statusNotice={{
+          text: currentSantri.targetHafalan
+            ? `Target: ${currentSantri.targetHafalan}`
+            : 'Jaga konsistensi hafalan setiap hari',
+          type: 'positive'
+        }}
         summaryPill={
           <div className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/30 bg-emerald-950/60 px-2.5 py-1 text-emerald-200">
             <Clock3 className="h-3.5 w-3.5 text-emerald-300" />

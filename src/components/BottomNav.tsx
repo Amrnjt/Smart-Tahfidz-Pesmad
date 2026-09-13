@@ -176,7 +176,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       </AnimatePresence>
 
       {/* Floating Mobile Navigation Dock */}
-      <div className="fixed left-0 right-0 bottom-2.5 sm:bottom-3 z-40 px-3 pointer-events-none md:hidden select-none">
+      <div className={`fixed left-0 right-0 bottom-2.5 sm:bottom-3 ${isActionSheetOpen ? 'z-50' : 'z-40'} px-3 pointer-events-none md:hidden select-none`}>
         <nav
           className="pointer-events-auto w-full max-w-[390px] mx-auto grid grid-cols-5 items-center px-1.5 py-1 rounded-[26px] bg-white/98 backdrop-blur-md border border-slate-200/95 shadow-[0_12px_36px_rgba(15,23,42,0.12),0_2px_8px_rgba(15,23,42,0.06)]"
           aria-label="Navigasi bawah"

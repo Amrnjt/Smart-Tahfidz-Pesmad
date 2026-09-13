@@ -288,6 +288,12 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
             ? `Target: ${targetSantri.targetHafalan} · Kelas ${targetSantri.kelas || '—'}`
             : `Kelas: ${targetSantri.kelas || 'Belum ditetapkan'}`
         }
+        statusNotice={{
+          text: programLiburanActive
+            ? 'Program pantauan liburan aktif'
+            : `Setoran terakhir: ${latestRecency.label}`,
+          type: programLiburanActive ? 'attention' : 'positive'
+        }}
         summaryPill={
           <div className="inline-flex items-center gap-1.5 rounded-xl border border-emerald-400/30 bg-emerald-950/60 px-2.5 py-1 text-emerald-200">
             <Clock3 className="h-3.5 w-3.5 text-emerald-300" />
