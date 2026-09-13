@@ -8,17 +8,12 @@ import {
   X,
   BookOpen,
   Settings2,
-  BookPlus,
-  RotateCw,
-  BookOpenCheck,
-  GraduationCap,
-  Eye,
   ChevronDown
 } from 'lucide-react';
 import { useRipple } from '../hooks/useRipple';
 import { ManageActionSheet } from './ManageActionSheet';
 import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
-import { storageService } from '../services/storageService';
+import { SETOR_ACTIONS } from '../config/setorActions';
 import type { NotifyFn } from './Snackbar';
 
 interface BottomNavProps {
@@ -28,13 +23,6 @@ interface BottomNavProps {
   santriList: Santri[];
   onNotify: NotifyFn;
 }
-
-const SETOR_ACTIONS = [
-  { tab: 'ziyadah' as ActiveTab, label: 'Ziyadah', icon: BookPlus },
-  { tab: 'murojaah' as ActiveTab, label: "Muroja'ah", icon: RotateCw },
-  { tab: 'binnadzor' as ActiveTab, label: 'Binnadzor', icon: BookOpenCheck },
-  { tab: 'pembelajaran' as ActiveTab, label: 'Non-Tahfidz', icon: GraduationCap }
-];
 
 export const BottomNav: React.FC<BottomNavProps> = ({
   currentUser,
@@ -46,15 +34,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [isManageSheetOpen, setIsManageSheetOpen] = useState(false);
   const [showMonitorModal, setShowMonitorModal] = useState(false);
-  const [programLiburanActive, setProgramLiburanActive] = useState(false);
-  const [isProgramToggling, setIsProgramToggling] = useState(false);
   const fabRipple = useRipple<HTMLButtonElement>();
 
   useEffect(() => {
     if (!isActionSheetOpen) return;
-
-    const cfg = storageService.getAppConfig();
-    setProgramLiburanActive(Boolean(cfg.programLiburanActive));
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setIsActionSheetOpen(false);
@@ -125,38 +108,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     navigateTo(tab);
   };
 
-  const openPantauanMonitor = () => {
-    setIsActionSheetOpen(false);
-    setShowMonitorModal(true);
-  };
-
-  const toggleProgramLiburan = async () => {
-    if (isProgramToggling) return;
-
-    const nextStatus = !programLiburanActive;
-    setIsProgramToggling(true);
-
-    try {
-      const updated = await storageService.setProgramLiburanActive(
-        nextStatus,
-        'Ustadz / Admin'
-      );
-      const storedStatus = Boolean(updated.programLiburanActive);
-      setProgramLiburanActive(storedStatus);
-      onNotify(
-        'success',
-        storedStatus
-          ? 'Program Pantauan Liburan aktif dan tersimpan di Cloud.'
-          : 'Program Pantauan Liburan dinonaktifkan dan tersimpan di Cloud.'
-      );
-    } catch (error) {
-      console.error(error);
-      onNotify('error', 'Status Program Pantauan Liburan gagal diperbarui di Cloud.');
-    } finally {
-      setIsProgramToggling(false);
-    }
-  };
-
   return (
     <>
       {/* Backdrop for Setor Dropup Menu */}
@@ -213,52 +164,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                   exit={{ opacity: 0, y: 12, scale: 0.9 }}
                   transition={{ type: 'spring', stiffness: 420, damping: 30, mass: 0.72 }}
                 >
-                  {/* Pantauan Liburan Toggle Banner */}
-                  <motion.div
-                    className="p2-setor-dropup-program"
-                    role="group"
-                    aria-label="Program Pantauan Liburan"
-                    initial={{ opacity: 0, y: 14, scale: 0.82 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.9 }}
-                    transition={{ type: 'spring', stiffness: 460, damping: 28, mass: 0.62 }}
-                  >
-                    <button
-                      type="button"
-                      className="p2-setor-program-info"
-                      onClick={openPantauanMonitor}
-                      aria-haspopup="dialog"
-                      aria-label="Buka rekap Program Pantauan Liburan"
-                    >
-                      <span className="p2-setor-program-icon" aria-hidden="true">
-                        <Eye className="w-4 h-4" />
-                      </span>
-                      <span className="p2-setor-program-copy">
-                        <span className="p2-setor-program-title">Pantauan Liburan</span>
-                        <span className="p2-setor-program-status">
-                          {programLiburanActive ? 'Aktif' : 'Nonaktif'}
-                        </span>
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={programLiburanActive}
-                      aria-busy={isProgramToggling}
-                      aria-label={
-                        programLiburanActive
-                          ? 'Nonaktifkan Program Pantauan Liburan'
-                          : 'Aktifkan Program Pantauan Liburan'
-                      }
-                      className={`p2-setor-program-switch ${programLiburanActive ? 'is-active' : ''}`}
-                      onClick={toggleProgramLiburan}
-                      disabled={isProgramToggling}
-                    >
-                      <span className="p2-setor-program-switch-thumb" aria-hidden="true" />
-                    </button>
-                  </motion.div>
-
                   {/* Setor Options (Ziyadah, Muroja'ah, Binnadzor, Non-Tahfidz) */}
                   {SETOR_ACTIONS.map((action, index) => {
                     const Icon = action.icon;
@@ -277,10 +182,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                           stiffness: 460,
                           damping: 28,
                           mass: 0.62,
-                          delay: (index + 1) * 0.045
+                          delay: index * 0.04
                         }}
                       >
-                        <span className="p2-setor-dropup-label">{action.label}</span>
+                        <span className="p2-setor-dropup-label">{action.title}</span>
                         <span className="p2-setor-dropup-icon" aria-hidden="true">
                           <Icon className="w-4 h-4" />
                         </span>
@@ -330,8 +235,8 @@ export const BottomNav: React.FC<BottomNavProps> = ({
             </span>
           </div>
 
-          {/* 4. Kelola (with ManageActionSheet for Kelas & Santri) */}
-          <div className="relative">
+          {/* 4. Kelola (with anchored mini popover for Kelas, Santri & Pantauan Liburan) */}
+          <div className="relative flex flex-col items-center">
             <ManageNavButton
               isManageSheetOpen={isManageSheetOpen}
               isActive={isManageActive}
@@ -345,6 +250,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               isOpen={isManageSheetOpen}
               onClose={() => setIsManageSheetOpen(false)}
               onSelect={(tab) => navigateTo(tab)}
+              onOpenPantauanLiburan={() => {
+                setIsManageSheetOpen(false);
+                setShowMonitorModal(true);
+              }}
+              activeTab={activeTab}
             />
           </div>
 
@@ -423,6 +333,7 @@ const ManageNavButton: React.FC<ManageNavButtonProps> = ({
   return (
     <button
       type="button"
+      id="kelola-nav-button"
       ref={ripple.elementRef}
       onClick={(event) => {
         ripple.createRipple(event);
@@ -436,7 +347,7 @@ const ManageNavButton: React.FC<ManageNavButtonProps> = ({
       aria-label={isManageSheetOpen ? 'Tutup menu Kelola' : 'Buka menu Kelola'}
       aria-haspopup="menu"
       aria-expanded={isManageSheetOpen}
-      aria-controls="manage-dropdown-menu"
+      aria-controls="manage-popover-menu"
       aria-current={isActive ? 'page' : undefined}
     >
       <span className="flex items-center justify-center">

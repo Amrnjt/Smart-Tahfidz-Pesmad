@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   LayoutDashboard,
   History,
   Plus,
   School,
   Users,
+  Eye,
   BookOpen
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import type { ActiveTab } from '../types';
 import { useRipple } from '../hooks/useRipple';
+import { DesktopSetorPopover } from './DesktopSetorPopover';
 
 interface DesktopPrimaryNavProps {
   activeTab: ActiveTab;
@@ -17,6 +19,8 @@ interface DesktopPrimaryNavProps {
   isUstadz: boolean;
   isSetorMenuOpen: boolean;
   onOpenSetorMenu: () => void;
+  onCloseSetorMenu: () => void;
+  onOpenPantauanLiburan?: () => void;
 }
 
 interface NavItemConfig {
@@ -28,6 +32,8 @@ interface NavItemConfig {
   isSignatureAction?: boolean;
   hasPopup?: boolean;
   isExpanded?: boolean;
+  elementId?: string;
+  ref?: React.RefObject<HTMLButtonElement | null>;
 }
 
 export const DesktopPrimaryNav: React.FC<DesktopPrimaryNavProps> = ({
@@ -35,9 +41,12 @@ export const DesktopPrimaryNav: React.FC<DesktopPrimaryNavProps> = ({
   setActiveTab,
   isUstadz,
   isSetorMenuOpen,
-  onOpenSetorMenu
+  onOpenSetorMenu,
+  onCloseSetorMenu,
+  onOpenPantauanLiburan
 }) => {
   const isSetorActive = ['ziyadah', 'murojaah', 'binnadzor', 'pembelajaran'].includes(activeTab);
+  const setorButtonRef = useRef<HTMLButtonElement>(null);
 
   const navItems: NavItemConfig[] = [
     {
@@ -62,10 +71,18 @@ export const DesktopPrimaryNav: React.FC<DesktopPrimaryNavProps> = ({
       label: 'Setor',
       icon: Plus,
       isActive: isSetorActive,
-      onClick: onOpenSetorMenu,
+      onClick: () => {
+        if (isSetorMenuOpen) {
+          onCloseSetorMenu();
+        } else {
+          onOpenSetorMenu();
+        }
+      },
       isSignatureAction: true,
       hasPopup: true,
-      isExpanded: isSetorMenuOpen
+      isExpanded: isSetorMenuOpen,
+      elementId: 'desktop-setor-button',
+      ref: setorButtonRef
     });
 
     navItems.push({
@@ -83,6 +100,16 @@ export const DesktopPrimaryNav: React.FC<DesktopPrimaryNavProps> = ({
       isActive: activeTab === 'santri',
       onClick: () => setActiveTab('santri')
     });
+
+    if (onOpenPantauanLiburan) {
+      navItems.push({
+        id: 'pantauan',
+        label: 'Pantauan',
+        icon: Eye,
+        isActive: false,
+        onClick: onOpenPantauanLiburan
+      });
+    }
   }
 
   navItems.push({
@@ -110,6 +137,19 @@ export const DesktopPrimaryNav: React.FC<DesktopPrimaryNavProps> = ({
           />
         ))}
       </nav>
+
+      {/* Anchored Desktop/Tablet Setor Command Popover */}
+      {isUstadz && (
+        <DesktopSetorPopover
+          isOpen={isSetorMenuOpen}
+          onClose={onCloseSetorMenu}
+          onSelect={(tab) => {
+            setActiveTab(tab);
+            onCloseSetorMenu();
+          }}
+          triggerRef={setorButtonRef}
+        />
+      )}
     </div>
   );
 };
@@ -134,11 +174,19 @@ const DesktopNavItem: React.FC<DesktopNavItemProps> = ({ item }) => {
   return (
     <button
       type="button"
-      ref={ripple.elementRef}
+      id={item.elementId}
+      ref={(node) => {
+        // Handle both ripple elementRef and custom item.ref
+        (ripple.elementRef as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+        if (item.ref) {
+          (item.ref as React.MutableRefObject<HTMLButtonElement | null>).current = node;
+        }
+      }}
       onClick={handleClick}
       aria-current={isActive ? 'page' : undefined}
       aria-haspopup={item.hasPopup ? 'dialog' : undefined}
       aria-expanded={item.isExpanded}
+      aria-controls={item.id === 'setor' ? 'desktop-setor-popover' : undefined}
       className={`ripple-container relative min-h-[42px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 z-10 ${
         isSignature && !isActive
           ? 'bg-emerald-50/90 text-emerald-800 border border-emerald-300/80 hover:bg-emerald-100/90 hover:text-emerald-900 shadow-2xs'
@@ -171,7 +219,7 @@ const DesktopNavItem: React.FC<DesktopNavItemProps> = ({ item }) => {
 
       {/* Item Label */}
       <span className="relative z-10 truncate tracking-tight">
-        {isSignature ? `+ ${item.label}` : item.label}
+        {item.label}
       </span>
     </button>
   );
