@@ -107,8 +107,8 @@ test('Page navigation keeps page content live and uses a short local no-scale en
   assert.doesNotMatch(chromeTransitionCss, /view-transition-name:\s*p2-page/);
   assert.doesNotMatch(chromeTransitionCss, /::view-transition-/);
   assert.match(chromeTransitionCss, /\.p3-page-content\.is-navigation-entering\s*\{[\s\S]*?animation:/);
-  assert.match(chromeTransitionCss, /--chrome-local-page-duration:\s*260ms/);
-  assert.match(chromeTransitionCss, /@media \(max-width: 767px\)[\s\S]*?--chrome-local-page-duration:\s*240ms/);
+  assert.match(chromeTransitionCss, /--chrome-local-page-duration:\s*320ms/);
+  assert.match(chromeTransitionCss, /@media \(max-width: 767px\)[\s\S]*?--chrome-local-page-duration:\s*300ms/);
   assert.doesNotMatch(chromeTransitionCss, /scale\(/);
 });
 

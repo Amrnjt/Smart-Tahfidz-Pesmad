@@ -7,6 +7,7 @@ import ts from 'typescript';
 
 const require = createRequire(import.meta.url);
 const source = readFileSync(new URL('../src/hooks/useActiveTabNavigation.ts', import.meta.url), 'utf8');
+const transitionCss = readFileSync(new URL('../src/chrome-transition-fix.css', import.meta.url), 'utf8');
 const compiled = ts.transpileModule(source + '\nexport { commitLocalNavigation };', {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 }
 }).outputText;
@@ -22,6 +23,7 @@ test('navigation commits once before resetting scroll, without a native snapshot
   const classes = new Set();
   let nextFrame;
   let finish;
+  let cleanupDelay = 0;
   const page = { classList: { add: value => classes.add(value), remove: value => classes.delete(value) } };
   const commit = loadNavigation({
     document: {
@@ -31,7 +33,7 @@ test('navigation commits once before resetting scroll, without a native snapshot
     window: {
       scrollTo: options => events.push(['scroll', options.top, options.left, options.behavior]),
       requestAnimationFrame: callback => { nextFrame = callback; },
-      setTimeout: callback => { finish = callback; return 1; },
+      setTimeout: (callback, delay) => { finish = callback; cleanupDelay = delay; return 1; },
       clearTimeout() {}
     }
   });
@@ -39,6 +41,7 @@ test('navigation commits once before resetting scroll, without a native snapshot
   assert.deepEqual(events, [['update'], ['scroll', 0, 0, 'auto']]);
   nextFrame();
   assert.ok(classes.has('is-navigation-entering'));
+  assert.ok(cleanupDelay >= 320, `cleanup delay ${cleanupDelay}ms must not cut off the 320ms transition`);
   finish();
   assert.equal(classes.has('is-navigation-entering'), false);
 });
@@ -59,4 +62,9 @@ test('navigation commits once outside the browser without accessing DOM APIs', (
   let updates = 0;
   loadNavigation()(() => updates++);
   assert.equal(updates, 1);
+});
+
+test('page transition uses the approved smoother desktop and mobile durations', () => {
+  assert.match(transitionCss, /--chrome-local-page-duration:\s*320ms;/);
+  assert.match(transitionCss, /@media \(max-width: 767px\)[\s\S]*--chrome-local-page-duration:\s*300ms;/);
 });
