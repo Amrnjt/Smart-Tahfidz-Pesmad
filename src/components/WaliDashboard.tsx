@@ -303,10 +303,10 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
         actions={heroActions}
       />
 
-      {/* 2. COMPACT BENTO KPI GRID (2 columns mobile, 4 columns desktop) */}
+      {/* 2. COMPACT BENTO KPI GRID (2 columns mobile, 4 columns tablet & desktop) */}
       <section
         aria-label="Statistik Belajar Santri"
-        className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4"
+        className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 lg:gap-3.5"
       >
         <CompactBentoKpiCard
           label="Total Setoran"

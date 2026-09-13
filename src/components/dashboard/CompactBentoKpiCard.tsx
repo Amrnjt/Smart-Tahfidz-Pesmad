@@ -7,7 +7,7 @@ export interface CompactBentoKpiCardProps {
   value: number;
   icon: React.ComponentType<{ className?: string }>;
   trend?: string;
-  trendPositive?: boolean;
+  trendPositive?: boolean | null;
   subtitle?: string;
   onClick?: () => void;
   iconTone?: 'emerald' | 'teal' | 'indigo' | 'amber' | 'rose' | 'sky';
@@ -74,30 +74,47 @@ export const CompactBentoKpiCard: React.FC<CompactBentoKpiCardProps> = ({
   const { elementRef, createRipple } = useRipple<HTMLButtonElement>();
   const tone = toneStyles[iconTone] || toneStyles.emerald;
 
+  const hasProgress = typeof progressPercent === 'number';
+
+  // Neutral status detection: 'sama dengan kemarin', 0 delta, or undefined trendPositive must be slate
+  const isNeutralTrend =
+    trendPositive === undefined ||
+    trendPositive === null ||
+    trend?.toLowerCase().includes('sama') ||
+    trend?.toLowerCase().includes('stagnan');
+
+  const trendColorClass = isNeutralTrend
+    ? 'text-slate-500 font-medium'
+    : trendPositive === true
+    ? 'text-emerald-700 font-bold'
+    : 'text-rose-600 font-bold';
+
   const cardContent = (
-    <div className="flex h-full flex-col justify-between p-3 sm:p-3.5 overflow-hidden">
-      {/* Top Header: Icon and Optional Badge */}
-      <div className="flex items-center justify-between gap-1.5">
-        <span
-          className={`flex h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 items-center justify-center rounded-lg sm:rounded-xl border ${tone.ring} ${tone.bg} ${tone.text} shadow-xs`}
-        >
-          <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" aria-hidden="true" />
-        </span>
+    <div className="flex h-full flex-col justify-between p-3 md:px-3.5 md:py-3 lg:px-4 lg:py-3.5 overflow-hidden select-none">
+      {/* 1. Baris Atas: [Icon + Label] di kiri (menyatu) & [Badge kecil] di kanan */}
+      <div className="flex items-center justify-between gap-1.5 min-w-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <span
+            className={`flex h-6 w-6 sm:h-6.5 sm:w-6.5 md:h-7 md:w-7 flex-shrink-0 items-center justify-center rounded-lg border ${tone.ring} ${tone.bg} ${tone.text} shadow-2xs`}
+          >
+            <Icon className="h-3.5 w-3.5 sm:h-3.5 sm:w-3.5 md:h-4 md:w-4 stroke-[2.2]" aria-hidden="true" />
+          </span>
+          <p className="truncate text-[10px] sm:text-[10.5px] md:text-[11px] font-bold tracking-wider text-slate-500 uppercase leading-none">
+            {label}
+          </p>
+        </div>
 
         {badge && (
-          <span className="rounded-md bg-slate-100/90 px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold text-slate-600 truncate">
+          <span className="flex-shrink-0 rounded-md bg-slate-100/90 px-1.5 py-0.5 text-[9px] sm:text-[9.5px] font-semibold text-slate-500 border border-slate-200/50 leading-none">
             {badge}
           </span>
         )}
       </div>
 
-      {/* Center / Body: Label & Big Counter Number */}
-      <div className="my-auto min-w-0 py-0.5">
-        <p className="truncate text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-          {label}
-        </p>
-        <div className="mt-0.5 flex items-baseline gap-1">
-          <span className="text-xl sm:text-2xl font-[800] tracking-tight text-slate-900 tabular-nums leading-none">
+      {/* 2. Bagian Tengah: Angka Utama + Info Ringkas / Persentase */}
+      <div className="flex items-baseline justify-between gap-1.5 min-w-0 pt-1 pb-0.5">
+        <div className="flex items-baseline gap-1 min-w-0">
+          <span className="text-2xl sm:text-[24px] md:text-[25px] lg:text-[27px] font-black tracking-tight text-slate-900 tabular-nums leading-none">
             <AnimatedCounter value={value} duration={700} />
           </span>
           {suffix && (
@@ -106,36 +123,35 @@ export const CompactBentoKpiCard: React.FC<CompactBentoKpiCardProps> = ({
             </span>
           )}
         </div>
+
+        {/* Jika kartu memiliki progress (Ziyadah/Muraja'ah), letakkan subtitle persentase di samping angka */}
+        {hasProgress && subtitle && (
+          <span className="text-[10px] sm:text-[10.5px] md:text-[11px] font-semibold text-slate-500 tabular-nums truncate max-w-[55%] text-right leading-none">
+            {subtitle}
+          </span>
+        )}
       </div>
 
-      {/* Bottom Footer: Trend or Subtitle or Mini Progress */}
-      <div className="min-w-0">
-        {typeof progressPercent === 'number' && (
-          <div className="mb-1 h-1 w-full overflow-hidden rounded-full bg-slate-100">
+      {/* 3. Bagian Bawah: Progress Bar ramping / Trend / Subtitle dengan baseline yang selaras */}
+      <div className="min-w-0 pt-0.5">
+        {hasProgress ? (
+          <div className="h-1 w-full overflow-hidden rounded-full bg-slate-100 border border-slate-100/80">
             <div
               className={`h-full rounded-full transition-all duration-500 ${tone.bar}`}
               style={{ width: `${Math.min(100, Math.max(0, progressPercent))}%` }}
             />
           </div>
-        )}
-
-        {trend ? (
-          <p
-            className={`truncate text-[10px] sm:text-[11px] font-semibold ${
-              trendPositive === true
-                ? 'text-emerald-700'
-                : trendPositive === false
-                ? 'text-rose-600'
-                : 'text-slate-500'
-            }`}
-          >
+        ) : trend ? (
+          <p className={`truncate text-[10px] sm:text-[10.5px] md:text-[11px] ${trendColorClass} leading-none`}>
             {trend}
           </p>
         ) : subtitle ? (
-          <p className="truncate text-[10px] sm:text-[11px] text-slate-500">
+          <p className="truncate text-[10px] sm:text-[10.5px] md:text-[11px] text-slate-500 font-medium leading-none">
             {subtitle}
           </p>
-        ) : null}
+        ) : (
+          <div className="h-3" aria-hidden="true" />
+        )}
       </div>
     </div>
   );
@@ -149,7 +165,7 @@ export const CompactBentoKpiCard: React.FC<CompactBentoKpiCardProps> = ({
           createRipple(e);
           onClick();
         }}
-        className="ripple-container ui-bento-card ui-bento-card-interactive group flex flex-col justify-between w-full h-[116px] sm:h-[124px] max-h-[124px] sm:max-h-[132px] overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+        className="ripple-container ui-bento-card ui-bento-card-interactive group flex flex-col justify-between w-full h-[106px] sm:h-[110px] md:h-[108px] lg:h-[110px] overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 cursor-pointer"
         aria-label={`${label}: ${value}`}
       >
         {cardContent}
@@ -158,7 +174,7 @@ export const CompactBentoKpiCard: React.FC<CompactBentoKpiCardProps> = ({
   }
 
   return (
-    <div className="ui-bento-card flex flex-col justify-between w-full h-[116px] sm:h-[124px] max-h-[124px] sm:max-h-[132px] overflow-hidden">
+    <div className="ui-bento-card flex flex-col justify-between w-full h-[106px] sm:h-[110px] md:h-[108px] lg:h-[110px] overflow-hidden">
       {cardContent}
     </div>
   );

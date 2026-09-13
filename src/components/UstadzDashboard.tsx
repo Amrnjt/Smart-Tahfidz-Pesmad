@@ -242,17 +242,17 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
         }
       />
 
-      {/* 2. COMPACT BENTO KPI GRID (2 columns on mobile, 4 columns on desktop) */}
+      {/* 2. COMPACT BENTO KPI GRID (2 columns on mobile, 4 columns on tablet & desktop) */}
       <section
         aria-label="Statistik Kunci Setoran"
-        className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4"
+        className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 lg:gap-3.5"
       >
         <CompactBentoKpiCard
           label="Setoran Hari Ini"
           value={todayActivities.length}
           icon={CalendarCheck}
           trend={momentumLabel}
-          trendPositive={momentumDelta > 0}
+          trendPositive={momentumDelta > 0 ? true : momentumDelta < 0 ? false : null}
           iconTone="emerald"
           badge="Harian"
           onClick={() => setActiveTab('riwayat')}
