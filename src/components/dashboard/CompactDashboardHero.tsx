@@ -116,21 +116,21 @@ export const CompactDashboardHero: React.FC<CompactDashboardHeroProps> = ({
 
             {/* Contextual Command Status Panel */}
             {statusNotice && (
-              <div className="mt-2.5 inline-flex items-center gap-2">
+              <div className="mt-2.5 inline-flex items-center gap-2 max-w-full">
                 {isAttention ? (
-                  <div className="inline-flex items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-400/15 px-3 py-1.5 text-xs sm:text-sm font-semibold text-amber-200 shadow-2xs backdrop-blur-xs">
+                  <div className="inline-flex items-center gap-2 rounded-xl border border-amber-400/40 bg-amber-400/15 px-3 py-1.5 text-xs sm:text-sm font-semibold text-amber-200 shadow-2xs backdrop-blur-xs max-w-full min-w-0">
                     <AlertTriangle className="h-4 w-4 text-amber-300 flex-shrink-0" />
-                    <span>{statusNotice.text}</span>
+                    <span className="truncate">{statusNotice.text}</span>
                   </div>
                 ) : isPositive ? (
-                  <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-950/50 px-3 py-1.5 text-xs sm:text-sm font-medium text-emerald-200 shadow-2xs backdrop-blur-xs">
+                  <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/30 bg-emerald-950/50 px-3 py-1.5 text-xs sm:text-sm font-medium text-emerald-200 shadow-2xs backdrop-blur-xs max-w-full min-w-0">
                     <CheckCircle2 className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                    <span>{statusNotice.text}</span>
+                    <span className="truncate">{statusNotice.text}</span>
                   </div>
                 ) : (
-                  <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/25 bg-emerald-950/40 px-3 py-1.5 text-xs sm:text-sm font-medium text-emerald-200/90 shadow-2xs backdrop-blur-xs">
+                  <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/25 bg-emerald-950/40 px-3 py-1.5 text-xs sm:text-sm font-medium text-emerald-200/90 shadow-2xs backdrop-blur-xs max-w-full min-w-0">
                     <Info className="h-4 w-4 text-emerald-300 flex-shrink-0" />
-                    <span>{statusNotice.text}</span>
+                    <span className="truncate">{statusNotice.text}</span>
                   </div>
                 )}
               </div>
@@ -139,7 +139,7 @@ export const CompactDashboardHero: React.FC<CompactDashboardHeroProps> = ({
 
           {/* Right: Conditional Hero Action(s) */}
           {hasActions && (
-            <div className="flex flex-wrap items-center gap-2 pt-1 lg:pt-0 lg:flex-shrink-0">
+            <div className="flex flex-wrap items-center gap-2 pt-1 lg:pt-0 lg:flex-shrink-0 max-w-full">
               {effectivePrimary && <HeroActionButton action={effectivePrimary} isPrimary={true} />}
               {effectiveSecondary && <HeroActionButton action={effectiveSecondary} isPrimary={false} />}
             </div>
@@ -158,7 +158,7 @@ const HeroActionButton: React.FC<{ action: HeroAction; isPrimary: boolean }> = (
   const Icon = action.icon;
 
   let btnClasses =
-    'ripple-container inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 active:scale-98';
+    'ripple-container inline-flex min-h-[42px] items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-bold shadow-sm transition-all focus-visible:outline-none focus-visible:ring-2 active:scale-98 max-w-full';
 
   if (action.variant === 'amber') {
     btnClasses +=
@@ -188,7 +188,7 @@ const HeroActionButton: React.FC<{ action: HeroAction; isPrimary: boolean }> = (
       className={btnClasses}
     >
       {Icon && <Icon className="h-4 w-4 flex-shrink-0" aria-hidden="true" />}
-      <span>{action.label}</span>
+      <span className="truncate">{action.label}</span>
     </button>
   );
 };

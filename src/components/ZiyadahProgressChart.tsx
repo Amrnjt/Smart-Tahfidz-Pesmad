@@ -425,7 +425,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
             {chartType === 'bar' ? (
               <BarChart
                 data={weeklyData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis
@@ -439,6 +439,8 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
                   tickLine={false}
                   axisLine={false}
                   allowDecimals={false}
+                  width={44}
+                  tickMargin={8}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 {metricType === 'ayat' ? (
@@ -462,7 +464,7 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
             ) : (
               <AreaChart
                 data={weeklyData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
               >
                 <defs>
                   <linearGradient id="colorAyat" x1="0" y1="0" x2="0" y2="1">
@@ -486,6 +488,8 @@ export const ZiyadahProgressChart: React.FC<ZiyadahProgressChartProps> = ({
                   tickLine={false}
                   axisLine={false}
                   allowDecimals={false}
+                  width={44}
+                  tickMargin={8}
                 />
                 <Tooltip content={<CustomTooltip />} />
                 {metricType === 'ayat' ? (

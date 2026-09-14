@@ -27,7 +27,7 @@ export const QualityRingBento: React.FC<QualityRingBentoProps> = ({
         createRipple(e);
         onClick();
       }}
-      className={`ripple-container ui-bento-card ui-bento-card-interactive flex w-full items-center justify-between p-3.5 sm:p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${className}`}
+      className={`ripple-container ui-bento-card ui-bento-card-interactive flex w-full min-w-0 overflow-hidden items-center justify-between p-3.5 sm:p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 ${className}`}
       aria-label="Kualitas Sangat Baik. Buka analitik kualitas"
     >
       <div className="flex items-center gap-3 min-w-0">

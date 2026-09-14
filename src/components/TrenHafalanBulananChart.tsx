@@ -851,7 +851,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                 /* Bar Chart View */
                 <BarChart
                   data={monthlyData}
-                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                  margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
                 >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis
@@ -865,6 +865,8 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                   tick={{ fill: '#64748b', fontSize: 10 }}
                   axisLine={{ stroke: '#cbd5e1' }}
                   tickLine={false}
+                  width={44}
+                  tickMargin={8}
                 />
                 <Tooltip
                   contentStyle={{
@@ -919,7 +921,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
               /* Line Chart View */
               <LineChart
                 data={monthlyData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                 <XAxis
@@ -933,6 +935,8 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                   tick={{ fill: '#64748b', fontSize: 10 }}
                   axisLine={{ stroke: '#cbd5e1' }}
                   tickLine={false}
+                  width={44}
+                  tickMargin={8}
                 />
                 <Tooltip
                   contentStyle={{
@@ -988,7 +992,7 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
               /* Area Chart View (Default) */
               <AreaChart
                 data={monthlyData}
-                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
               >
                 <defs>
                   <linearGradient id="colorMonthlyAyat" x1="0" y1="0" x2="0" y2="1">
@@ -1016,6 +1020,8 @@ export const TrenHafalanBulananChart: React.FC<TrenHafalanBulananChartProps> = (
                   tick={{ fill: '#64748b', fontSize: 10 }}
                   axisLine={{ stroke: '#cbd5e1' }}
                   tickLine={false}
+                  width={44}
+                  tickMargin={8}
                 />
                 <Tooltip
                   contentStyle={{

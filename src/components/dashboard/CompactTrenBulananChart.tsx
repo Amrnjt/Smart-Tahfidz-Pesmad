@@ -139,7 +139,7 @@ export const CompactTrenBulananChart: React.FC<CompactTrenBulananChartProps> = (
 
   return (
     <div
-      className={`ui-bento-card bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col h-full overflow-hidden ${className}`}
+      className={`ui-bento-card bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col h-full overflow-hidden min-w-0 w-full max-w-full ${className}`}
     >
       {/* 1. Header: Icon + Title + Period Dropdown & Total summary */}
       <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
@@ -183,7 +183,7 @@ export const CompactTrenBulananChart: React.FC<CompactTrenBulananChartProps> = (
       </div>
 
       {/* 2. Interactive Filter Chips (Kategori Setoran) */}
-      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 my-2.5">
+      <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 my-2.5 min-w-0 w-full">
         <button
           type="button"
           onClick={() => setSelectedSeries('ALL')}
@@ -275,7 +275,7 @@ export const CompactTrenBulananChart: React.FC<CompactTrenBulananChartProps> = (
           <MeasuredChartFrame>
             <AreaChart
               data={monthlyData}
-              margin={{ top: 12, right: 12, left: 4, bottom: 2 }}
+              margin={{ top: 12, right: 12, left: 10, bottom: 2 }}
             >
               <defs>
                 <linearGradient id="gradientZiyadah" x1="0" y1="0" x2="0" y2="1">
@@ -313,8 +313,8 @@ export const CompactTrenBulananChart: React.FC<CompactTrenBulananChartProps> = (
                 tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 500 }}
                 axisLine={false}
                 tickLine={false}
-                width={36}
-                tickMargin={6}
+                width={44}
+                tickMargin={8}
               />
 
               <Tooltip

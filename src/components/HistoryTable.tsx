@@ -1352,7 +1352,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       {!isViewOnly && visibleSelectedCount > 0 && (
         <>
           {/* Mobile: compact sticky selection toolbar */}
-          <div className="lg:hidden sticky top-0 z-20 -mx-0.5 px-2 py-1.5 bg-white border border-slate-200 rounded-lg flex items-center gap-1.5 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1">
+          <div className="lg:hidden sticky top-0 z-20 w-full px-2 py-1.5 bg-white border border-slate-200 rounded-lg flex items-center gap-1.5 text-xs flex-shrink-0 animate-in fade-in slide-in-from-top-1">
             <div className="min-w-0 flex-1 flex items-center gap-1.5">
               <span className="w-5 h-5 rounded-md bg-slate-900 text-white inline-flex items-center justify-center text-xs font-bold flex-shrink-0">
                 {visibleSelectedCount}

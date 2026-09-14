@@ -150,7 +150,7 @@ export const CompactBentoKpiCard: React.FC<CompactBentoKpiCardProps> = ({
     : 'text-rose-600 font-bold';
 
   const cardContent = (
-    <div className="flex h-full flex-col justify-between p-3 md:p-3.5 lg:p-4 overflow-hidden select-none">
+    <div className="flex h-full w-full min-w-0 flex-col justify-between p-3 md:p-3.5 lg:p-4 overflow-hidden select-none">
       {/* 1. Baris Atas: Grid dengan [Icon], [Label], dan [Badge] yang menyatu rapat */}
       <div className="grid grid-cols-[auto_1fr_auto] items-center gap-1.5 sm:gap-2 min-w-0 w-full">
         <span
@@ -225,7 +225,7 @@ export const CompactBentoKpiCard: React.FC<CompactBentoKpiCardProps> = ({
           createRipple(e);
           onClick();
         }}
-        className="ripple-container ui-bento-card ui-bento-card-interactive group flex flex-col justify-between w-full h-[106px] sm:h-[110px] md:h-[108px] lg:h-[112px] overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 cursor-pointer"
+        className="ripple-container ui-bento-card ui-bento-card-interactive group flex flex-col justify-between w-full h-[106px] sm:h-[110px] md:h-[108px] lg:h-[112px] overflow-hidden text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-1 cursor-pointer min-w-0"
         aria-label={`${label}: ${value}`}
       >
         {cardContent}
@@ -234,7 +234,7 @@ export const CompactBentoKpiCard: React.FC<CompactBentoKpiCardProps> = ({
   }
 
   return (
-    <div className="ui-bento-card flex flex-col justify-between w-full h-[106px] sm:h-[110px] md:h-[108px] lg:h-[112px] overflow-hidden">
+    <div className="ui-bento-card flex flex-col justify-between w-full h-[106px] sm:h-[110px] md:h-[108px] lg:h-[112px] overflow-hidden min-w-0">
       {cardContent}
     </div>
   );

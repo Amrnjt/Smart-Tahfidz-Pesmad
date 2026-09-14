@@ -93,7 +93,7 @@ export const ManageActionSheet: React.FC<ManageActionSheetProps> = ({
             id="manage-popover-menu"
             role="menu"
             aria-label="Pilihan Kelola & Administrasi"
-            className="absolute bottom-[calc(100%+12px)] left-1/2 -translate-x-1/2 z-50 w-[238px] p-1.5 rounded-2xl bg-white/98 backdrop-blur-md border border-slate-200/90 shadow-[0_12px_32px_-4px_rgba(15,23,42,0.14),0_2px_8px_rgba(15,23,42,0.05)] flex flex-col pointer-events-auto select-none"
+            className="absolute bottom-[calc(100%+12px)] right-[-24px] sm:right-auto sm:left-1/2 sm:-translate-x-1/2 z-50 w-[230px] max-w-[calc(100vw-24px)] p-1.5 rounded-2xl bg-white/98 backdrop-blur-md border border-slate-200/90 shadow-[0_12px_32px_-4px_rgba(15,23,42,0.14),0_2px_8px_rgba(15,23,42,0.05)] flex flex-col pointer-events-auto select-none"
             initial={{ opacity: 0, y: 8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 6, scale: 0.97 }}
@@ -101,7 +101,7 @@ export const ManageActionSheet: React.FC<ManageActionSheetProps> = ({
           >
             {/* Anchored Caret Arrow pointing to Kelola */}
             <div
-              className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rotate-45 bg-white border-r border-b border-slate-200/90 shadow-[2px_2px_4px_rgba(15,23,42,0.03)]"
+              className="absolute -bottom-1 right-8 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 w-2.5 h-2.5 rotate-45 bg-white border-r border-b border-slate-200/90 shadow-[2px_2px_4px_rgba(15,23,42,0.03)]"
               aria-hidden="true"
             />
 

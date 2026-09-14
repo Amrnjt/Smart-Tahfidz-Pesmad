@@ -343,7 +343,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
           <div className="h-64 sm:h-76 w-full min-w-0 pt-2">
             <MeasuredChartFrame>
               {chartType === 'bar' ? (
-                <BarChart data={monthlyData} margin={{ top: 12, right: 12, left: 4, bottom: 4 }}>
+                <BarChart data={monthlyData} margin={{ top: 12, right: 12, left: 10, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
                   <XAxis
                     dataKey="bulan"
@@ -357,8 +357,8 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     tick={{ fill: '#94a3b8', fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
-                    width={36}
-                    tickMargin={6}
+                    width={44}
+                    tickMargin={8}
                   />
                   <Tooltip
                     contentStyle={{
@@ -392,7 +392,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                   <Bar dataKey="Pembelajaran" fill="#d97706" radius={[5, 5, 0, 0]} maxBarSize={20} animationDuration={600} animationEasing="ease-out" />
                 </BarChart>
               ) : (
-                <AreaChart data={monthlyData} margin={{ top: 12, right: 12, left: 4, bottom: 4 }}>
+                <AreaChart data={monthlyData} margin={{ top: 12, right: 12, left: 10, bottom: 4 }}>
                   <defs>
                     <linearGradient id="colorZiyadah" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#059669" stopOpacity={0.25}/>
@@ -424,8 +424,8 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     tick={{ fill: '#94a3b8', fontSize: 10 }}
                     axisLine={false}
                     tickLine={false}
-                    width={36}
-                    tickMargin={6}
+                    width={44}
+                    tickMargin={8}
                   />
                   <Tooltip
                     contentStyle={{

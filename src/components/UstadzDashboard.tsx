@@ -255,7 +255,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
       {/* 2. COMPACT BENTO KPI GRID (2 columns on mobile, 4 columns on tablet & desktop) */}
       <section
         aria-label="Statistik Kunci Setoran"
-        className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 lg:gap-3.5"
+        className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 lg:gap-3.5 w-full min-w-0"
       >
         <CompactBentoKpiCard
           label="Setoran Hari Ini"
@@ -302,10 +302,10 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
       {/* 3. INSIGHT BENTO ROW: 7-Day Velocity & Quality (5 : 3 desktop ratio) */}
       <section
         aria-label="Ritme dan Kualitas Setoran"
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-3 sm:gap-4 items-stretch"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-3 sm:gap-4 items-stretch w-full min-w-0"
       >
         {/* 7-Day Rhythm Pulse (± 5/8 desktop) */}
-        <div className="md:col-span-1 lg:col-span-5">
+        <div className="md:col-span-1 lg:col-span-5 min-w-0 w-full">
           <SevenDayRhythmBento
             pulse={sevenDayPulse}
             todayKey={today}
@@ -316,7 +316,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
         </div>
 
         {/* Quality & Additional Summary (± 3/8 desktop) */}
-        <div className="md:col-span-1 lg:col-span-3 flex flex-col gap-3">
+        <div className="md:col-span-1 lg:col-span-3 flex flex-col gap-3 min-w-0 w-full">
           <QualityRingBento
             percent={sangatBaikPercent}
             count={sangatBaikCount}
@@ -404,7 +404,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
         </div>
 
         {chartView === 'ringkasan' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(300px,1.2fr)] gap-3 sm:gap-4 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(300px,1.2fr)] gap-3 sm:gap-4 items-stretch w-full min-w-0">
             <CompactTrenBulananChart
               ziyadahRecords={ziyadahRecords}
               murojaahRecords={murojaahRecords}

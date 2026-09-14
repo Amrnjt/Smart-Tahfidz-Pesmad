@@ -34,16 +34,16 @@ export const CompactAttentionBento: React.FC<CompactAttentionBentoProps> = ({
   return (
     <div
       id="ustadz-tindak-lanjut"
-      className={`ui-bento-card scroll-mt-24 p-4 sm:p-5 flex flex-col justify-between ${
+      className={`ui-bento-card scroll-mt-24 p-4 sm:p-5 flex flex-col justify-between overflow-hidden min-w-0 w-full ${
         todayAttentionCount > 0 ? 'border-amber-200/90' : ''
       } ${className}`}
     >
       {/* Header */}
       <div>
         <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <span
-              className={`flex h-8 w-8 items-center justify-center rounded-xl border ${
+              className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-xl border ${
                 todayAttentionCount > 0
                   ? 'border-amber-200 bg-amber-50 text-amber-700'
                   : 'border-emerald-200 bg-emerald-50 text-emerald-700'
@@ -55,18 +55,18 @@ export const CompactAttentionBento: React.FC<CompactAttentionBentoProps> = ({
                 <CheckCircle2 className="h-4 w-4" />
               )}
             </span>
-            <div>
-              <h2 className="text-sm font-bold text-slate-900 leading-tight">
+            <div className="min-w-0">
+              <h2 className="text-sm font-bold text-slate-900 leading-tight truncate">
                 Tindak Lanjut Setoran
               </h2>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-500 truncate">
                 Nilai Kurang / Mengulang aktual
               </p>
             </div>
           </div>
 
           <span
-            className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+            className={`rounded-full px-2.5 py-0.5 text-xs font-bold flex-shrink-0 ${
               todayAttentionCount > 0
                 ? 'bg-amber-100 text-amber-800'
                 : 'bg-emerald-100 text-emerald-800'
@@ -129,7 +129,7 @@ const AttentionRow: React.FC<{ item: AttentionItem; onClick: () => void }> = ({
         createRipple(e);
         onClick();
       }}
-      className="ripple-container group -mx-1.5 flex w-[calc(100%+0.75rem)] items-center justify-between rounded-lg px-1.5 py-2 text-left transition-colors hover:bg-slate-50"
+      className="ripple-container group flex w-full min-w-0 items-center justify-between rounded-lg px-2 py-2 text-left transition-colors hover:bg-slate-50"
     >
       <div className="min-w-0 flex-1 pr-2">
         <div className="flex items-center gap-1.5">

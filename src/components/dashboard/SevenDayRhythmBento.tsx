@@ -80,7 +80,7 @@ export const SevenDayRhythmBento: React.FC<SevenDayRhythmBentoProps> = ({
 
   return (
     <div
-      className={`ui-bento-card p-3.5 sm:p-4 md:p-5 flex flex-col justify-between select-none ${className}`}
+      className={`ui-bento-card p-3.5 sm:p-4 md:p-5 flex flex-col justify-between select-none overflow-hidden min-w-0 w-full ${className}`}
       style={{ minHeight: '205px' }}
     >
       {/* 1. Header Row */}
@@ -101,15 +101,15 @@ export const SevenDayRhythmBento: React.FC<SevenDayRhythmBentoProps> = ({
 
         {/* Momentum Status Pill */}
         <span
-          className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-bold flex-shrink-0 transition-colors ${momentumMeta.tone}`}
+          className={`inline-flex items-center gap-1 rounded-full border px-2 sm:px-2.5 py-0.5 text-[10px] sm:text-[11px] font-bold flex-shrink-0 transition-colors max-w-[130px] sm:max-w-none ${momentumMeta.tone}`}
         >
-          <MomentumIcon className={`h-3 w-3 ${momentumMeta.iconColor} stroke-[2.5]`} />
-          <span>{momentumLabel}</span>
+          <MomentumIcon className={`h-3 w-3 ${momentumMeta.iconColor} stroke-[2.5] flex-shrink-0`} />
+          <span className="truncate">{momentumLabel}</span>
         </span>
       </div>
 
       {/* 2. Main Analytics & Bar Chart Grid */}
-      <div className="my-2.5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+      <div className="my-2.5 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 min-w-0 w-full overflow-hidden">
         {/* Compact Summary Block (Desktop/Tablet left column) */}
         <div className="hidden sm:flex flex-col justify-center sm:w-28 md:w-32 flex-shrink-0 pr-2 border-r border-slate-100">
           <div className="flex items-baseline gap-1">
@@ -233,18 +233,18 @@ export const SevenDayRhythmBento: React.FC<SevenDayRhythmBentoProps> = ({
       </div>
 
       {/* 3. Footer Info Row */}
-      <div className="border-t border-slate-100 pt-2 flex items-center justify-between text-[11px] text-slate-500">
-        <div className="flex items-center gap-1.5 truncate">
-          <span className="font-bold text-slate-700">Hari ini:</span>
-          <span className="text-emerald-800 font-semibold">{todayCount} setoran</span>
+      <div className="border-t border-slate-100 pt-2 flex items-center justify-between text-[10px] sm:text-[11px] text-slate-500 min-w-0 w-full overflow-hidden">
+        <div className="flex items-center gap-1.5 truncate min-w-0">
+          <span className="font-bold text-slate-700 flex-shrink-0">Hari ini:</span>
+          <span className="text-emerald-800 font-semibold truncate">{todayCount} setoran</span>
         </div>
 
-        <div className="flex items-center gap-1.5 truncate pl-2">
+        <div className="flex items-center gap-1.5 truncate pl-2 min-w-0">
           {mostActiveDay ? (
             <>
-              <span className="hidden xs:inline text-slate-400">·</span>
-              <span className="font-medium text-slate-500">Hari teraktif:</span>
-              <span className="font-bold text-slate-800">
+              <span className="hidden xs:inline text-slate-400 flex-shrink-0">·</span>
+              <span className="font-medium text-slate-500 hidden sm:inline flex-shrink-0">Hari teraktif:</span>
+              <span className="font-bold text-slate-800 truncate">
                 {mostActiveDay.label} ({mostActiveDay.count})
               </span>
             </>

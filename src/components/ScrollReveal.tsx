@@ -49,7 +49,7 @@ export const ScrollReveal: React.FC<ScrollRevealProps> = ({
   return (
     <div
       ref={elementRef}
-      className={`scroll-reveal ${isVisible ? 'is-visible' : ''} ${className}`}
+      className={`scroll-reveal w-full min-w-0 max-w-full ${isVisible ? 'is-visible' : ''} ${className}`}
     >
       {children}
     </div>

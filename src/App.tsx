@@ -215,7 +215,7 @@ export default function App() {
             onNotify={notify}
           />
         ) : (
-          <div className="p3-page-content space-y-5 min-w-0">
+          <div className="p3-page-content space-y-5 min-w-0 w-full max-w-full">
             
             {/* Content per Tab */}
             {activeTab === 'dashboard' && (

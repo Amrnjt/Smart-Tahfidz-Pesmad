@@ -143,7 +143,7 @@ export const CompactActivityFeed: React.FC<CompactActivityFeedProps> = ({
 
   return (
     <div
-      className={`ui-bento-card bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col justify-between overflow-hidden ${className}`}
+      className={`ui-bento-card bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col justify-between overflow-hidden min-w-0 w-full max-w-full ${className}`}
     >
       {/* 1. Header: Icon + Title + Subtitle and Count Badge */}
       <div>
@@ -204,9 +204,9 @@ export const CompactActivityFeed: React.FC<CompactActivityFeedProps> = ({
                     return (
                       <div
                         key={`${activity.category}-${activity.id}-${itemIdx}`}
-                        className="group relative flex items-center justify-between gap-2.5 p-1.5 sm:p-2 rounded-xl transition-colors hover:bg-emerald-50/40 border border-transparent hover:border-emerald-100/60"
+                        className="group relative flex items-center justify-between gap-2.5 p-1.5 sm:p-2 rounded-xl transition-colors hover:bg-emerald-50/40 border border-transparent hover:border-emerald-100/60 min-w-0 w-full"
                       >
-                        <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           {/* Compact category badge container */}
                           <div
                             className={`relative z-10 flex h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 items-center justify-center rounded-lg sm:rounded-xl border font-black text-[11px] sm:text-xs shadow-2xs ${meta.badgeTone}`}
