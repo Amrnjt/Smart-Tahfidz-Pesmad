@@ -378,20 +378,20 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
               type="button"
               onClick={() => setChartView('ringkasan')}
               aria-pressed={chartView === 'ringkasan'}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
                 chartView === 'ringkasan'
                   ? 'bg-emerald-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <TrendingUp className="h-3.5 w-3.5" />
-              Tren & Aktivitas
+              Grafik Tren
             </button>
             <button
               type="button"
               onClick={() => setChartView('analisis_detail')}
               aria-pressed={chartView === 'analisis_detail'}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
                 chartView === 'analisis_detail'
                   ? 'bg-emerald-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'

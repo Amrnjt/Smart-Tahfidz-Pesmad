@@ -7,7 +7,7 @@ import {
   CartesianGrid,
   Tooltip
 } from 'recharts';
-import { TrendingUp, Calendar, BookOpen } from 'lucide-react';
+import { TrendingUp, Calendar, Layers } from 'lucide-react';
 import { ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord } from '../../types';
 import { MeasuredChartFrame } from '../MeasuredChartFrame';
 
@@ -34,6 +34,8 @@ interface MonthlyDataPoint {
   Total: number;
 }
 
+type SeriesKey = 'ALL' | 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran';
+
 const NAMA_BULAN_PENDEK = [
   'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
   'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'
@@ -55,6 +57,7 @@ export const CompactTrenBulananChart: React.FC<CompactTrenBulananChartProps> = (
   className = ''
 }) => {
   const [timeRangeMonths, setTimeRangeMonths] = useState<number>(6);
+  const [selectedSeries, setSelectedSeries] = useState<SeriesKey>('ALL');
 
   // Filter records by santri if targeted
   const filteredZiyadah = useMemo(() => {
@@ -129,20 +132,30 @@ export const CompactTrenBulananChart: React.FC<CompactTrenBulananChartProps> = (
 
   const hasData = totalPeriod.grandTotal > 0;
 
+  const showZiyadah = selectedSeries === 'ALL' || selectedSeries === 'Ziyadah';
+  const showMurojaah = selectedSeries === 'ALL' || selectedSeries === 'Murojaah';
+  const showBinnadzor = (selectedSeries === 'ALL' || selectedSeries === 'Binnadzor') && (binnadzorRecords.length > 0 || totalPeriod.binnadzor > 0);
+  const showPembelajaran = (selectedSeries === 'ALL' || selectedSeries === 'Pembelajaran') && (pembelajaranRecords.length > 0 || totalPeriod.pembelajaran > 0);
+
   return (
     <div
-      className={`ui-bento-card bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col justify-between overflow-hidden ${className}`}
+      className={`ui-bento-card bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/80 shadow-2xs flex flex-col h-full overflow-hidden ${className}`}
     >
-      {/* 1. Header: Compact icon + title + subtext and period dropdown */}
-      <div className="flex items-center justify-between gap-2">
+      {/* 1. Header: Icon + Title + Period Dropdown & Total summary */}
+      <div className="flex items-center justify-between gap-2 pb-2 border-b border-slate-100">
         <div className="flex items-center gap-2 min-w-0">
           <span className="flex h-7 w-7 sm:h-8 sm:w-8 flex-shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200/70 shadow-2xs">
             <TrendingUp className="h-4 w-4" />
           </span>
           <div className="min-w-0">
-            <h3 className="text-xs sm:text-sm font-[800] tracking-tight text-slate-900 truncate">
-              {title}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-xs sm:text-sm font-[800] tracking-tight text-slate-900 truncate">
+                {title}
+              </h3>
+              <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded-md bg-slate-100 text-[10px] font-semibold text-slate-600 border border-slate-200/60 tabular-nums">
+                {totalPeriod.grandTotal} sesi
+              </span>
+            </div>
             <p className="text-[10px] sm:text-[11px] text-slate-500 truncate">
               {subtitle}
             </p>
@@ -150,13 +163,14 @@ export const CompactTrenBulananChart: React.FC<CompactTrenBulananChartProps> = (
         </div>
 
         {/* Period Selector (3, 6, 12 Bulan) */}
-        <div className="flex items-center gap-1 rounded-lg bg-slate-100/90 p-0.5 border border-slate-200/70 text-[10px] sm:text-[11px] font-semibold text-slate-600 flex-shrink-0">
+        <div className="flex items-center gap-0.5 sm:gap-1 rounded-xl bg-slate-100/90 p-1 border border-slate-200/70 text-[10px] sm:text-[11px] font-semibold text-slate-600 flex-shrink-0">
           {[3, 6, 12].map(m => (
             <button
               key={m}
               type="button"
               onClick={() => setTimeRangeMonths(m)}
-              className={`px-2 py-1 rounded-md transition-all ${
+              aria-pressed={timeRangeMonths === m}
+              className={`px-2 py-1 rounded-lg transition-all cursor-pointer ${
                 timeRangeMonths === m
                   ? 'bg-white text-emerald-800 font-bold shadow-2xs'
                   : 'hover:text-slate-900 text-slate-500'
@@ -168,69 +182,121 @@ export const CompactTrenBulananChart: React.FC<CompactTrenBulananChartProps> = (
         </div>
       </div>
 
-      {/* 2. Summary Metric Chips directly above chart (wrap max 2 lines on mobile) */}
+      {/* 2. Interactive Filter Chips (Kategori Setoran) */}
       <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 my-2.5">
-        <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50/90 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-emerald-800 border border-emerald-200/60">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
-          Ziyadah {totalPeriod.ziyadah}
-        </span>
-        <span className="inline-flex items-center gap-1 rounded-md bg-teal-50/90 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-teal-800 border border-teal-200/60">
-          <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-          Muroja'ah {totalPeriod.murojaah}
-        </span>
-        {binnadzorRecords.length > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-md bg-indigo-50/90 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-indigo-800 border border-indigo-200/60">
-            <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
-            Binnadzor {totalPeriod.binnadzor}
-          </span>
+        <button
+          type="button"
+          onClick={() => setSelectedSeries('ALL')}
+          aria-pressed={selectedSeries === 'ALL'}
+          className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer border ${
+            selectedSeries === 'ALL'
+              ? 'bg-slate-900 text-white border-slate-900 shadow-2xs'
+              : 'bg-slate-50 text-slate-600 border-slate-200/80 hover:bg-slate-100'
+          }`}
+        >
+          <Layers className="w-3 h-3" />
+          Semua
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSelectedSeries(selectedSeries === 'Ziyadah' ? 'ALL' : 'Ziyadah')}
+          aria-pressed={selectedSeries === 'Ziyadah'}
+          className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer border ${
+            selectedSeries === 'Ziyadah'
+              ? 'bg-emerald-700 text-white border-emerald-700 shadow-2xs'
+              : 'bg-emerald-50/90 text-emerald-800 border-emerald-200/70 hover:bg-emerald-100/80'
+          }`}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${selectedSeries === 'Ziyadah' ? 'bg-white' : 'bg-emerald-600'}`} />
+          Ziyadah <span className="tabular-nums font-extrabold">{totalPeriod.ziyadah}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSelectedSeries(selectedSeries === 'Murojaah' ? 'ALL' : 'Murojaah')}
+          aria-pressed={selectedSeries === 'Murojaah'}
+          className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer border ${
+            selectedSeries === 'Murojaah'
+              ? 'bg-sky-700 text-white border-sky-700 shadow-2xs'
+              : 'bg-sky-50/90 text-sky-800 border-sky-200/70 hover:bg-sky-100/80'
+          }`}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${selectedSeries === 'Murojaah' ? 'bg-white' : 'bg-sky-600'}`} />
+          Muroja'ah <span className="tabular-nums font-extrabold">{totalPeriod.murojaah}</span>
+        </button>
+
+        {(binnadzorRecords.length > 0 || totalPeriod.binnadzor > 0) && (
+          <button
+            type="button"
+            onClick={() => setSelectedSeries(selectedSeries === 'Binnadzor' ? 'ALL' : 'Binnadzor')}
+            aria-pressed={selectedSeries === 'Binnadzor'}
+            className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer border ${
+              selectedSeries === 'Binnadzor'
+                ? 'bg-indigo-700 text-white border-indigo-700 shadow-2xs'
+                : 'bg-indigo-50/90 text-indigo-800 border-indigo-200/70 hover:bg-indigo-100/80'
+            }`}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${selectedSeries === 'Binnadzor' ? 'bg-white' : 'bg-indigo-600'}`} />
+            Binnadzor <span className="tabular-nums font-extrabold">{totalPeriod.binnadzor}</span>
+          </button>
         )}
-        {pembelajaranRecords.length > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-md bg-amber-50/90 px-2 py-0.5 text-[10px] sm:text-[11px] font-bold text-amber-800 border border-amber-200/60">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-600" />
-            Kelas {totalPeriod.pembelajaran}
-          </span>
+
+        {(pembelajaranRecords.length > 0 || totalPeriod.pembelajaran > 0) && (
+          <button
+            type="button"
+            onClick={() => setSelectedSeries(selectedSeries === 'Pembelajaran' ? 'ALL' : 'Pembelajaran')}
+            aria-pressed={selectedSeries === 'Pembelajaran'}
+            className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] sm:text-[11px] font-bold transition-all cursor-pointer border ${
+              selectedSeries === 'Pembelajaran'
+                ? 'bg-amber-700 text-white border-amber-700 shadow-2xs'
+                : 'bg-amber-50/90 text-amber-800 border-amber-200/70 hover:bg-amber-100/80'
+            }`}
+          >
+            <span className={`h-1.5 w-1.5 rounded-full ${selectedSeries === 'Pembelajaran' ? 'bg-white' : 'bg-amber-600'}`} />
+            Kelas <span className="tabular-nums font-extrabold">{totalPeriod.pembelajaran}</span>
+          </button>
         )}
       </div>
 
-      {/* 3. Compact Chart Canvas */}
-      <div className="h-[190px] sm:h-[210px] md:h-[220px] lg:h-[235px] w-full min-w-0 pt-0.5">
+      {/* 3. Responsive Chart Canvas (Fills available space) */}
+      <div className="flex-1 min-h-[210px] sm:min-h-[230px] w-full min-w-0 pt-1 flex flex-col justify-end">
         {!hasData ? (
-          <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center">
-            <Calendar className="h-5 w-5 text-slate-400" />
-            <p className="mt-1.5 text-xs font-semibold text-slate-600">
-              Belum ada data aktivitas untuk periode ini.
+          <div className="flex h-full min-h-[190px] flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/50 p-4 text-center">
+            <Calendar className="h-6 w-6 text-slate-400" />
+            <p className="mt-2 text-xs font-semibold text-slate-700">
+              Belum ada data aktivitas untuk periode {timeRangeMonths} bulan ini.
             </p>
-            <p className="text-[10px] text-slate-500">
-              Setoran yang tercatat akan otomatis terangkum di grafik ini.
+            <p className="text-[11px] text-slate-500 max-w-[240px] mt-0.5">
+              Setoran yang tercatat akan otomatis terangkum secara visual di grafik ini.
             </p>
           </div>
         ) : (
           <MeasuredChartFrame>
             <AreaChart
               data={monthlyData}
-              margin={{ top: 8, right: 10, left: -22, bottom: 0 }}
+              margin={{ top: 12, right: 12, left: 4, bottom: 2 }}
             >
               <defs>
-                {/* Subtle Area Gradients with 0.05-0.12 opacity */}
                 <linearGradient id="gradientZiyadah" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#059669" stopOpacity={0.12} />
+                  <stop offset="5%" stopColor="#059669" stopOpacity={0.16} />
                   <stop offset="95%" stopColor="#059669" stopOpacity={0.01} />
                 </linearGradient>
                 <linearGradient id="gradientMurojaah" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#0284c7" stopOpacity={0.12} />
+                  <stop offset="5%" stopColor="#0284c7" stopOpacity={0.16} />
                   <stop offset="95%" stopColor="#0284c7" stopOpacity={0.01} />
                 </linearGradient>
                 <linearGradient id="gradientBinnadzor" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.10} />
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15} />
                   <stop offset="95%" stopColor="#6366f1" stopOpacity={0.01} />
                 </linearGradient>
                 <linearGradient id="gradientPembelajaran" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.10} />
-                  <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.01} />
+                  <stop offset="5%" stopColor="#d97706" stopOpacity={0.15} />
+                  <stop offset="95%" stopColor="#d97706" stopOpacity={0.01} />
                 </linearGradient>
               </defs>
 
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
 
               <XAxis
                 dataKey="label"
@@ -238,14 +304,17 @@ export const CompactTrenBulananChart: React.FC<CompactTrenBulananChartProps> = (
                 axisLine={{ stroke: '#e2e8f0' }}
                 tickLine={false}
                 interval="preserveStartEnd"
+                dy={4}
               />
 
               <YAxis
                 allowDecimals={false}
-                tick={{ fill: '#94a3b8', fontSize: 9 }}
+                domain={[0, 'auto']}
+                tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 500 }}
                 axisLine={false}
                 tickLine={false}
-                width={28}
+                width={36}
+                tickMargin={6}
               />
 
               <Tooltip
@@ -253,89 +322,102 @@ export const CompactTrenBulananChart: React.FC<CompactTrenBulananChartProps> = (
                   if (!active || !payload || !payload.length) return null;
                   const item = payload[0].payload as MonthlyDataPoint;
                   return (
-                    <div className="rounded-xl border border-slate-200/90 bg-white p-2.5 shadow-sm text-xs min-w-[130px]">
-                      <p className="font-bold text-slate-800 pb-1.5 border-b border-slate-100 text-[11px]">
-                        {item.fullMonth}
-                      </p>
-                      <div className="mt-1.5 space-y-1 text-[11px]">
-                        <div className="flex items-center justify-between gap-3 text-emerald-700 font-semibold">
-                          <span className="flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
-                            Ziyadah
-                          </span>
-                          <span>{item.Ziyadah}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3 text-teal-700 font-semibold">
-                          <span className="flex items-center gap-1.5">
-                            <span className="h-1.5 w-1.5 rounded-full bg-teal-600" />
-                            Muroja'ah
-                          </span>
-                          <span>{item.Murojaah}</span>
-                        </div>
-                        {binnadzorRecords.length > 0 && (
-                          <div className="flex items-center justify-between gap-3 text-indigo-700 font-semibold">
+                    <div className="rounded-xl border border-slate-200/90 bg-white/95 backdrop-blur-xs p-3 shadow-lg shadow-slate-900/5 text-xs min-w-[155px]">
+                      <div className="flex items-center justify-between pb-1.5 border-b border-slate-100">
+                        <span className="font-bold text-slate-800 text-[11px]">
+                          {item.fullMonth}
+                        </span>
+                        <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 tabular-nums">
+                          {item.Total} sesi
+                        </span>
+                      </div>
+                      <div className="mt-2 space-y-1.5 text-[11px]">
+                        {showZiyadah && (
+                          <div className="flex items-center justify-between gap-3 text-emerald-800 font-medium">
                             <span className="flex items-center gap-1.5">
-                              <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+                              <span className="h-2 w-2 rounded-full bg-emerald-600" />
+                              Ziyadah
+                            </span>
+                            <span className="font-bold tabular-nums">{item.Ziyadah}</span>
+                          </div>
+                        )}
+                        {showMurojaah && (
+                          <div className="flex items-center justify-between gap-3 text-sky-800 font-medium">
+                            <span className="flex items-center gap-1.5">
+                              <span className="h-2 w-2 rounded-full bg-sky-600" />
+                              Muroja'ah
+                            </span>
+                            <span className="font-bold tabular-nums">{item.Murojaah}</span>
+                          </div>
+                        )}
+                        {showBinnadzor && (
+                          <div className="flex items-center justify-between gap-3 text-indigo-800 font-medium">
+                            <span className="flex items-center gap-1.5">
+                              <span className="h-2 w-2 rounded-full bg-indigo-600" />
                               Binnadzor
                             </span>
-                            <span>{item.Binnadzor}</span>
+                            <span className="font-bold tabular-nums">{item.Binnadzor}</span>
                           </div>
                         )}
-                        {pembelajaranRecords.length > 0 && (
-                          <div className="flex items-center justify-between gap-3 text-amber-700 font-semibold">
+                        {showPembelajaran && (
+                          <div className="flex items-center justify-between gap-3 text-amber-800 font-medium">
                             <span className="flex items-center gap-1.5">
-                              <span className="h-1.5 w-1.5 rounded-full bg-amber-600" />
+                              <span className="h-2 w-2 rounded-full bg-amber-600" />
                               Kelas
                             </span>
-                            <span>{item.Pembelajaran}</span>
+                            <span className="font-bold tabular-nums">{item.Pembelajaran}</span>
                           </div>
                         )}
-                        <div className="pt-1 border-t border-slate-100 flex items-center justify-between text-slate-600 font-bold">
-                          <span>Total</span>
-                          <span>{item.Total}</span>
-                        </div>
                       </div>
                     </div>
                   );
                 }}
               />
 
-              <Area
-                type="monotone"
-                dataKey="Ziyadah"
-                stroke="#059669"
-                strokeWidth={2.2}
-                fill="url(#gradientZiyadah)"
-                isAnimationActive={!prefersReducedMotion}
-                animationDuration={600}
-              />
-              <Area
-                type="monotone"
-                dataKey="Murojaah"
-                stroke="#0284c7"
-                strokeWidth={2.2}
-                fill="url(#gradientMurojaah)"
-                isAnimationActive={!prefersReducedMotion}
-                animationDuration={600}
-              />
-              {binnadzorRecords.length > 0 && (
+              {showZiyadah && (
                 <Area
                   type="monotone"
-                  dataKey="Binnadzor"
-                  stroke="#6366f1"
-                  strokeWidth={2.2}
-                  fill="url(#gradientBinnadzor)"
+                  dataKey="Ziyadah"
+                  stroke="#059669"
+                  strokeWidth={2.4}
+                  fill="url(#gradientZiyadah)"
+                  activeDot={{ r: 5, stroke: '#ffffff', strokeWidth: 2, fill: '#059669' }}
                   isAnimationActive={!prefersReducedMotion}
                   animationDuration={600}
                 />
               )}
-              {pembelajaranRecords.length > 0 && (
+              {showMurojaah && (
+                <Area
+                  type="monotone"
+                  dataKey="Murojaah"
+                  stroke="#0284c7"
+                  strokeWidth={2.4}
+                  fill="url(#gradientMurojaah)"
+                  activeDot={{ r: 5, stroke: '#ffffff', strokeWidth: 2, fill: '#0284c7' }}
+                  isAnimationActive={!prefersReducedMotion}
+                  animationDuration={600}
+                />
+              )}
+              {showBinnadzor && (
+                <Area
+                  type="monotone"
+                  dataKey="Binnadzor"
+                  stroke="#6366f1"
+                  strokeWidth={2.4}
+                  fill="url(#gradientBinnadzor)"
+                  activeDot={{ r: 5, stroke: '#ffffff', strokeWidth: 2, fill: '#6366f1' }}
+                  isAnimationActive={!prefersReducedMotion}
+                  animationDuration={600}
+                />
+              )}
+              {showPembelajaran && (
                 <Area
                   type="monotone"
                   dataKey="Pembelajaran"
-                  stroke="#f59e0b"
-                  strokeWidth={2.2}
+                  stroke="#d97706"
+                  strokeWidth={2.4}
                   fill="url(#gradientPembelajaran)"
+                  activeDot={{ r: 5, stroke: '#ffffff', strokeWidth: 2, fill: '#d97706' }}
                   isAnimationActive={!prefersReducedMotion}
                   animationDuration={600}
                 />

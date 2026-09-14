@@ -320,55 +320,60 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                 ({selectedSantriFilter === 'ALL' ? 'Seluruh Santri' : santriList.find(s => s.idSantri === selectedSantriFilter)?.namaSantri || selectedSantriFilter})
               </span>
             </h4>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs sm:text-xs">
-              <span className="flex items-center gap-1 text-emerald-700 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-sm bg-emerald-600 flex-shrink-0"></span>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 text-xs">
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200/70 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-600 flex-shrink-0" />
                 Ziyadah ({filteredZiyadah.length})
               </span>
-              <span className="flex items-center gap-1 text-amber-700 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-sm bg-amber-500 flex-shrink-0"></span>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-sky-50 text-sky-800 border border-sky-200/70 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-sky-600 flex-shrink-0" />
                 Muroja'ah ({filteredMurojaah.length})
               </span>
-              <span className="flex items-center gap-1 text-indigo-700 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-sm bg-indigo-600 flex-shrink-0"></span>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-800 border border-indigo-200/70 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-indigo-600 flex-shrink-0" />
                 Binnadzor ({filteredBinnadzor.length})
               </span>
-              <span className="flex items-center gap-1 text-orange-700 font-semibold">
-                <span className="w-2.5 h-2.5 rounded-sm bg-orange-500 flex-shrink-0"></span>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200/70 font-semibold">
+                <span className="w-2 h-2 rounded-full bg-amber-600 flex-shrink-0" />
                 Pembelajaran ({filteredPembelajaran.length})
               </span>
             </div>
           </div>
 
-          <div className="h-60 sm:h-72 w-full min-w-0 pt-2">
+          <div className="h-64 sm:h-76 w-full min-w-0 pt-2">
             <MeasuredChartFrame>
               {chartType === 'bar' ? (
-                <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                <BarChart data={monthlyData} margin={{ top: 12, right: 12, left: 4, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
                   <XAxis
                     dataKey="bulan"
-                    tick={{ fill: '#64748b', fontSize: 10 }}
-                    axisLine={{ stroke: '#cbd5e1' }}
+                    tick={{ fill: '#64748b', fontSize: 10, fontWeight: 500 }}
+                    axisLine={{ stroke: '#e2e8f0' }}
                     tickLine={false}
+                    dy={4}
                   />
                   <YAxis
                     allowDecimals={false}
-                    tick={{ fill: '#64748b', fontSize: 10 }}
-                    axisLine={{ stroke: '#cbd5e1' }}
+                    tick={{ fill: '#94a3b8', fontSize: 10 }}
+                    axisLine={false}
                     tickLine={false}
+                    width={36}
+                    tickMargin={6}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#ffffff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                      backdropFilter: 'blur(4px)',
                       borderRadius: '12px',
                       border: '1px solid #e2e8f0',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.08)',
                       fontSize: '11px',
-                      color: '#1e293b'
+                      color: '#1e293b',
+                      padding: '10px 12px'
                     }}
                     formatter={(value: any, name: any) => [
-                      `${value} kali sesi`,
-                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : name === 'Binnadzor' ? '📑 Binnadzor (Baca Mushaf)' : '📘 Pembelajaran Non-Tahfidz'
+                      `${value} sesi`,
+                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : name === 'Binnadzor' ? '📑 Binnadzor (Tilawah)' : '📘 Pembelajaran Non-Tahfidz'
                     ]}
                   />
                   <Legend
@@ -381,56 +386,61 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                       </span>
                     )}
                   />
-                  <Bar dataKey="Ziyadah" fill="#059669" radius={[4, 4, 0, 0]} maxBarSize={22} animationDuration={800} animationEasing="ease-out" />
-                  <Bar dataKey="Murojaah" fill="#d97706" radius={[4, 4, 0, 0]} maxBarSize={22} animationDuration={800} animationEasing="ease-out" />
-                  <Bar dataKey="Binnadzor" fill="#4f46e5" radius={[4, 4, 0, 0]} maxBarSize={22} animationDuration={800} animationEasing="ease-out" />
-                  <Bar dataKey="Pembelajaran" fill="#ea580c" radius={[4, 4, 0, 0]} maxBarSize={22} animationDuration={800} animationEasing="ease-out" />
+                  <Bar dataKey="Ziyadah" fill="#059669" radius={[5, 5, 0, 0]} maxBarSize={20} animationDuration={600} animationEasing="ease-out" />
+                  <Bar dataKey="Murojaah" fill="#0284c7" radius={[5, 5, 0, 0]} maxBarSize={20} animationDuration={600} animationEasing="ease-out" />
+                  <Bar dataKey="Binnadzor" fill="#6366f1" radius={[5, 5, 0, 0]} maxBarSize={20} animationDuration={600} animationEasing="ease-out" />
+                  <Bar dataKey="Pembelajaran" fill="#d97706" radius={[5, 5, 0, 0]} maxBarSize={20} animationDuration={600} animationEasing="ease-out" />
                 </BarChart>
               ) : (
-                <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart data={monthlyData} margin={{ top: 12, right: 12, left: 4, bottom: 4 }}>
                   <defs>
                     <linearGradient id="colorZiyadah" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#059669" stopOpacity={0.4}/>
-                      <stop offset="95%" stopColor="#059669" stopOpacity={0.0}/>
+                      <stop offset="5%" stopColor="#059669" stopOpacity={0.25}/>
+                      <stop offset="95%" stopColor="#059669" stopOpacity={0.01}/>
                     </linearGradient>
                     <linearGradient id="colorMurojaah" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#d97706" stopOpacity={0.35}/>
-                      <stop offset="95%" stopColor="#d97706" stopOpacity={0.0}/>
+                      <stop offset="5%" stopColor="#0284c7" stopOpacity={0.25}/>
+                      <stop offset="95%" stopColor="#0284c7" stopOpacity={0.01}/>
                     </linearGradient>
                     <linearGradient id="colorBinnadzor" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.35}/>
-                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0.0}/>
+                      <stop offset="5%" stopColor="#6366f1" stopOpacity={0.22}/>
+                      <stop offset="95%" stopColor="#6366f1" stopOpacity={0.01}/>
                     </linearGradient>
                     <linearGradient id="colorPembelajaran" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ea580c" stopOpacity={0.35}/>
-                      <stop offset="95%" stopColor="#ea580c" stopOpacity={0.0}/>
+                      <stop offset="5%" stopColor="#d97706" stopOpacity={0.22}/>
+                      <stop offset="95%" stopColor="#d97706" stopOpacity={0.01}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                  <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
                   <XAxis
                     dataKey="bulan"
-                    tick={{ fill: '#64748b', fontSize: 10 }}
-                    axisLine={{ stroke: '#cbd5e1' }}
+                    tick={{ fill: '#64748b', fontSize: 10, fontWeight: 500 }}
+                    axisLine={{ stroke: '#e2e8f0' }}
                     tickLine={false}
+                    dy={4}
                   />
                   <YAxis
                     allowDecimals={false}
-                    tick={{ fill: '#64748b', fontSize: 10 }}
-                    axisLine={{ stroke: '#cbd5e1' }}
+                    tick={{ fill: '#94a3b8', fontSize: 10 }}
+                    axisLine={false}
                     tickLine={false}
+                    width={36}
+                    tickMargin={6}
                   />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: '#ffffff',
+                      backgroundColor: 'rgba(255, 255, 255, 0.96)',
+                      backdropFilter: 'blur(4px)',
                       borderRadius: '12px',
                       border: '1px solid #e2e8f0',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.08)',
                       fontSize: '11px',
-                      color: '#1e293b'
+                      color: '#1e293b',
+                      padding: '10px 12px'
                     }}
                     formatter={(value: any, name: any) => [
-                      `${value} kali sesi`,
-                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : name === 'Binnadzor' ? '📑 Binnadzor (Baca Mushaf)' : '📘 Pembelajaran Non-Tahfidz'
+                      `${value} sesi`,
+                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : name === 'Binnadzor' ? '📑 Binnadzor (Tilawah)' : '📘 Pembelajaran Non-Tahfidz'
                     ]}
                   />
                   <Legend
@@ -447,40 +457,44 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     type="monotone"
                     dataKey="Ziyadah"
                     stroke="#059669"
-                    strokeWidth={2}
+                    strokeWidth={2.4}
                     fillOpacity={1}
                     fill="url(#colorZiyadah)"
-                    animationDuration={800}
+                    activeDot={{ r: 5, stroke: '#ffffff', strokeWidth: 2, fill: '#059669' }}
+                    animationDuration={600}
                     animationEasing="ease-out"
                   />
                   <Area
                     type="monotone"
                     dataKey="Murojaah"
-                    stroke="#d97706"
-                    strokeWidth={2}
+                    stroke="#0284c7"
+                    strokeWidth={2.4}
                     fillOpacity={1}
                     fill="url(#colorMurojaah)"
-                    animationDuration={800}
+                    activeDot={{ r: 5, stroke: '#ffffff', strokeWidth: 2, fill: '#0284c7' }}
+                    animationDuration={600}
                     animationEasing="ease-out"
                   />
                   <Area
                     type="monotone"
                     dataKey="Binnadzor"
-                    stroke="#4f46e5"
-                    strokeWidth={2}
+                    stroke="#6366f1"
+                    strokeWidth={2.4}
                     fillOpacity={1}
                     fill="url(#colorBinnadzor)"
-                    animationDuration={800}
+                    activeDot={{ r: 5, stroke: '#ffffff', strokeWidth: 2, fill: '#6366f1' }}
+                    animationDuration={600}
                     animationEasing="ease-out"
                   />
                   <Area
                     type="monotone"
                     dataKey="Pembelajaran"
-                    stroke="#ea580c"
-                    strokeWidth={2}
+                    stroke="#d97706"
+                    strokeWidth={2.4}
                     fillOpacity={1}
                     fill="url(#colorPembelajaran)"
-                    animationDuration={800}
+                    activeDot={{ r: 5, stroke: '#ffffff', strokeWidth: 2, fill: '#d97706' }}
+                    animationDuration={600}
                     animationEasing="ease-out"
                   />
                 </AreaChart>
