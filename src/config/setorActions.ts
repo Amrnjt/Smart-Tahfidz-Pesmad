@@ -21,6 +21,11 @@ export interface SetorActionItem {
     badgeBg: string;
     badgeText: string;
     badgeBorder: string;
+    iconSurfaceBg: string;
+    iconSurfaceText: string;
+    iconSurfaceBorder: string;
+    tileHoverBorder: string;
+    tileActiveBg: string;
   };
 }
 
@@ -43,7 +48,12 @@ export const SETOR_ACTIONS: SetorActionItem[] = [
       iconColor: 'text-emerald-700',
       badgeBg: 'bg-emerald-50',
       badgeText: 'text-emerald-700',
-      badgeBorder: 'border-emerald-200'
+      badgeBorder: 'border-emerald-200',
+      iconSurfaceBg: 'bg-emerald-50',
+      iconSurfaceText: 'text-emerald-700',
+      iconSurfaceBorder: 'border-emerald-100/90',
+      tileHoverBorder: 'hover:border-emerald-200/90',
+      tileActiveBg: 'active:bg-emerald-50/50'
     }
   },
   {
@@ -64,7 +74,12 @@ export const SETOR_ACTIONS: SetorActionItem[] = [
       iconColor: 'text-teal-700',
       badgeBg: 'bg-teal-50',
       badgeText: 'text-teal-700',
-      badgeBorder: 'border-teal-200'
+      badgeBorder: 'border-teal-200',
+      iconSurfaceBg: 'bg-teal-50',
+      iconSurfaceText: 'text-teal-700',
+      iconSurfaceBorder: 'border-teal-100/90',
+      tileHoverBorder: 'hover:border-teal-200/90',
+      tileActiveBg: 'active:bg-teal-50/50'
     }
   },
   {
@@ -85,7 +100,12 @@ export const SETOR_ACTIONS: SetorActionItem[] = [
       iconColor: 'text-indigo-700',
       badgeBg: 'bg-indigo-50',
       badgeText: 'text-indigo-700',
-      badgeBorder: 'border-indigo-200'
+      badgeBorder: 'border-indigo-200',
+      iconSurfaceBg: 'bg-indigo-50',
+      iconSurfaceText: 'text-indigo-700',
+      iconSurfaceBorder: 'border-indigo-100/90',
+      tileHoverBorder: 'hover:border-indigo-200/90',
+      tileActiveBg: 'active:bg-indigo-50/50'
     }
   },
   {
@@ -106,7 +126,12 @@ export const SETOR_ACTIONS: SetorActionItem[] = [
       iconColor: 'text-amber-700',
       badgeBg: 'bg-amber-50',
       badgeText: 'text-amber-800',
-      badgeBorder: 'border-amber-200'
+      badgeBorder: 'border-amber-200',
+      iconSurfaceBg: 'bg-amber-50',
+      iconSurfaceText: 'text-amber-700',
+      iconSurfaceBorder: 'border-amber-100/90',
+      tileHoverBorder: 'hover:border-amber-200/90',
+      tileActiveBg: 'active:bg-amber-50/50'
     }
   }
 ];

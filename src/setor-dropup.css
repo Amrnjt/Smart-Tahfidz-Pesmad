@@ -1,10 +1,10 @@
-/* Mobile Setor launcher — centered above the central FAB with a live Pantauan switch. */
+/* Mobile Setor command tray — anchored above the central signature FAB. */
 .p2-setor-dropup-backdrop {
   position: fixed;
   inset: 0;
   z-index: 38;
   border: 0;
-  background: rgba(15, 23, 42, 0.18);
+  background: rgba(15, 23, 42, 0.11);
   -webkit-tap-highlight-color: transparent;
   pointer-events: auto;
 }
@@ -16,191 +16,134 @@
 .p2-setor-dropup {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + 1.35rem);
+  bottom: calc(100% + 12px);
   z-index: 50;
-  width: min(14.25rem, calc(100vw - 1.5rem));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.55rem;
+  width: min(330px, calc(100vw - 24px));
   transform-origin: center bottom;
   translate: -50% 0;
   pointer-events: auto;
 }
 
-.p2-setor-dropup-program {
-  width: min(14.25rem, 100%);
-  min-height: 3.2rem;
+/* Single Floating Command Tray */
+.p2-setor-tray {
+  position: relative;
+  width: 100%;
+  padding: 0.75rem 0.75rem 0.7rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.98);
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  box-shadow:
+    0 16px 36px -4px rgba(15, 23, 42, 0.12),
+    0 4px 12px -2px rgba(15, 23, 42, 0.05);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Caret pointing directly to center FAB */
+.p2-setor-tray-caret {
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  background: #ffffff;
+  border-right: 1px solid rgba(226, 232, 240, 0.95);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.95);
+  transform: translateX(-50%) rotate(45deg);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Header inside tray */
+.p2-setor-tray-header {
+  padding: 0.1rem 0.25rem 0.5rem;
+  text-align: left;
+}
+
+.p2-setor-tray-title {
+  font-size: 0.75rem;
+  line-height: 1.1;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.p2-setor-tray-desc {
+  font-size: 0.65rem;
+  line-height: 1.2;
+  font-weight: 500;
+  color: #64748b;
+  margin-top: 0.1rem;
+}
+
+/* 2x2 Grid Tiles */
+.p2-setor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.p2-setor-tile {
+  position: relative;
+  min-height: 56px;
+  padding: 0.5rem 0.55rem;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.85);
+  border: 1px solid rgba(241, 245, 249, 0.95);
   display: flex;
   align-items: center;
   gap: 0.55rem;
-  padding: 0.28rem 0.34rem 0.28rem 0.38rem;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.99);
-  color: #0f172a;
-  box-shadow:
-    0 14px 32px rgba(15, 23, 42, 0.14),
-    0 2px 8px rgba(15, 23, 42, 0.05);
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 120ms ease;
   -webkit-tap-highlight-color: transparent;
-  pointer-events: auto;
 }
 
-.p2-setor-program-info {
+.p2-setor-tile:active {
+  transform: scale(0.98);
+}
+
+.p2-setor-tile:focus-visible {
+  outline: 2px solid #10b981;
+  outline-offset: 1px;
+}
+
+.p2-setor-tile-icon {
+  width: 2rem;
+  height: 2rem;
+  flex: 0 0 2rem;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 150ms ease;
+}
+
+.p2-setor-tile-copy {
   min-width: 0;
   flex: 1 1 auto;
   display: flex;
-  align-items: center;
-  gap: 0.52rem;
-  border: 0;
-  border-radius: 999px;
-  background: transparent;
-  color: inherit;
-  padding: 0;
-  text-align: left;
-  cursor: pointer;
-}
-
-.p2-setor-program-icon {
-  width: 2.48rem;
-  height: 2.48rem;
-  flex: 0 0 2.48rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: linear-gradient(145deg, #ecfdf5, #d1fae5);
-  border: 1px solid rgba(16, 185, 129, 0.16);
-  color: #047857;
-}
-
-.p2-setor-program-copy {
-  min-width: 0;
-  display: flex;
   flex-direction: column;
-  gap: 0.02rem;
 }
 
-.p2-setor-program-title {
-  max-width: 7.7rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.p2-setor-tile-title {
+  font-size: 0.74rem;
+  font-weight: 700;
   color: #1e293b;
-  font-size: 0.72rem;
-  line-height: 1rem;
-  font-weight: 800;
-}
-
-.p2-setor-program-status {
-  color: #64748b;
-  font-size: 0.64rem;
-  line-height: 0.9rem;
-  font-weight: 650;
-}
-
-.p2-setor-program-switch {
-  position: relative;
-  width: 3.05rem;
-  height: 1.72rem;
-  flex: 0 0 3.05rem;
-  border: 1px solid rgba(100, 116, 139, 0.24);
-  border-radius: 999px;
-  background: #e2e8f0;
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.08);
-  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.p2-setor-program-switch.is-active {
-  border-color: rgba(5, 150, 105, 0.42);
-  background: #10b981;
-  box-shadow:
-    inset 0 1px 2px rgba(4, 120, 87, 0.12),
-    0 0 0 3px rgba(16, 185, 129, 0.08);
-}
-
-.p2-setor-program-switch:disabled {
-  cursor: wait;
-  opacity: 0.65;
-}
-
-.p2-setor-program-switch-thumb {
-  position: absolute;
-  top: 50%;
-  left: 0.19rem;
-  width: 1.28rem;
-  height: 1.28rem;
-  border-radius: 999px;
-  background: #ffffff;
-  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.22);
-  transform: translate(0, -50%);
-  transition: transform 190ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-
-.p2-setor-program-switch.is-active .p2-setor-program-switch-thumb {
-  transform: translate(1.32rem, -50%);
-}
-
-.p2-setor-dropup-item {
-  width: min(13rem, 100%);
-  min-height: 3.1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  padding: 0.22rem 0.24rem 0.22rem 0.88rem;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.98);
-  color: #0f172a;
-  box-shadow:
-    0 12px 30px rgba(15, 23, 42, 0.12),
-    0 2px 8px rgba(15, 23, 42, 0.05);
+  line-height: 1.15;
   white-space: nowrap;
-  -webkit-tap-highlight-color: transparent;
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.p2-setor-dropup-item:active,
-.p2-setor-program-info:active {
-  transform: scale(0.975);
-}
-
-.p2-setor-dropup-label {
-  max-width: 8.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #334155;
-  font-size: 0.72rem;
-  line-height: 1rem;
-  font-weight: 750;
 }
 
-.p2-setor-dropup-icon {
-  width: 2.55rem;
-  height: 2.55rem;
-  flex: 0 0 2.55rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 999px;
-  background: linear-gradient(145deg, #ecfdf5, #d1fae5);
-  border: 1px solid rgba(16, 185, 129, 0.16);
-  color: #047857;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
-}
-
-.p2-setor-fab.is-open {
-  background: linear-gradient(145deg, #059669, #047857);
-  box-shadow:
-    0 14px 32px rgba(4, 120, 87, 0.3),
-    0 0 0 7px rgba(16, 185, 129, 0.09);
-}
-
-.p2-setor-fab.is-open svg {
-  transform: rotate(0deg);
+.p2-setor-tile-subtitle {
+  font-size: 0.63rem;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.15;
+  margin-top: 0.12rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Kelola — Secondary grouped navigation styling */
@@ -235,55 +178,34 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .p2-setor-dropup-item:hover,
-  .p2-setor-dropup-program:hover {
-    border-color: rgba(16, 185, 129, 0.26);
+  .p2-setor-tile:hover {
     background: #ffffff;
-  }
-
-  .p2-setor-dropup-item:hover .p2-setor-dropup-icon,
-  .p2-setor-program-info:hover .p2-setor-program-icon {
-    background: #d1fae5;
-    color: #065f46;
   }
 }
 
 @media (max-width: 360px) {
   .p2-setor-dropup {
-    bottom: calc(100% + 1.05rem);
-    width: min(13.25rem, calc(100vw - 1rem));
-    gap: 0.42rem;
+    width: min(310px, calc(100vw - 16px));
+    bottom: calc(100% + 10px);
   }
 
-  .p2-setor-dropup-program {
-    width: min(13.25rem, 100%);
+  .p2-setor-tile {
+    min-height: 52px;
+    padding: 0.45rem 0.45rem;
+    gap: 0.45rem;
   }
 
-  .p2-setor-dropup-item {
-    width: min(12.25rem, 100%);
-    min-height: 2.85rem;
-  }
-
-  .p2-setor-program-icon,
-  .p2-setor-dropup-icon {
-    width: 2.35rem;
-    height: 2.35rem;
-    flex-basis: 2.35rem;
-  }
-
-  .p2-setor-program-title {
-    max-width: 6.6rem;
+  .p2-setor-tile-icon {
+    width: 1.85rem;
+    height: 1.85rem;
+    flex-basis: 1.85rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .p2-setor-dropup-item,
-  .p2-setor-dropup-icon,
-  .p2-setor-dropup-program,
-  .p2-setor-program-switch,
-  .p2-setor-program-switch-thumb,
-  .p2-setor-fab.is-open,
-  .p2-setor-fab.is-open svg,
+  .p2-setor-tray,
+  .p2-setor-tile,
+  .p2-setor-tile-icon,
   .p2-manage-toggle-chevron {
     transition: none !important;
     animation: none !important;

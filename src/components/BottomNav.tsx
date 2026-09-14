@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { User, ActiveTab, Santri } from '../types';
 import {
   LayoutDashboard,
@@ -35,6 +35,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   const [isManageSheetOpen, setIsManageSheetOpen] = useState(false);
   const [showMonitorModal, setShowMonitorModal] = useState(false);
   const fabRipple = useRipple<HTMLButtonElement>();
+  const shouldReduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (!isActionSheetOpen) return;
@@ -159,39 +160,50 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                   className="p2-setor-dropup"
                   role="menu"
                   aria-label="Pilih jenis setoran"
-                  initial={{ opacity: 0, y: 18, scale: 0.82 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 12, scale: 0.9 }}
-                  transition={{ type: 'spring', stiffness: 420, damping: 30, mass: 0.72 }}
+                  initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.94 }}
+                  animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
+                  exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 8, scale: 0.95 }}
+                  transition={{ type: 'spring', stiffness: 420, damping: 28, mass: 0.6 }}
                 >
-                  {/* Setor Options (Ziyadah, Muroja'ah, Binnadzor, Non-Tahfidz) */}
-                  {SETOR_ACTIONS.map((action, index) => {
-                    const Icon = action.icon;
-                    return (
-                      <motion.button
-                        type="button"
-                        role="menuitem"
-                        key={action.tab}
-                        className="p2-setor-dropup-item"
-                        onClick={() => chooseSetor(action.tab)}
-                        initial={{ opacity: 0, y: 14, scale: 0.82 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 8, scale: 0.9 }}
-                        transition={{
-                          type: 'spring',
-                          stiffness: 460,
-                          damping: 28,
-                          mass: 0.62,
-                          delay: index * 0.04
-                        }}
-                      >
-                        <span className="p2-setor-dropup-label">{action.title}</span>
-                        <span className="p2-setor-dropup-icon" aria-hidden="true">
-                          <Icon className="w-4 h-4" />
-                        </span>
-                      </motion.button>
-                    );
-                  })}
+                  <div className="p2-setor-tray">
+                    <div className="p2-setor-tray-header">
+                      <div className="p2-setor-tray-title">Pilih Jenis Setoran</div>
+                      <div className="p2-setor-tray-desc">Pencatatan hafalan &amp; tilawah santri</div>
+                    </div>
+
+                    <div className="p2-setor-grid">
+                      {SETOR_ACTIONS.map((action, index) => {
+                        const Icon = action.icon;
+                        return (
+                          <motion.button
+                            type="button"
+                            role="menuitem"
+                            key={action.tab}
+                            className={`p2-setor-tile ${action.colorClasses.tileHoverBorder} ${action.colorClasses.tileActiveBg}`}
+                            onClick={() => chooseSetor(action.tab)}
+                            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.92, y: 6 }}
+                            animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                            transition={{
+                              delay: shouldReduceMotion ? 0 : index * 0.03,
+                              duration: 0.16
+                            }}
+                          >
+                            <span
+                              className={`p2-setor-tile-icon border ${action.colorClasses.iconSurfaceBg} ${action.colorClasses.iconSurfaceText} ${action.colorClasses.iconSurfaceBorder}`}
+                              aria-hidden="true"
+                            >
+                              <Icon className="w-4 h-4" />
+                            </span>
+                            <span className="p2-setor-tile-copy">
+                              <span className="p2-setor-tile-title">{action.title}</span>
+                              <span className="p2-setor-tile-subtitle">{action.subtitle}</span>
+                            </span>
+                          </motion.button>
+                        );
+                      })}
+                    </div>
+                    <div className="p2-setor-tray-caret" aria-hidden="true" />
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
