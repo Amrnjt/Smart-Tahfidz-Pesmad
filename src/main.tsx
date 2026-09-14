@@ -1,7 +1,9 @@
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
-import App from './App.tsx';
+import SecureApp from './SecureApp.tsx';
 import { installCloudCommitGate } from './services/cloudCommitGate';
+import { installSecureAccountBridge } from './services/secureAccountBridge';
+import { installRoleScopedSync } from './services/roleScopedSync';
 import '@fontsource-variable/plus-jakarta-sans/wght.css';
 import './index.css';
 import './design-foundation.css';
@@ -18,11 +20,15 @@ import './ustadz-experience-finish.css';
 import './setoran-workflow-finish.css';
 import './setor-dropup.css';
 
-// P0.3: Firestore is the commit gate; LocalStorage remains cache only.
+// P0.3: generic Cloud commit semantics first.
 installCloudCommitGate();
+// P0.1: secure account lifecycle must override any legacy account methods.
+installSecureAccountBridge();
+// P0.5: role/ownership scoping wraps the authenticated lifecycle last.
+installRoleScopedSync();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <SecureApp />
   </StrictMode>,
 );

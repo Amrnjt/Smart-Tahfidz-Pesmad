@@ -20,6 +20,7 @@ on:
       - 'src/components/SantriDashboard.tsx'
       - 'src/components/ScrollReveal.tsx'
       - 'src/components/MeasuredChartFrame.tsx'
+      - 'src/components/dashboard/**'
       - 'src/components/HafalanStatsChart.tsx'
       - 'src/components/TrenHafalanBulananChart.tsx'
       - 'src/components/ZiyadahForm.tsx'
@@ -81,9 +82,11 @@ jobs:
           grep -q 'forced-colors: active' src/motion-finish.css
           grep -q 'prefers-reduced-motion: reduce' src/chrome-transition-fix.css
           grep -q 'forced-colors: active' src/chrome-transition-fix.css
-          grep -q 'p2-dashboard-ustadz' src/components/UstadzDashboard.tsx
-          grep -q 'p2-dashboard-wali' src/components/WaliDashboard.tsx
-          grep -q 'p2-dashboard-santri' src/components/SantriDashboard.tsx
+          grep -q 'CompactDashboardHero' src/components/UstadzDashboard.tsx
+          grep -q 'CompactDashboardHero' src/components/WaliDashboard.tsx
+          grep -q 'CompactDashboardHero' src/components/SantriDashboard.tsx
+          grep -q 'ui-bento-card' src/components/dashboard/CompactBentoKpiCard.tsx
+          grep -q 'prefers-reduced-motion: reduce' src/index.css
           grep -q 'ui-form-identity' src/components/ZiyadahForm.tsx
           grep -q 'ui-form-identity' src/components/MurojaahForm.tsx
           grep -q 'ui-form-identity' src/components/BinnadzorForm.tsx

@@ -6,7 +6,6 @@ import type {
   PantauanLiburanRecord,
   PembelajaranRecord,
   Santri,
-  User,
   ZiyadahRecord
 } from '../types';
 import { getTodayInputFormat, getCurrentTimeInputFormat } from '../utils/dateFormatter';
@@ -15,20 +14,17 @@ import { storageService } from './storageService';
 import { doc, setDoc, writeBatch } from 'firebase/firestore';
 
 const STORAGE_KEYS = {
-  USERS: 'tahfidz_users_db_v2',
   SANTRI: 'tahfidz_santri_db_v2',
   ZIYADAH: 'tahfidz_ziyadah_db_v2',
   MUROJAAH: 'tahfidz_murojaah_db_v2',
   BINNADZOR: 'tahfidz_binnadzor_db_v2',
   PEMBELAJARAN: 'tahfidz_pembelajaran_db_v2',
   KELAS: 'tahfidz_kelas_db_v2',
-  SESSION: 'tahfidz_active_session_v2',
   PANTAUAN_LIBURAN: 'tahfidz_pantauan_liburan_v2',
   APP_CONFIG: 'tahfidz_app_config_v2'
 } as const;
 
 const COLLECTIONS = {
-  USERS: 'users',
   SANTRI: 'santri',
   ZIYADAH: 'ziyadah',
   MUROJAAH: 'murojaah',
@@ -56,14 +52,10 @@ function nowTimestamp(timestamp?: string): string {
 /**
  * P0.3 Data Truth gate.
  *
- * Firestore is the commit gate for every mutation that can change data shown to
- * users. LocalStorage is only updated after the Cloud write succeeds. This
- * prevents a failed network/permission write from leaving a local record that
- * looks permanent even though it never reached the source of truth.
- *
- * This compatibility layer intentionally wraps the existing storageService so
- * P0.1 can replace account methods with its secure server bridge without a
- * large storage refactor in the same change set.
+ * Firestore is the commit gate for operational Tahfidz mutations. LocalStorage
+ * is updated only after the Cloud write succeeds. Account lifecycle is
+ * intentionally excluded here and is owned exclusively by P0.1's trusted
+ * secureAccountBridge/server endpoints.
  */
 export function installCloudCommitGate(): void {
   if (installed) return;
@@ -245,112 +237,6 @@ export function installCloudCommitGate(): void {
     const target: Santri = { ...current, ...updatedData };
     await setDoc(doc(db, COLLECTIONS.SANTRI, idSantri), cleanForFirestore(target), { merge: true });
     writeArrayCache(STORAGE_KEYS.SANTRI, list.map((s) => s.idSantri === idSantri ? target : s));
-    return true;
-  };
-
-  storageService.addSantri = async (
-    santri: Santri,
-    defaultPassword = '123'
-  ): Promise<Santri> => {
-    const list = storageService.getSantriList();
-    const users = storageService.getUsers();
-
-    const nextSantri = [...list];
-    const santriIndex = nextSantri.findIndex((s) => s.idSantri === santri.idSantri);
-    if (santriIndex >= 0) nextSantri[santriIndex] = santri;
-    else nextSantri.push(santri);
-
-    const nextUsers = users.map((user) => ({ ...user }));
-    const waliUsername = `wali_${santri.idSantri.toLowerCase()}`;
-    let waliUser = nextUsers.find((u) => u.username.toLowerCase() === waliUsername);
-    if (waliUser) {
-      waliUser.nama = santri.waliNama
-        ? `Wali ${santri.namaSantri} (${santri.waliNama})`
-        : `Wali ${santri.namaSantri}`;
-      waliUser.idSantri = santri.idSantri;
-    } else {
-      waliUser = {
-        id: `USR-WLI-${santri.idSantri}`,
-        username: waliUsername,
-        password: defaultPassword,
-        role: 'Wali',
-        nama: santri.waliNama
-          ? `Wali ${santri.namaSantri} (${santri.waliNama})`
-          : `Wali ${santri.namaSantri}`,
-        idSantri: santri.idSantri
-      };
-      nextUsers.push(waliUser);
-    }
-
-    const santriUsername = santri.idSantri;
-    let santriUser = nextUsers.find((u) => u.username.toLowerCase() === santriUsername.toLowerCase());
-    if (santriUser) {
-      santriUser.nama = santri.namaSantri;
-      santriUser.idSantri = santri.idSantri;
-    } else {
-      santriUser = {
-        id: `USR-STR-${santri.idSantri}`,
-        username: santriUsername,
-        password: defaultPassword,
-        role: 'Santri',
-        nama: santri.namaSantri,
-        idSantri: santri.idSantri
-      };
-      nextUsers.push(santriUser);
-    }
-
-    // One atomic Cloud commit prevents partial creation of the santri and its
-    // two companion accounts.
-    const batch = writeBatch(db);
-    batch.set(doc(db, COLLECTIONS.SANTRI, santri.idSantri), cleanForFirestore(santri));
-    batch.set(doc(db, COLLECTIONS.USERS, waliUser.id), cleanForFirestore(waliUser));
-    batch.set(doc(db, COLLECTIONS.USERS, santriUser.id), cleanForFirestore(santriUser));
-    await batch.commit();
-
-    writeArrayCache(STORAGE_KEYS.SANTRI, nextSantri);
-    writeArrayCache(STORAGE_KEYS.USERS, nextUsers);
-    return santri;
-  };
-
-  storageService.addUser = async (user: User): Promise<User> => {
-    const ensuredUser: User = {
-      id: user.id || `USR-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
-      username: user.username ? user.username.trim().toLowerCase() : '',
-      password: user.password ? user.password.trim() : '123',
-      role: user.role || 'Ustadz',
-      nama: user.nama ? user.nama.trim() : 'Ustadz Pengajar',
-      idSantri: (user.role === 'Ustadz' || user.role === 'Superadmin') ? '' : (user.idSantri || '')
-    };
-
-    await setDoc(doc(db, COLLECTIONS.USERS, ensuredUser.id), cleanForFirestore(ensuredUser));
-
-    const users = storageService.getUsers();
-    const existingIndex = users.findIndex((u) => u.username.toLowerCase() === ensuredUser.username.toLowerCase());
-    if (existingIndex >= 0) users[existingIndex] = ensuredUser;
-    else users.push(ensuredUser);
-    writeArrayCache(STORAGE_KEYS.USERS, users);
-    return ensuredUser;
-  };
-
-  storageService.updateUser = async (
-    id: string,
-    updatedData: Partial<User>
-  ): Promise<boolean> => {
-    const cleanUpdate = { ...updatedData };
-    if (cleanUpdate.username) cleanUpdate.username = cleanUpdate.username.trim().toLowerCase();
-    if (cleanUpdate.password) cleanUpdate.password = cleanUpdate.password.trim();
-    if (cleanUpdate.nama) cleanUpdate.nama = cleanUpdate.nama.trim();
-
-    const users = storageService.getUsers();
-    const current = users.find((u) => u.id === id);
-    if (!current) return false;
-    const target: User = { ...current, ...cleanUpdate };
-
-    await setDoc(doc(db, COLLECTIONS.USERS, id), cleanForFirestore(target), { merge: true });
-
-    writeArrayCache(STORAGE_KEYS.USERS, users.map((u) => u.id === id ? target : u));
-    const currentSession = storageService.getSession();
-    if (currentSession?.id === id) storageService.setSession({ ...currentSession, ...cleanUpdate });
     return true;
   };
 
