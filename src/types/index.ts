@@ -238,3 +238,41 @@ export interface AppConfig {
 }
 
 export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'binnadzor' | 'pembelajaran' | 'riwayat' | 'mushaf' | 'santri' | 'kelas';
+
+export type TrashRecordType = 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran';
+
+export interface TrashRecord {
+  id: string;
+  recordId: string;
+  recordType: TrashRecordType;
+  sourceCollection: string;
+  payload: Record<string, any>;
+  deletedAt: string;
+  deletedBy: string;
+  expiresAt: string;
+}
+
+export interface CombinedHistoryItem {
+  id: string;
+  type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran';
+  timestamp: string;
+  idSantri: string;
+  namaSantri: string;
+  materi: string;
+  nilai: PredikatNilai;
+  catatan: string;
+  inputBy: string;
+  surah?: string;
+  ayatAwal?: number;
+  ayatAkhir?: number;
+  surahAtauJuz?: string;
+  tipeKelas?: TipeKelas;
+  statusKenaikan?: StatusKenaikan;
+  hukumTajwid?: AspekKualitas;
+  makhrojHuruf?: AspekKualitas;
+  kefasihan?: AspekKualitas;
+  kelancaran?: AspekKualitas;
+  kendalaSantri?: string;
+  rekomendasiTindakLanjut?: string;
+}
+

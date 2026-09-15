@@ -133,6 +133,18 @@
         "updatedAt": { "type": "string" },
         "updatedBy": { "type": "string" }
       }
+    },
+    "TrashRecord": {
+      "fields": {
+        "id": { "type": "string" },
+        "recordId": { "type": "string" },
+        "recordType": { "type": "string" },
+        "sourceCollection": { "type": "string" },
+        "payload": { "type": "map" },
+        "deletedAt": { "type": "string" },
+        "deletedBy": { "type": "string" },
+        "expiresAt": { "type": "string" }
+      }
     }
   }
 }

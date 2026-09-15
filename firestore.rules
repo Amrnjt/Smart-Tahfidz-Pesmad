@@ -28,5 +28,8 @@ service cloud.firestore {
     match /app_config/{id} {
       allow read, write: if true;
     }
+    match /trash_records/{trashId} {
+      allow read, write: if true;
+    }
   }
 }

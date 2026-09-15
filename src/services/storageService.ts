@@ -1,4 +1,4 @@
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas, PantauanLiburanRecord, AppConfig } from '../types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas, PantauanLiburanRecord, AppConfig, TrashRecord, CombinedHistoryItem } from '../types';
 import { getClassGroup } from '../utils/classUtils';
 import { getTodayInputFormat, getCurrentTimeInputFormat } from '../utils/dateFormatter';
 import { db } from './firebase';
@@ -6,10 +6,15 @@ import {
   collection,
   doc,
   setDoc,
+  getDoc,
   deleteDoc,
   onSnapshot,
   getDocs,
-  writeBatch
+  writeBatch,
+  query,
+  where,
+  orderBy,
+  limit
 } from 'firebase/firestore';
 
 function normalizeKelas(kelas: string): string {
@@ -36,7 +41,8 @@ const STORAGE_KEYS = {
   SESSION: 'tahfidz_active_session_v2',
   PANTAUAN_LIBURAN: 'tahfidz_pantauan_liburan_v2',
   APP_CONFIG: 'tahfidz_app_config_v2',
-  DELETED_RECORDS: 'tahfidz_deleted_records_v2'
+  DELETED_RECORDS: 'tahfidz_deleted_records_v2',
+  TRASH: 'tahfidz_trash_records_v2'
 };
 
 const COLLECTIONS = {
@@ -48,7 +54,8 @@ const COLLECTIONS = {
   PEMBELAJARAN: 'pembelajaran',
   KELAS: 'kelas',
   PANTAUAN_LIBURAN: 'pantauan_liburan',
-  APP_CONFIG: 'app_config'
+  APP_CONFIG: 'app_config',
+  TRASH: 'trash_records'
 };
 
 function cleanForFirestore<T>(data: T): T {
@@ -120,6 +127,19 @@ export const storageService = {
       localStorage.setItem(STORAGE_KEYS.DELETED_RECORDS, JSON.stringify(Array.from(set)));
     } catch (e) {
       console.error('Failed to mark record as deleted:', e);
+    }
+  },
+
+  unmarkRecordDeleted(id: string): void {
+    if (!id) return;
+    try {
+      const set = this.getDeletedRecordIds();
+      if (set.has(id)) {
+        set.delete(id);
+        localStorage.setItem(STORAGE_KEYS.DELETED_RECORDS, JSON.stringify(Array.from(set)));
+      }
+    } catch (e) {
+      console.error('Failed to unmark record as deleted:', e);
     }
   },
 
@@ -558,15 +578,129 @@ export const storageService = {
     return newRecord;
   },
 
-  async deleteRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran', id: string): Promise<boolean> {
+  getTrashRecords(): TrashRecord[] {
+    return readArrayCache<TrashRecord>(STORAGE_KEYS.TRASH);
+  },
+
+  async purgeExpiredTrash(): Promise<number> {
+    try {
+      const nowIso = new Date().toISOString();
+      const trashSnap = await getDocs(collection(db, COLLECTIONS.TRASH));
+      const expiredDocIds: string[] = [];
+      const validTrash: TrashRecord[] = [];
+
+      trashSnap.forEach(docSnap => {
+        const data = docSnap.data() as TrashRecord;
+        const id = data.id || docSnap.id;
+        if (data.expiresAt && data.expiresAt <= nowIso) {
+          expiredDocIds.push(id);
+        } else {
+          validTrash.push({ ...data, id });
+        }
+      });
+
+      if (expiredDocIds.length > 0) {
+        for (let i = 0; i < expiredDocIds.length; i += 450) {
+          const chunk = expiredDocIds.slice(i, i + 450);
+          const batch = writeBatch(db);
+          chunk.forEach(docId => {
+            batch.delete(doc(db, COLLECTIONS.TRASH, docId));
+          });
+          await batch.commit();
+        }
+      }
+
+      validTrash.sort((a, b) => (b.deletedAt || '').localeCompare(a.deletedAt || ''));
+      writeArrayCache(STORAGE_KEYS.TRASH, validTrash);
+      return expiredDocIds.length;
+    } catch (e) {
+      console.error('Failed to purge expired trash:', e);
+      return 0;
+    }
+  },
+
+  async fetchTrashRecords(): Promise<TrashRecord[]> {
+    try {
+      await this.purgeExpiredTrash();
+      const snap = await getDocs(collection(db, COLLECTIONS.TRASH));
+      const list: TrashRecord[] = [];
+      const nowIso = new Date().toISOString();
+      snap.forEach(docSnap => {
+        const data = docSnap.data() as TrashRecord;
+        const id = data.id || docSnap.id;
+        if (!data.expiresAt || data.expiresAt > nowIso) {
+          list.push({ ...data, id });
+        }
+      });
+      list.sort((a, b) => (b.deletedAt || '').localeCompare(a.deletedAt || ''));
+      writeArrayCache(STORAGE_KEYS.TRASH, list);
+      return list;
+    } catch (e) {
+      console.error('Failed to fetch trash records:', e);
+      return this.getTrashRecords();
+    }
+  },
+
+  async deleteRecord(
+    type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran',
+    id: string,
+    deletedBy?: string
+  ): Promise<boolean> {
     if (!id) return false;
 
-    const collectionName = type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
+    const sourceCollection = type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
       : type === 'Murojaah' ? COLLECTIONS.MUROJAAH
       : type === 'Pembelajaran' ? COLLECTIONS.PEMBELAJARAN
       : COLLECTIONS.BINNADZOR;
 
-    await deleteDoc(doc(db, collectionName, id));
+    let existingRecord: any = null;
+    if (type === 'Ziyadah') {
+      existingRecord = this.getZiyadahRecords().find(r => r.id === id);
+    } else if (type === 'Murojaah') {
+      existingRecord = this.getMurojaahRecords().find(r => r.id === id);
+    } else if (type === 'Pembelajaran') {
+      existingRecord = this.getPembelajaranRecords().find(r => r.id === id);
+    } else {
+      existingRecord = this.getBinnadzorRecords().find(r => r.id === id);
+    }
+
+    if (!existingRecord) {
+      try {
+        const snap = await getDoc(doc(db, sourceCollection, id));
+        if (snap.exists()) {
+          existingRecord = { ...snap.data(), id: snap.id };
+        }
+      } catch (e) {
+        console.warn('Could not retrieve record from Firestore before soft delete:', e);
+      }
+    }
+
+    if (!existingRecord) {
+      existingRecord = { id };
+    }
+
+    const now = new Date();
+    const deletedAt = now.toISOString();
+    const expiresAt = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000).toISOString();
+    const trashDocId = `trash_${id}`;
+    const author = deletedBy || this.getSession()?.name || this.getSession()?.username || 'Ustadz / Admin';
+
+    const trashItem: TrashRecord = {
+      id: trashDocId,
+      recordId: id,
+      recordType: type,
+      sourceCollection,
+      payload: existingRecord,
+      deletedAt,
+      deletedBy: author,
+      expiresAt,
+    };
+
+    const batch = writeBatch(db);
+    batch.set(doc(db, COLLECTIONS.TRASH, trashDocId), cleanForFirestore(trashItem));
+    batch.delete(doc(db, sourceCollection, id));
+    await batch.commit();
+
     this.markRecordDeleted(id);
 
     if (type === 'Ziyadah') {
@@ -578,20 +712,66 @@ export const storageService = {
     } else {
       writeArrayCache(STORAGE_KEYS.BINNADZOR, this.getBinnadzorRecords().filter(r => r.id !== id));
     }
+
+    const currentTrash = this.getTrashRecords().filter(t => t.recordId !== id && t.id !== trashDocId);
+    currentTrash.unshift(trashItem);
+    writeArrayCache(STORAGE_KEYS.TRASH, currentTrash);
+
     return true;
   },
 
-  async deleteRecordsBatch(items: { type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran'; id: string }[]): Promise<boolean> {
+  async deleteRecordsBatch(
+    items: { type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran'; id: string }[],
+    deletedBy?: string
+  ): Promise<boolean> {
     if (!items || items.length === 0) return true;
 
+    const now = new Date();
+    const deletedAt = now.toISOString();
+    const expiresAt = new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000).toISOString();
+    const author = deletedBy || this.getSession()?.name || this.getSession()?.username || 'Ustadz / Admin';
+
+    const ziyadahCache = this.getZiyadahRecords();
+    const murojaahCache = this.getMurojaahRecords();
+    const binnadzorCache = this.getBinnadzorRecords();
+    const pembelajaranCache = this.getPembelajaranRecords();
+
+    const trashItems: TrashRecord[] = [];
     const batch = writeBatch(db);
+
     items.forEach(item => {
-      const coll = item.type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
+      const sourceCollection = item.type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
         : item.type === 'Murojaah' ? COLLECTIONS.MUROJAAH
         : item.type === 'Pembelajaran' ? COLLECTIONS.PEMBELAJARAN
         : COLLECTIONS.BINNADZOR;
-      batch.delete(doc(db, coll, item.id));
+
+      let existingRecord: any = null;
+      if (item.type === 'Ziyadah') existingRecord = ziyadahCache.find(r => r.id === item.id);
+      else if (item.type === 'Murojaah') existingRecord = murojaahCache.find(r => r.id === item.id);
+      else if (item.type === 'Pembelajaran') existingRecord = pembelajaranCache.find(r => r.id === item.id);
+      else existingRecord = binnadzorCache.find(r => r.id === item.id);
+
+      if (!existingRecord) {
+        existingRecord = { id: item.id };
+      }
+
+      const trashDocId = `trash_${item.id}`;
+      const trashItem: TrashRecord = {
+        id: trashDocId,
+        recordId: item.id,
+        recordType: item.type,
+        sourceCollection,
+        payload: existingRecord,
+        deletedAt,
+        deletedBy: author,
+        expiresAt,
+      };
+
+      trashItems.push(trashItem);
+      batch.set(doc(db, COLLECTIONS.TRASH, trashDocId), cleanForFirestore(trashItem));
+      batch.delete(doc(db, sourceCollection, item.id));
     });
+
     await batch.commit();
 
     items.forEach(item => {
@@ -603,12 +783,142 @@ export const storageService = {
     const binnadzorIds = new Set(items.filter(i => i.type === 'Binnadzor').map(i => i.id));
     const pembelajaranIds = new Set(items.filter(i => i.type === 'Pembelajaran').map(i => i.id));
 
-    if (ziyadahIds.size > 0) writeArrayCache(STORAGE_KEYS.ZIYADAH, this.getZiyadahRecords().filter(r => !ziyadahIds.has(r.id)));
-    if (murojaahIds.size > 0) writeArrayCache(STORAGE_KEYS.MUROJAAH, this.getMurojaahRecords().filter(r => !murojaahIds.has(r.id)));
-    if (binnadzorIds.size > 0) writeArrayCache(STORAGE_KEYS.BINNADZOR, this.getBinnadzorRecords().filter(r => !binnadzorIds.has(r.id)));
-    if (pembelajaranIds.size > 0) writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, this.getPembelajaranRecords().filter(r => !pembelajaranIds.has(r.id)));
+    if (ziyadahIds.size > 0) writeArrayCache(STORAGE_KEYS.ZIYADAH, ziyadahCache.filter(r => !ziyadahIds.has(r.id)));
+    if (murojaahIds.size > 0) writeArrayCache(STORAGE_KEYS.MUROJAAH, murojaahCache.filter(r => !murojaahIds.has(r.id)));
+    if (binnadzorIds.size > 0) writeArrayCache(STORAGE_KEYS.BINNADZOR, binnadzorCache.filter(r => !binnadzorIds.has(r.id)));
+    if (pembelajaranIds.size > 0) writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, pembelajaranCache.filter(r => !pembelajaranIds.has(r.id)));
+
+    const deletedIds = new Set(items.map(i => i.id));
+    const currentTrash = this.getTrashRecords().filter(t => !deletedIds.has(t.recordId));
+    writeArrayCache(STORAGE_KEYS.TRASH, [...trashItems, ...currentTrash]);
 
     return true;
+  },
+
+  async restoreTrashRecord(trashId: string): Promise<{ success: boolean; message?: string; record?: any }> {
+    try {
+      let trashItem = this.getTrashRecords().find(t => t.id === trashId || t.recordId === trashId);
+      if (!trashItem) {
+        const snap = await getDoc(doc(db, COLLECTIONS.TRASH, trashId));
+        if (snap.exists()) {
+          trashItem = { ...snap.data(), id: snap.id } as TrashRecord;
+        }
+      }
+
+      if (!trashItem) {
+        return { success: false, message: 'Data di Tempat Sampah tidak ditemukan.' };
+      }
+
+      const originalId = trashItem.recordId;
+      const targetCollection = trashItem.sourceCollection;
+
+      // Ensure no active record with this original ID already exists
+      let existingActive = false;
+      if (trashItem.recordType === 'Ziyadah') {
+        existingActive = this.getZiyadahRecords().some(r => r.id === originalId);
+      } else if (trashItem.recordType === 'Murojaah') {
+        existingActive = this.getMurojaahRecords().some(r => r.id === originalId);
+      } else if (trashItem.recordType === 'Pembelajaran') {
+        existingActive = this.getPembelajaranRecords().some(r => r.id === originalId);
+      } else {
+        existingActive = this.getBinnadzorRecords().some(r => r.id === originalId);
+      }
+
+      if (!existingActive) {
+        const checkSnap = await getDoc(doc(db, targetCollection, originalId));
+        if (checkSnap.exists()) {
+          existingActive = true;
+        }
+      }
+
+      if (existingActive) {
+        return {
+          success: false,
+          message: `Record aktif dengan ID '${originalId}' sudah ada dalam sistem. Pemulihan dibatalkan agar tidak menimpa data aktif.`
+        };
+      }
+
+      const payloadToRestore = {
+        ...trashItem.payload,
+        id: originalId
+      };
+
+      const batch = writeBatch(db);
+      batch.set(doc(db, targetCollection, originalId), cleanForFirestore(payloadToRestore));
+      batch.delete(doc(db, COLLECTIONS.TRASH, trashItem.id));
+      await batch.commit();
+
+      this.unmarkRecordDeleted(originalId);
+
+      if (trashItem.recordType === 'Ziyadah') {
+        const list = this.getZiyadahRecords().filter(r => r.id !== originalId);
+        list.unshift(payloadToRestore as ZiyadahRecord);
+        list.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+        writeArrayCache(STORAGE_KEYS.ZIYADAH, list);
+      } else if (trashItem.recordType === 'Murojaah') {
+        const list = this.getMurojaahRecords().filter(r => r.id !== originalId);
+        list.unshift(payloadToRestore as MurojaahRecord);
+        list.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+        writeArrayCache(STORAGE_KEYS.MUROJAAH, list);
+      } else if (trashItem.recordType === 'Pembelajaran') {
+        const list = this.getPembelajaranRecords().filter(r => r.id !== originalId);
+        list.unshift(payloadToRestore as PembelajaranRecord);
+        list.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+        writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, list);
+      } else {
+        const list = this.getBinnadzorRecords().filter(r => r.id !== originalId);
+        list.unshift(payloadToRestore as BinnadzorRecord);
+        list.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+        writeArrayCache(STORAGE_KEYS.BINNADZOR, list);
+      }
+
+      const updatedTrash = this.getTrashRecords().filter(t => t.id !== trashItem?.id && t.recordId !== originalId);
+      writeArrayCache(STORAGE_KEYS.TRASH, updatedTrash);
+
+      return { success: true, record: payloadToRestore };
+    } catch (e) {
+      console.error('Failed to restore record:', e);
+      return { success: false, message: (e as Error).message || 'Gagal memulihkan data' };
+    }
+  },
+
+  async permanentlyDeleteTrashRecord(trashId: string): Promise<boolean> {
+    try {
+      const trashItem = this.getTrashRecords().find(t => t.id === trashId);
+      await deleteDoc(doc(db, COLLECTIONS.TRASH, trashId));
+      if (trashItem?.recordId) {
+        this.markRecordDeleted(trashItem.recordId);
+      }
+      const updated = this.getTrashRecords().filter(t => t.id !== trashId);
+      writeArrayCache(STORAGE_KEYS.TRASH, updated);
+      return true;
+    } catch (e) {
+      console.error('Failed to permanently delete trash record:', e);
+      return false;
+    }
+  },
+
+  async emptyTrash(): Promise<boolean> {
+    try {
+      const trashList = await this.fetchTrashRecords();
+      if (trashList.length === 0) return true;
+
+      for (let i = 0; i < trashList.length; i += 450) {
+        const chunk = trashList.slice(i, i + 450);
+        const batch = writeBatch(db);
+        chunk.forEach(t => {
+          batch.delete(doc(db, COLLECTIONS.TRASH, t.id));
+          if (t.recordId) this.markRecordDeleted(t.recordId);
+        });
+        await batch.commit();
+      }
+
+      writeArrayCache(STORAGE_KEYS.TRASH, []);
+      return true;
+    } catch (e) {
+      console.error('Failed to empty trash:', e);
+      return false;
+    }
   },
 
   async syncWithCloud(): Promise<{ success: boolean; message?: string }> {
@@ -708,11 +1018,244 @@ export const storageService = {
       });
       writeArrayCache(STORAGE_KEYS.KELAS, kelasList);
 
+      try {
+        await this.purgeExpiredTrash();
+      } catch (trashErr) {
+        console.warn('Failed to purge expired trash during sync:', trashErr);
+      }
+
       return { success: true };
     } catch (err) {
       console.error('syncWithCloud error:', err);
       return { success: false, message: (err as Error).message };
     }
+  },
+
+  async fetchRecordsForDateRange(startDate: string, endDate: string): Promise<CombinedHistoryItem[]> {
+    const deletedIds = this.getDeletedRecordIds();
+    const results: CombinedHistoryItem[] = [];
+    const seen = new Set<string>();
+
+    const startBound = `${startDate} 00:00`;
+    const endBound = `${endDate} 23:59:59`;
+
+    try {
+      // 1. Ziyadah
+      const ziyadahQ = query(
+        collection(db, COLLECTIONS.ZIYADAH),
+        where('timestamp', '>=', startBound),
+        where('timestamp', '<=', endBound),
+        orderBy('timestamp', 'desc')
+      );
+      const ziyadahSnap = await getDocs(ziyadahQ);
+      ziyadahSnap.forEach(docSnap => {
+        const d = docSnap.data() as ZiyadahRecord;
+        const id = d.id || docSnap.id;
+        if (id && !deletedIds.has(id) && !seen.has(id)) {
+          seen.add(id);
+          results.push({
+            id,
+            type: 'Ziyadah',
+            timestamp: d.timestamp,
+            idSantri: d.idSantri,
+            namaSantri: d.namaSantri,
+            materi: `${d.surah} • ayat ${d.ayatAwal}-${d.ayatAkhir}`,
+            nilai: d.nilai,
+            catatan: d.catatan || '',
+            inputBy: d.inputBy || '',
+            surah: d.surah,
+            ayatAwal: d.ayatAwal,
+            ayatAkhir: d.ayatAkhir
+          });
+        }
+      });
+
+      // 2. Murojaah
+      const murojaahQ = query(
+        collection(db, COLLECTIONS.MUROJAAH),
+        where('timestamp', '>=', startBound),
+        where('timestamp', '<=', endBound),
+        orderBy('timestamp', 'desc')
+      );
+      const murojaahSnap = await getDocs(murojaahQ);
+      murojaahSnap.forEach(docSnap => {
+        const d = docSnap.data() as MurojaahRecord;
+        const id = d.id || docSnap.id;
+        if (id && !deletedIds.has(id) && !seen.has(id)) {
+          seen.add(id);
+          results.push({
+            id,
+            type: 'Murojaah',
+            timestamp: d.timestamp,
+            idSantri: d.idSantri,
+            namaSantri: d.namaSantri,
+            materi: d.surahAtauJuz,
+            nilai: d.nilai,
+            catatan: d.catatan || '',
+            inputBy: d.inputBy || '',
+            surahAtauJuz: d.surahAtauJuz
+          });
+        }
+      });
+
+      // 3. Binnadzor
+      const binnadzorQ = query(
+        collection(db, COLLECTIONS.BINNADZOR),
+        where('timestamp', '>=', startBound),
+        where('timestamp', '<=', endBound),
+        orderBy('timestamp', 'desc')
+      );
+      const binnadzorSnap = await getDocs(binnadzorQ);
+      binnadzorSnap.forEach(docSnap => {
+        const d = docSnap.data() as BinnadzorRecord;
+        const id = d.id || docSnap.id;
+        if (id && !deletedIds.has(id) && !seen.has(id)) {
+          seen.add(id);
+          results.push({
+            id,
+            type: 'Binnadzor',
+            timestamp: d.timestamp,
+            idSantri: d.idSantri,
+            namaSantri: d.namaSantri,
+            materi: d.surahAtauHalaman || d.materi || 'Tilawah',
+            nilai: d.nilai,
+            catatan: d.catatan || '',
+            inputBy: d.inputBy || '',
+            surahAtauJuz: d.surahAtauHalaman,
+            hukumTajwid: d.hukumTajwid,
+            makhrojHuruf: d.makhrojHuruf,
+            kefasihan: d.kefasihan,
+            kelancaran: d.kelancaran
+          });
+        }
+      });
+
+      // 4. Pembelajaran
+      const pembelajaranQ = query(
+        collection(db, COLLECTIONS.PEMBELAJARAN),
+        where('timestamp', '>=', startBound),
+        where('timestamp', '<=', endBound),
+        orderBy('timestamp', 'desc')
+      );
+      const pembelajaranSnap = await getDocs(pembelajaranQ);
+      pembelajaranSnap.forEach(docSnap => {
+        const d = docSnap.data() as PembelajaranRecord;
+        const id = d.id || docSnap.id;
+        if (id && !deletedIds.has(id) && !seen.has(id)) {
+          seen.add(id);
+          results.push({
+            id,
+            type: 'Pembelajaran',
+            timestamp: d.timestamp,
+            idSantri: d.idSantri,
+            namaSantri: d.namaSantri,
+            materi: d.materi || (d.jilid ? `${d.jilid} Hal ${d.halaman}` : 'Materi Pembelajaran'),
+            nilai: d.nilai,
+            catatan: d.catatan || '',
+            inputBy: d.inputBy || '',
+            tipeKelas: d.tipeKelas,
+            statusKenaikan: d.statusKenaikan,
+            kendalaSantri: d.kendalaSantri,
+            rekomendasiTindakLanjut: d.rekomendasiTindakLanjut
+          });
+        }
+      });
+    } catch (err) {
+      console.warn('Firestore range query failed, falling back to local cache:', err);
+      const inRange = (ts: string) => {
+        if (!ts) return false;
+        const datePart = ts.slice(0, 10);
+        return datePart >= startDate && datePart <= endDate;
+      };
+
+      this.getZiyadahRecords().filter(r => inRange(r.timestamp)).forEach(d => {
+        if (!deletedIds.has(d.id) && !seen.has(d.id)) {
+          seen.add(d.id);
+          results.push({
+            id: d.id,
+            type: 'Ziyadah',
+            timestamp: d.timestamp,
+            idSantri: d.idSantri,
+            namaSantri: d.namaSantri,
+            materi: `${d.surah} • ayat ${d.ayatAwal}-${d.ayatAkhir}`,
+            nilai: d.nilai,
+            catatan: d.catatan || '',
+            inputBy: d.inputBy || '',
+            surah: d.surah,
+            ayatAwal: d.ayatAwal,
+            ayatAkhir: d.ayatAkhir
+          });
+        }
+      });
+
+      this.getMurojaahRecords().filter(r => inRange(r.timestamp)).forEach(d => {
+        if (!deletedIds.has(d.id) && !seen.has(d.id)) {
+          seen.add(d.id);
+          results.push({
+            id: d.id,
+            type: 'Murojaah',
+            timestamp: d.timestamp,
+            idSantri: d.idSantri,
+            namaSantri: d.namaSantri,
+            materi: d.surahAtauJuz,
+            nilai: d.nilai,
+            catatan: d.catatan || '',
+            inputBy: d.inputBy || '',
+            surahAtauJuz: d.surahAtauJuz
+          });
+        }
+      });
+
+      this.getBinnadzorRecords().filter(r => inRange(r.timestamp)).forEach(d => {
+        if (!deletedIds.has(d.id) && !seen.has(d.id)) {
+          seen.add(d.id);
+          results.push({
+            id: d.id,
+            type: 'Binnadzor',
+            timestamp: d.timestamp,
+            idSantri: d.idSantri,
+            namaSantri: d.namaSantri,
+            materi: d.surahAtauHalaman || d.materi || 'Tilawah',
+            nilai: d.nilai,
+            catatan: d.catatan || '',
+            inputBy: d.inputBy || '',
+            surahAtauJuz: d.surahAtauHalaman,
+            hukumTajwid: d.hukumTajwid,
+            makhrojHuruf: d.makhrojHuruf,
+            kefasihan: d.kefasihan,
+            kelancaran: d.kelancaran
+          });
+        }
+      });
+
+      this.getPembelajaranRecords().filter(r => inRange(r.timestamp)).forEach(d => {
+        if (!deletedIds.has(d.id) && !seen.has(d.id)) {
+          seen.add(d.id);
+          results.push({
+            id: d.id,
+            type: 'Pembelajaran',
+            timestamp: d.timestamp,
+            idSantri: d.idSantri,
+            namaSantri: d.namaSantri,
+            materi: d.materi || (d.jilid ? `${d.jilid} Hal ${d.halaman}` : 'Materi Pembelajaran'),
+            nilai: d.nilai,
+            catatan: d.catatan || '',
+            inputBy: d.inputBy || '',
+            tipeKelas: d.tipeKelas,
+            statusKenaikan: d.statusKenaikan,
+            kendalaSantri: d.kendalaSantri,
+            rekomendasiTindakLanjut: d.rekomendasiTindakLanjut
+          });
+        }
+      });
+    }
+
+    results.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
+    return results;
+  },
+
+  async fetchRecordsForDate(dateStr: string): Promise<CombinedHistoryItem[]> {
+    return this.fetchRecordsForDateRange(dateStr, dateStr);
   },
 
   async updateRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran', id: string, updatedData: Partial<ZiyadahRecord | MurojaahRecord | BinnadzorRecord | PembelajaranRecord>): Promise<boolean> {

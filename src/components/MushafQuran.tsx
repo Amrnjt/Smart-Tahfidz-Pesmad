@@ -301,10 +301,10 @@ export const MushafQuran: React.FC = () => {
 
   const arabicFontSizeClass =
     fontSizeOffset === 'xlarge'
-      ? 'text-4xl sm:text-5xl leading-[2.4]'
+      ? 'text-2xl sm:text-4xl md:text-5xl leading-[2.6] sm:leading-[2.85] md:leading-[3.05]'
       : fontSizeOffset === 'large'
-        ? 'text-3xl sm:text-4xl leading-[2.4]'
-        : 'text-2xl sm:text-3xl leading-[2.4]';
+        ? 'text-xl sm:text-3xl md:text-4xl leading-[2.5] sm:leading-[2.75] md:leading-[2.9]'
+        : 'text-lg sm:text-2xl md:text-3xl leading-[2.4] sm:leading-[2.6] md:leading-[2.75]';
   const currentQariObj = QARI_LIST.find((q) => q.id === selectedQari) || QARI_LIST[0];
   const surfaceClass = isNightMode
     ? 'border-slate-700 bg-slate-900 text-slate-100'
@@ -529,15 +529,29 @@ export const MushafQuran: React.FC = () => {
         </header>
 
         {selectedSurah.number !== 9 && (
-          <div className="px-4 py-8 text-center sm:px-8">
-            <p lang="ar" dir="rtl" className="font-arabic text-2xl leading-loose sm:text-3xl">
-              بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-            </p>
-            {showTranslation && (
-              <p className={`mt-3 text-sm ${mutedClass}`}>
-                Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.
+          <div className="px-4 py-6 text-center sm:px-8 sm:py-8">
+            <div
+              className={`mx-auto max-w-xl rounded-2xl border p-5 sm:p-6 ${
+                isNightMode
+                  ? 'border-emerald-900/50 bg-emerald-950/20 text-slate-100'
+                  : 'border-emerald-100 bg-emerald-50/40 text-slate-900'
+              }`}
+            >
+              <p
+                lang="ar"
+                dir="rtl"
+                className={`mushaf-arabic-text text-center font-arabic text-2xl leading-[2.6] sm:text-3xl sm:leading-[2.8] md:text-4xl ${
+                  isNightMode ? 'text-amber-50/95' : 'text-slate-950'
+                }`}
+              >
+                بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
               </p>
-            )}
+              {showTranslation && (
+                <p className={`mt-2.5 text-xs sm:text-sm ${mutedClass}`}>
+                  Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.
+                </p>
+              )}
+            </div>
           </div>
         )}
 
@@ -585,41 +599,72 @@ export const MushafQuran: React.FC = () => {
                   id={`ayah-${ayah.nomorAyat}`}
                   key={ayah.nomorAyat}
                   aria-label={`Ayat ${ayah.nomorAyat}`}
-                  className={`scroll-mt-28 space-y-5 border-t px-4 py-6 sm:px-8 sm:py-8 ${isPlayingThisAyah ? (isNightMode ? 'border-emerald-700 bg-emerald-950' : 'border-emerald-300 bg-emerald-50') : isNightMode ? 'border-slate-800' : 'border-slate-200'}`}
+                  className={`scroll-mt-28 space-y-4 border-t px-4 py-6 sm:px-8 sm:py-8 transition-colors duration-150 ${
+                    isPlayingThisAyah
+                      ? isNightMode
+                        ? 'border-emerald-700/80 bg-emerald-950/40'
+                        : 'border-emerald-300 bg-emerald-50/60'
+                      : isNightMode
+                      ? 'border-slate-800'
+                      : 'border-slate-100'
+                  }`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p
-                      className={`text-sm font-medium ${isPlayingThisAyah ? (isNightMode ? 'text-emerald-200' : 'text-emerald-800') : mutedClass}`}
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        isPlayingThisAyah
+                          ? isNightMode
+                            ? 'border border-emerald-700/60 bg-emerald-900/70 text-emerald-200'
+                            : 'border border-emerald-200 bg-emerald-100 text-emerald-800'
+                          : isNightMode
+                          ? 'border border-slate-700/60 bg-slate-800/80 text-slate-300'
+                          : 'border border-slate-200 bg-slate-100 text-slate-700'
+                      }`}
                     >
-                      Ayat {ayah.nomorAyat}
-                      {isPlayingThisAyah && ' · Sedang diputar'}
-                    </p>
+                      <span className="font-mono">{ayah.nomorAyat}</span>
+                      {isPlayingThisAyah && (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-normal text-emerald-600 dark:text-emerald-300">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+                          Diputar
+                        </span>
+                      )}
+                    </span>
                     <button
                       type="button"
                       onClick={() => handlePlayAyahAudio(ayah, false)}
                       aria-label={`${isPlayingThisAyah ? 'Jeda' : 'Putar'} ayat ${ayah.nomorAyat}`}
-                      className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${controlClass}`}
+                      className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold ${controlClass}`}
                     >
                       {isPlayingThisAyah ? (
-                        <Pause className="h-4 w-4" aria-hidden="true" />
+                        <Pause className="h-3.5 w-3.5" aria-hidden="true" />
                       ) : (
-                        <Play className="h-4 w-4" aria-hidden="true" />
+                        <Play className="h-3.5 w-3.5" aria-hidden="true" />
                       )}
                       {isPlayingThisAyah ? 'Jeda' : 'Putar ayat'}
                     </button>
                   </div>
-                  <p
-                    lang="ar"
-                    dir="rtl"
-                    className={`break-words text-right font-arabic ${arabicFontSizeClass} ${isNightMode ? 'text-slate-100' : 'text-slate-950'}`}
-                  >
-                    {ayah.teksArab}
-                  </p>
+
+                  {/* Primary Mushaf Arabic Text Display */}
+                  <div className="ml-auto max-w-3xl py-2 sm:py-3.5">
+                    <p
+                      lang="ar"
+                      dir="rtl"
+                      className={`mushaf-arabic-text select-text text-right font-arabic break-words ${arabicFontSizeClass} ${
+                        isNightMode ? 'text-amber-50/95' : 'text-slate-950'
+                      }`}
+                    >
+                      {ayah.teksArab}
+                    </p>
+                  </div>
+
+                  {/* Subordinate Latin & Translation Display */}
                   {(showLatin || showTranslation) && (
-                    <div className="space-y-3">
+                    <div className="space-y-2.5 border-t border-slate-100 pt-2.5 dark:border-slate-800/60">
                       {showLatin && (
                         <p
-                          className={`break-words text-sm leading-relaxed ${isNightMode ? 'text-emerald-200' : 'text-emerald-900'}`}
+                          className={`break-words text-xs leading-relaxed font-medium sm:text-sm ${
+                            isNightMode ? 'text-emerald-300' : 'text-emerald-800'
+                          }`}
                         >
                           {ayah.teksLatin}
                         </p>

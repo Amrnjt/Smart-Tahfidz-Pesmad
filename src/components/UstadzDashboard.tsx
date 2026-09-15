@@ -18,9 +18,11 @@ import {
   ChartBar as BarChart3,
   RotateCw,
   TrendingUp,
+  Activity,
   Users
 } from 'lucide-react';
 import { getTodayInputFormat } from '../utils/dateFormatter';
+import { calculateSetoranMomentum, isSetoranActiveDay } from '../utils/scheduleHelper';
 import { HafalanStatsChart } from './HafalanStatsChart';
 import { CompactDashboardHero, HeroAction } from './dashboard/CompactDashboardHero';
 import { CompactBentoKpiCard } from './dashboard/CompactBentoKpiCard';
@@ -29,6 +31,7 @@ import { SevenDayRhythmBento } from './dashboard/SevenDayRhythmBento';
 import { QualityRingBento } from './dashboard/QualityRingBento';
 import { CompactTrenBulananChart } from './dashboard/CompactTrenBulananChart';
 import { CompactActivityFeed } from './dashboard/CompactActivityFeed';
+import { AdaptiveDevelopmentTrend } from './dashboard/AdaptiveDevelopmentTrend';
 import { ScrollReveal } from './ScrollReveal';
 
 interface UstadzDashboardProps {
@@ -67,7 +70,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   setActiveTab,
   onOpenSetorMenu
 }) => {
-  const [chartView, setChartView] = useState<'ringkasan' | 'analisis_detail'>('ringkasan');
+  const [chartView, setChartView] = useState<'tren_setor' | 'tren_perkembangan' | 'analisis_detail'>('tren_setor');
 
   const today = getTodayInputFormat();
   const santriById = new Map<string, Santri>(santriList.map(santri => [santri.idSantri, santri]));
@@ -142,18 +145,13 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
       weekday: 'short',
       timeZone: 'Asia/Jakarta'
     }).format(date).replace('.', '');
-    return { key, label, count };
+    const isActiveDay = isSetoranActiveDay(key);
+    return { key, label, count, isActiveDay };
   });
 
   const sevenDayTotal = sevenDayPulse.reduce((sum, day) => sum + day.count, 0);
-  const yesterdayCount = sevenDayPulse[5]?.count ?? 0;
   const todayCount = sevenDayPulse[6]?.count ?? todayActivities.length;
-  const momentumDelta = todayCount - yesterdayCount;
-  const momentumLabel = momentumDelta > 0
-    ? `+${momentumDelta} dari kemarin`
-    : momentumDelta < 0
-      ? `${momentumDelta} dari kemarin`
-      : 'sama dengan kemarin';
+  const { momentumLabel, delta: momentumDelta } = calculateSetoranMomentum(today, todayCount, activities);
 
   const jumpToAttention = () => {
     if (typeof document === 'undefined') return;
@@ -262,7 +260,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           value={todayActivities.length}
           icon={CalendarCheck}
           trend={momentumLabel}
-          trendPositive={momentumDelta > 0 ? true : momentumDelta < 0 ? false : null}
+          trendPositive={typeof momentumDelta === 'number' && momentumDelta > 0 ? true : typeof momentumDelta === 'number' && momentumDelta < 0 ? false : null}
           iconTone="emerald"
           badge="Harian"
           onClick={() => setActiveTab('riwayat')}
@@ -370,22 +368,35 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           </div>
 
           <div
-            className="inline-flex rounded-xl border border-slate-200/90 bg-white p-1 shadow-2xs self-start sm:self-auto"
+            className="inline-flex rounded-xl border border-slate-200/90 bg-white p-1 shadow-2xs self-start sm:self-auto flex-wrap gap-1"
             role="group"
-            aria-label="Pilihan tampilan"
+            aria-label="Pilihan tampilan analitik"
           >
             <button
               type="button"
-              onClick={() => setChartView('ringkasan')}
-              aria-pressed={chartView === 'ringkasan'}
+              onClick={() => setChartView('tren_setor')}
+              aria-pressed={chartView === 'tren_setor'}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
-                chartView === 'ringkasan'
+                chartView === 'tren_setor'
                   ? 'bg-emerald-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
               <TrendingUp className="h-3.5 w-3.5" />
-              Grafik Tren
+              Tren Setor
+            </button>
+            <button
+              type="button"
+              onClick={() => setChartView('tren_perkembangan')}
+              aria-pressed={chartView === 'tren_perkembangan'}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+                chartView === 'tren_perkembangan'
+                  ? 'bg-emerald-700 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              <Activity className="h-3.5 w-3.5" />
+              Tren Perkembangan
             </button>
             <button
               type="button"
@@ -403,7 +414,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           </div>
         </div>
 
-        {chartView === 'ringkasan' ? (
+        {chartView === 'tren_setor' && (
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(300px,1.2fr)] gap-3 sm:gap-4 items-stretch w-full min-w-0">
             <CompactTrenBulananChart
               ziyadahRecords={ziyadahRecords}
@@ -421,7 +432,20 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
               subtitle="Aktivitas terbaru santri"
             />
           </div>
-        ) : (
+        )}
+
+        {chartView === 'tren_perkembangan' && (
+          <AdaptiveDevelopmentTrend
+            kelasList={kelasList}
+            santriList={santriList}
+            ziyadahRecords={ziyadahRecords}
+            murojaahRecords={murojaahRecords}
+            binnadzorRecords={binnadzorRecords}
+            pembelajaranRecords={pembelajaranRecords}
+          />
+        )}
+
+        {chartView === 'analisis_detail' && (
           <div className="ui-bento-card overflow-hidden p-3 sm:p-5">
             <HafalanStatsChart
               santriList={santriList}

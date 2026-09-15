@@ -24,7 +24,8 @@ const STORAGE_KEYS = {
   KELAS: 'tahfidz_kelas_db_v2',
   SESSION: 'tahfidz_active_session_v2',
   PANTAUAN_LIBURAN: 'tahfidz_pantauan_liburan_v2',
-  APP_CONFIG: 'tahfidz_app_config_v2'
+  APP_CONFIG: 'tahfidz_app_config_v2',
+  TRASH: 'tahfidz_trash_records_v2'
 } as const;
 
 const COLLECTIONS = {
@@ -36,7 +37,8 @@ const COLLECTIONS = {
   PEMBELAJARAN: 'pembelajaran',
   KELAS: 'kelas',
   PANTAUAN_LIBURAN: 'pantauan_liburan',
-  APP_CONFIG: 'app_config'
+  APP_CONFIG: 'app_config',
+  TRASH: 'trash_records'
 } as const;
 
 let installed = false;
