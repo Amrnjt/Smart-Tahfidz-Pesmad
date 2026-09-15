@@ -33,6 +33,9 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Verify P0 repository cleanup
+        run: node --test tests/p0-repo-cleanup.test.mjs
+
       - name: Ensure production storage has no sample fallback
         run: |
           if grep -q "sampleDatabase\|INITIAL_USERS\|INITIAL_SANTRI\|INITIAL_ZIYADAH\|INITIAL_MUROJAAH\|INITIAL_BINNADZOR\|INITIAL_PEMBELAJARAN" src/services/storageService.ts; then

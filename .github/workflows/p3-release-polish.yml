@@ -22,7 +22,6 @@ on:
       - 'src/components/ScrollReveal.tsx'
       - 'src/components/MeasuredChartFrame.tsx'
       - 'src/components/HafalanStatsChart.tsx'
-      - 'src/components/TrenHafalanBulananChart.tsx'
       - 'src/hooks/useActiveTabNavigation.ts'
       - 'tests/navigation-jank-regression.test.mjs'
       - 'src/main.tsx'
@@ -159,7 +158,6 @@ jobs:
           grep -q 'p323-deferred-surface' src/components/UstadzDashboard.tsx
           grep -q 'data setoran aktual' src/components/UstadzDashboard.tsx
           grep -q 'MeasuredChartFrame' src/components/HafalanStatsChart.tsx
-          grep -q 'MeasuredChartFrame' src/components/TrenHafalanBulananChart.tsx
           grep -q 'ResizeObserver' src/components/MeasuredChartFrame.tsx
           grep -q 'p323-chart-frame' src/components/MeasuredChartFrame.tsx
           grep -q 'Menyiapkan grafik' src/components/MeasuredChartFrame.tsx
