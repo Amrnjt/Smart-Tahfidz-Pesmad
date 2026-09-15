@@ -3,7 +3,9 @@ import test from 'node:test';
 
 import {
   deduplicateHistoryItems,
+  getDefaultExpandedDateKey,
   getHistoryItemKey,
+  getNextExpandedDateKey,
   groupHistoryItemsByDate,
 } from '../src/utils/historyUtils.ts';
 import type { CombinedHistoryItem } from '../src/types/index.ts';
@@ -49,4 +51,20 @@ test('grouping preserves filtered order and ignores invalid timestamps', () => {
   assert.deepEqual(groups.map(group => group.dateKey), ['2026-09-15', '2026-09-14']);
   assert.deepEqual(groups[0].items, [newest]);
   assert.deepEqual(groups[1].items, [older]);
+});
+
+test('date accordion opens the newest available group by default', () => {
+  const groups = groupHistoryItemsByDate([
+    record('Ziyadah', '1', '2026-09-15 08:00'),
+    record('Murojaah', '2', '2026-09-14 19:30'),
+  ]);
+
+  assert.equal(getDefaultExpandedDateKey(groups), '2026-09-15');
+  assert.equal(getDefaultExpandedDateKey([]), null);
+});
+
+test('date accordion keeps at most one date open', () => {
+  assert.equal(getNextExpandedDateKey('2026-09-15', '2026-09-14'), '2026-09-14');
+  assert.equal(getNextExpandedDateKey('2026-09-15', '2026-09-15'), null);
+  assert.equal(getNextExpandedDateKey(null, '2026-09-15'), '2026-09-15');
 });
