@@ -66,7 +66,7 @@ export const LoginView: React.FC<LoginViewProps> = ({ onLoginSuccess, onNotify }
       } else {
         setErrorMsg(result.message || 'Username atau Password salah. Silakan periksa kembali.');
       }
-    } catch (err) {
+    } catch {
       setIsLoading(false);
       setErrorMsg('Terjadi kesalahan saat memproses login. Silakan coba lagi.');
     }
@@ -274,7 +274,7 @@ const DesktopLogin: React.FC<FormState> = ({
 );
 
 /* =====================================================================
-   MOBILE — immersive, app-style login (major upgrade)
+   MOBILE — immersive, app-style login
    ===================================================================== */
 const MobileLogin: React.FC<FormState> = ({
   username, setUsername, password, setPassword,
@@ -322,9 +322,9 @@ const MobileLogin: React.FC<FormState> = ({
             <input
               id="login-username-input"
               type="text"
-                autoComplete="username"
-                aria-invalid={!!errorMsg}
-                aria-describedby={errorMsg ? 'login-error-message' : undefined}
+              autoComplete="username"
+              aria-invalid={!!errorMsg}
+              aria-describedby={errorMsg ? 'login-error-message' : undefined}
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -345,9 +345,9 @@ const MobileLogin: React.FC<FormState> = ({
             <input
               id="login-password-input"
               type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                aria-invalid={!!errorMsg}
-                aria-describedby={errorMsg ? 'login-error-message' : undefined}
+              autoComplete="current-password"
+              aria-invalid={!!errorMsg}
+              aria-describedby={errorMsg ? 'login-error-message' : undefined}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -385,7 +385,7 @@ const MobileLogin: React.FC<FormState> = ({
         </div>
 
         {errorMsg && (
-            <div id="login-error-message" role="alert" aria-live="assertive" className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5">
+          <div id="login-error-message" role="alert" aria-live="assertive" className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 text-xs text-rose-800 flex items-start gap-2.5">
             <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
             <p className="font-semibold leading-snug">{errorMsg}</p>
           </div>
