@@ -113,11 +113,11 @@ jobs:
 
       - name: Verify P3.2.1 Wali experience contract
         run: |
-          grep -q 'p3-wali-page' src/components/WaliDashboard.tsx
-          grep -q 'p321-parent-hero' src/components/WaliDashboard.tsx
+          grep -q 'CompactDashboardHero' src/components/WaliDashboard.tsx
+          grep -q 'Wali Santri' src/components/WaliDashboard.tsx
           grep -q 'getRecencyInfo' src/components/WaliDashboard.tsx
           grep -q 'programLiburanActive' src/components/WaliDashboard.tsx
-          grep -q 'p321-deferred-surface' src/components/WaliDashboard.tsx
+          grep -q 'CompactActivityFeed' src/components/WaliDashboard.tsx
           grep -q 'p3-wali-page' src/release-polish.css
           grep -q 'p321-surface-secondary' src/release-polish.css
           grep -q 'p321-surface-tertiary' src/release-polish.css
@@ -128,12 +128,12 @@ jobs:
       - name: Verify P3.2.2 Santri experience contract
         run: |
           grep -q "import './santri-experience-finish.css'" src/main.tsx
-          grep -q 'p3-santri-page' src/components/SantriDashboard.tsx
-          grep -q 'p322-study-hero' src/components/SantriDashboard.tsx
+          grep -q 'CompactDashboardHero' src/components/SantriDashboard.tsx
+          grep -q 'Santri ·' src/components/SantriDashboard.tsx
           grep -q 'getRecencyInfo' src/components/SantriDashboard.tsx
           grep -q 'primaryAction' src/components/SantriDashboard.tsx
           grep -q 'santri-feedback-terbaru' src/components/SantriDashboard.tsx
-          grep -q 'p322-deferred-surface' src/components/SantriDashboard.tsx
+          grep -q 'CompactActivityFeed' src/components/SantriDashboard.tsx
           grep -q 'bukan estimasi progres' src/components/SantriDashboard.tsx
           grep -q 'p3-santri-page' src/santri-experience-finish.css
           grep -q 'p322-surface-secondary' src/santri-experience-finish.css
@@ -150,13 +150,11 @@ jobs:
       - name: Verify P3.2.3 Ustadz experience contract
         run: |
           grep -q "import './ustadz-experience-finish.css'" src/main.tsx
-          grep -q 'p3-ustadz-page' src/components/UstadzDashboard.tsx
-          grep -q 'p323-operator-hero' src/components/UstadzDashboard.tsx
-          grep -q 'getRecencyInfo' src/components/UstadzDashboard.tsx
-          grep -q 'operatorAction' src/components/UstadzDashboard.tsx
-          grep -q 'ustadz-tindak-lanjut' src/components/UstadzDashboard.tsx
-          grep -q 'p323-deferred-surface' src/components/UstadzDashboard.tsx
-          grep -q 'data setoran aktual' src/components/UstadzDashboard.tsx
+          grep -q 'CompactDashboardHero' src/components/UstadzDashboard.tsx
+          grep -q 'Dashboard ${currentUser.role' src/components/UstadzDashboard.tsx
+          grep -q 'todayActivities' src/components/UstadzDashboard.tsx
+          grep -q 'CompactTrenBulananChart' src/components/UstadzDashboard.tsx
+          grep -q 'CompactActivityFeed' src/components/UstadzDashboard.tsx
           grep -q 'MeasuredChartFrame' src/components/HafalanStatsChart.tsx
           grep -q 'ResizeObserver' src/components/MeasuredChartFrame.tsx
           grep -q 'p323-chart-frame' src/components/MeasuredChartFrame.tsx
