@@ -5,6 +5,17 @@ export interface HistoryDateGroup {
   items: CombinedHistoryItem[];
 }
 
+export function getDefaultExpandedDateKey(groups: HistoryDateGroup[]): string | null {
+  return groups[0]?.dateKey ?? null;
+}
+
+export function getNextExpandedDateKey(
+  currentDateKey: string | null,
+  requestedDateKey: string,
+): string | null {
+  return currentDateKey === requestedDateKey ? null : requestedDateKey;
+}
+
 export function getHistoryItemKey(item: Pick<CombinedHistoryItem, 'type' | 'id'>): string {
   return `${item.type}:${item.id}`;
 }
