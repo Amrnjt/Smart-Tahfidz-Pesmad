@@ -134,7 +134,7 @@ jobs:
           grep -q 'primaryAction' src/components/SantriDashboard.tsx
           grep -q 'santri-feedback-terbaru' src/components/SantriDashboard.tsx
           grep -q 'CompactActivityFeed' src/components/SantriDashboard.tsx
-          grep -q 'bukan estimasi progres' src/components/SantriDashboard.tsx
+          grep -q 'latestFeedback' src/components/SantriDashboard.tsx
           grep -q 'p3-santri-page' src/santri-experience-finish.css
           grep -q 'p322-surface-secondary' src/santri-experience-finish.css
           grep -q 'p322-surface-tertiary' src/santri-experience-finish.css
