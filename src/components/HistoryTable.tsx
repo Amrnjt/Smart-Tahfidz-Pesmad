@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { User, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS } from '../types';
+import { User, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, CombinedHistoryItem } from '../types';
 import { storageService } from '../services/storageService';
 import { SURAH_LIST } from '../data/quranSurahs';
 import {
@@ -34,6 +34,7 @@ import { UnduhLaporanModal } from './UnduhLaporanModal';
 import { getClassGroup } from '../utils/classUtils';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
+import { deduplicateHistoryItems, getHistoryItemKey, groupHistoryItemsByDate } from '../utils/historyUtils';
 
 interface EditableItem {
   id: string;
@@ -56,30 +57,6 @@ interface HistoryTableProps {
   onDataChanged: () => void;
   santriList?: Santri[];
   onNotify: NotifyFn;
-}
-
-interface CombinedItem {
-  id: string;
-  type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran';
-  timestamp: string;
-  idSantri: string;
-  namaSantri: string;
-  materi: string;
-  nilai: string;
-  catatan: string;
-  inputBy: string;
-  surah?: string;
-  ayatAwal?: number;
-  ayatAkhir?: number;
-  surahAtauJuz?: string;
-  tipeKelas?: string;
-  statusKenaikan?: string;
-  hukumTajwid?: string;
-  makhrojHuruf?: string;
-  kefasihan?: string;
-  kelancaran?: string;
-  kendalaSantri?: string;
-  rekomendasiTindakLanjut?: string;
 }
 
 const NAMA_BULAN = [
@@ -235,7 +212,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Delete & Batch Delete State
-  const [itemToDelete, setItemToDelete] = useState<CombinedItem | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<CombinedHistoryItem | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isBatchDeleteModalOpen, setIsBatchDeleteModalOpen] = useState(false);
@@ -287,8 +264,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     [isViewOnly, actualPembelajaran, targetSantriId]
   );
 
-  const combinedItems: CombinedItem[] = useMemo(() => {
-    const items: CombinedItem[] = [
+  const combinedItems: CombinedHistoryItem[] = useMemo(() => {
+    const items: CombinedHistoryItem[] = [
       ...filteredZiyadah.map(z => ({
         id: z.id, type: 'Ziyadah' as const, timestamp: z.timestamp, idSantri: z.idSantri,
         namaSantri: z.namaSantri || z.idSantri, materi: `${z.surah} (Ayat ${z.ayatAwal} - ${z.ayatAkhir})`,
@@ -318,14 +295,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       }))
     ];
     items.sort((a, b) => parseDateSafe(b.timestamp).getTime() - parseDateSafe(a.timestamp).getTime());
-    const seen = new Set<string>();
-    const deduplicated = items.filter((item) => {
-      const composite = `${item.type}-${item.id}`;
-      if (seen.has(composite)) return false;
-      seen.add(composite);
-      return true;
-    });
-    return deduplicated;
+    return deduplicateHistoryItems(items);
   }, [filteredZiyadah, filteredMurojaah, filteredBinnadzor, filteredPembelajaran]);
 
   // Build month list from data
@@ -363,7 +333,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     return `${yr}-${mo}-${day}`;
   };
 
-  const matchesCategory = (item: CombinedItem, cat: KategoriFilter): boolean => {
+  const matchesCategory = (item: CombinedHistoryItem, cat: KategoriFilter): boolean => {
     if (cat === 'ALL') return true;
     if (cat === 'Ziyadah') return item.type === 'Ziyadah';
     if (cat === 'Murojaah') return item.type === 'Murojaah';
@@ -378,7 +348,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     return true;
   };
 
-  const matchesDate = (item: CombinedItem): boolean => {
+  const matchesDate = (item: CombinedHistoryItem): boolean => {
     if (dateFilterMode === 'all') return true;
     if (dateFilterMode === 'bulan') {
       return getMonthKey(item.timestamp) === activeMonthKey;
@@ -464,7 +434,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   }, [combinedItems, dateFilterMode, activeMonthKey, customStartDate, customEndDate]);
 
   // Filter items by active date mode + category + search/filters
-  const displayedItems = useMemo(() => {
+  const filteredItems = useMemo(() => {
     return combinedItems.filter(item => {
       if (!matchesDate(item)) return false;
       if (!matchesCategory(item, kategoriFilter)) return false;
@@ -486,10 +456,21 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     });
   }, [combinedItems, dateFilterMode, activeMonthKey, customStartDate, customEndDate, kategoriFilter, searchQuery, nilaiFilter]);
 
+  // Prepare the filtered result for the date accordion without changing the current layout yet.
+  const displayedDateGroups = useMemo(
+    () => groupHistoryItemsByDate(filteredItems),
+    [filteredItems]
+  );
+
+  const displayedItems = useMemo(
+    () => displayedDateGroups.flatMap(group => group.items),
+    [displayedDateGroups]
+  );
+
   // Batch selections must never outlive the currently visible result set.
   // This prevents a filtered-out record from remaining silently selected.
   useEffect(() => {
-    const visibleIds = new Set(displayedItems.map(item => item.id));
+    const visibleIds = new Set(displayedItems.map(getHistoryItemKey));
     setSelectedIds(prev => {
       const next = new Set(Array.from(prev).filter(id => visibleIds.has(id)));
       return next.size === prev.size ? prev : next;
@@ -497,7 +478,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   }, [displayedItems]);
 
   const visibleSelectedCount = useMemo(
-    () => displayedItems.reduce((count, item) => count + (selectedIds.has(item.id) ? 1 : 0), 0),
+    () => displayedItems.reduce((count, item) => count + (selectedIds.has(getHistoryItemKey(item)) ? 1 : 0), 0),
     [displayedItems, selectedIds]
   );
 
@@ -578,7 +559,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     });
   };
 
-  const handleDelete = (item: CombinedItem, e?: React.MouseEvent) => {
+  const handleDelete = (item: CombinedHistoryItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setItemToDelete(item);
   };
@@ -592,7 +573,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       onNotify('success', `Data histori ${itemToDelete.type} untuk ${itemToDelete.namaSantri} berhasil dihapus dari Cloud.`);
       setSelectedIds(prev => {
         const next = new Set(prev);
-        next.delete(itemToDelete.id);
+        next.delete(getHistoryItemKey(itemToDelete));
         return next;
       });
       setItemToDelete(null);
@@ -608,7 +589,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     if (visibleSelectedCount === 0) return;
     setIsBatchDeleting(true);
     try {
-      const itemsToDel = displayedItems.filter(i => selectedIds.has(i.id)).map(i => ({ type: i.type, id: i.id }));
+      const itemsToDel = displayedItems.filter(i => selectedIds.has(getHistoryItemKey(i))).map(i => ({ type: i.type, id: i.id }));
       await storageService.deleteRecordsBatch(itemsToDel);
       onDataChanged();
       onNotify('success', `${itemsToDel.length} data rekaman histori berhasil dihapus dari Cloud.`);
@@ -626,7 +607,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     if (visibleSelectedCount === displayedItems.length && displayedItems.length > 0) {
       setSelectedIds(new Set());
     } else {
-      setSelectedIds(new Set(displayedItems.map(i => i.id)));
+      setSelectedIds(new Set(displayedItems.map(getHistoryItemKey)));
     }
   };
 
@@ -640,7 +621,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     });
   };
 
-  const openEditModal = (item: CombinedItem) => {
+  const openEditModal = (item: CombinedHistoryItem) => {
     setEditingItem(item);
     setEditNilai(item.nilai as PredikatNilai);
     if (item.type === 'Ziyadah') {
@@ -698,7 +679,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     return santri?.waliKontak || '';
   };
 
-  const buildWhatsAppLink = (item: CombinedItem): string | null => {
+  const buildWhatsAppLink = (item: CombinedHistoryItem): string | null => {
     const waliKontak = getWaliContact(item.idSantri);
     if (!waliKontak) return null;
     const phone = formatPhoneForWA(waliKontak);
@@ -1516,8 +1497,10 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         ) : (
           <div className="divide-y divide-slate-100">
             {displayedItems.map((item) => {
-              const isExpanded = expandedRows.has(item.id);
-              const isSelected = selectedIds.has(item.id);
+              const historyKey = getHistoryItemKey(item);
+              const detailId = `history-${item.type.toLowerCase()}-${item.id}`;
+              const isExpanded = expandedRows.has(historyKey);
+              const isSelected = selectedIds.has(historyKey);
               const timePart = item.timestamp.includes(' ')
                 ? item.timestamp.split(' ')[1]
                 : item.timestamp.includes('T')
@@ -1548,7 +1531,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                           <input
                             type="checkbox"
                             checked={isSelected}
-                            onChange={(e) => toggleSelectItem(item.id, e)}
+                            onChange={(e) => toggleSelectItem(historyKey, e)}
                             aria-label={`Pilih rekaman ${item.type} untuk ${item.namaSantri}`}
                             className="w-4 h-4 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
                           />
@@ -1557,9 +1540,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                       <button
                         type="button"
-                        onClick={() => toggleRow(item.id)}
+                        onClick={() => toggleRow(historyKey)}
                         aria-expanded={isExpanded}
-                        aria-controls={`history-mobile-detail-${item.id}`}
+                        aria-controls={`${detailId}-mobile`}
                         className="min-w-0 flex-1 text-left"
                       >
                         {/* Primary line: identity + score */}
@@ -1632,7 +1615,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     </div>
 
                     {isExpanded && (
-                      <div id={`history-mobile-detail-${item.id}`} className="p2-history-mobile-detail mt-3 ml-6 rounded-r-xl border-l-2 border-slate-200 bg-slate-50/70 pl-3 pr-3 py-3">
+                      <div id={`${detailId}-mobile`} className="p2-history-mobile-detail mt-3 ml-6 rounded-r-xl border-l-2 border-slate-200 bg-slate-50/70 pl-3 pr-3 py-3">
                         <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-x-3 gap-y-2 text-xs leading-5">
                           <span className="text-slate-400">ID Santri</span>
                           <span className="font-mono text-slate-600">{item.idSantri}</span>
@@ -1702,7 +1685,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   {/* DESKTOP VIEW ROW (hidden sm:flex) */}
                   <div
                     className="p2-history-desktop-row hidden lg:flex items-center gap-2.5 px-4 py-3 cursor-pointer"
-                    onClick={() => toggleRow(item.id)}
+                    onClick={() => toggleRow(historyKey)}
                   >
                     {/* Row Select Checkbox (For Ustadz/Admin) */}
                     {!isViewOnly && (
@@ -1710,7 +1693,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                         <input
                           type="checkbox"
                           checked={isSelected}
-                          onChange={(e) => toggleSelectItem(item.id, e)}
+                          onChange={(e) => toggleSelectItem(historyKey, e)}
                           aria-label={`Pilih rekaman ${item.type} untuk ${item.namaSantri}`}
                           className="w-4 h-4 rounded text-emerald-700 focus:ring-emerald-500 border-slate-300 cursor-pointer"
                         />
@@ -1720,9 +1703,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     {/* Expand control */}
                     <button
                       type="button"
-                      onClick={(e) => { e.stopPropagation(); toggleRow(item.id); }}
+                      onClick={(e) => { e.stopPropagation(); toggleRow(historyKey); }}
                       aria-expanded={isExpanded}
-                      aria-controls={`history-desktop-detail-${item.id}`}
+                      aria-controls={`${detailId}-desktop`}
                       aria-label={`${isExpanded ? 'Tutup' : 'Buka'} detail rekaman ${item.type} untuk ${item.namaSantri}`}
                       className="flex min-h-11 min-w-11 flex-shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100"
                     >
@@ -1792,7 +1775,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                   {/* Expanded Detail - accordion */}
                   {isExpanded && (
-                    <div id={`history-desktop-detail-${item.id}`} className="p2-history-desktop-detail hidden lg:block px-2.5 sm:px-4 pb-3 pt-2 bg-slate-50/70 border-t border-slate-200/80 rounded-b-lg space-y-2 text-xs">
+                    <div id={`${detailId}-desktop`} className="p2-history-desktop-detail hidden lg:block px-2.5 sm:px-4 pb-3 pt-2 bg-slate-50/70 border-t border-slate-200/80 rounded-b-lg space-y-2 text-xs">
                       {/* Grid cards for detail */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         {/* Detail Identitas & Materi Card */}
