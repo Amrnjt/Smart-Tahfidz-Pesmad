@@ -67,7 +67,7 @@ jobs:
           grep -q 'p3-chrome-stack' src/App.tsx
           grep -q 'DesktopPrimaryNav' src/App.tsx
           grep -q 'data-app-chrome="primary-navigation"' src/components/DesktopPrimaryNav.tsx
-          grep -q 'p2-topbar ui-safe-top relative select-none' src/components/Navbar.tsx
+          grep -q 'sticky top-0 z-40 w-full' src/components/Navbar.tsx
           grep -q 'position: sticky' src/release-polish.css
           grep -q 'p3-primary-nav-layer' src/release-polish.css
           if grep -A120 'Main Container' src/App.tsx | grep -q 'aria-label="Navigasi utama"'; then
