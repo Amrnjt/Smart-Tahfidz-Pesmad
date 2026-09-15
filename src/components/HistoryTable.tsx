@@ -34,7 +34,13 @@ import { UnduhLaporanModal } from './UnduhLaporanModal';
 import { getClassGroup } from '../utils/classUtils';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
-import { deduplicateHistoryItems, getHistoryItemKey, groupHistoryItemsByDate } from '../utils/historyUtils';
+import {
+  deduplicateHistoryItems,
+  getDefaultExpandedDateKey,
+  getHistoryItemKey,
+  getNextExpandedDateKey,
+  groupHistoryItemsByDate
+} from '../utils/historyUtils';
 
 interface EditableItem {
   id: string;
@@ -194,6 +200,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const [showReportModal, setShowReportModal] = useState(false);
   const [activeMonthKey, setActiveMonthKey] = useState<string>('');
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [expandedDateKey, setExpandedDateKey] = useState<string | null>(null);
   const [hasSetDefaultMonth, setHasSetDefaultMonth] = useState(false);
 
   // Custom date range state
@@ -466,6 +473,19 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     () => displayedDateGroups.flatMap(group => group.items),
     [displayedDateGroups]
   );
+
+  useEffect(() => {
+    setExpandedDateKey(current => {
+      if (current && displayedDateGroups.some(group => group.dateKey === current)) {
+        return current;
+      }
+      return getDefaultExpandedDateKey(displayedDateGroups);
+    });
+  }, [displayedDateGroups]);
+
+  const toggleDateGroup = (dateKey: string) => {
+    setExpandedDateKey(current => getNextExpandedDateKey(current, dateKey));
+  };
 
   // Batch selections must never outlive the currently visible result set.
   // This prevents a filtered-out record from remaining silently selected.
@@ -1495,8 +1515,55 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
             </div>
           </>
         ) : (
-          <div className="divide-y divide-slate-100">
-            {displayedItems.map((item) => {
+          <div className="space-y-2 bg-slate-50/60 p-2 sm:p-3">
+            {displayedDateGroups.map((dateGroup) => {
+              const isDateExpanded = expandedDateKey === dateGroup.dateKey;
+              const datePanelId = `history-date-${dateGroup.dateKey}`;
+
+              return (
+                <section
+                  key={dateGroup.dateKey}
+                  className="overflow-hidden rounded-xl border border-slate-200 bg-white"
+                >
+                  <h3>
+                    <button
+                      type="button"
+                      onClick={() => toggleDateGroup(dateGroup.dateKey)}
+                      aria-expanded={isDateExpanded}
+                      aria-controls={datePanelId}
+                      className={`flex min-h-14 w-full items-center justify-between gap-3 px-3.5 py-3 text-left transition-colors sm:px-4 ${
+                        isDateExpanded ? 'bg-emerald-50/60' : 'bg-white hover:bg-slate-50'
+                      }`}
+                    >
+                      <span className="flex min-w-0 items-center gap-2.5">
+                        <span className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg ${
+                          isDateExpanded ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          <Calendar className="h-4 w-4" aria-hidden="true" />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-extrabold text-slate-900">
+                            {dateGroup.dateKey === getTodayInputFormat()
+                              ? 'Hari Ini'
+                              : formatTanggalLengkap(dateGroup.dateKey)}
+                          </span>
+                          <span className="block text-xs font-medium text-slate-500">
+                            {dateGroup.items.length} setoran
+                          </span>
+                        </span>
+                      </span>
+                      <span className="flex flex-shrink-0 items-center gap-2 text-xs font-semibold text-slate-500">
+                        <span className="hidden sm:inline">{isDateExpanded ? 'Tutup' : 'Buka'}</span>
+                        {isDateExpanded
+                          ? <ChevronUp className="h-4 w-4" aria-hidden="true" />
+                          : <ChevronDown className="h-4 w-4" aria-hidden="true" />}
+                      </span>
+                    </button>
+                  </h3>
+
+                  {isDateExpanded && (
+                    <div id={datePanelId} className="divide-y divide-slate-100 border-t border-slate-200">
+                      {dateGroup.items.map((item) => {
               const historyKey = getHistoryItemKey(item);
               const detailId = `history-${item.type.toLowerCase()}-${item.id}`;
               const isExpanded = expandedRows.has(historyKey);
@@ -1943,6 +2010,11 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     </div>
                   )}
                 </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </section>
               );
             })}
           </div>
