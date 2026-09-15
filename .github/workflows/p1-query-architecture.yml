@@ -1,0 +1,44 @@
+name: P1 Query Architecture Gate
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/App.tsx'
+      - 'src/components/*Dashboard.tsx'
+      - 'src/components/HafalanStatsChart.tsx'
+      - 'src/components/HistoryTable.tsx'
+      - 'src/components/UnduhLaporanModal.tsx'
+      - 'src/components/dashboard/CompactTrenBulananChart.tsx'
+      - 'src/hooks/use*SetoranRecords.ts'
+      - 'src/services/cloudCommitGate.ts'
+      - 'src/services/setoran*.ts'
+      - 'src/services/storageService.ts'
+      - 'src/state/setoranChannelReducer.ts'
+      - 'src/utils/setoranDataset.ts'
+      - 'tests/setoran-*'
+      - 'package.json'
+      - '.github/workflows/p1-query-architecture.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: TypeScript check
+        run: npm run lint
+      - name: P1 behavioral tests
+        run: npm run test:p1
+      - name: P1 consumer contracts
+        run: node --test tests/setoran-consumer-contracts.test.mjs tests/setoran-mutation-contracts.test.mjs
+      - name: Production build
+        run: npm run build

@@ -152,42 +152,44 @@ export function installCloudCommitGate(): void {
     id: string,
     updatedData: Partial<ZiyadahRecord | MurojaahRecord | BinnadzorRecord | PembelajaranRecord>
   ): Promise<boolean> => {
-    if (type === 'Ziyadah') {
-      const records = storageService.getZiyadahRecords();
-      const current = records.find((r) => r.id === id);
-      if (!current) return false;
-      const target = { ...current, ...updatedData } as ZiyadahRecord;
-      await setDoc(doc(db, COLLECTIONS.ZIYADAH, id), cleanForFirestore(target), { merge: true });
-      writeArrayCache(STORAGE_KEYS.ZIYADAH, records.map((r) => r.id === id ? target : r));
-      return true;
-    }
+    const targetByType = {
+      Ziyadah: {
+        collection: COLLECTIONS.ZIYADAH,
+        storageKey: STORAGE_KEYS.ZIYADAH,
+        getRecords: () => storageService.getZiyadahRecords(),
+      },
+      Murojaah: {
+        collection: COLLECTIONS.MUROJAAH,
+        storageKey: STORAGE_KEYS.MUROJAAH,
+        getRecords: () => storageService.getMurojaahRecords(),
+      },
+      Binnadzor: {
+        collection: COLLECTIONS.BINNADZOR,
+        storageKey: STORAGE_KEYS.BINNADZOR,
+        getRecords: () => storageService.getBinnadzorRecords(),
+      },
+      Pembelajaran: {
+        collection: COLLECTIONS.PEMBELAJARAN,
+        storageKey: STORAGE_KEYS.PEMBELAJARAN,
+        getRecords: () => storageService.getPembelajaranRecords(),
+      },
+    }[type];
 
-    if (type === 'Murojaah') {
-      const records = storageService.getMurojaahRecords();
-      const current = records.find((r) => r.id === id);
-      if (!current) return false;
-      const target = { ...current, ...updatedData } as MurojaahRecord;
-      await setDoc(doc(db, COLLECTIONS.MUROJAAH, id), cleanForFirestore(target), { merge: true });
-      writeArrayCache(STORAGE_KEYS.MUROJAAH, records.map((r) => r.id === id ? target : r));
-      return true;
-    }
+    await setDoc(
+      doc(db, targetByType.collection, id),
+      cleanForFirestore({ id, ...updatedData }),
+      { merge: true },
+    );
 
-    if (type === 'Pembelajaran') {
-      const records = storageService.getPembelajaranRecords();
-      const current = records.find((r) => r.id === id);
-      if (!current) return false;
-      const target = { ...current, ...updatedData } as PembelajaranRecord;
-      await setDoc(doc(db, COLLECTIONS.PEMBELAJARAN, id), cleanForFirestore(target), { merge: true });
-      writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, records.map((r) => r.id === id ? target : r));
-      return true;
+    const cachedRecords = targetByType.getRecords();
+    if (cachedRecords.some(record => record.id === id)) {
+      writeArrayCache(
+        targetByType.storageKey,
+        cachedRecords.map(record =>
+          record.id === id ? { ...record, ...updatedData, id } : record,
+        ),
+      );
     }
-
-    const records = storageService.getBinnadzorRecords();
-    const current = records.find((r) => r.id === id);
-    if (!current) return false;
-    const target = { ...current, ...updatedData } as BinnadzorRecord;
-    await setDoc(doc(db, COLLECTIONS.BINNADZOR, id), cleanForFirestore(target), { merge: true });
-    writeArrayCache(STORAGE_KEYS.BINNADZOR, records.map((r) => r.id === id ? target : r));
     return true;
   };
 

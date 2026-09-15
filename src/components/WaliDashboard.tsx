@@ -2,13 +2,13 @@ import React from 'react';
 import {
   User,
   Santri,
-  ZiyadahRecord,
-  MurojaahRecord,
-  BinnadzorRecord,
-  PembelajaranRecord,
   ActiveTab,
   PredikatNilai
 } from '../types';
+import type {
+  QueryChannelStatus,
+  SetoranDataset,
+} from '../services/setoranQuery.types';
 import {
   ArrowRight,
   BookOpen,
@@ -35,10 +35,10 @@ import { CompactActivityFeed } from './dashboard/CompactActivityFeed';
 interface WaliDashboardProps {
   currentUser: User;
   santriList: Santri[];
-  ziyadahRecords: ZiyadahRecord[];
-  murojaahRecords: MurojaahRecord[];
-  binnadzorRecords?: BinnadzorRecord[];
-  pembelajaranRecords?: PembelajaranRecord[];
+  recentRecords: SetoranDataset;
+  analyticsRecords: SetoranDataset;
+  analyticsStatus: QueryChannelStatus;
+  onAnalyticsMonthsChange: (months: 6 | 12) => void;
   setActiveTab: (tab: ActiveTab) => void;
   onNotify: NotifyFn;
 }
@@ -138,13 +138,19 @@ const getRecencyInfo = (timestamp?: string): RecencyInfo => {
 export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   currentUser,
   santriList,
-  ziyadahRecords,
-  murojaahRecords,
-  binnadzorRecords = [],
-  pembelajaranRecords = [],
+  recentRecords,
+  analyticsRecords,
+  analyticsStatus,
+  onAnalyticsMonthsChange,
   setActiveTab,
   onNotify
 }) => {
+  const {
+    ziyadah: ziyadahRecords,
+    murojaah: murojaahRecords,
+    binnadzor: binnadzorRecords,
+    pembelajaran: pembelajaranRecords,
+  } = recentRecords;
   const targetSantri = santriList.find(santri => santri.idSantri === currentUser.idSantri);
 
   if (!targetSantri) {
@@ -172,6 +178,10 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   const santriMurojaah = murojaahRecords.filter(record => record.idSantri === targetSantri.idSantri);
   const santriBinnadzor = binnadzorRecords.filter(record => record.idSantri === targetSantri.idSantri);
   const santriPembelajaran = pembelajaranRecords.filter(record => record.idSantri === targetSantri.idSantri);
+  const analyticsZiyadah = analyticsRecords.ziyadah.filter(record => record.idSantri === targetSantri.idSantri);
+  const analyticsMurojaah = analyticsRecords.murojaah.filter(record => record.idSantri === targetSantri.idSantri);
+  const analyticsBinnadzor = analyticsRecords.binnadzor.filter(record => record.idSantri === targetSantri.idSantri);
+  const analyticsPembelajaran = analyticsRecords.pembelajaran.filter(record => record.idSantri === targetSantri.idSantri);
 
   const rawActivities: WaliActivity[] = [
     ...santriZiyadah.map(record => ({
@@ -514,12 +524,20 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
 
       {/* 6. TREN & AKTIVITAS BENTO SECTION */}
       <ScrollReveal delay={60} className="space-y-3">
+        <p className="sr-only" role="status" aria-live="polite">
+          {analyticsStatus === 'loading'
+            ? 'Memuat data grafik.'
+            : analyticsStatus === 'error'
+              ? 'Grafik menggunakan data terakhir karena pembaruan gagal.'
+              : 'Data grafik siap.'}
+        </p>
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(300px,1.2fr)] gap-3 sm:gap-4 items-stretch">
           <CompactTrenBulananChart
-            ziyadahRecords={santriZiyadah}
-            murojaahRecords={santriMurojaah}
-            binnadzorRecords={santriBinnadzor}
-            pembelajaranRecords={santriPembelajaran}
+            ziyadahRecords={analyticsZiyadah}
+            murojaahRecords={analyticsMurojaah}
+            binnadzorRecords={analyticsBinnadzor}
+            pembelajaranRecords={analyticsPembelajaran}
+            onTimeRangeMonthsChange={onAnalyticsMonthsChange}
             targetSantriId={targetSantri.idSantri}
             title="Tren Hafalan Santri"
             subtitle={`Perkembangan aktivitas tahfidz ${targetSantri.namaSantri}`}

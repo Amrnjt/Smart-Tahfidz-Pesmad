@@ -20,6 +20,7 @@ export interface CompactTrenBulananChartProps {
   subtitle?: string;
   targetSantriId?: string;
   className?: string;
+  onTimeRangeMonthsChange?: (months: 6 | 12) => void;
 }
 
 interface MonthlyDataPoint {
@@ -54,7 +55,8 @@ export const CompactTrenBulananChart: React.FC<CompactTrenBulananChartProps> = (
   title = 'Tren Bulanan',
   subtitle = 'Perkembangan aktivitas tahfidz',
   targetSantriId,
-  className = ''
+  className = '',
+  onTimeRangeMonthsChange,
 }) => {
   const [timeRangeMonths, setTimeRangeMonths] = useState<number>(6);
   const [selectedSeries, setSelectedSeries] = useState<SeriesKey>('ALL');
@@ -168,7 +170,10 @@ export const CompactTrenBulananChart: React.FC<CompactTrenBulananChartProps> = (
             <button
               key={m}
               type="button"
-              onClick={() => setTimeRangeMonths(m)}
+              onClick={() => {
+                setTimeRangeMonths(m);
+                onTimeRangeMonthsChange?.(m === 12 ? 12 : 6);
+              }}
               aria-pressed={timeRangeMonths === m}
               className={`px-2 py-1 rounded-lg transition-all cursor-pointer ${
                 timeRangeMonths === m

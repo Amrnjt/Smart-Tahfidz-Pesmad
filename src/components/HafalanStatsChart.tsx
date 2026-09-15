@@ -25,6 +25,7 @@ interface HafalanStatsChartProps {
   binnadzorRecords?: BinnadzorRecord[];
   pembelajaranRecords?: PembelajaranRecord[];
   kelasList?: Kelas[];
+  onTimeRangeMonthsChange?: (months: 6 | 12) => void;
 }
 
 export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
@@ -33,7 +34,8 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
   murojaahRecords,
   binnadzorRecords = [],
   pembelajaranRecords = [],
-  kelasList = []
+  kelasList = [],
+  onTimeRangeMonthsChange,
 }) => {
   const [selectedSantriFilter, setSelectedSantriFilter] = useState<string>('ALL');
   const [selectedKelasFilter, setSelectedKelasFilter] = useState<string>('ALL');
@@ -271,7 +273,11 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
             <Calendar className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
             <select
               value={timeRangeMonths}
-              onChange={(e) => setTimeRangeMonths(Number(e.target.value))}
+              onChange={(event) => {
+                const selectedMonths = Number(event.target.value);
+                setTimeRangeMonths(selectedMonths);
+                onTimeRangeMonthsChange?.(selectedMonths === 12 ? 12 : 6);
+              }}
               className="bg-transparent font-medium focus:outline-hidden cursor-pointer"
             >
               <option value={3}>3 Bulan</option>

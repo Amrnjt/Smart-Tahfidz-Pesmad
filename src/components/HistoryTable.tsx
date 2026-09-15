@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { User, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, CombinedHistoryItem } from '../types';
+import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, CombinedHistoryItem } from '../types';
 import { storageService } from '../services/storageService';
+import type { SetoranDataset, SetoranDateRange } from '../services/setoranQuery.types';
+import { setoranQueryService } from '../services/setoranQueryService';
 import { SURAH_LIST } from '../data/quranSurahs';
 import {
   Search,
@@ -31,6 +33,7 @@ import {
 } from 'lucide-react';
 import { addDaysToDateInput, formatTanggalLengkap, formatTanggalRingkas, getTodayInputFormat, parseDateSafe } from '../utils/dateFormatter';
 import { UnduhLaporanModal } from './UnduhLaporanModal';
+import { TrashBinModal } from './TrashBinModal';
 import { getClassGroup } from '../utils/classUtils';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
@@ -41,6 +44,8 @@ import {
   getNextExpandedDateKey,
   groupHistoryItemsByDate
 } from '../utils/historyUtils';
+import { useHistoricalSetoranRecords } from '../hooks/useHistoricalSetoranRecords';
+import { createMonthRange } from '../utils/setoranDataset';
 
 interface EditableItem {
   id: string;
@@ -56,13 +61,10 @@ interface EditableItem {
 
 interface HistoryTableProps {
   currentUser: User;
-  ziyadahRecords: ZiyadahRecord[];
-  murojaahRecords: MurojaahRecord[];
-  binnadzorRecords?: BinnadzorRecord[];
-  pembelajaranRecords?: PembelajaranRecord[];
-  onDataChanged: () => void;
+  onMutationCommitted: () => void;
   santriList?: Santri[];
   onNotify: NotifyFn;
+  legacyMonthKeys?: string[];
 }
 
 const NAMA_BULAN = [
@@ -192,13 +194,20 @@ const KATEGORI_OPTIONS: KategoriOption[] = [
 ];
 
 export const HistoryTable: React.FC<HistoryTableProps> = ({
-  currentUser, ziyadahRecords, murojaahRecords, binnadzorRecords, pembelajaranRecords, onDataChanged, santriList = [], onNotify
+  currentUser,
+  onMutationCommitted,
+  santriList = [],
+  onNotify,
+  legacyMonthKeys = [],
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [kategoriFilter, setKategoriFilter] = useState<KategoriFilter>('ALL');
   const [nilaiFilter, setNilaiFilter] = useState<string>('ALL');
   const [showReportModal, setShowReportModal] = useState(false);
-  const [activeMonthKey, setActiveMonthKey] = useState<string>('');
+  const [showTrashBin, setShowTrashBin] = useState(false);
+  const [activeMonthKey, setActiveMonthKey] = useState<string>(
+    () => getTodayInputFormat().slice(0, 7),
+  );
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [expandedDateKey, setExpandedDateKey] = useState<string | null>(null);
   const [hasSetDefaultMonth, setHasSetDefaultMonth] = useState(false);
@@ -225,6 +234,19 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const [isBatchDeleteModalOpen, setIsBatchDeleteModalOpen] = useState(false);
   const [isBatchDeleting, setIsBatchDeleting] = useState(false);
   const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [deletedIds] = useState<ReadonlySet<string>>(
+    () => storageService.getDeletedRecordIds(),
+  );
+  const historicalChannel = useHistoricalSetoranRecords({
+    enabled: true,
+    deletedIds,
+  });
+  const {
+    ziyadah: ziyadahRecords,
+    murojaah: murojaahRecords,
+    binnadzor: actualBinnadzor,
+    pembelajaran: actualPembelajaran,
+  } = historicalChannel.data;
 
   const editDialogRef = useAccessibleDialog(Boolean(editingItem), () => {
     if (!isSavingEdit) {
@@ -250,9 +272,6 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   })();
   const isViewOnly = normalizedRole === 'Wali' || normalizedRole === 'Santri';
   const targetSantriId = currentUser.idSantri || (normalizedRole === 'Santri' ? currentUser.username : '');
-
-  const actualBinnadzor = binnadzorRecords || storageService.getBinnadzorRecords();
-  const actualPembelajaran = pembelajaranRecords || storageService.getPembelajaranRecords();
 
   const filteredZiyadah = useMemo(
     () => isViewOnly ? ziyadahRecords.filter(r => r.idSantri === targetSantriId) : ziyadahRecords,
@@ -305,27 +324,66 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     return deduplicateHistoryItems(items);
   }, [filteredZiyadah, filteredMurojaah, filteredBinnadzor, filteredPembelajaran]);
 
-  // Build month list from data
+  // Cache contributes navigation hints only; selected content always comes from Firestore.
   const monthKeys = useMemo(() => {
-    const keys = new Set<string>();
+    const keys = new Set<string>([
+      getTodayInputFormat().slice(0, 7),
+      ...legacyMonthKeys,
+    ]);
     combinedItems.forEach(item => {
       const mk = getMonthKey(item.timestamp);
       if (mk) keys.add(mk);
     });
     return Array.from(keys).sort((a, b) => b.localeCompare(a));
-  }, [combinedItems]);
+  }, [combinedItems, legacyMonthKeys]);
 
-  // Default to current month on initial load only (not on every monthKeys change)
   useEffect(() => {
-    if (hasSetDefaultMonth || monthKeys.length === 0) return;
-    const currentKey = getTodayInputFormat().slice(0, 7);
-    if (monthKeys.includes(currentKey)) {
-      setActiveMonthKey(currentKey);
-    } else {
-      setActiveMonthKey(monthKeys[0]);
+    if (dateFilterMode === 'bulan') {
+      const [year, monthNumber] = activeMonthKey.split('-').map(Number);
+      if (year && monthNumber >= 1 && monthNumber <= 12) {
+        void historicalChannel.loadRange(createMonthRange(year, monthNumber - 1));
+      }
+      return;
     }
-    setHasSetDefaultMonth(true);
-  }, [monthKeys, hasSetDefaultMonth]);
+
+    if (dateFilterMode === 'range') {
+      if (!customStartDate || !customEndDate || customStartDate > customEndDate) return;
+      const range: SetoranDateRange = {
+        startInclusive: `${customStartDate} 00:00`,
+        endExclusive: `${addDaysToDateInput(customEndDate, 1)} 00:00`,
+      };
+      void historicalChannel.loadRange(range);
+      return;
+    }
+
+    void historicalChannel.loadAll();
+  }, [
+    activeMonthKey,
+    customEndDate,
+    customStartDate,
+    dateFilterMode,
+    historicalChannel.loadAll,
+    historicalChannel.loadRange,
+  ]);
+
+  const loadReportRecords = async (
+    range: SetoranDateRange,
+    idSantri?: string,
+  ): Promise<SetoranDataset> => {
+    const records = await setoranQueryService.fetchRecordsByRange(range, deletedIds);
+    if (!idSantri) return records;
+    return {
+      ziyadah: records.ziyadah.filter(record => record.idSantri === idSantri),
+      murojaah: records.murojaah.filter(record => record.idSantri === idSantri),
+      binnadzor: records.binnadzor.filter(record => record.idSantri === idSantri),
+      pembelajaran: records.pembelajaran.filter(record => record.idSantri === idSantri),
+    };
+  };
+
+  const mutationCommitted = () => {
+    historicalChannel.retry();
+    onMutationCommitted();
+  };
 
   // Helper to extract YYYY-MM-DD from timestamp string
   const getItemDateString = (ts: string): string => {
@@ -356,6 +414,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   };
 
   const matchesDate = (item: CombinedHistoryItem): boolean => {
+    if (historicalChannel.status === 'loading' || historicalChannel.status === 'error') {
+      return true;
+    }
     if (dateFilterMode === 'all') return true;
     if (dateFilterMode === 'bulan') {
       return getMonthKey(item.timestamp) === activeMonthKey;
@@ -438,7 +499,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     });
 
     return counts;
-  }, [combinedItems, dateFilterMode, activeMonthKey, customStartDate, customEndDate]);
+  }, [combinedItems, dateFilterMode, activeMonthKey, customStartDate, customEndDate, historicalChannel.status]);
 
   // Filter items by active date mode + category + search/filters
   const filteredItems = useMemo(() => {
@@ -461,7 +522,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       const matchesNilai = nilaiFilter === 'ALL' || item.nilai === nilaiFilter;
       return matchesNilai;
     });
-  }, [combinedItems, dateFilterMode, activeMonthKey, customStartDate, customEndDate, kategoriFilter, searchQuery, nilaiFilter]);
+  }, [combinedItems, dateFilterMode, activeMonthKey, customStartDate, customEndDate, kategoriFilter, searchQuery, nilaiFilter, historicalChannel.status]);
 
   // Prepare the filtered result for the date accordion without changing the current layout yet.
   const displayedDateGroups = useMemo(
@@ -588,9 +649,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     if (!itemToDelete) return;
     setIsDeleting(true);
     try {
-      await storageService.deleteRecord(itemToDelete.type, itemToDelete.id);
-      onDataChanged();
-      onNotify('success', `Data histori ${itemToDelete.type} untuk ${itemToDelete.namaSantri} berhasil dihapus dari Cloud.`);
+      await storageService.deleteRecord(itemToDelete.type, itemToDelete.id, currentUser.nama || currentUser.username);
+      mutationCommitted();
+      onNotify('success', `Data ${itemToDelete.type} dipindahkan ke Tempat Sampah selama 15 hari.`);
       setSelectedIds(prev => {
         const next = new Set(prev);
         next.delete(getHistoryItemKey(itemToDelete));
@@ -610,9 +671,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     setIsBatchDeleting(true);
     try {
       const itemsToDel = displayedItems.filter(i => selectedIds.has(getHistoryItemKey(i))).map(i => ({ type: i.type, id: i.id }));
-      await storageService.deleteRecordsBatch(itemsToDel);
-      onDataChanged();
-      onNotify('success', `${itemsToDel.length} data rekaman histori berhasil dihapus dari Cloud.`);
+      await storageService.deleteRecordsBatch(itemsToDel, currentUser.nama || currentUser.username);
+      mutationCommitted();
+      onNotify('success', `${itemsToDel.length} data dipindahkan ke Tempat Sampah selama 15 hari.`);
       setSelectedIds(new Set());
       setIsBatchDeleteModalOpen(false);
     } catch (err) {
@@ -682,7 +743,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           surahAtauJuz: editSurahAtauJuz.trim(), nilai: editNilai
         });
       }
-      onDataChanged();
+      mutationCommitted();
       onNotify('success', `Perubahan ${editingItem.type} berhasil disimpan ke Cloud.`);
       closeEditModal();
     } catch (err) {
@@ -750,6 +811,25 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
   return (
     <div className="p2-history bg-white rounded-xl p-2.5 sm:p-4 border border-slate-200/90 flex flex-col lg:max-h-[calc(100dvh-140px)]">
+      {historicalChannel.status === 'error' && (
+        <div className="mb-3 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800" role="alert">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span>Riwayat untuk periode ini gagal dimuat. Data periode sebelumnya tetap ditampilkan.</span>
+            <button
+              type="button"
+              onClick={historicalChannel.retry}
+              className="min-h-10 rounded-lg bg-rose-700 px-3 font-bold text-white hover:bg-rose-800"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        </div>
+      )}
+      {historicalChannel.status === 'loading' && (
+        <p className="mb-2 text-xs font-semibold text-emerald-700" role="status" aria-live="polite">
+          Memuat riwayat periode terpilih…
+        </p>
+      )}
       {/* Header & Filter Controls */}
       <div className="p2-history-toolbar pb-2 border-b border-slate-100 flex-shrink-0 space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -764,6 +844,17 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
           {/* Export is intentionally secondary on mobile */}
           <div className="lg:hidden flex items-center gap-1.5 flex-shrink-0">
+            {!isViewOnly && (
+              <button
+                type="button"
+                onClick={() => setShowTrashBin(true)}
+                className="min-h-11 px-3 inline-flex items-center gap-1 rounded-lg border border-amber-200 bg-amber-50 text-xs font-semibold text-amber-800 hover:bg-amber-100 transition cursor-pointer"
+                aria-label="Buka Tempat Sampah"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Sampah</span>
+              </button>
+            )}
             <button
               onClick={() => setShowReportModal(true)}
               className="min-h-11 px-3 inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white text-xs font-semibold text-slate-600 hover:bg-slate-50 transition cursor-pointer"
@@ -786,6 +877,16 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         {/* Mobile: search is primary, secondary filters collapse behind one control */}
         <div className="lg:hidden space-y-2">
           <div className="flex items-center gap-2">
+            {!isViewOnly && (
+              <button
+                type="button"
+                onClick={() => setShowTrashBin(true)}
+                className="ui-control inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100 font-semibold text-sm transition cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Tempat Sampah</span>
+              </button>
+            )}
             <div className="relative min-w-0 flex-1">
               <Search className="w-4 h-4 absolute left-2.5 top-2 text-slate-400" />
               <input
@@ -949,7 +1050,10 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                                 : 'bg-white text-slate-600 border-slate-200'
                             }`}
                           >
-                            {getMonthLabel(mk)} · {monthCounts[mk] || 0}
+                            {getMonthLabel(mk)}
+                            {mk === activeMonthKey && historicalChannel.status === 'success'
+                              ? ` · ${monthCounts[mk] || 0}`
+                              : ''}
                           </button>
                         ))
                       )}
@@ -1174,7 +1278,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     <span className={`px-1.5 py-0.5 rounded-md text-xs font-bold ${
                       activeMonthKey === mk ? 'bg-white/20 text-white' : 'bg-white text-slate-500'
                     }`}>
-                      {monthCounts[mk] || 0}
+                      {activeMonthKey === mk && historicalChannel.status === 'success'
+                        ? monthCounts[mk] || 0
+                        : '—'}
                     </span>
                   </button>
                 ))
@@ -2144,10 +2250,18 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         onClose={() => setShowReportModal(false)}
         currentUser={currentUser}
         santriList={santriList}
-        ziyadahRecords={ziyadahRecords}
-        murojaahRecords={murojaahRecords}
-        binnadzorRecords={binnadzorRecords || actualBinnadzor}
-        pembelajaranRecords={pembelajaranRecords || actualPembelajaran}
+        loadReportRecords={loadReportRecords}
+      />
+
+      <TrashBinModal
+        isOpen={showTrashBin}
+        onClose={() => setShowTrashBin(false)}
+        onRestoreSuccess={() => {
+          mutationCommitted();
+          historicalChannel.retry();
+        }}
+        onNotify={onNotify}
+        currentUser={currentUser}
       />
 
       {/* Single Item Delete Confirmation Modal */}
