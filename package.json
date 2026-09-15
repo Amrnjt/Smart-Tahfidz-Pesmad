@@ -10,7 +10,8 @@
     "postbuild": "node -e \"console.log('=== BUILD LOG END: Build successful! ===');\"",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:p1": "node --import tsx --test tests/setoran-*.test.ts"
   },
   "npm": {
     "allow-scripts": {

@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import {
   User,
   Santri,
-  ZiyadahRecord,
-  MurojaahRecord,
-  BinnadzorRecord,
-  PembelajaranRecord,
   ActiveTab,
   Kelas,
   PredikatNilai
 } from '../types';
+import type {
+  QueryChannelStatus,
+  SetoranDataset,
+} from '../services/setoranQuery.types';
 import {
   AlertTriangle,
   ArrowRight,
@@ -37,10 +37,10 @@ import { ScrollReveal } from './ScrollReveal';
 interface UstadzDashboardProps {
   currentUser: User;
   santriList: Santri[];
-  ziyadahRecords: ZiyadahRecord[];
-  murojaahRecords: MurojaahRecord[];
-  binnadzorRecords?: BinnadzorRecord[];
-  pembelajaranRecords?: PembelajaranRecord[];
+  recentRecords: SetoranDataset;
+  analyticsRecords: SetoranDataset;
+  analyticsStatus: QueryChannelStatus;
+  onAnalyticsMonthsChange: (months: 6 | 12) => void;
   kelasList: Kelas[];
   setActiveTab: (tab: ActiveTab) => void;
   onSelectSantriForZiyadah?: (idSantri: string) => void;
@@ -62,15 +62,21 @@ interface DashboardActivity {
 export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   currentUser,
   santriList,
-  ziyadahRecords,
-  murojaahRecords,
-  binnadzorRecords = [],
-  pembelajaranRecords = [],
+  recentRecords,
+  analyticsRecords,
+  analyticsStatus,
+  onAnalyticsMonthsChange,
   kelasList,
   setActiveTab,
   onOpenSetorMenu
 }) => {
   const [chartView, setChartView] = useState<'tren_setor' | 'tren_perkembangan' | 'analisis_detail'>('tren_setor');
+  const {
+    ziyadah: ziyadahRecords,
+    murojaah: murojaahRecords,
+    binnadzor: binnadzorRecords,
+    pembelajaran: pembelajaranRecords,
+  } = recentRecords;
 
   const today = getTodayInputFormat();
   const santriById = new Map<string, Santri>(santriList.map(santri => [santri.idSantri, santri]));
@@ -414,13 +420,22 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           </div>
         </div>
 
+        <p className="sr-only" role="status" aria-live="polite">
+          {analyticsStatus === 'loading'
+            ? 'Memuat data grafik.'
+            : analyticsStatus === 'error'
+              ? 'Grafik menggunakan data terakhir karena pembaruan gagal.'
+               : 'Data grafik siap.'}
+        </p>
+
         {chartView === 'tren_setor' && (
           <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(300px,1.2fr)] gap-3 sm:gap-4 items-stretch w-full min-w-0">
             <CompactTrenBulananChart
-              ziyadahRecords={ziyadahRecords}
-              murojaahRecords={murojaahRecords}
-              binnadzorRecords={binnadzorRecords}
-              pembelajaranRecords={pembelajaranRecords}
+              ziyadahRecords={analyticsRecords.ziyadah}
+              murojaahRecords={analyticsRecords.murojaah}
+              binnadzorRecords={analyticsRecords.binnadzor}
+              pembelajaranRecords={analyticsRecords.pembelajaran}
+              onTimeRangeMonthsChange={onAnalyticsMonthsChange}
               title="Tren Bulanan"
               subtitle="Perkembangan aktivitas tahfidz"
             />
@@ -449,10 +464,11 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           <div className="ui-bento-card overflow-hidden p-3 sm:p-5">
             <HafalanStatsChart
               santriList={santriList}
-              ziyadahRecords={ziyadahRecords}
-              murojaahRecords={murojaahRecords}
-              binnadzorRecords={binnadzorRecords}
-              pembelajaranRecords={pembelajaranRecords}
+              ziyadahRecords={analyticsRecords.ziyadah}
+              murojaahRecords={analyticsRecords.murojaah}
+              binnadzorRecords={analyticsRecords.binnadzor}
+              pembelajaranRecords={analyticsRecords.pembelajaran}
+              onTimeRangeMonthsChange={onAnalyticsMonthsChange}
               kelasList={kelasList}
             />
           </div>

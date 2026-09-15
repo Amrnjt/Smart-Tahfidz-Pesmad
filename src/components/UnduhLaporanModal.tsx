@@ -1,13 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import {
-  User,
-  ZiyadahRecord,
-  MurojaahRecord,
-  BinnadzorRecord,
-  PembelajaranRecord,
-  Santri
-} from '../types';
+import { User, Santri } from '../types';
+import type {
+  SetoranDataset,
+  SetoranDateRange,
+} from '../services/setoranQuery.types';
 import {
   useGeneratePDF,
   NAMA_BULAN,
@@ -15,7 +12,8 @@ import {
   ReportPeriod,
   ReportPeriodRange
 } from '../hooks/useGeneratePDF';
-import { parseDateSafe } from '../utils/dateFormatter';
+import { getTodayInputFormat } from '../utils/dateFormatter';
+import { createMonthRange } from '../utils/setoranDataset';
 import {
   X,
   Download,
@@ -34,10 +32,15 @@ interface UnduhLaporanModalProps {
   onClose: () => void;
   currentUser: User;
   santriList: Santri[];
-  ziyadahRecords: ZiyadahRecord[];
-  murojaahRecords: MurojaahRecord[];
-  binnadzorRecords?: BinnadzorRecord[];
-  pembelajaranRecords?: PembelajaranRecord[];
+  loadReportRecords: (
+    range: SetoranDateRange,
+    idSantri?: string,
+  ) => Promise<SetoranDataset>;
+}
+
+function currentPeriodKey(): string {
+  const [year, month] = getTodayInputFormat().split('-').map(Number);
+  return `${year}-${month - 1}`;
 }
 
 export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
@@ -45,31 +48,17 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   onClose,
   currentUser,
   santriList,
-  ziyadahRecords,
-  murojaahRecords,
-  binnadzorRecords = [],
-  pembelajaranRecords = []
+  loadReportRecords,
 }) => {
   const { isGenerating, error, success, generatePDF } = useGeneratePDF();
+  const [isLoadingRecords, setIsLoadingRecords] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const dialogRef = useAccessibleDialog(isOpen, onClose);
 
   const isViewOnly = currentUser.role === 'Wali' || currentUser.role === 'Santri';
   const targetSantriId =
     currentUser.idSantri ||
     (currentUser.role === 'Santri' ? currentUser.username : '');
-
-  const scopedZiyadah = isViewOnly
-    ? ziyadahRecords.filter(r => r.idSantri === targetSantriId)
-    : ziyadahRecords;
-  const scopedMurojaah = isViewOnly
-    ? murojaahRecords.filter(r => r.idSantri === targetSantriId)
-    : murojaahRecords;
-  const scopedBinnadzor = isViewOnly
-    ? binnadzorRecords.filter(r => r.idSantri === targetSantriId)
-    : binnadzorRecords;
-  const scopedPembelajaran = isViewOnly
-    ? pembelajaranRecords.filter(r => r.idSantri === targetSantriId)
-    : pembelajaranRecords;
 
   const targetSantri = isViewOnly
     ? santriList.find(s => s.idSantri === targetSantriId) || null
@@ -81,69 +70,34 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
     ? targetSantri
     : santriList.find(s => s.idSantri === selectedSantriId) || null;
 
-  const reportZiyadah = isViewOnly
-    ? scopedZiyadah
-    : ziyadahRecords.filter(r => !selectedSantriId || r.idSantri === selectedSantriId);
-  const reportMurojaah = isViewOnly
-    ? scopedMurojaah
-    : murojaahRecords.filter(r => !selectedSantriId || r.idSantri === selectedSantriId);
-  const reportBinnadzor = isViewOnly
-    ? scopedBinnadzor
-    : binnadzorRecords.filter(r => !selectedSantriId || r.idSantri === selectedSantriId);
-  const reportPembelajaran = isViewOnly
-    ? scopedPembelajaran
-    : pembelajaranRecords.filter(r => !selectedSantriId || r.idSantri === selectedSantriId);
-
   const availablePeriods = useMemo(() => {
-    const allRecords = [
-      ...reportZiyadah,
-      ...reportMurojaah,
-      ...reportBinnadzor,
-      ...reportPembelajaran
-    ];
-    const periodSet = new Set<string>();
-
-    allRecords.forEach(r => {
-      const datePart = r.timestamp.split(' ')[0] || r.timestamp;
-      const parsed = parseDateSafe(datePart);
-      periodSet.add(`${parsed.getFullYear()}-${parsed.getMonth()}`);
+    const [currentYear, currentMonthNumber] = getTodayInputFormat().split('-').map(Number);
+    return Array.from({ length: 120 }, (_, index) => {
+      const date = new Date(Date.UTC(currentYear, currentMonthNumber - 1 - index, 1));
+      const year = date.getUTCFullYear();
+      const month = date.getUTCMonth();
+      return {
+        key: `${year}-${month}`,
+        year,
+        month,
+        label: `${NAMA_BULAN[month]} ${year}`,
+        sortKey: year * 100 + month,
+      };
     });
-
-    const now = new Date();
-    periodSet.add(`${now.getFullYear()}-${now.getMonth()}`);
-
-    return Array.from(periodSet)
-      .map(key => {
-        const [yearStr, monthStr] = key.split('-');
-        const year = parseInt(yearStr, 10);
-        const month = parseInt(monthStr, 10);
-
-        return {
-          key,
-          year,
-          month,
-          label: `${NAMA_BULAN[month]} ${year}`,
-          sortKey: year * 100 + month
-        };
-      })
-      .sort((a, b) => b.sortKey - a.sortKey);
-  }, [reportZiyadah, reportMurojaah, reportBinnadzor, reportPembelajaran]);
+  }, []);
 
   const [period, setPeriod] = useState<string>(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${now.getMonth()}`;
+    return currentPeriodKey();
   });
 
   const [useRange, setUseRange] = useState(false);
 
   const [rangeStart, setRangeStart] = useState<string>(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${now.getMonth()}`;
+    return currentPeriodKey();
   });
 
   const [rangeEnd, setRangeEnd] = useState<string>(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${now.getMonth()}`;
+    return currentPeriodKey();
   });
 
   const [options, setOptions] = useState<ReportOptions>({
@@ -179,17 +133,48 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   })();
 
   const handleDownload = async () => {
-    await generatePDF({
-      santri: reportSantri,
-      currentUser,
-      ziyadahRecords: reportZiyadah,
-      murojaahRecords: reportMurojaah,
-      binnadzorRecords: reportBinnadzor,
-      pembelajaranRecords: reportPembelajaran,
-      period: reportPeriod,
-      periodRange: useRange && rangeValid ? reportPeriodRange : undefined,
-      options
-    });
+    if (useRange && !rangeValid) return;
+    setIsLoadingRecords(true);
+    setLoadError(null);
+
+    try {
+      const range = useRange
+        ? {
+            startInclusive: createMonthRange(
+              rangeStartYear,
+              rangeStartMonth,
+            ).startInclusive,
+            endExclusive: createMonthRange(
+              rangeEndYear,
+              rangeEndMonth,
+            ).endExclusive,
+          }
+        : createMonthRange(selectedYear, selectedMonth);
+      const records = await loadReportRecords(
+        range,
+        reportSantri?.idSantri || undefined,
+      );
+
+      await generatePDF({
+        santri: reportSantri,
+        currentUser,
+        ziyadahRecords: records.ziyadah,
+        murojaahRecords: records.murojaah,
+        binnadzorRecords: records.binnadzor,
+        pembelajaranRecords: records.pembelajaran,
+        period: reportPeriod,
+        periodRange: useRange && rangeValid ? reportPeriodRange : undefined,
+        options,
+      });
+    } catch (queryError) {
+      setLoadError(
+        queryError instanceof Error
+          ? queryError.message
+          : 'Data laporan tidak dapat dimuat dari Cloud.',
+      );
+    } finally {
+      setIsLoadingRecords(false);
+    }
   };
 
   const toggleOption = (key: keyof ReportOptions) => {
@@ -273,10 +258,10 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
             </div>
           )}
 
-          {error && (
+          {(error || loadError) && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-medium flex items-center gap-2.5">
               <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
-              <span className="min-w-0 break-words">{error}</span>
+              <span className="min-w-0 break-words">{loadError || error}</span>
             </div>
           )}
 
@@ -465,74 +450,10 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
               </span>
             </div>
 
-            {(() => {
-              const prefixes =
-                useRange && rangeValid
-                  ? (() => {
-                      const list: string[] = [];
-                      let m = rangeStartMonth;
-                      let yr = rangeStartYear;
-
-                      while (true) {
-                        list.push(
-                          `${yr}-${(m + 1).toString().padStart(2, '0')}`
-                        );
-
-                        if (yr === rangeEndYear && m === rangeEndMonth) break;
-
-                        m++;
-
-                        if (m > 11) {
-                          m = 0;
-                          yr++;
-                        }
-                      }
-
-                      return list;
-                    })()
-                  : [
-                      `${selectedYear}-${(selectedMonth + 1)
-                        .toString()
-                        .padStart(2, '0')}`
-                    ];
-
-              const matchFn = (ts: string) => {
-                const dp = ts.split(' ')[0] || ts;
-                return prefixes.some(p => dp.startsWith(p));
-              };
-
-              return (
-                <>
-                  <p>
-                    Ziyadah pada periode ini:{' '}
-                    <b>
-                      {
-                        reportZiyadah.filter(r => matchFn(r.timestamp)).length
-                      }
-                    </b>{' '}
-                    setoran
-                  </p>
-                  <p>
-                    Muroja'ah pada periode ini:{' '}
-                    <b>
-                      {
-                        reportMurojaah.filter(r => matchFn(r.timestamp)).length
-                      }
-                    </b>{' '}
-                    setoran
-                  </p>
-                  <p>
-                    Binnadzor pada periode ini:{' '}
-                    <b>
-                      {
-                        reportBinnadzor.filter(r => matchFn(r.timestamp)).length
-                      }
-                    </b>{' '}
-                    setoran
-                  </p>
-                </>
-              );
-            })()}
+            <p>
+              Data Ziyadah, Muroja'ah, Binnadzor, dan Pembelajaran untuk periode
+              terpilih akan diambil langsung dari Cloud saat PDF dibuat.
+            </p>
           </div>
         </div>
 
@@ -547,10 +468,10 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
 
           <button
             onClick={handleDownload}
-            disabled={isGenerating || (useRange && !rangeValid)}
+            disabled={isGenerating || isLoadingRecords || (useRange && !rangeValid)}
             className="ui-control w-full sm:w-auto px-6 rounded-lg bg-emerald-800 hover:bg-emerald-700 text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {isGenerating ? (
+            {isGenerating || isLoadingRecords ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span>Memproses PDF...</span>

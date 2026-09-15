@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas } from './types';
+import { User, Santri, Kelas } from './types';
 import { storageService } from './services/storageService';
+import type { SetoranDataset } from './services/setoranQuery.types';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
 import { DesktopPrimaryNav } from './components/DesktopPrimaryNav';
@@ -22,7 +23,53 @@ import { NotificationToastContainer } from './components/NotificationToastContai
 import { Snackbar, SnackbarState, NotifyFn } from './components/Snackbar';
 import { useSetoranNotifications } from './hooks/useSetoranNotifications';
 import { useActiveTabNavigation } from './hooks/useActiveTabNavigation';
+import { useRecentSetoranRecords } from './hooks/useRecentSetoranRecords';
+import { useAnalyticsSetoranRecords } from './hooks/useAnalyticsSetoranRecords';
+import { createRecentRange } from './utils/setoranDataset';
 import { Cloud } from 'lucide-react';
+
+interface LegacySetoranBootstrap {
+  recent: SetoranDataset;
+  monthKeys: string[];
+}
+
+function readLegacySetoranBootstrap(): LegacySetoranBootstrap {
+  try {
+    const cached: SetoranDataset = {
+      ziyadah: storageService.getZiyadahRecords(),
+      murojaah: storageService.getMurojaahRecords(),
+      binnadzor: storageService.getBinnadzorRecords(),
+      pembelajaran: storageService.getPembelajaranRecords(),
+    };
+    const range = createRecentRange(new Date(), 30);
+    const inRecentRange = (record: { timestamp: string }) =>
+      record.timestamp >= range.startInclusive && record.timestamp < range.endExclusive;
+    const monthKeys = new Set<string>();
+    Object.values(cached).flat().forEach(record => {
+      const monthKey = record.timestamp?.slice(0, 7);
+      if (/^\d{4}-\d{2}$/.test(monthKey)) monthKeys.add(monthKey);
+    });
+
+    return {
+      recent: {
+        ziyadah: cached.ziyadah.filter(inRecentRange),
+        murojaah: cached.murojaah.filter(inRecentRange),
+        binnadzor: cached.binnadzor.filter(inRecentRange),
+        pembelajaran: cached.pembelajaran.filter(inRecentRange),
+      },
+      monthKeys: [...monthKeys].sort((left, right) => right.localeCompare(left)),
+    };
+  } catch {
+    return {
+      recent: { ziyadah: [], murojaah: [], binnadzor: [], pembelajaran: [] },
+      monthKeys: [],
+    };
+  }
+}
+
+function datasetHasRecords(dataset: SetoranDataset): boolean {
+  return Object.values(dataset).some(records => records.length > 0);
+}
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -36,18 +83,7 @@ export default function App() {
   const [santriList, setSantriList] = useState<Santri[]>(() => {
     try { return storageService.getSantriList(); } catch { return []; }
   });
-  const [ziyadahRecords, setZiyadahRecords] = useState<ZiyadahRecord[]>(() => {
-    try { return storageService.getZiyadahRecords(); } catch { return []; }
-  });
-  const [murojaahRecords, setMurojaahRecords] = useState<MurojaahRecord[]>(() => {
-    try { return storageService.getMurojaahRecords(); } catch { return []; }
-  });
-  const [binnadzorRecords, setBinnadzorRecords] = useState<BinnadzorRecord[]>(() => {
-    try { return storageService.getBinnadzorRecords(); } catch { return []; }
-  });
-  const [pembelajaranRecords, setPembelajaranRecords] = useState<PembelajaranRecord[]>(() => {
-    try { return storageService.getPembelajaranRecords(); } catch { return []; }
-  });
+  const [legacyBootstrap] = useState(readLegacySetoranBootstrap);
   const [kelasList, setKelasList] = useState<Kelas[]>(() => {
     try { return storageService.getKelasList(); } catch { return []; }
   });
@@ -60,6 +96,31 @@ export default function App() {
   const [snack, setSnack] = useState<SnackbarState | null>(null);
   const [isSetorMenuOpen, setIsSetorMenuOpen] = useState(false);
   const [showPantauanModal, setShowPantauanModal] = useState(false);
+  const [deletedIds, setDeletedIds] = useState<ReadonlySet<string>>(
+    () => storageService.getDeletedRecordIds(),
+  );
+  const [analyticsMonths, setAnalyticsMonths] = useState<6 | 12>(6);
+  const [analyticsRefreshToken, setAnalyticsRefreshToken] = useState(0);
+
+  const recentChannel = useRecentSetoranRecords({
+    enabled: Boolean(currentUser),
+    deletedIds,
+    initialData: datasetHasRecords(legacyBootstrap.recent)
+      ? legacyBootstrap.recent
+      : undefined,
+  });
+  const analyticsChannel = useAnalyticsSetoranRecords({
+    enabled: Boolean(currentUser && activeTab === 'dashboard'),
+    months: analyticsMonths,
+    refreshToken: analyticsRefreshToken,
+    deletedIds,
+  });
+
+  const handleSetoranMutationCommitted = () => {
+    setDeletedIds(storageService.getDeletedRecordIds());
+    recentChannel.retry();
+    setAnalyticsRefreshToken(token => token + 1);
+  };
 
   const notify: NotifyFn = (type, message, options = {}) => {
     setSnack({
@@ -70,23 +131,18 @@ export default function App() {
     });
   };
 
-  const refreshData = () => {
+  const refreshReferenceData = () => {
     setSantriList(storageService.getSantriList());
-    setZiyadahRecords(storageService.getZiyadahRecords());
-    setMurojaahRecords(storageService.getMurojaahRecords());
-    setBinnadzorRecords(storageService.getBinnadzorRecords());
-    setPembelajaranRecords(storageService.getPembelajaranRecords());
     setKelasList(storageService.getKelasList());
     setUserList(storageService.getUsers());
   };
 
-  // Setup real-time Firebase Firestore synchronization across all devices
+  // Master/reference data stays realtime without subscribing to setoran history.
   useEffect(() => {
-    refreshData();
+    refreshReferenceData();
 
-    // Subscribe to real-time changes from Firestore database
-    const unsubscribe = storageService.initRealtimeSync(() => {
-      refreshData();
+    const unsubscribe = storageService.initReferenceRealtimeSync(() => {
+      refreshReferenceData();
     });
 
     return () => {
@@ -97,7 +153,7 @@ export default function App() {
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
     setActiveTab('dashboard');
-    refreshData();
+    refreshReferenceData();
   };
 
   const handleLogout = () => {
@@ -110,11 +166,14 @@ export default function App() {
     if (isSyncing) return;
     setSyncState('syncing');
     try {
-      const result = await storageService.syncWithCloud();
+      const result = await storageService.syncReferenceDataWithCloud();
       if (!result.success) {
         throw new Error(result.message || 'Cloud tidak dapat dijangkau.');
       }
-      refreshData();
+      refreshReferenceData();
+      setDeletedIds(storageService.getDeletedRecordIds());
+      recentChannel.retry();
+      setAnalyticsRefreshToken(token => token + 1);
       setSyncState('success');
       setSnack({
         id: `sync-${Date.now()}`,
@@ -123,7 +182,7 @@ export default function App() {
       });
     } catch (err) {
       console.error(err);
-      refreshData();
+      refreshReferenceData();
       setSyncState('error');
       setSnack({
         id: `sync-err-${Date.now()}`,
@@ -165,10 +224,35 @@ export default function App() {
   // Delayed notification system for Wali Santri role
   const { toasts, dismissToast } = useSetoranNotifications(
     currentUser,
-    ziyadahRecords,
-    murojaahRecords,
+    recentChannel.data.ziyadah,
+    recentChannel.data.murojaah,
     santriList
   );
+
+  useEffect(() => {
+    if (!recentChannel.error) return;
+    setSnack({
+      id: `recent-query-${Date.now()}`,
+      type: 'error',
+      message: 'Data setoran terbaru tidak dapat diperbarui. Data terakhir tetap ditampilkan.',
+      actionLabel: 'Coba Lagi',
+      onAction: recentChannel.retry,
+    });
+  }, [recentChannel.error, recentChannel.retry]);
+
+  useEffect(() => {
+    if (!analyticsChannel.error) return;
+    setSnack({
+      id: `analytics-query-${Date.now()}`,
+      type: 'error',
+      message: 'Grafik belum dapat diperbarui. Data grafik terakhir tetap ditampilkan.',
+      actionLabel: 'Coba Lagi',
+      onAction: () => setAnalyticsRefreshToken(token => token + 1),
+    });
+  }, [analyticsChannel.error]);
+
+  const recentUnavailable = !datasetHasRecords(recentChannel.data)
+    && recentChannel.status !== 'success';
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans selection:bg-emerald-200 selection:text-emerald-950 ui-app-shell relative w-full max-w-full">
@@ -219,14 +303,40 @@ export default function App() {
             
             {/* Content per Tab */}
             {activeTab === 'dashboard' && (
-              isUstadz ? (
+              recentUnavailable ? (
+                <section
+                  className="ui-bento-card p-5 sm:p-6"
+                  role={recentChannel.status === 'error' ? 'alert' : 'status'}
+                  aria-live="polite"
+                >
+                  <h1 className="text-base font-bold text-slate-900">
+                    {recentChannel.status === 'error'
+                      ? 'Data setoran belum tersedia'
+                      : 'Memuat data setoran terbaru…'}
+                  </h1>
+                  <p className="mt-1.5 text-sm text-slate-600">
+                    {recentChannel.status === 'error'
+                      ? 'Statistik tidak ditampilkan sebagai nol karena sumber Cloud belum berhasil dimuat.'
+                      : 'Menyiapkan statistik hari ini dan aktivitas 30 hari terakhir.'}
+                  </p>
+                  {recentChannel.status === 'error' && (
+                    <button
+                      type="button"
+                      onClick={recentChannel.retry}
+                      className="mt-4 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-800"
+                    >
+                      Coba Lagi
+                    </button>
+                  )}
+                </section>
+              ) : isUstadz ? (
                 <UstadzDashboard
                   currentUser={currentUser}
                   santriList={santriList}
-                  ziyadahRecords={ziyadahRecords}
-                  murojaahRecords={murojaahRecords}
-                  binnadzorRecords={binnadzorRecords}
-                  pembelajaranRecords={pembelajaranRecords}
+                  recentRecords={recentChannel.data}
+                  analyticsRecords={analyticsChannel.data}
+                  analyticsStatus={analyticsChannel.status}
+                  onAnalyticsMonthsChange={setAnalyticsMonths}
                   kelasList={kelasList}
                   setActiveTab={setActiveTab}
                   onSelectSantriForZiyadah={handleSelectSantriForZiyadah}
@@ -236,10 +346,10 @@ export default function App() {
                 <WaliDashboard
                   currentUser={currentUser}
                   santriList={santriList}
-                  ziyadahRecords={ziyadahRecords}
-                  murojaahRecords={murojaahRecords}
-                  binnadzorRecords={binnadzorRecords}
-                  pembelajaranRecords={pembelajaranRecords}
+                  recentRecords={recentChannel.data}
+                  analyticsRecords={analyticsChannel.data}
+                  analyticsStatus={analyticsChannel.status}
+                  onAnalyticsMonthsChange={setAnalyticsMonths}
                   setActiveTab={setActiveTab}
                   onNotify={notify}
                 />
@@ -247,10 +357,10 @@ export default function App() {
                 <SantriDashboard
                   currentUser={currentUser}
                   santriList={santriList}
-                  ziyadahRecords={ziyadahRecords}
-                  murojaahRecords={murojaahRecords}
-                  binnadzorRecords={binnadzorRecords}
-                  pembelajaranRecords={pembelajaranRecords}
+                  recentRecords={recentChannel.data}
+                  analyticsRecords={analyticsChannel.data}
+                  analyticsStatus={analyticsChannel.status}
+                  onAnalyticsMonthsChange={setAnalyticsMonths}
                   setActiveTab={setActiveTab}
                 />
               )
@@ -270,7 +380,8 @@ export default function App() {
                 kelasList={kelasList}
                 selectedSantriId={selectedSantriId}
                 onSuccess={() => {
-                  refreshData();
+                  refreshReferenceData();
+                  handleSetoranMutationCommitted();
                   setActiveTab('riwayat');
                 }}
                 onNotify={notify}
@@ -284,7 +395,8 @@ export default function App() {
                 kelasList={kelasList}
                 selectedSantriId={selectedSantriId}
                 onSuccess={() => {
-                  refreshData();
+                  refreshReferenceData();
+                  handleSetoranMutationCommitted();
                   setActiveTab('riwayat');
                 }}
                 onNotify={notify}
@@ -298,7 +410,8 @@ export default function App() {
                 kelasList={kelasList}
                 selectedSantriId={selectedSantriId}
                 onSuccess={() => {
-                  refreshData();
+                  refreshReferenceData();
+                  handleSetoranMutationCommitted();
                   setActiveTab('riwayat');
                 }}
                 onNotify={notify}
@@ -312,7 +425,8 @@ export default function App() {
                 kelasList={kelasList}
                 selectedSantriId={selectedSantriId}
                 onSuccess={() => {
-                  refreshData();
+                  refreshReferenceData();
+                  handleSetoranMutationCommitted();
                   setActiveTab('riwayat');
                 }}
                 onNotify={notify}
@@ -322,13 +436,10 @@ export default function App() {
             {activeTab === 'riwayat' && (
               <HistoryTable
                 currentUser={currentUser}
-                ziyadahRecords={ziyadahRecords}
-                murojaahRecords={murojaahRecords}
-                binnadzorRecords={binnadzorRecords}
-                pembelajaranRecords={pembelajaranRecords}
-                onDataChanged={refreshData}
+                onMutationCommitted={handleSetoranMutationCommitted}
                 santriList={santriList}
                 onNotify={notify}
+                legacyMonthKeys={legacyBootstrap.monthKeys}
               />
             )}
 
@@ -337,7 +448,7 @@ export default function App() {
             {activeTab === 'santri' && isUstadz && (
               <SantriManagement
                 santriList={santriList}
-                onDataChanged={refreshData}
+                onDataChanged={refreshReferenceData}
                 onNotify={notify}
               />
             )}
@@ -347,7 +458,7 @@ export default function App() {
                 kelasList={kelasList}
                 santriList={santriList}
                 userList={userList}
-                onDataChanged={refreshData}
+                onDataChanged={refreshReferenceData}
                 onNotify={notify}
               />
             )}
