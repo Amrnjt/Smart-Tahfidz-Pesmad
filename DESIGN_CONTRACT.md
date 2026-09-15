@@ -39,7 +39,7 @@ Final polish tidak boleh merusak:
 - PDF functionality
 - Mushaf data/API logic
 - BottomNav mental model
-- SetorActionSheet workflow
+- Setor Launcher workflow
 - brand Pesmad
 
 Business logic, Firebase schema/auth/storage contract, data semantics, dan permission model bukan wilayah redesign kecuali diaudit secara khusus dan disetujui sebagai perubahan fungsi.
