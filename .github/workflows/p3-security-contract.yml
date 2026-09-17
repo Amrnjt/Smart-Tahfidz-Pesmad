@@ -1,0 +1,24 @@
+name: P3 Firestore Security Contract
+
+on:
+  push:
+    branches:
+      - feat/p1-pimpinan-role-foundation
+    paths:
+      - 'firestore.secure.rules'
+      - 'tests/firestore-security-contract.test.mjs'
+      - '.github/workflows/p3-security-contract.yml'
+  workflow_dispatch:
+
+jobs:
+  security-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run Firestore security contract test
+        run: node --test tests/firestore-security-contract.test.mjs
