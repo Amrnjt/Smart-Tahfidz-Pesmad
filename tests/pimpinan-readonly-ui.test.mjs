@@ -5,6 +5,8 @@ import test from 'node:test';
 const historyView = readFileSync('src/components/PimpinanHistoryTable.tsx', 'utf8');
 const bottomNav = readFileSync('src/components/PimpinanBottomNav.tsx', 'utf8');
 const app = readFileSync('src/App.tsx', 'utf8');
+const navbar = readFileSync('src/components/Navbar.tsx', 'utf8');
+const santriManagement = readFileSync('src/components/SantriManagement.tsx', 'utf8');
 
 test('Pimpinan history presenter contains no mutation path', () => {
   assert.doesNotMatch(historyView, /updateRecord|deleteRecord|deleteRecordsBatch|setRecord|addRecord/);
@@ -29,4 +31,17 @@ test('App routes Pimpinan through dedicated read-only presenters', () => {
 test('Pimpinan cannot trigger manual cloud sync mutation path', () => {
   assert.match(app, /if \(isGlobalReadOnlyRole\(currentUser\?\.role\)\) return;/);
   assert.match(app, /onRefresh=\{canSetor \? handleManualRefresh : undefined\}/);
+});
+
+test('Navbar identifies Pimpinan explicitly instead of falling back to Ustadz', () => {
+  assert.match(navbar, /normalizeUserRole/);
+  assert.match(navbar, /Pimpinan:\s*\{/);
+  assert.match(navbar, /label:\s*'Pimpinan'/);
+});
+
+test('account management can create and edit Pimpinan without a santri link', () => {
+  const pimpinanOptions = santriManagement.match(/option value="Pimpinan"/g) || [];
+  assert.ok(pimpinanOptions.length >= 2);
+  assert.match(santriManagement, /editRole === 'Pimpinan'/);
+  assert.match(santriManagement, /newUserRole === 'Pimpinan'/);
 });
