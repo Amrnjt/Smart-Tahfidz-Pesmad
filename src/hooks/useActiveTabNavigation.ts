@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { flushSync } from 'react-dom';
 import type { ActiveTab, User } from '../types';
+import { canAccessTab } from '../utils/roles';
 
 const VALID_TABS: ActiveTab[] = [
   'dashboard',
@@ -14,23 +15,15 @@ const VALID_TABS: ActiveTab[] = [
   'kelas'
 ];
 
-const VIEW_ONLY_TABS = new Set<ActiveTab>(['dashboard', 'riwayat', 'mushaf']);
-
 function readUrlTab(): ActiveTab {
   if (typeof window === 'undefined') return 'dashboard';
   const raw = new URLSearchParams(window.location.search).get('tab')?.trim().toLowerCase() || '';
   return VALID_TABS.includes(raw as ActiveTab) ? raw as ActiveTab : 'dashboard';
 }
 
-function isViewOnlyUser(user: User | null): boolean {
-  if (!user) return false;
-  const role = String(user.role || '').trim().toLowerCase();
-  return role === 'wali' || role.includes('wali') || role === 'santri';
-}
-
 function sanitizeTab(user: User | null, tab: ActiveTab): ActiveTab {
   if (!user) return 'dashboard';
-  return isViewOnlyUser(user) && !VIEW_ONLY_TABS.has(tab) ? 'dashboard' : tab;
+  return canAccessTab(user.role, tab) ? tab : 'dashboard';
 }
 
 function urlForTab(tab: ActiveTab): string {
