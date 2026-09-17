@@ -3,6 +3,7 @@ import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, Pembelaja
 import { storageService } from './services/storageService';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
+import { PimpinanBottomNav } from './components/PimpinanBottomNav';
 import { DesktopPrimaryNav } from './components/DesktopPrimaryNav';
 import { PantauanLiburanMonitorModal } from './components/PantauanLiburanMonitorModal';
 import { SetoranFormNav } from './components/SetoranFormNav';
@@ -15,6 +16,7 @@ import { MurojaahForm } from './components/MurojaahForm';
 import { BinnadzorForm } from './components/BinnadzorForm';
 import { PembelajaranForm } from './components/PembelajaranForm';
 import { HistoryTable } from './components/HistoryTable';
+import { PimpinanHistoryTable } from './components/PimpinanHistoryTable';
 import { MushafQuran } from './components/MushafQuran';
 import { SantriManagement } from './components/SantriManagement';
 import { KelasManagement } from './components/KelasManagement';
@@ -22,6 +24,14 @@ import { NotificationToastContainer } from './components/NotificationToastContai
 import { Snackbar, SnackbarState, NotifyFn } from './components/Snackbar';
 import { useSetoranNotifications } from './hooks/useSetoranNotifications';
 import { useActiveTabNavigation } from './hooks/useActiveTabNavigation';
+import {
+  canManageKelas,
+  canManageSantri,
+  canWriteSetoran,
+  isGlobalReadOnlyRole,
+  normalizeUserRole,
+  usesGlobalDashboard,
+} from './utils/roles';
 import { Cloud } from 'lucide-react';
 
 export default function App() {
@@ -139,11 +149,23 @@ export default function App() {
     setSelectedSantriId(idSantri);
   };
 
-  const userRoleStr = String(currentUser?.role || '').trim().toLowerCase();
-  const isWali = userRoleStr === 'wali' || userRoleStr.includes('wali');
-  const isSantri = userRoleStr === 'santri';
-  const isUstadz = !isWali && !isSantri;
+  const normalizedRole = normalizeUserRole(currentUser?.role);
+  const isWali = normalizedRole === 'Wali';
+  const isSantri = normalizedRole === 'Santri';
+  const isPimpinan = isGlobalReadOnlyRole(currentUser?.role);
+  const hasGlobalDashboard = usesGlobalDashboard(currentUser?.role);
+  const canSetor = canWriteSetoran(currentUser?.role);
+  const canManageSantriData = canManageSantri(currentUser?.role);
+  const canManageKelasData = canManageKelas(currentUser?.role);
   const isSetorActive = ['ziyadah', 'murojaah', 'binnadzor', 'pembelajaran'].includes(activeTab);
+
+  const setDashboardTab = (tab: Parameters<typeof setActiveTab>[0]) => {
+    if (!isPimpinan) {
+      setActiveTab(tab);
+      return;
+    }
+    setActiveTab(tab === 'mushaf' ? 'mushaf' : 'riwayat');
+  };
 
   const syncStatusCopy =
     syncState === 'syncing'
@@ -196,11 +218,11 @@ export default function App() {
           <DesktopPrimaryNav
             activeTab={activeTab}
             setActiveTab={setActiveTab}
-            isUstadz={isUstadz}
+            isUstadz={canSetor}
             isSetorMenuOpen={isSetorMenuOpen}
             onOpenSetorMenu={() => setIsSetorMenuOpen(true)}
             onCloseSetorMenu={() => setIsSetorMenuOpen(false)}
-            onOpenPantauanLiburan={() => setShowPantauanModal(true)}
+            onOpenPantauanLiburan={canSetor ? () => setShowPantauanModal(true) : undefined}
           />
         )}
       </div>
@@ -219,7 +241,7 @@ export default function App() {
             
             {/* Content per Tab */}
             {activeTab === 'dashboard' && (
-              isUstadz ? (
+              hasGlobalDashboard ? (
                 <UstadzDashboard
                   currentUser={currentUser}
                   santriList={santriList}
@@ -228,9 +250,9 @@ export default function App() {
                   binnadzorRecords={binnadzorRecords}
                   pembelajaranRecords={pembelajaranRecords}
                   kelasList={kelasList}
-                  setActiveTab={setActiveTab}
-                  onSelectSantriForZiyadah={handleSelectSantriForZiyadah}
-                  onOpenSetorMenu={() => setIsSetorMenuOpen(true)}
+                  setActiveTab={setDashboardTab}
+                  onSelectSantriForZiyadah={isPimpinan ? undefined : handleSelectSantriForZiyadah}
+                  onOpenSetorMenu={isPimpinan ? () => undefined : () => setIsSetorMenuOpen(true)}
                 />
               ) : isWali ? (
                 <WaliDashboard
@@ -243,7 +265,7 @@ export default function App() {
                   setActiveTab={setActiveTab}
                   onNotify={notify}
                 />
-              ) : (
+              ) : isSantri ? (
                 <SantriDashboard
                   currentUser={currentUser}
                   santriList={santriList}
@@ -253,17 +275,21 @@ export default function App() {
                   pembelajaranRecords={pembelajaranRecords}
                   setActiveTab={setActiveTab}
                 />
+              ) : (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm font-semibold text-amber-900">
+                  Role akun tidak dikenali. Hubungi administrator untuk memperbaiki akses akun.
+                </div>
               )
             )}
 
-            {isSetorActive && isUstadz && (
+            {isSetorActive && canSetor && (
               <SetoranFormNav
                 activeTab={activeTab}
                 onBack={() => setActiveTab('dashboard')}
               />
             )}
 
-            {activeTab === 'ziyadah' && isUstadz && (
+            {activeTab === 'ziyadah' && canSetor && (
               <ZiyadahForm
                 currentUser={currentUser}
                 santriList={santriList}
@@ -277,7 +303,7 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'murojaah' && isUstadz && (
+            {activeTab === 'murojaah' && canSetor && (
               <MurojaahForm
                 currentUser={currentUser}
                 santriList={santriList}
@@ -291,7 +317,7 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'binnadzor' && isUstadz && (
+            {activeTab === 'binnadzor' && canSetor && (
               <BinnadzorForm
                 currentUser={currentUser}
                 santriList={santriList}
@@ -305,7 +331,7 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'pembelajaran' && isUstadz && (
+            {activeTab === 'pembelajaran' && canSetor && (
               <PembelajaranForm
                 currentUser={currentUser}
                 santriList={santriList}
@@ -320,21 +346,32 @@ export default function App() {
             )}
 
             {activeTab === 'riwayat' && (
-              <HistoryTable
-                currentUser={currentUser}
-                ziyadahRecords={ziyadahRecords}
-                murojaahRecords={murojaahRecords}
-                binnadzorRecords={binnadzorRecords}
-                pembelajaranRecords={pembelajaranRecords}
-                onDataChanged={refreshData}
-                santriList={santriList}
-                onNotify={notify}
-              />
+              isPimpinan ? (
+                <PimpinanHistoryTable
+                  currentUser={currentUser}
+                  ziyadahRecords={ziyadahRecords}
+                  murojaahRecords={murojaahRecords}
+                  binnadzorRecords={binnadzorRecords}
+                  pembelajaranRecords={pembelajaranRecords}
+                  santriList={santriList}
+                />
+              ) : (
+                <HistoryTable
+                  currentUser={currentUser}
+                  ziyadahRecords={ziyadahRecords}
+                  murojaahRecords={murojaahRecords}
+                  binnadzorRecords={binnadzorRecords}
+                  pembelajaranRecords={pembelajaranRecords}
+                  onDataChanged={refreshData}
+                  santriList={santriList}
+                  onNotify={notify}
+                />
+              )
             )}
 
             {activeTab === 'mushaf' && <MushafQuran />}
 
-            {activeTab === 'santri' && isUstadz && (
+            {activeTab === 'santri' && canManageSantriData && (
               <SantriManagement
                 santriList={santriList}
                 onDataChanged={refreshData}
@@ -342,7 +379,7 @@ export default function App() {
               />
             )}
 
-            {activeTab === 'kelas' && isUstadz && (
+            {activeTab === 'kelas' && canManageKelasData && (
               <KelasManagement
                 kelasList={kelasList}
                 santriList={santriList}
@@ -376,7 +413,7 @@ export default function App() {
       </main>
 
       {/* Desktop/Tablet Pantauan Liburan Monitor Modal */}
-      {showPantauanModal && isUstadz && (
+      {showPantauanModal && canSetor && (
         <PantauanLiburanMonitorModal
           isOpen={showPantauanModal}
           onClose={() => setShowPantauanModal(false)}
@@ -386,13 +423,20 @@ export default function App() {
       )}
 
       {/* Mobile Bottom Navigation */}
-      <BottomNav
-        currentUser={currentUser}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        santriList={santriList}
-        onNotify={notify}
-      />
+      {isPimpinan ? (
+        <PimpinanBottomNav
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
+      ) : (
+        <BottomNav
+          currentUser={currentUser}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          santriList={santriList}
+          onNotify={notify}
+        />
+      )}
 
       {/* In-app notification toasts for Wali Santri */}
       {isWali && (
