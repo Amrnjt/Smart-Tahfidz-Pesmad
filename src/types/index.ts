@@ -148,8 +148,8 @@ export interface PembelajaranRecord {
   kelasId?: string;
   namaKelas?: string;
   tipeKelas: TipeKelas;
-  jilidAtauKategori?: string;
-  materiPokok?: string;
+  jilidAtauKategori?: string; // e.g. "Ummi Dewasa Jilid 1", "Ummi Dewasa Jilid 2", "Kelas Istimewa (Remedial)"
+  materiPokok?: string;      // e.g. "Hal. 12 - Mad Thabi'i" atau "Terapi Makhroj 'Ain & Ha"
   halamanAwal?: number;
   halamanAkhir?: number;
   barisAwal?: number;
@@ -162,6 +162,7 @@ export interface PembelajaranRecord {
   catatanBimbingan?: string;
   statusKenaikan?: StatusKenaikan;
   inputBy: string;
+  // Field fleksibel kompatibilitas lintas komponen
   materi?: string;
   catatan?: string;
   jilid?: string;
@@ -210,14 +211,16 @@ export const SHALAT_STATUS_OPTIONS: { value: ShalatJamaahStatus; label: string; 
 
 export interface PantauanLiburanRecord {
   id: string;
-  timestamp: string;
-  tanggal: string;
+  timestamp: string; // YYYY-MM-DD HH:mm atau ISO
+  tanggal: string;   // YYYY-MM-DD
   idSantri: string;
   namaSantri: string;
   kelas?: string;
+  // Wirid Yaumiyyah (al-Waqi'ah, al-Mulk, al-Insyirah)
   wiridWaqiah: boolean;
   wiridMulk: boolean;
   wiridInsyirah: boolean;
+  // Keaktifan Shalat Jama'ah 5 Waktu (Jama'ah | Berhalangan | Sakit)
   shalatSubuh: ShalatJamaahStatus;
   shalatDzuhur: ShalatJamaahStatus;
   shalatAshar: ShalatJamaahStatus;
@@ -272,3 +275,4 @@ export interface CombinedHistoryItem {
   kendalaSantri?: string;
   rekomendasiTindakLanjut?: string;
 }
+
