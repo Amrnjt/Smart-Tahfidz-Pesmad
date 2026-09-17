@@ -14,6 +14,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import { PesmadLogo } from './PesmadLogo';
 import { useRipple } from '../hooks/useRipple';
+import { normalizeUserRole } from '../utils/roles';
 
 interface NavbarProps {
   currentUser: User | null;
@@ -47,7 +48,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   const syncMenuRef = useRef<HTMLDivElement>(null);
   const syncTriggerRef = useRef<HTMLButtonElement>(null);
 
-  // Update last sync time on success
   useEffect(() => {
     if (syncState === 'success') {
       const now = new Date();
@@ -57,7 +57,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   }, [syncState]);
 
-  // Click outside listener for Profile and Sync dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -75,7 +74,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showProfileMenu, showSyncMenu]);
 
-  // Escape key handler for accessible popovers
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
@@ -108,20 +106,18 @@ export const Navbar: React.FC<NavbarProps> = ({
         .toUpperCase()
     : 'U';
 
-  const normalizedRole: 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri' = (() => {
-    if (!currentUser?.role) return 'Ustadz';
-    const role = String(currentUser.role).trim().toLowerCase();
-    if (role === 'superadmin') return 'Superadmin';
-    if (role === 'wali' || role.includes('wali')) return 'Wali';
-    if (role === 'santri') return 'Santri';
-    return 'Ustadz';
-  })();
+  const normalizedRole = normalizeUserRole(currentUser?.role);
 
-  const roleStyle = {
+  const roleStyle = normalizedRole ? {
     Superadmin: {
       label: 'Superadmin',
       badge: 'bg-amber-50 text-amber-900 border-amber-200/90',
       avatar: 'bg-amber-100 text-amber-900 border-amber-300'
+    },
+    Pimpinan: {
+      label: 'Pimpinan',
+      badge: 'bg-violet-50 text-violet-900 border-violet-200/90',
+      avatar: 'bg-violet-100 text-violet-900 border-violet-300'
     },
     Ustadz: {
       label: 'Ustadz Musyrif',
@@ -138,7 +134,11 @@ export const Navbar: React.FC<NavbarProps> = ({
       badge: 'bg-cyan-50 text-cyan-900 border-cyan-200/90',
       avatar: 'bg-cyan-100 text-cyan-900 border-cyan-300'
     }
-  }[normalizedRole];
+  }[normalizedRole] : {
+    label: 'Role Tidak Dikenali',
+    badge: 'bg-slate-50 text-slate-700 border-slate-200/90',
+    avatar: 'bg-slate-100 text-slate-700 border-slate-300'
+  };
 
   const isSyncingActive = isRefreshing || syncState === 'syncing';
   const isSyncError = syncState === 'error';
@@ -150,8 +150,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     >
       <div className="max-w-7xl mx-auto px-3 sm:px-5 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-[68px] gap-3">
-          
-          {/* 1. BRAND AREA (ANCHOR KIRI) */}
           <div className="flex items-center min-w-0">
             <a
               ref={brandRipple.elementRef}
@@ -165,7 +163,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               aria-current={currentUser && activeTab === 'dashboard' ? 'page' : undefined}
               aria-label="Beranda Smart Tahfidz Pesmad"
             >
-              {/* PesmadLogo with Soft Neumorphic Ring */}
               <span
                 className="relative flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-800 via-emerald-850 to-emerald-950 p-1.5 shadow-[0_3px_10px_rgba(6,78,59,0.18)] border border-emerald-700/40 flex-shrink-0"
                 aria-hidden="true"
@@ -173,7 +170,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <PesmadLogo size="sm" className="w-full h-full" />
               </span>
 
-              {/* Brand Typography */}
               <div className="min-w-0 flex flex-col justify-center">
                 <div className="flex items-baseline gap-1 text-[15px] sm:text-base font-extrabold tracking-tight text-slate-900 leading-tight">
                   <span>Smart</span>
@@ -191,11 +187,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             </a>
           </div>
 
-          {/* 2. USER CONTROLS (KANAN: CLOUD SYNC + PROFILE) */}
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             {currentUser ? (
               <>
-                {/* CLOUD SYNC COMPACT CONTROL */}
                 <div className="relative" ref={syncMenuRef}>
                   <button
                     type="button"
@@ -223,8 +217,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                         <RefreshCw className="w-3 h-3 text-amber-600 animate-spin absolute -bottom-0.5 -right-0.5" />
                       )}
                     </span>
-
-                    {/* Status Dot */}
                     <span
                       className={`w-2 h-2 rounded-full ${
                         isSyncingActive
@@ -235,8 +227,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                       }`}
                       aria-hidden="true"
                     />
-
-                    {/* Compact Label */}
                     <span className="hidden sm:inline font-semibold">
                       {isSyncingActive
                         ? 'Menyinkronkan...'
@@ -244,7 +234,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                         ? 'Gagal Sinkron'
                         : 'Tersinkron'}
                     </span>
-
                     <ChevronDown
                       className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${
                         showSyncMenu ? 'rotate-180 text-emerald-700' : ''
@@ -253,7 +242,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                     />
                   </button>
 
-                  {/* CLOUD SYNC POPOVER */}
                   <AnimatePresence>
                     {showSyncMenu && (
                       <motion.div
@@ -266,7 +254,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                         transition={{ duration: 0.18, ease: 'easeOut' }}
                         className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl bg-white border border-slate-200/90 shadow-[0_12px_32px_rgba(15,23,42,0.12),0_2px_8px_rgba(15,23,42,0.06)] p-3.5 sm:p-4 z-50 text-slate-800"
                       >
-                        {/* Status Header */}
                         <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                           <div className="flex items-center gap-2">
                             {isSyncingActive ? (
@@ -288,7 +275,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                           </div>
                         </div>
 
-                        {/* Detail Info Rows */}
                         <div className="py-3 space-y-2 text-xs">
                           <div className="flex justify-between items-center text-slate-600">
                             <span className="text-slate-500 font-medium">Penyedia Basis Data:</span>
@@ -307,7 +293,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                           </div>
                         </div>
 
-                        {/* Action Button */}
                         {onRefresh && (
                           <div className="pt-2 border-t border-slate-100">
                             <button
@@ -328,7 +313,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </AnimatePresence>
                 </div>
 
-                {/* PROFILE CONTROL */}
                 <div className="relative" ref={profileMenuRef}>
                   <button
                     type="button"
@@ -348,14 +332,11 @@ export const Navbar: React.FC<NavbarProps> = ({
                     aria-haspopup="menu"
                     aria-label="Menu akun pengguna"
                   >
-                    {/* Compact Avatar with Neumorphic Rim */}
                     <span
                       className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-extrabold shadow-2xs flex-shrink-0 ${roleStyle.avatar}`}
                     >
                       {userInitials}
                     </span>
-
-                    {/* Name & Role on Desktop/Tablet */}
                     <div className="hidden sm:flex flex-col items-start leading-tight text-left min-w-0">
                       <span className="max-w-[110px] sm:max-w-[135px] truncate text-xs font-extrabold text-slate-900">
                         {currentUser.nama}
@@ -364,7 +345,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                         {roleStyle.label}
                       </span>
                     </div>
-
                     <ChevronDown
                       className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
                         showProfileMenu ? 'rotate-180 text-emerald-700' : ''
@@ -373,7 +353,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                     />
                   </button>
 
-                  {/* PROFILE POPOVER */}
                   <AnimatePresence>
                     {showProfileMenu && (
                       <motion.div
@@ -386,7 +365,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                         transition={{ duration: 0.18, ease: 'easeOut' }}
                         className="absolute right-0 top-full mt-2 w-72 sm:w-80 rounded-2xl bg-white border border-slate-200/90 shadow-[0_12px_36px_rgba(15,23,42,0.12),0_2px_8px_rgba(15,23,42,0.06)] overflow-hidden z-50 text-slate-800"
                       >
-                        {/* Popover Header with User Details */}
                         <div className="p-4 bg-gradient-to-br from-emerald-50/70 via-white to-slate-50 border-b border-slate-100 flex items-center gap-3">
                           <span
                             className={`w-11 h-11 rounded-full border flex items-center justify-center text-sm font-extrabold shadow-xs flex-shrink-0 ${roleStyle.avatar}`}
@@ -408,7 +386,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                           </div>
                         </div>
 
-                        {/* Menu Options List */}
                         <div className="p-2 space-y-1" role="none">
                           <button
                             type="button"
@@ -458,7 +435,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                           )}
                         </div>
 
-                        {/* Logout Footer */}
                         <div className="p-2 border-t border-slate-100 bg-slate-50/50" role="none">
                           <button
                             type="button"
@@ -494,7 +470,6 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             )}
           </div>
-
         </div>
       </div>
     </header>
