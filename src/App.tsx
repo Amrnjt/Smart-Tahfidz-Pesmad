@@ -117,6 +117,7 @@ export default function App() {
   };
 
   const handleManualRefresh = async () => {
+    if (isGlobalReadOnlyRole(currentUser?.role)) return;
     if (isSyncing) return;
     setSyncState('syncing');
     try {
@@ -209,7 +210,7 @@ export default function App() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           onLogout={handleLogout}
-          onRefresh={handleManualRefresh}
+          onRefresh={canSetor ? handleManualRefresh : undefined}
           isRefreshing={isSyncing}
           syncState={syncState}
         />
