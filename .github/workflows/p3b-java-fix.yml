@@ -1,0 +1,53 @@
+name: P3B Java Prerequisite Fix
+
+on:
+  push:
+    branches:
+      - feat/p1-pimpinan-role-foundation
+    paths:
+      - '.github/workflows/p3b-java-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-workflow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/p1-pimpinan-role-foundation
+          fetch-depth: 0
+
+      - name: Add JDK 21 to P3B gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/p3b-auth-bootstrap.yml')
+          text = path.read_text()
+          marker = "      - name: Install secure-auth dependencies\n"
+          java = """      - name: Set up Java 21 for Firebase Emulator\n        uses: actions/setup-java@v4\n        with:\n          distribution: temurin\n          java-version: '21'\n\n"""
+          if java not in text:
+              assert marker in text
+              text = text.replace(marker, java + marker, 1)
+          text = text.replace(
+              "rm .github/workflows/p3b-auth-bootstrap.yml",
+              "rm -f .github/workflows/p3b-auth-bootstrap.yml .github/workflows/p3b-java-fix.yml",
+              1,
+          )
+          text = text.replace(
+              "            .github/workflows/p3b-auth-bootstrap.yml\n",
+              "            .github/workflows/p3b-auth-bootstrap.yml \\\n            .github/workflows/p3b-java-fix.yml\n",
+              1,
+          )
+          path.write_text(text)
+          PY
+
+      - name: Commit corrected P3B gate
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/p3b-auth-bootstrap.yml
+          git commit -m 'ci: use Java 21 for Firebase auth emulator'
+          git push origin HEAD:feat/p1-pimpinan-role-foundation
