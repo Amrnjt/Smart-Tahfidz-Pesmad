@@ -1,0 +1,264 @@
+name: P3B Secure Auth Bootstrap
+
+on:
+  push:
+    branches:
+      - feat/p1-pimpinan-role-foundation
+    paths:
+      - '.github/workflows/p3b-auth-bootstrap.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  auth-bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/p1-pimpinan-role-foundation
+          fetch-depth: 0
+
+      - name: Write bootstrap contract test
+        shell: bash
+        run: |
+          cat > tests/p3b-auth-bootstrap.test.mjs <<'EOF'
+          import assert from 'node:assert/strict';
+          import { existsSync, readFileSync } from 'node:fs';
+          import test from 'node:test';
+
+          test('secure auth bootstrap exists and trusts Pimpinan without making it writer staff', () => {
+            for (const file of [
+              'api/_credentials.ts',
+              'api/_firebaseAdmin.ts',
+              'api/auth/login.ts',
+              'api/auth/admin-users.ts',
+              'api/auth/migrate-credentials.ts',
+              'src/services/authService.ts',
+              'src/services/secureAccountBridge.ts',
+              'src/SecureApp.tsx',
+              'firebase.json',
+            ]) assert.equal(existsSync(file), true, `${file} must exist`);
+
+            const login = readFileSync('api/auth/login.ts', 'utf8');
+            const admin = readFileSync('api/auth/admin-users.ts', 'utf8');
+            const migrate = readFileSync('api/auth/migrate-credentials.ts', 'utf8');
+            const firebase = readFileSync('src/services/firebase.ts', 'utf8');
+            const authService = readFileSync('src/services/authService.ts', 'utf8');
+            const main = readFileSync('src/main.tsx', 'utf8');
+
+            assert.match(login, /'Pimpinan'/);
+            assert.match(migrate, /'Pimpinan'/);
+            assert.match(admin, /'Pimpinan'/);
+            assert.match(admin, /return role === 'Superadmin' \|\| role === 'Ustadz';/);
+            assert.match(firebase, /export const auth = getAuth\(app\);/);
+            assert.match(authService, /normalizeUserRole/);
+            assert.match(main, /SecureApp/);
+            assert.match(main, /installSecureAccountBridge\(\)/);
+          });
+          EOF
+
+      - name: Verify RED
+        shell: bash
+        run: |
+          set +e
+          node --test tests/p3b-auth-bootstrap.test.mjs > /tmp/p3b-red.log 2>&1
+          status=$?
+          cat /tmp/p3b-red.log
+          if [ "$status" -eq 0 ]; then
+            echo 'Expected secure-auth bootstrap contract to fail before implementation.'
+            exit 1
+          fi
+          echo 'RED confirmed.'
+
+      - name: Port proven secure-auth files
+        shell: bash
+        run: |
+          mkdir -p api/auth src/services
+          for file in \
+            api/_credentials.ts \
+            api/_firebaseAdmin.ts \
+            api/auth/login.ts \
+            api/auth/admin-users.ts \
+            api/auth/migrate-credentials.ts \
+            src/services/authService.ts \
+            src/services/secureAccountBridge.ts \
+            src/SecureApp.tsx \
+            firebase.json \
+            tests/auth.runtime.test.ts
+          do
+            git show origin/security/p0-auth-role-integration:$file > $file
+          done
+
+      - name: Adapt auth implementation to current Pimpinan role contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+
+          # --- server login ---
+          path = Path('api/auth/login.ts')
+          text = path.read_text()
+          text = text.replace(
+              "type AuthRole = 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri';",
+              "type AuthRole = 'Superadmin' | 'Pimpinan' | 'Ustadz' | 'Wali' | 'Santri';",
+          )
+          text = text.replace(
+              "  if (value === 'superadmin') return 'Superadmin';\n  if (value === 'ustadz') return 'Ustadz';",
+              "  if (value === 'superadmin') return 'Superadmin';\n  if (value === 'pimpinan') return 'Pimpinan';\n  if (value === 'ustadz') return 'Ustadz';",
+          )
+          path.write_text(text)
+
+          # --- credential migration ---
+          path = Path('api/auth/migrate-credentials.ts')
+          text = path.read_text()
+          text = text.replace(
+              "type AuthRole = 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri';",
+              "type AuthRole = 'Superadmin' | 'Pimpinan' | 'Ustadz' | 'Wali' | 'Santri';",
+          )
+          text = text.replace(
+              "  if (value === 'superadmin') return 'Superadmin';\n  if (value === 'ustadz') return 'Ustadz';",
+              "  if (value === 'superadmin') return 'Superadmin';\n  if (value === 'pimpinan') return 'Pimpinan';\n  if (value === 'ustadz') return 'Ustadz';",
+          )
+          path.write_text(text)
+
+          # --- secure account API: Pimpinan trusted, never writer staff ---
+          path = Path('api/auth/admin-users.ts')
+          text = path.read_text()
+          text = text.replace(
+              "const ALLOWED_ROLES = new Set(['Superadmin', 'Ustadz', 'Wali', 'Santri']);",
+              "const ALLOWED_ROLES = new Set(['Superadmin', 'Pimpinan', 'Ustadz', 'Wali', 'Santri']);",
+          )
+          text = text.replace(
+              "type AuthRole = 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri';",
+              "type AuthRole = 'Superadmin' | 'Pimpinan' | 'Ustadz' | 'Wali' | 'Santri';",
+          )
+          # isStaff deliberately remains only Superadmin/Ustadz.
+          path.write_text(text)
+
+          # --- client auth: centralized role normalization incl. Pimpinan ---
+          path = Path('src/services/authService.ts')
+          text = path.read_text()
+          text = text.replace(
+              "import type { User, UserRole } from '../types';",
+              "import type { User } from '../types';\nimport { normalizeUserRole } from '../utils/roles';",
+          )
+          start = text.index('function normalizeRole(')
+          end = text.index('function stripCredentialFields', start)
+          replacement = """function trustedRole(role: unknown) {\n  return normalizeUserRole(role);\n}\n\n"""
+          text = text[:start] + replacement + text[end:]
+          text = text.replace(
+              "        role: normalizeRole(payload.user.role)",
+              "        role: normalizeUserRole(payload.user.role) || payload.user.role",
+          )
+          path.write_text(text)
+
+          # --- Firebase client Auth export; preserve current runtime config ---
+          path = Path('src/services/firebase.ts')
+          text = path.read_text()
+          if "from 'firebase/auth'" not in text:
+              text = text.replace(
+                  "import { getFirestore } from 'firebase/firestore';",
+                  "import { getAuth } from 'firebase/auth';\nimport { getFirestore } from 'firebase/firestore';",
+                  1,
+              )
+          if 'export const auth = getAuth(app);' not in text:
+              anchor = "const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();\n"
+              assert anchor in text
+              text = text.replace(anchor, anchor + "\nexport const auth = getAuth(app);\n", 1)
+          path.write_text(text)
+
+          # --- Current main: keep all current CSS, install secure bridge and SecureApp ---
+          path = Path('src/main.tsx')
+          text = path.read_text()
+          text = text.replace("import App from './App.tsx';", "import SecureApp from './SecureApp.tsx';")
+          if "installSecureAccountBridge" not in text:
+              text = text.replace(
+                  "import { installCloudCommitGate } from './services/cloudCommitGate';",
+                  "import { installCloudCommitGate } from './services/cloudCommitGate';\nimport { installSecureAccountBridge } from './services/secureAccountBridge';",
+                  1,
+              )
+          text = text.replace(
+              "installCloudCommitGate();",
+              "installCloudCommitGate();\n// Secure account lifecycle overrides legacy client-side credential handling.\ninstallSecureAccountBridge();",
+              1,
+          )
+          text = text.replace('<App />', '<SecureApp />')
+          path.write_text(text)
+
+          # --- Auth runtime test: add Pimpinan to migration/token/admin denial coverage ---
+          path = Path('tests/auth.runtime.test.ts')
+          text = path.read_text()
+          pimpinan = "  { id: 'pimpinan-1', username: 'pimpinantest', password: 'PassPimpinan123!', nama: 'Pimpinan Test', role: 'Pimpinan', idSantri: '' },\n"
+          anchor = "  { id: 'super-1', username: 'supertest', password: 'PassSuper123!', nama: 'Super Test', role: 'Superadmin', idSantri: '' },\n"
+          if pimpinan not in text:
+              assert anchor in text
+              text = text.replace(anchor, anchor + pimpinan, 1)
+          text = text.replace('all four roles receive usable custom tokens with correct claims', 'all five roles receive usable custom tokens with correct claims')
+          denial_anchor = "  const waliSession = await loginClient(wali, 'admin');\n"
+          if "pimpinanSession" not in text:
+              text = text.replace(
+                  denial_anchor,
+                  denial_anchor + "  const pimpinan = users.find((user) => user.role === 'Pimpinan')!;\n  const pimpinanSession = await loginClient(pimpinan, 'admin');\n",
+                  1,
+              )
+              insert_before = "  const ustadzSuperadminDenied = await call(adminUsersHandler, {\n"
+              denial = """  const pimpinanCreateDenied = await call(adminUsersHandler, {\n    method: 'POST',\n    headers: { authorization: `Bearer ${pimpinanSession.idToken}` },\n    body: {\n      action: 'createUser',\n      user: { id: 'forbidden-by-pimpinan', username: 'forbiddenpimpinan', nama: 'Forbidden', role: 'Santri', idSantri: 'santri-x' },\n      password: 'Nope123!',\n    },\n  });\n  assert.equal(pimpinanCreateDenied.statusCode, 403);\n\n"""
+              assert insert_before in text
+              text = text.replace(insert_before, denial + insert_before, 1)
+          path.write_text(text)
+
+          # --- package dependencies/scripts only; avoid unrelated old-branch deps ---
+          path = Path('package.json')
+          package = json.loads(path.read_text())
+          package.setdefault('engines', {})['node'] = '22.x'
+          package['dependencies']['firebase-admin'] = '^14.3.0'
+          package['devDependencies']['@firebase/rules-unit-testing'] = '^5.0.2'
+          package['devDependencies']['firebase-tools'] = '^15.29.0'
+          package['scripts']['test:auth-runtime'] = 'firebase emulators:exec --project demo-smart-tahfidz --only auth,firestore "tsx --test tests/auth.runtime.test.ts"'
+          package['scripts']['test:firestore-rules'] = 'firebase emulators:exec --project demo-smart-tahfidz --only firestore "node --test tests/firestore.rules.test.mjs"'
+          path.write_text(json.dumps(package, indent=2, ensure_ascii=False) + '\n')
+
+          # --- documented server prerequisites, no secrets ---
+          Path('.env.example').write_text("""FIREBASE_API_KEY=\nFIREBASE_PROJECT_ID=\nFIRESTORE_DATABASE_ID=\nFIREBASE_CLIENT_EMAIL=\nFIREBASE_PRIVATE_KEY=\nP0_MIGRATION_SECRET=\nP0_ALLOW_LEGACY_LOGIN_MIGRATION=false\n""")
+          PY
+
+      - name: Install secure-auth dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Verify GREEN bootstrap contract
+        run: node --test tests/p3b-auth-bootstrap.test.mjs
+
+      - name: Verify secure auth runtime with emulators
+        run: npm run test:auth-runtime
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit verified auth bootstrap and remove workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          rm .github/workflows/p3b-auth-bootstrap.yml
+          git add \
+            api \
+            src/services/authService.ts \
+            src/services/secureAccountBridge.ts \
+            src/services/firebase.ts \
+            src/SecureApp.tsx \
+            src/main.tsx \
+            firebase.json \
+            package.json \
+            package-lock.json \
+            .env.example \
+            tests/auth.runtime.test.ts \
+            tests/p3b-auth-bootstrap.test.mjs \
+            .github/workflows/p3b-auth-bootstrap.yml
+          git commit -m 'security: bootstrap Firebase Auth for Pimpinan'
+          git push origin HEAD:feat/p1-pimpinan-role-foundation
