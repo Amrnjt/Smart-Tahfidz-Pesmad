@@ -18,6 +18,17 @@ test('normalizeUserRole canonicalizes pimpinan variants', () => {
   assert.equal(normalizeUserRole('  PIMPINAN  '), 'Pimpinan');
 });
 
+test('unknown roles fail closed instead of inheriting staff access', () => {
+  assert.equal(normalizeUserRole('operator'), null);
+  assert.equal(canViewAllHistory('operator'), false);
+  assert.equal(canWriteSetoran('operator'), false);
+  assert.equal(canEditHistory('operator'), false);
+  assert.equal(canDeleteHistory('operator'), false);
+  assert.equal(canManageSantri('operator'), false);
+  assert.equal(canManageKelas('operator'), false);
+  assert.equal(canManageUsers('operator'), false);
+});
+
 test('Pimpinan can view all history but cannot mutate tahfidz data', () => {
   assert.equal(canViewAllHistory('Pimpinan'), true);
   assert.equal(canWriteSetoran('Pimpinan'), false);
