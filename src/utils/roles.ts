@@ -60,11 +60,13 @@ export function canDeleteHistory(role: unknown): boolean {
 }
 
 export function canManageSantri(role: unknown): boolean {
-  return normalizeUserRole(role) === 'Superadmin';
+  const normalized = normalizeUserRole(role);
+  return normalized === 'Superadmin' || normalized === 'Ustadz';
 }
 
 export function canManageKelas(role: unknown): boolean {
-  return normalizeUserRole(role) === 'Superadmin';
+  const normalized = normalizeUserRole(role);
+  return normalized === 'Superadmin' || normalized === 'Ustadz';
 }
 
 export function canManageUsers(role: unknown): boolean {
