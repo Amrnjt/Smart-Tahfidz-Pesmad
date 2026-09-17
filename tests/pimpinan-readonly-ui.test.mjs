@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import test from 'node:test';
+
+const historyView = readFileSync('src/components/PimpinanHistoryTable.tsx', 'utf8');
+const bottomNav = readFileSync('src/components/PimpinanBottomNav.tsx', 'utf8');
+const app = readFileSync('src/App.tsx', 'utf8');
+
+test('Pimpinan history presenter contains no mutation path', () => {
+  assert.doesNotMatch(historyView, /updateRecord|deleteRecord|deleteRecordsBatch|setRecord|addRecord/);
+  assert.doesNotMatch(historyView, /Trash2|SquarePen|\bPencil\b/);
+  assert.match(historyView, /UnduhLaporanModal/);
+});
+
+test('Pimpinan mobile navigation exposes only read-only primary destinations', () => {
+  assert.match(bottomNav, /Beranda/);
+  assert.match(bottomNav, /Riwayat/);
+  assert.match(bottomNav, /Mushaf/);
+  assert.doesNotMatch(bottomNav, /Setor|Kelola|Pantauan/);
+});
+
+test('App routes Pimpinan through dedicated read-only presenters', () => {
+  assert.match(app, /PimpinanHistoryTable/);
+  assert.match(app, /PimpinanBottomNav/);
+  assert.match(app, /isGlobalReadOnlyRole/);
+  assert.match(app, /canWriteSetoran/);
+});
