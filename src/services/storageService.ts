@@ -1,6 +1,7 @@
 import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas, PantauanLiburanRecord, AppConfig, TrashRecord, CombinedHistoryItem } from '../types';
 import { getClassGroup } from '../utils/classUtils';
 import { getTodayInputFormat, getCurrentTimeInputFormat } from '../utils/dateFormatter';
+import { normalizeUserRole } from '../utils/roles';
 import { db } from './firebase';
 import {
   collection,
@@ -61,6 +62,13 @@ const COLLECTIONS = {
 function cleanForFirestore<T>(data: T): T {
   return JSON.parse(JSON.stringify(data));
 }
+
+function assertCloudMutationAllowed(session: User | null): void {
+  if (normalizeUserRole(session?.role) === 'Pimpinan') {
+    throw new Error('Akun Pimpinan bersifat view-only dan tidak dapat mengubah data.');
+  }
+}
+
 
 function deduplicateById<T extends { id?: string; idSantri?: string }>(items: T[]): T[] {
   const seen = new Set<string>();
@@ -178,17 +186,12 @@ export const storageService = {
     }
 
     if (matched) {
-      const r = String(matched.role || '').trim().toLowerCase();
-      if (r === 'superadmin') {
-        matched.role = 'Superadmin';
-      } else if (r === 'wali' || r.includes('wali')) {
-        matched.role = 'Wali';
-      } else if (r === 'santri') {
-        matched.role = 'Santri';
-      } else {
-        matched.role = 'Ustadz';
+      const normalizedRole = normalizeUserRole(matched.role);
+      if (!normalizedRole) {
+        return { success: false, message: 'Role akun tidak dikenali. Hubungi administrator.' };
       }
 
+      matched.role = normalizedRole;
       this.setSession(matched);
       return { success: true, user: matched };
     }
@@ -455,6 +458,7 @@ export const storageService = {
   },
 
   async saveZiyadah(record: Omit<ZiyadahRecord, 'id'> & { timestamp?: string }): Promise<ZiyadahRecord> {
+    assertCloudMutationAllowed(this.getSession());
     const records = this.getZiyadahRecords();
     const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
 
@@ -486,6 +490,7 @@ export const storageService = {
   },
 
   async saveMurojaah(record: Omit<MurojaahRecord, 'id'> & { timestamp?: string }): Promise<MurojaahRecord> {
+    assertCloudMutationAllowed(this.getSession());
     const records = this.getMurojaahRecords();
     const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
 
@@ -517,6 +522,7 @@ export const storageService = {
   },
 
   async saveBinnadzor(record: Omit<BinnadzorRecord, 'id'> & { timestamp?: string }): Promise<BinnadzorRecord> {
+    assertCloudMutationAllowed(this.getSession());
     const records = this.getBinnadzorRecords();
     const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
 
@@ -548,6 +554,7 @@ export const storageService = {
   },
 
   async savePembelajaran(record: Omit<PembelajaranRecord, 'id'> & { timestamp?: string }): Promise<PembelajaranRecord> {
+    assertCloudMutationAllowed(this.getSession());
     const records = this.getPembelajaranRecords();
     const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
 
@@ -583,6 +590,7 @@ export const storageService = {
   },
 
   async purgeExpiredTrash(): Promise<number> {
+    assertCloudMutationAllowed(this.getSession());
     try {
       const nowIso = new Date().toISOString();
       const trashSnap = await getDocs(collection(db, COLLECTIONS.TRASH));
@@ -646,6 +654,7 @@ export const storageService = {
     id: string,
     deletedBy?: string
   ): Promise<boolean> {
+    assertCloudMutationAllowed(this.getSession());
     if (!id) return false;
 
     const sourceCollection = type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
@@ -724,6 +733,7 @@ export const storageService = {
     items: { type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran'; id: string }[],
     deletedBy?: string
   ): Promise<boolean> {
+    assertCloudMutationAllowed(this.getSession());
     if (!items || items.length === 0) return true;
 
     const now = new Date();
@@ -796,6 +806,7 @@ export const storageService = {
   },
 
   async restoreTrashRecord(trashId: string): Promise<{ success: boolean; message?: string; record?: any }> {
+    assertCloudMutationAllowed(this.getSession());
     try {
       let trashItem = this.getTrashRecords().find(t => t.id === trashId || t.recordId === trashId);
       if (!trashItem) {
@@ -883,6 +894,7 @@ export const storageService = {
   },
 
   async permanentlyDeleteTrashRecord(trashId: string): Promise<boolean> {
+    assertCloudMutationAllowed(this.getSession());
     try {
       const trashItem = this.getTrashRecords().find(t => t.id === trashId);
       await deleteDoc(doc(db, COLLECTIONS.TRASH, trashId));
@@ -899,6 +911,7 @@ export const storageService = {
   },
 
   async emptyTrash(): Promise<boolean> {
+    assertCloudMutationAllowed(this.getSession());
     try {
       const trashList = await this.fetchTrashRecords();
       if (trashList.length === 0) return true;
@@ -1259,6 +1272,7 @@ export const storageService = {
   },
 
   async updateRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran', id: string, updatedData: Partial<ZiyadahRecord | MurojaahRecord | BinnadzorRecord | PembelajaranRecord>): Promise<boolean> {
+    assertCloudMutationAllowed(this.getSession());
     if (type === 'Ziyadah') {
       const records = this.getZiyadahRecords().map(r => r.id === id ? { ...r, ...updatedData } as ZiyadahRecord : r);
       writeArrayCache(STORAGE_KEYS.ZIYADAH, records);
@@ -1312,6 +1326,7 @@ export const storageService = {
   },
 
   async setProgramLiburanActive(active: boolean, updatedBy: string = 'Ustadz / Admin'): Promise<AppConfig> {
+    assertCloudMutationAllowed(this.getSession());
     const prev = this.getAppConfig();
     const updated: AppConfig = {
       ...prev,
@@ -1331,6 +1346,7 @@ export const storageService = {
   },
 
   async savePantauanLiburan(record: Omit<PantauanLiburanRecord, 'id' | 'timestamp'> & { id?: string; timestamp?: string }): Promise<PantauanLiburanRecord> {
+    assertCloudMutationAllowed(this.getSession());
     const records = this.getPantauanLiburanRecords();
     const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
 
@@ -1370,12 +1386,14 @@ export const storageService = {
   },
 
   async deletePantauanLiburan(id: string): Promise<boolean> {
+    assertCloudMutationAllowed(this.getSession());
     await deleteDoc(doc(db, COLLECTIONS.PANTAUAN_LIBURAN, id));
     writeArrayCache(STORAGE_KEYS.PANTAUAN_LIBURAN, this.getPantauanLiburanRecords().filter(r => r.id !== id));
     return true;
   },
 
   async addSantri(santri: Santri, defaultPassword = '123'): Promise<Santri> {
+    assertCloudMutationAllowed(this.getSession());
     const list = this.getSantriList();
     const existingIndex = list.findIndex(s => s.idSantri === santri.idSantri);
     if (existingIndex >= 0) {
@@ -1436,6 +1454,7 @@ export const storageService = {
   },
 
   async updateSantri(idSantri: string, updatedData: Partial<Santri>): Promise<boolean> {
+    assertCloudMutationAllowed(this.getSession());
     const list = this.getSantriList().map(s => s.idSantri === idSantri ? { ...s, ...updatedData } : s);
     writeArrayCache(STORAGE_KEYS.SANTRI, list);
 
@@ -1452,6 +1471,7 @@ export const storageService = {
   },
 
   async deleteSantri(idSantri: string, deleteRelatedHistory = true): Promise<boolean> {
+    assertCloudMutationAllowed(this.getSession());
     const usersToDelete = this.getUsers().filter(u => u.idSantri === idSantri || u.username.toLowerCase() === idSantri.toLowerCase());
     const ziyadahToDelete = deleteRelatedHistory ? this.getZiyadahRecords().filter(r => r.idSantri === idSantri) : [];
     const murojaahToDelete = deleteRelatedHistory ? this.getMurojaahRecords().filter(r => r.idSantri === idSantri) : [];
@@ -1490,6 +1510,7 @@ export const storageService = {
   },
 
   async addUser(user: User): Promise<User> {
+    assertCloudMutationAllowed(this.getSession());
     const users = this.getUsers();
 
     const ensuredUser: User = {
@@ -1498,7 +1519,7 @@ export const storageService = {
       password: user.password ? user.password.trim() : '123',
       role: user.role || 'Ustadz',
       nama: user.nama ? user.nama.trim() : 'Ustadz Pengajar',
-      idSantri: (user.role === 'Ustadz' || user.role === 'Superadmin') ? '' : (user.idSantri || '')
+      idSantri: ['Ustadz', 'Superadmin', 'Pimpinan'].includes(user.role) ? '' : (user.idSantri || '')
     };
 
     const existingIndex = users.findIndex(u => u.username.toLowerCase() === ensuredUser.username.toLowerCase());
@@ -1521,10 +1542,12 @@ export const storageService = {
   },
 
   async updateUser(id: string, updatedData: Partial<User>): Promise<boolean> {
+    assertCloudMutationAllowed(this.getSession());
     const cleanUpdate = { ...updatedData };
     if (cleanUpdate.username) cleanUpdate.username = cleanUpdate.username.trim().toLowerCase();
     if (cleanUpdate.password) cleanUpdate.password = cleanUpdate.password.trim();
     if (cleanUpdate.nama) cleanUpdate.nama = cleanUpdate.nama.trim();
+    if (cleanUpdate.role && ['Ustadz', 'Superadmin', 'Pimpinan'].includes(cleanUpdate.role)) cleanUpdate.idSantri = '';
 
     const users = this.getUsers().map(u => u.id === id ? { ...u, ...cleanUpdate } : u);
     writeArrayCache(STORAGE_KEYS.USERS, users);
@@ -1548,6 +1571,7 @@ export const storageService = {
   },
 
   async deleteUser(id: string): Promise<boolean> {
+    assertCloudMutationAllowed(this.getSession());
     await deleteDoc(doc(db, COLLECTIONS.USERS, id));
     writeArrayCache(STORAGE_KEYS.USERS, this.getUsers().filter(u => u.id !== id));
     return true;
@@ -1557,20 +1581,10 @@ export const storageService = {
     const data = localStorage.getItem(STORAGE_KEYS.SESSION);
     if (!data) return null;
     try {
-      const user = JSON.parse(data);
-      if (user) {
-        const r = String(user.role || '').trim().toLowerCase();
-        if (r === 'superadmin') {
-          user.role = 'Superadmin';
-        } else if (r === 'wali' || r.includes('wali')) {
-          user.role = 'Wali';
-        } else if (r === 'santri') {
-          user.role = 'Santri';
-        } else {
-          user.role = 'Ustadz';
-        }
-      }
-      return user;
+      const user = JSON.parse(data) as User;
+      const normalizedRole = normalizeUserRole(user.role);
+      if (!normalizedRole) return null;
+      return { ...user, role: normalizedRole };
     } catch {
       return null;
     }
@@ -1585,6 +1599,7 @@ export const storageService = {
   },
 
   async addKelas(kelas: Kelas): Promise<Kelas> {
+    assertCloudMutationAllowed(this.getSession());
     const list = this.getKelasList();
     const assignedIds = new Set(kelas.santriIds || []);
 
@@ -1637,6 +1652,7 @@ export const storageService = {
   },
 
   async updateKelas(id: string, updatedData: Partial<Kelas>): Promise<boolean> {
+    assertCloudMutationAllowed(this.getSession());
     const list = this.getKelasList();
     const currentKelas = list.find(k => k.id === id);
     const oldSantriIds = new Set(currentKelas?.santriIds || []);
@@ -1704,6 +1720,7 @@ export const storageService = {
   },
 
   async deleteKelas(id: string): Promise<boolean> {
+    assertCloudMutationAllowed(this.getSession());
     const list = this.getKelasList();
     const deletedKelas = list.find(k => k.id === id);
     const affectedSantriIds = new Set(deletedKelas?.santriIds || []);
