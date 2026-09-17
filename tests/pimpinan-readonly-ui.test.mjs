@@ -25,3 +25,8 @@ test('App routes Pimpinan through dedicated read-only presenters', () => {
   assert.match(app, /isGlobalReadOnlyRole/);
   assert.match(app, /canWriteSetoran/);
 });
+
+test('Pimpinan cannot trigger manual cloud sync mutation path', () => {
+  assert.match(app, /if \(isGlobalReadOnlyRole\(currentUser\?\.role\)\) return;/);
+  assert.match(app, /onRefresh=\{canSetor \? handleManualRefresh : undefined\}/);
+});
