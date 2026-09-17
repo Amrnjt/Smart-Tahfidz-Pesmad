@@ -8,9 +8,9 @@ const ROLE_ALIASES: Record<string, UserRole> = {
   santri: 'Santri',
 };
 
-export function normalizeUserRole(role: unknown): UserRole {
+export function normalizeUserRole(role: unknown): UserRole | null {
   const normalized = String(role ?? '').trim().toLowerCase();
-  return ROLE_ALIASES[normalized] ?? 'Ustadz';
+  return ROLE_ALIASES[normalized] ?? null;
 }
 
 export function canViewAllHistory(role: unknown): boolean {
