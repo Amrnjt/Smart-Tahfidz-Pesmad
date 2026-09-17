@@ -13,11 +13,11 @@ test('secure Firestore rules require authenticated server-side identity', () => 
 test('Pimpinan is explicitly read-only in secure rules', () => {
   assert.match(secureRules, /function\s+isPimpinan\s*\(\)/);
   assert.match(secureRules, /role\(\)\s*==\s*['"]Pimpinan['"]/);
-  assert.match(secureRules, /function\s+canWriteTahfidz\s*\(\)/);
-  assert.doesNotMatch(
-    secureRules,
-    /function\s+canWriteTahfidz\s*\(\)[\s\S]*?Pimpinan[\s\S]*?\}/
-  );
+
+  const writeHelper = secureRules.match(/function\s+canWriteTahfidz\s*\(\)\s*\{([^}]*)\}/)?.[1] ?? '';
+  assert.match(writeHelper, /isSuperadmin\(\)/);
+  assert.match(writeHelper, /isUstadz\(\)/);
+  assert.doesNotMatch(writeHelper, /Pimpinan|isPimpinan/);
 });
 
 test('mutable tahfidz collections are protected by role-aware write checks', () => {
