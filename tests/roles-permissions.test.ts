@@ -49,4 +49,10 @@ test('existing roles keep their intended foundation permissions', () => {
   assert.equal(canWriteSetoran('Ustadz'), true);
   assert.equal(canWriteSetoran('Wali'), false);
   assert.equal(canWriteSetoran('Santri'), false);
+
+  assert.equal(canManageSantri('Superadmin'), true);
+  assert.equal(canManageSantri('Ustadz'), true);
+  assert.equal(canManageKelas('Superadmin'), true);
+  assert.equal(canManageKelas('Ustadz'), true);
+  assert.equal(canManageUsers('Ustadz'), false);
 });
