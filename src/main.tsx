@@ -3,6 +3,7 @@ import {createRoot} from 'react-dom/client';
 import SecureApp from './SecureApp.tsx';
 import { installCloudCommitGate } from './services/cloudCommitGate';
 import { installSecureAccountBridge } from './services/secureAccountBridge';
+import { installRoleScopedSync } from './services/roleScopedSync';
 import '@fontsource-variable/plus-jakarta-sans/wght.css';
 import './index.css';
 import './design-foundation.css';
@@ -23,6 +24,8 @@ import './setor-dropup.css';
 installCloudCommitGate();
 // Secure account lifecycle overrides legacy client-side credential handling.
 installSecureAccountBridge();
+// Role-aware data ingress: global monitoring for Pimpinan, personal scope for Wali/Santri.
+installRoleScopedSync();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

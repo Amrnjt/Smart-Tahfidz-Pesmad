@@ -15,6 +15,24 @@ export function normalizeUserRole(role: unknown): UserRole | null {
   return ROLE_ALIASES[normalized] ?? null;
 }
 
+
+export function isWriterStaffRole(role: unknown): boolean {
+  const normalized = normalizeUserRole(role);
+  return normalized === 'Superadmin' || normalized === 'Ustadz';
+}
+
+export function isGlobalReaderRole(role: unknown): boolean {
+  const normalized = normalizeUserRole(role);
+  return normalized === 'Superadmin' || normalized === 'Pimpinan' || normalized === 'Ustadz';
+}
+
+export function getLinkedSantriId(user: import('../types').User | null | undefined): string {
+  if (!user) return '';
+  const normalized = normalizeUserRole(user.role);
+  if (normalized !== 'Wali' && normalized !== 'Santri') return '';
+  return String(user.idSantri || (normalized === 'Santri' ? user.username : '') || '').trim();
+}
+
 export function isPersonalViewOnlyRole(role: unknown): boolean {
   const normalized = normalizeUserRole(role);
   return normalized === 'Wali' || normalized === 'Santri';
