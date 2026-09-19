@@ -225,6 +225,12 @@ jobs:
           Path('.env.example').write_text("""FIREBASE_API_KEY=\nFIREBASE_PROJECT_ID=\nFIRESTORE_DATABASE_ID=\nFIREBASE_CLIENT_EMAIL=\nFIREBASE_PRIVATE_KEY=\nP0_MIGRATION_SECRET=\nP0_ALLOW_LEGACY_LOGIN_MIGRATION=false\n""")
           PY
 
+      - name: Set up Java 21 for Firebase Emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
       - name: Install secure-auth dependencies
         run: npm install --no-audit --no-fund
 
@@ -240,12 +246,11 @@ jobs:
       - name: Production build
         run: npm run build
 
-      - name: Commit verified auth bootstrap and remove workflow
+      - name: Commit verified auth bootstrap
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          rm .github/workflows/p3b-auth-bootstrap.yml
           git add \
             api \
             src/services/authService.ts \
@@ -258,7 +263,6 @@ jobs:
             package-lock.json \
             .env.example \
             tests/auth.runtime.test.ts \
-            tests/p3b-auth-bootstrap.test.mjs \
-            .github/workflows/p3b-auth-bootstrap.yml
+            tests/p3b-auth-bootstrap.test.mjs
           git commit -m 'security: bootstrap Firebase Auth for Pimpinan'
           git push origin HEAD:feat/p1-pimpinan-role-foundation
