@@ -1,6 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore';
-import { getAdminServices } from '../_firebaseAdmin';
-import { hashPassword, safeLegacyCompare, verifyPassword, type StoredCredential } from '../_credentials';
+import { getAdminServices } from '../_firebaseAdmin.js';
+import { hashPassword, safeLegacyCompare, verifyPassword, type StoredCredential } from '../_credentials.js';
 
 type AuthRole = 'Superadmin' | 'Pimpinan' | 'Ustadz' | 'Wali' | 'Santri';
 
