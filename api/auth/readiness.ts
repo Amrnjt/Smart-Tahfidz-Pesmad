@@ -1,4 +1,4 @@
-import { getAdminServices } from '../_firebaseAdmin';
+import { getAdminServices } from '../_firebaseAdmin.js';
 
 type AuthRole = 'Superadmin' | 'Pimpinan' | 'Ustadz' | 'Wali' | 'Santri';
 
