@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
-    "prebuild": "node -e \"console.log('=== BUILD LOG START [' + new Date().toISOString() + '] ==='); console.log('Builder Environment Check Passed.');\"",
+    "prebuild": "node scripts/verify-preview-environment.mjs && node -e \"console.log('=== BUILD LOG START [' + new Date().toISOString() + '] ==='); console.log('Builder Environment Check Passed.');\"",
     "build": "vite build",
     "postbuild": "node -e \"console.log('=== BUILD LOG END: Build successful! ===');\"",
     "preview": "vite preview",
@@ -14,7 +14,8 @@
     "test:auth-runtime": "firebase emulators:exec --project demo-smart-tahfidz --only auth,firestore \"tsx --test tests/auth.runtime.test.ts\"",
     "test:firestore-rules": "firebase emulators:exec --project demo-smart-tahfidz --only firestore \"node --test tests/firestore.rules.test.mjs\"",
     "verify:security-bootstrap": "node scripts/verify-security-bootstrap.mjs",
-    "verify:cutover-env": "node scripts/verify-security-bootstrap.mjs --require-env"
+    "verify:cutover-env": "node scripts/verify-security-bootstrap.mjs --require-env",
+    "verify:preview-env": "node scripts/verify-preview-environment.mjs"
   },
   "npm": {
     "allow-scripts": {
