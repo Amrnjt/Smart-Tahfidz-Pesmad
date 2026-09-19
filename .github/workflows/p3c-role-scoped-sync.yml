@@ -230,7 +230,7 @@ jobs:
                 )
               : () => undefined;
 
-            const bindCollection = <T extends { id?: string }>(
+            const bindCollection = <T>(
               collectionName: string,
               storageKey: string,
               sorter: (items: T[]) => T[] = (items) => items
@@ -319,7 +319,7 @@ jobs:
             const scopedQuery = (collectionName: string) =>
               query(collection(db, collectionName), where('idSantri', '==', targetSantriId));
 
-            const bindScoped = <T extends { id?: string }>(
+            const bindScoped = <T>(
               collectionName: string,
               storageKey: string,
               sorter: (items: T[]) => T[] = (items) => items
