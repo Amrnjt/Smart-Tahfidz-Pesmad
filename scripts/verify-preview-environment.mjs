@@ -20,18 +20,21 @@ const databaseId = String(process.env.FIRESTORE_DATABASE_ID || '').trim();
 const migrationSecret = String(process.env.P0_MIGRATION_SECRET || '').trim();
 const legacyFallback = process.env.P0_ALLOW_LEGACY_LOGIN_MIGRATION === 'true';
 
-const failures = [];
-if (missing.length) failures.push(`Missing Preview env: ${missing.join(', ')}`);
-if (migrationSecret.length < 24) failures.push('P0_MIGRATION_SECRET must be at least 24 characters in Preview.');
-if (legacyFallback) failures.push('P0_ALLOW_LEGACY_LOGIN_MIGRATION must be false in Preview.');
-if (projectId === PRODUCTION_PROJECT_ID && databaseId === PRODUCTION_DATABASE_ID) {
-  failures.push('Preview Firebase Admin is pointing at the production project/database pair.');
+if (missing.length) {
+  console.error('P3F Preview environment NOT READY: required env is incomplete.');
+  process.exit(2);
 }
-
-if (failures.length) {
-  console.error('P3F Preview environment NOT READY:');
-  for (const failure of failures) console.error(`- ${failure}`);
-  process.exit(1);
+if (migrationSecret.length < 24) {
+  console.error('P3F Preview environment NOT READY: migration secret is too short.');
+  process.exit(3);
+}
+if (legacyFallback) {
+  console.error('P3F Preview environment NOT READY: legacy login fallback is enabled.');
+  process.exit(4);
+}
+if (projectId === PRODUCTION_PROJECT_ID && databaseId === PRODUCTION_DATABASE_ID) {
+  console.error('P3F Preview environment NOT READY: Firebase Admin targets production.');
+  process.exit(5);
 }
 
 console.log('P3F Preview environment READY and isolated from production.');
