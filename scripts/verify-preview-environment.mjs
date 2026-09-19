@@ -21,8 +21,16 @@ const migrationSecret = String(process.env.P0_MIGRATION_SECRET || '').trim();
 const legacyFallback = process.env.P0_ALLOW_LEGACY_LOGIN_MIGRATION === 'true';
 
 if (missing.length) {
+  const bit = {
+    FIREBASE_PROJECT_ID: 1,
+    FIRESTORE_DATABASE_ID: 2,
+    FIREBASE_CLIENT_EMAIL: 4,
+    FIREBASE_PRIVATE_KEY: 8,
+    P0_MIGRATION_SECRET: 16,
+  };
+  const mask = missing.reduce((sum, key) => sum + bit[key], 0);
   console.error('P3F Preview environment NOT READY: required env is incomplete.');
-  process.exit(2);
+  process.exit(20 + mask);
 }
 if (migrationSecret.length < 24) {
   console.error('P3F Preview environment NOT READY: migration secret is too short.');
