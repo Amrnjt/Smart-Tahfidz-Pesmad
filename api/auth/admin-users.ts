@@ -1,6 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore';
-import { getAdminServices } from '../_firebaseAdmin';
-import { hashPassword } from '../_credentials';
+import { getAdminServices } from '../_firebaseAdmin.js';
+import { hashPassword } from '../_credentials.js';
 
 const ALLOWED_ROLES = new Set(['Superadmin', 'Pimpinan', 'Ustadz', 'Wali', 'Santri']);
 type AuthRole = 'Superadmin' | 'Pimpinan' | 'Ustadz' | 'Wali' | 'Santri';
