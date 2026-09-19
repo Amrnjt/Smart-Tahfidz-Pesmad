@@ -1,35 +1,104 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function role() {
+      return signedIn() ? request.auth.token.role : null;
+    }
+
+    function linkedSantriId() {
+      return signedIn() ? request.auth.token.idSantri : null;
+    }
+
+    function isKnownRole() {
+      return role() in ['Superadmin', 'Ustadz', 'Pimpinan', 'Wali', 'Santri'];
+    }
+
+    function isWriterStaff() {
+      return role() == 'Superadmin' || role() == 'Ustadz';
+    }
+
+    function isGlobalReader() {
+      return role() == 'Superadmin' || role() == 'Ustadz' || role() == 'Pimpinan';
+    }
+
+    function isPersonalReader() {
+      return role() == 'Wali' || role() == 'Santri';
+    }
+
+    function ownsSantri(santriId) {
+      return isPersonalReader()
+        && linkedSantriId() != null
+        && linkedSantriId() != ''
+        && linkedSantriId() == santriId;
+    }
+
+    function ownsResource() {
+      return isPersonalReader()
+        && linkedSantriId() != null
+        && linkedSantriId() != ''
+        && resource.data.idSantri == linkedSantriId();
+    }
+
     match /users/{userId} {
-      allow read, write: if true;
+      allow read: if isWriterStaff() || (signedIn() && isKnownRole() && request.auth.uid == userId);
+      // Account lifecycle is server-only through Firebase Admin.
+      allow write: if false;
     }
+
     match /santri/{santriId} {
-      allow read, write: if true;
+      allow read: if isGlobalReader() || ownsSantri(santriId);
+      allow write: if isWriterStaff();
     }
-    match /ziyadah/{ziyadahId} {
-      allow read, write: if true;
+
+    match /ziyadah/{recordId} {
+      allow read: if isGlobalReader() || ownsResource();
+      allow write: if isWriterStaff();
     }
-    match /murojaah/{murojaahId} {
-      allow read, write: if true;
+
+    match /murojaah/{recordId} {
+      allow read: if isGlobalReader() || ownsResource();
+      allow write: if isWriterStaff();
     }
-    match /binnadzor/{binnadzorId} {
-      allow read, write: if true;
+
+    match /binnadzor/{recordId} {
+      allow read: if isGlobalReader() || ownsResource();
+      allow write: if isWriterStaff();
     }
+
+    match /pembelajaran/{recordId} {
+      allow read: if isGlobalReader() || ownsResource();
+      allow write: if isWriterStaff();
+    }
+
     match /kelas/{kelasId} {
-      allow read, write: if true;
+      allow read: if isGlobalReader();
+      allow write: if isWriterStaff();
     }
-    match /pembelajaran/{pembelajaranId} {
-      allow read, write: if true;
+
+    match /pantauan_liburan/{recordId} {
+      allow read: if isGlobalReader() || ownsResource();
+      allow write: if isWriterStaff();
     }
-    match /pantauan_liburan/{id} {
-      allow read, write: if true;
+
+    match /app_config/{configId} {
+      allow read: if signedIn() && isKnownRole();
+      allow write: if isWriterStaff();
     }
-    match /app_config/{id} {
-      allow read, write: if true;
-    }
+
     match /trash_records/{trashId} {
-      allow read, write: if true;
+      allow read, write: if isWriterStaff();
+    }
+
+    match /auth_credentials/{credentialId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }
