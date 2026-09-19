@@ -1,0 +1,391 @@
+name: P3E Migration Readiness Gate
+
+on:
+  push:
+    branches:
+      - feat/p1-pimpinan-role-foundation
+    paths:
+      - '.github/workflows/p3e-readiness.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/p1-pimpinan-role-foundation
+          fetch-depth: 0
+
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Set up Java 21 for Firebase Emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Write P3E contract test
+        shell: bash
+        run: |
+          cat > tests/p3e-readiness-contract.test.mjs <<'EOF'
+          import assert from 'node:assert/strict';
+          import { existsSync, readFileSync } from 'node:fs';
+          import test from 'node:test';
+
+          test('cutover readiness artifacts exist and fail closed', () => {
+            for (const file of [
+              'api/auth/readiness.ts',
+              'scripts/verify-security-bootstrap.mjs',
+              'docs/security/p3e-production-cutover.md',
+            ]) {
+              assert.equal(existsSync(file), true, `${file} must exist`);
+            }
+
+            const readiness = readFileSync('api/auth/readiness.ts', 'utf8');
+            assert.match(readiness, /P0_MIGRATION_SECRET/);
+            assert.match(readiness, /readyForCutover/);
+            assert.match(readiness, /legacyPasswordsRemaining/);
+            assert.match(readiness, /missingCredentials/);
+            assert.match(readiness, /missingAuthUsers/);
+            assert.match(readiness, /claimMismatches/);
+            assert.match(readiness, /usernameConflicts/);
+
+            const verifier = readFileSync('scripts/verify-security-bootstrap.mjs', 'utf8');
+            assert.match(verifier, /P0_ALLOW_LEGACY_LOGIN_MIGRATION/);
+            assert.match(verifier, /firestore\.rules/);
+            assert.match(verifier, /auth_credentials/);
+            assert.match(verifier, /process\.exitCode = 1/);
+          });
+
+          test('package exposes explicit security readiness commands', () => {
+            const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+            assert.equal(pkg.scripts['verify:security-bootstrap'], 'node scripts/verify-security-bootstrap.mjs');
+            assert.equal(pkg.scripts['verify:cutover-env'], 'node scripts/verify-security-bootstrap.mjs --require-env');
+          });
+
+          test('environment template documents every server-side cutover prerequisite', () => {
+            const env = readFileSync('.env.example', 'utf8');
+            for (const key of [
+              'FIREBASE_PROJECT_ID',
+              'FIRESTORE_DATABASE_ID',
+              'FIREBASE_CLIENT_EMAIL',
+              'FIREBASE_PRIVATE_KEY',
+              'P0_MIGRATION_SECRET',
+              'P0_ALLOW_LEGACY_LOGIN_MIGRATION',
+            ]) assert.match(env, new RegExp(`^${key}=`, 'm'));
+          });
+          EOF
+
+      - name: Verify RED
+        shell: bash
+        run: |
+          set +e
+          node --test tests/p3e-readiness-contract.test.mjs > /tmp/p3e-red.log 2>&1
+          status=$?
+          cat /tmp/p3e-red.log
+          if [ "$status" -eq 0 ]; then
+            echo 'Expected P3E readiness contract to fail before implementation.'
+            exit 1
+          fi
+          echo 'RED confirmed.'
+
+      - name: Implement readiness audit and static cutover gate
+        shell: bash
+        run: |
+          mkdir -p scripts docs/security
+
+          cat > api/auth/readiness.ts <<'EOF'
+          import { getAdminServices } from '../_firebaseAdmin';
+
+          type AuthRole = 'Superadmin' | 'Pimpinan' | 'Ustadz' | 'Wali' | 'Santri';
+
+          function normalizeRole(role: unknown): AuthRole | null {
+            const value = String(role || '').trim().toLowerCase();
+            if (value === 'superadmin') return 'Superadmin';
+            if (value === 'pimpinan') return 'Pimpinan';
+            if (value === 'ustadz') return 'Ustadz';
+            if (value === 'wali' || value.includes('wali')) return 'Wali';
+            if (value === 'santri') return 'Santri';
+            return null;
+          }
+
+          function send(res: any, status: number, body: Record<string, unknown>) {
+            res.setHeader('Cache-Control', 'no-store');
+            return res.status(status).json(body);
+          }
+
+          export default async function handler(req: any, res: any) {
+            if (req.method !== 'GET') {
+              res.setHeader('Allow', 'GET');
+              return send(res, 405, { success: false, message: 'Metode tidak diizinkan.' });
+            }
+
+            const expectedSecret = process.env.P0_MIGRATION_SECRET;
+            const suppliedSecret = String(req.headers['x-migration-secret'] || '');
+            if (!expectedSecret || expectedSecret.length < 24 || suppliedSecret !== expectedSecret) {
+              return send(res, 403, { success: false, message: 'Audit readiness tidak diizinkan.' });
+            }
+
+            try {
+              const { auth, db } = getAdminServices();
+              const usersSnapshot = await db.collection('users').get();
+              const credentialsSnapshot = await db.collection('auth_credentials').get();
+              const credentials = new Map(credentialsSnapshot.docs.map((item) => [item.id, item.data() as Record<string, any>]));
+              const usernameOwners = new Map<string, string[]>();
+
+              let legacyPasswordsRemaining = 0;
+              let missingCredentials = 0;
+              let missingAuthUsers = 0;
+              let claimMismatches = 0;
+              let unknownRoles = 0;
+
+              for (const userDoc of usersSnapshot.docs) {
+                const profile = userDoc.data() as Record<string, any>;
+                const userId = String(profile.id || userDoc.id);
+                const username = String(profile.username || '').trim().toLowerCase();
+                const role = normalizeRole(profile.role);
+                const idSantri = role === 'Wali' || role === 'Santri' ? String(profile.idSantri || '') : '';
+
+                if (typeof profile.password === 'string' && profile.password.trim()) {
+                  legacyPasswordsRemaining += 1;
+                }
+
+                if (!role || !username) {
+                  unknownRoles += 1;
+                  continue;
+                }
+
+                const owners = usernameOwners.get(username) || [];
+                owners.push(userId);
+                usernameOwners.set(username, owners);
+
+                const credential = credentials.get(userId);
+                if (
+                  !credential ||
+                  !credential.credential ||
+                  credential.credential.algorithm !== 'scrypt' ||
+                  String(credential.username || '').trim().toLowerCase() !== username ||
+                  normalizeRole(credential.role) !== role
+                ) {
+                  missingCredentials += 1;
+                }
+
+                try {
+                  const firebaseUser = await auth.getUser(userId);
+                  const claims = firebaseUser.customClaims || {};
+                  if (
+                    claims.role !== role ||
+                    String(claims.username || '').trim().toLowerCase() !== username ||
+                    String(claims.idSantri || '') !== idSantri
+                  ) {
+                    claimMismatches += 1;
+                  }
+                } catch (error: any) {
+                  if (error?.code === 'auth/user-not-found') {
+                    missingAuthUsers += 1;
+                  } else {
+                    throw error;
+                  }
+                }
+              }
+
+              const usernameConflicts = [...usernameOwners.values()].filter((owners) => owners.length > 1).length;
+              const orphanCredentials = credentialsSnapshot.docs.filter(
+                (item) => !usersSnapshot.docs.some((user) => String((user.data() as any).id || user.id) === item.id)
+              ).length;
+
+              const readyForCutover =
+                legacyPasswordsRemaining === 0 &&
+                missingCredentials === 0 &&
+                missingAuthUsers === 0 &&
+                claimMismatches === 0 &&
+                usernameConflicts === 0 &&
+                unknownRoles === 0;
+
+              return send(res, 200, {
+                success: true,
+                readyForCutover,
+                totalUsers: usersSnapshot.size,
+                totalCredentials: credentialsSnapshot.size,
+                legacyPasswordsRemaining,
+                missingCredentials,
+                missingAuthUsers,
+                claimMismatches,
+                usernameConflicts,
+                unknownRoles,
+                orphanCredentials,
+                legacyLoginFallbackEnabled: process.env.P0_ALLOW_LEGACY_LOGIN_MIGRATION === 'true'
+              });
+            } catch (error) {
+              console.error('Security readiness audit error:', error);
+              return send(res, 500, {
+                success: false,
+                readyForCutover: false,
+                message: 'Audit kesiapan keamanan gagal diproses.'
+              });
+            }
+          }
+          EOF
+
+          cat > scripts/verify-security-bootstrap.mjs <<'EOF'
+          import { existsSync, readFileSync } from 'node:fs';
+
+          const requireEnv = process.argv.includes('--require-env');
+          const failures = [];
+
+          function requireFile(path) {
+            if (!existsSync(path)) failures.push(`File wajib tidak ditemukan: ${path}`);
+          }
+
+          for (const path of [
+            'api/auth/login.ts',
+            'api/auth/migrate-credentials.ts',
+            'api/auth/readiness.ts',
+            'src/services/authService.ts',
+            'src/services/roleScopedSync.ts',
+            'firestore.rules',
+            'firebase.json',
+          ]) requireFile(path);
+
+          if (existsSync('firestore.rules')) {
+            const rules = readFileSync('firestore.rules', 'utf8');
+            if (/allow\s+[^;]*:\s*if\s+true\s*;/.test(rules)) {
+              failures.push('firestore.rules masih memiliki unconditional allow.');
+            }
+            if (!/request\.auth\.token\.role/.test(rules)) {
+              failures.push('firestore.rules belum memakai Firebase Auth role claims.');
+            }
+            if (!/match \/auth_credentials\/\{credentialId\}/.test(rules) || !/allow read, write: if false;/.test(rules)) {
+              failures.push('auth_credentials belum ditutup dari client.');
+            }
+          }
+
+          const envTemplate = existsSync('.env.example') ? readFileSync('.env.example', 'utf8') : '';
+          const requiredEnv = [
+            'FIREBASE_PROJECT_ID',
+            'FIRESTORE_DATABASE_ID',
+            'FIREBASE_CLIENT_EMAIL',
+            'FIREBASE_PRIVATE_KEY',
+            'P0_MIGRATION_SECRET',
+          ];
+
+          for (const key of requiredEnv) {
+            if (!new RegExp(`^${key}=`, 'm').test(envTemplate)) {
+              failures.push(`.env.example belum mendokumentasikan ${key}.`);
+            }
+          }
+
+          if (requireEnv) {
+            for (const key of requiredEnv) {
+              if (!String(process.env[key] || '').trim()) failures.push(`Environment variable belum tersedia: ${key}`);
+            }
+            if (String(process.env.P0_MIGRATION_SECRET || '').trim().length < 24) {
+              failures.push('P0_MIGRATION_SECRET minimal 24 karakter.');
+            }
+            if (process.env.P0_ALLOW_LEGACY_LOGIN_MIGRATION === 'true') {
+              failures.push('P0_ALLOW_LEGACY_LOGIN_MIGRATION harus false sebelum rules secure diaktifkan.');
+            }
+          }
+
+          if (failures.length > 0) {
+            console.error('Security bootstrap NOT READY:');
+            for (const failure of failures) console.error(`- ${failure}`);
+            process.exitCode = 1;
+          } else {
+            console.log(requireEnv ? 'Cutover environment READY.' : 'Security bootstrap repository contract READY.');
+          }
+          EOF
+
+          cat > docs/security/p3e-production-cutover.md <<'EOF'
+          # P3E Production Cutover Runbook
+
+          Status dokumen ini adalah **readiness/runbook**, bukan izin deploy otomatis.
+
+          ## Gate wajib sebelum cutover
+
+          1. Deploy application/API code terlebih dahulu dengan Firestore rules lama belum diperketat.
+          2. Pastikan environment production tersedia:
+             - FIREBASE_PROJECT_ID
+             - FIRESTORE_DATABASE_ID
+             - FIREBASE_CLIENT_EMAIL
+             - FIREBASE_PRIVATE_KEY
+             - P0_MIGRATION_SECRET (minimal 24 karakter)
+             - P0_ALLOW_LEGACY_LOGIN_MIGRATION=false
+          3. Jalankan `npm run verify:cutover-env` di environment yang memiliki variable tersebut.
+          4. Jalankan endpoint migrasi credential terkontrol satu kali:
+             `POST /api/auth/migrate-credentials` dengan header `x-migration-secret`.
+          5. Migrasi hanya dianggap berhasil bila `readyForAuthGate=true`, `skipped=0`, dan `conflicts=0`.
+          6. Jalankan `GET /api/auth/readiness` dengan header migration secret.
+          7. Jangan deploy Firestore rules secure kecuali `readyForCutover=true`.
+          8. Smoke-test login untuk Superadmin, Ustadz, Pimpinan, Wali, dan Santri.
+          9. Verifikasi Pimpinan dapat membaca monitoring global tetapi semua mutation ditolak.
+          10. Baru setelah seluruh gate hijau, deploy `firestore.rules`.
+
+          ## Rollback
+
+          - Jangan mengembalikan plaintext password ke koleksi users.
+          - Bila auth cutover bermasalah sebelum rules secure aktif, rollback application deployment ke build sebelumnya sambil menjaga backup credential migration.
+          - Bila masalah muncul setelah rules secure aktif, perbaiki/auth rollback application + rules sebagai satu unit; jangan membuka kembali `auth_credentials` ke client.
+          - `P0_ALLOW_LEGACY_LOGIN_MIGRATION` hanya boleh diaktifkan dalam jendela migrasi terkontrol dan harus kembali false sebelum cutover dianggap selesai.
+
+          ## Kriteria selesai
+
+          - readiness endpoint: `readyForCutover=true`
+          - plaintext password tersisa: 0
+          - missing credentials: 0
+          - missing Firebase Auth users: 0
+          - claim mismatches: 0
+          - duplicate username conflicts: 0
+          - unknown roles: 0
+          - auth/runtime tests, Firestore rules emulator tests, TypeScript, dan production build hijau
+          EOF
+
+          node - <<'NODE'
+          import fs from 'node:fs';
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          pkg.scripts['verify:security-bootstrap'] = 'node scripts/verify-security-bootstrap.mjs';
+          pkg.scripts['verify:cutover-env'] = 'node scripts/verify-security-bootstrap.mjs --require-env';
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          NODE
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Verify GREEN P3E contract
+        run: node --test tests/p3e-readiness-contract.test.mjs
+
+      - name: Verify repository security bootstrap
+        run: npm run verify:security-bootstrap
+
+      - name: Verify auth runtime and migration regression
+        run: npm run test:auth-runtime
+
+      - name: Verify Firestore rules regression
+        run: npm run test:firestore-rules
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Production build
+        run: npm run build
+
+      - name: Commit verified P3E readiness layer
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            api/auth/readiness.ts \
+            scripts/verify-security-bootstrap.mjs \
+            docs/security/p3e-production-cutover.md \
+            tests/p3e-readiness-contract.test.mjs \
+            package.json
+          git commit -m 'security: add production cutover readiness gate'
+          git push origin HEAD:feat/p1-pimpinan-role-foundation
