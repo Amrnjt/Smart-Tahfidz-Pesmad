@@ -27,7 +27,9 @@ async function ensureFirebaseIdentity(
 ) {
   try {
     const existing = await auth.getUser(userId);
-    if (existing.displayName !== nama) await auth.updateUser(userId, { displayName: nama });
+    if (existing.displayName !== nama) {
+      await auth.updateUser(userId, { displayName: nama });
+    }
   } catch (error: any) {
     if (error?.code !== 'auth/user-not-found') throw error;
     await auth.createUser({ uid: userId, displayName: nama });
@@ -50,8 +52,11 @@ export default async function handler(req: any, res: any) {
   try {
     const { auth, db } = getAdminServices();
     const credentials = db.collection('auth_credentials');
+
     let credentialSnapshot = await credentials.where('username', '==', username).limit(1).get();
 
+    // Disabled by default. This exists only for a controlled migration window.
+    // Production activation should run /api/auth/migrate-credentials first.
     if (credentialSnapshot.empty && process.env.P0_ALLOW_LEGACY_LOGIN_MIGRATION === 'true') {
       const legacyUsers = await db.collection('users').where('username', '==', username).limit(1).get();
       if (!legacyUsers.empty) {
@@ -61,7 +66,9 @@ export default async function handler(req: any, res: any) {
 
         if (legacyPassword && safeLegacyCompare(legacyPassword, password)) {
           const legacyRole = normalizeRole(legacyUser.role);
-          if (!legacyRole) return send(res, 403, { success: false, message: 'Role akun tidak dikenali.' });
+          if (!legacyRole) {
+            return send(res, 403, { success: false, message: 'Role akun tidak dikenali.' });
+          }
 
           const userId = String(legacyUser.id || legacyDoc.id);
           const migratedCredential = {
@@ -69,7 +76,7 @@ export default async function handler(req: any, res: any) {
             username,
             nama: String(legacyUser.nama || username),
             role: legacyRole,
-            idSantri: legacyRole === 'Wali' || legacyRole === 'Santri' ? String(legacyUser.idSantri || '') : '',
+            idSantri: String(legacyUser.idSantri || ''),
             kelasId: String(legacyUser.kelasId || ''),
             credential: hashPassword(password),
             createdAt: new Date().toISOString(),
@@ -94,18 +101,25 @@ export default async function handler(req: any, res: any) {
     const credentialDoc = credentialSnapshot.docs[0];
     const stored = credentialDoc.data() as Record<string, any>;
     const credential = stored.credential as StoredCredential;
+
     if (!verifyPassword(password, credential)) {
       return send(res, 401, { success: false, message: 'Username / ID Santri atau Password salah.' });
     }
 
     const userId = String(stored.userId || credentialDoc.id);
     const role = normalizeRole(stored.role);
-    if (!role) return send(res, 403, { success: false, message: 'Role akun tidak dikenali.' });
+    if (!role) {
+      return send(res, 403, { success: false, message: 'Role akun tidak dikenali.' });
+    }
 
     const nama = String(stored.nama || username);
-    const idSantri = role === 'Wali' || role === 'Santri' ? String(stored.idSantri || '') : '';
+    const idSantri = String(stored.idSantri || '');
     const kelasId = String(stored.kelasId || '');
-    const claims = { role, username, idSantri };
+    const claims = {
+      role,
+      username,
+      idSantri
+    };
 
     await ensureFirebaseIdentity(auth, userId, nama, claims);
     const token = await auth.createCustomToken(userId, claims);
@@ -124,6 +138,9 @@ export default async function handler(req: any, res: any) {
     });
   } catch (error) {
     console.error('Custom auth login error:', error);
-    return send(res, 500, { success: false, message: 'Layanan autentikasi gagal memproses login.' });
+    return send(res, 500, {
+      success: false,
+      message: 'Layanan autentikasi gagal memproses login.'
+    });
   }
 }

@@ -10,7 +10,9 @@
     "postbuild": "node -e \"console.log('=== BUILD LOG END: Build successful! ===');\"",
     "preview": "vite preview",
     "clean": "rm -rf dist server.js",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:auth-runtime": "firebase emulators:exec --project demo-smart-tahfidz --only auth,firestore \"tsx --test tests/auth.runtime.test.ts\"",
+    "test:firestore-rules": "firebase emulators:exec --project demo-smart-tahfidz --only firestore \"node --test tests/firestore.rules.test.mjs\""
   },
   "npm": {
     "allow-scripts": {
@@ -30,7 +32,8 @@
     "react": "^19.0.1",
     "react-dom": "^19.0.1",
     "recharts": "^3.10.1",
-    "vite": "^6.2.3"
+    "vite": "^6.2.3",
+    "firebase-admin": "^14.3.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
@@ -39,6 +42,11 @@
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.3"
+    "vite": "^6.2.3",
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "firebase-tools": "^15.29.0"
+  },
+  "engines": {
+    "node": "22.x"
   }
 }

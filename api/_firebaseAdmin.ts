@@ -7,14 +7,18 @@ const PRODUCTION_DATABASE_ID = 'ai-studio-pesmadsmarttahfi-4e6782fc-20ad-4a80-82
 
 function requiredEnv(name: string): string {
   const value = process.env[name]?.trim();
-  if (!value) throw new Error(`${name} is not configured on the server.`);
+  if (!value) {
+    throw new Error(`${name} is not configured on the server.`);
+  }
   return value;
 }
 
 function getAdminConfig() {
   const projectId = requiredEnv('FIREBASE_PROJECT_ID');
   const databaseId = requiredEnv('FIRESTORE_DATABASE_ID');
-  const isEmulator = Boolean(process.env.FIREBASE_AUTH_EMULATOR_HOST || process.env.FIRESTORE_EMULATOR_HOST);
+  const isEmulator = Boolean(
+    process.env.FIREBASE_AUTH_EMULATOR_HOST || process.env.FIRESTORE_EMULATOR_HOST
+  );
 
   if (
     process.env.VERCEL_ENV === 'preview' &&
@@ -25,7 +29,13 @@ function getAdminConfig() {
   }
 
   if (isEmulator) {
-    return { projectId, databaseId, isEmulator: true as const, clientEmail: '', privateKey: '' };
+    return {
+      projectId,
+      databaseId,
+      isEmulator: true as const,
+      clientEmail: '',
+      privateKey: ''
+    };
   }
 
   return {
@@ -41,7 +51,9 @@ function getAdminApp(config: ReturnType<typeof getAdminConfig>): App {
   const existing = getApps()[0];
   if (existing) return existing;
 
-  if (config.isEmulator) return initializeApp({ projectId: config.projectId });
+  if (config.isEmulator) {
+    return initializeApp({ projectId: config.projectId });
+  }
 
   return initializeApp({
     projectId: config.projectId,
@@ -56,6 +68,7 @@ function getAdminApp(config: ReturnType<typeof getAdminConfig>): App {
 export function getAdminServices() {
   const config = getAdminConfig();
   const app = getAdminApp(config);
+
   return {
     auth: getAuth(app),
     db: getFirestore(app, config.databaseId)
