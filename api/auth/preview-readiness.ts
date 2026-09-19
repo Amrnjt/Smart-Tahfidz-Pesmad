@@ -1,4 +1,4 @@
-import { getAdminServices } from '../_firebaseAdmin';
+import { getAdminServices } from '../_firebaseAdmin.js';
 
 const REQUIRED_ENV = [
   'FIREBASE_PROJECT_ID',
