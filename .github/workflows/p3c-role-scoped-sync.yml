@@ -579,6 +579,12 @@ jobs:
           main.write_text(text)
           PY
 
+      - name: Set up Java 21 for Firebase Emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
