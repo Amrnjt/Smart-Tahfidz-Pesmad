@@ -193,11 +193,16 @@ jobs:
             }
           }
 
-          function snapshotArray<T extends { id?: string }>(snapshot: any): T[] {
-            return snapshot.docs.map((item: any) => ({
-              ...(item.data() as T),
-              id: (item.data() as T).id || item.id
-            }));
+          function snapshotArray<T>(snapshot: any): T[] {
+            return snapshot.docs.map((item: any) => {
+              const data = item.data() as Record<string, unknown>;
+              return ({
+                ...data,
+                ...(Object.prototype.hasOwnProperty.call(data, 'id')
+                  ? { id: String(data.id || item.id) }
+                  : {})
+              }) as T;
+            });
           }
 
           function startPimpinanRealtimeScope(session: User, onUpdate?: () => void): () => void {
