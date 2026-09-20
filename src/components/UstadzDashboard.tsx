@@ -370,7 +370,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           </div>
 
           <div
-            className="inline-flex rounded-xl border border-slate-200/90 bg-white p-1 shadow-2xs self-start sm:self-auto flex-wrap gap-1"
+            className="grid w-full grid-cols-3 gap-1 rounded-xl border border-slate-200/90 bg-white p-1 shadow-2xs sm:w-auto"
             role="group"
             aria-label="Pilihan tampilan analitik"
           >
@@ -378,40 +378,40 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
               type="button"
               onClick={() => setChartView('tren_setor')}
               aria-pressed={chartView === 'tren_setor'}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+              className={`flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-1.5 py-1.5 text-[11px] font-bold transition-colors cursor-pointer sm:px-3 sm:text-xs ${
                 chartView === 'tren_setor'
                   ? 'bg-emerald-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <TrendingUp className="h-3.5 w-3.5" />
-              Tren Setor
+              <TrendingUp className="hidden h-3.5 w-3.5 sm:block" />
+              <span className="sm:hidden">Setor</span><span className="hidden sm:inline">Tren Setor</span>
             </button>
             <button
               type="button"
               onClick={() => setChartView('tren_perkembangan')}
               aria-pressed={chartView === 'tren_perkembangan'}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+              className={`flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-1.5 py-1.5 text-[11px] font-bold transition-colors cursor-pointer sm:px-3 sm:text-xs ${
                 chartView === 'tren_perkembangan'
                   ? 'bg-emerald-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <Activity className="h-3.5 w-3.5" />
-              Tren Perkembangan
+              <Activity className="hidden h-3.5 w-3.5 sm:block" />
+              <span className="sm:hidden">Perkembangan</span><span className="hidden sm:inline">Tren Perkembangan</span>
             </button>
             <button
               type="button"
               onClick={() => setChartView('analisis_detail')}
               aria-pressed={chartView === 'analisis_detail'}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+              className={`flex min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg px-1.5 py-1.5 text-[11px] font-bold transition-colors cursor-pointer sm:px-3 sm:text-xs ${
                 chartView === 'analisis_detail'
                   ? 'bg-emerald-700 text-white shadow-xs'
                   : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              <BarChart3 className="h-3.5 w-3.5" />
-              Analisis Detail
+              <BarChart3 className="hidden h-3.5 w-3.5 sm:block" />
+              <span className="sm:hidden">Analisis</span><span className="hidden sm:inline">Analisis Detail</span>
             </button>
           </div>
         </div>
