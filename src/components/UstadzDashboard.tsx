@@ -72,6 +72,8 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
 }) => {
   const [chartView, setChartView] = useState<'tren_setor' | 'tren_perkembangan' | 'analisis_detail'>('tren_setor');
 
+  const isPimpinan = String(currentUser?.role || '').trim().toLowerCase() === 'pimpinan';
+
   const today = getTodayInputFormat();
   const santriById = new Map<string, Santri>(santriList.map(santri => [santri.idSantri, santri]));
   const resolveName = (idSantri: string, fallback?: string) => fallback || santriById.get(idSantri)?.namaSantri || idSantri;
@@ -273,7 +275,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           subtitle="Bina & monitoring"
           iconTone="indigo"
           badge="Total"
-          onClick={() => setActiveTab('santri')}
+          onClick={() => setActiveTab(isPimpinan ? 'riwayat' : 'santri')}
         />
 
         <CompactBentoKpiCard
@@ -283,7 +285,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           subtitle={`${todayActivities.length > 0 ? Math.round((todayZiyadahCount / todayActivities.length) * 100) : 0}% dari setoran`}
           iconTone="teal"
           progressPercent={todayActivities.length > 0 ? (todayZiyadahCount / todayActivities.length) * 100 : 0}
-          onClick={() => setActiveTab('ziyadah')}
+          onClick={() => setActiveTab(isPimpinan ? 'riwayat' : 'ziyadah')}
         />
 
         <CompactBentoKpiCard
@@ -293,7 +295,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           subtitle={`${todayActivities.length > 0 ? Math.round((todayMurojaahCount / todayActivities.length) * 100) : 0}% dari setoran`}
           iconTone="amber"
           progressPercent={todayActivities.length > 0 ? (todayMurojaahCount / todayActivities.length) * 100 : 0}
-          onClick={() => setActiveTab('murojaah')}
+          onClick={() => setActiveTab(isPimpinan ? 'riwayat' : 'murojaah')}
         />
       </section>
 

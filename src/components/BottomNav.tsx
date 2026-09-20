@@ -61,9 +61,10 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   };
 
   const roleStr = String(currentUser.role || '').trim().toLowerCase();
+  const isPimpinan = roleStr === 'pimpinan';
   const isWali = roleStr === 'wali' || roleStr.includes('wali');
   const isSantri = roleStr === 'santri';
-  const isUstadz = !isWali && !isSantri;
+  const isUstadz = !isWali && !isSantri && !isPimpinan;
   const isSetorActive =
     activeTab === 'ziyadah' ||
     activeTab === 'murojaah' ||
@@ -71,12 +72,12 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     activeTab === 'pembelajaran';
   const isManageActive = activeTab === 'kelas' || activeTab === 'santri';
 
-  // 1. Wali & Santri 3-Item Layout
+  // 1. Wali, Santri & Pimpinan 3-Item Layout (Dashboard, Riwayat, Mushaf)
   if (!isUstadz) {
     const items = [
       {
         id: 'dashboard' as ActiveTab,
-        label: isWali ? 'Anak Saya' : 'Hafalan',
+        label: isPimpinan ? 'Beranda' : isWali ? 'Anak Saya' : 'Hafalan',
         icon: LayoutDashboard
       },
       { id: 'riwayat' as ActiveTab, label: 'Riwayat', icon: History },

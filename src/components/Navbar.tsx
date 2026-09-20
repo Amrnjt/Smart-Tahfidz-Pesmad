@@ -108,20 +108,28 @@ export const Navbar: React.FC<NavbarProps> = ({
         .toUpperCase()
     : 'U';
 
-  const normalizedRole: 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri' = (() => {
+  const normalizedRole: 'Superadmin' | 'Pimpinan' | 'Ustadz' | 'Wali' | 'Santri' = (() => {
     if (!currentUser?.role) return 'Ustadz';
     const role = String(currentUser.role).trim().toLowerCase();
     if (role === 'superadmin') return 'Superadmin';
+    if (role === 'pimpinan') return 'Pimpinan';
     if (role === 'wali' || role.includes('wali')) return 'Wali';
     if (role === 'santri') return 'Santri';
     return 'Ustadz';
   })();
+
+  const isPimpinan = normalizedRole === 'Pimpinan';
 
   const roleStyle = {
     Superadmin: {
       label: 'Superadmin',
       badge: 'bg-amber-50 text-amber-900 border-amber-200/90',
       avatar: 'bg-amber-100 text-amber-900 border-amber-300'
+    },
+    Pimpinan: {
+      label: 'Pimpinan',
+      badge: 'bg-indigo-50 text-indigo-900 border-indigo-200/90',
+      avatar: 'bg-indigo-100 text-indigo-900 border-indigo-300'
     },
     Ustadz: {
       label: 'Ustadz Musyrif',
@@ -308,7 +316,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         </div>
 
                         {/* Action Button */}
-                        {onRefresh && (
+                        {onRefresh && !isPimpinan && (
                           <div className="pt-2 border-t border-slate-100">
                             <button
                               type="button"
@@ -432,7 +440,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                             </div>
                           </button>
 
-                          {onRefresh && (
+                          {onRefresh && !isPimpinan && (
                             <button
                               type="button"
                               role="menuitem"

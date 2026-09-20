@@ -246,31 +246,33 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     if (!currentUser?.role) return 'Ustadz';
     const r = String(currentUser.role).trim().toLowerCase();
     if (r === 'superadmin') return 'Superadmin';
+    if (r === 'pimpinan') return 'Pimpinan';
     if (r === 'wali' || r.includes('wali')) return 'Wali';
     if (r === 'santri') return 'Santri';
     return 'Ustadz';
   })();
-  const isViewOnly = normalizedRole === 'Wali' || normalizedRole === 'Santri';
+  const isPersonalViewOnly = normalizedRole === 'Wali' || normalizedRole === 'Santri';
+  const isViewOnly = isPersonalViewOnly || normalizedRole === 'Pimpinan';
   const targetSantriId = currentUser.idSantri || (normalizedRole === 'Santri' ? currentUser.username : '');
 
   const actualBinnadzor = binnadzorRecords || storageService.getBinnadzorRecords();
   const actualPembelajaran = pembelajaranRecords || storageService.getPembelajaranRecords();
 
   const filteredZiyadah = useMemo(
-    () => isViewOnly ? ziyadahRecords.filter(r => r.idSantri === targetSantriId) : ziyadahRecords,
-    [isViewOnly, ziyadahRecords, targetSantriId]
+    () => isPersonalViewOnly ? ziyadahRecords.filter(r => r.idSantri === targetSantriId) : ziyadahRecords,
+    [isPersonalViewOnly, ziyadahRecords, targetSantriId]
   );
   const filteredMurojaah = useMemo(
-    () => isViewOnly ? murojaahRecords.filter(r => r.idSantri === targetSantriId) : murojaahRecords,
-    [isViewOnly, murojaahRecords, targetSantriId]
+    () => isPersonalViewOnly ? murojaahRecords.filter(r => r.idSantri === targetSantriId) : murojaahRecords,
+    [isPersonalViewOnly, murojaahRecords, targetSantriId]
   );
   const filteredBinnadzor = useMemo(
-    () => isViewOnly ? actualBinnadzor.filter(r => r.idSantri === targetSantriId) : actualBinnadzor,
-    [isViewOnly, actualBinnadzor, targetSantriId]
+    () => isPersonalViewOnly ? actualBinnadzor.filter(r => r.idSantri === targetSantriId) : actualBinnadzor,
+    [isPersonalViewOnly, actualBinnadzor, targetSantriId]
   );
   const filteredPembelajaran = useMemo(
-    () => isViewOnly ? actualPembelajaran.filter(r => r.idSantri === targetSantriId) : actualPembelajaran,
-    [isViewOnly, actualPembelajaran, targetSantriId]
+    () => isPersonalViewOnly ? actualPembelajaran.filter(r => r.idSantri === targetSantriId) : actualPembelajaran,
+    [isPersonalViewOnly, actualPembelajaran, targetSantriId]
   );
 
   const combinedItems: CombinedHistoryItem[] = useMemo(() => {

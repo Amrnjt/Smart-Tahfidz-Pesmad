@@ -104,7 +104,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
         username: cleanUsername,
         password: cleanPassword,
         role: editRole,
-        idSantri: (editRole === 'Ustadz' || editRole === 'Superadmin') ? '' : editIdSantri.trim()
+        idSantri: (editRole === 'Ustadz' || editRole === 'Superadmin' || editRole === 'Pimpinan') ? '' : editIdSantri.trim()
       });
 
       setIsSaving(false);
@@ -206,7 +206,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
         password: cleanPassword,
         role: newUserRole,
         nama: cleanNama,
-        idSantri: (newUserRole === 'Ustadz' || newUserRole === 'Superadmin') ? '' : newUserIdSantri.trim()
+        idSantri: (newUserRole === 'Ustadz' || newUserRole === 'Superadmin' || newUserRole === 'Pimpinan') ? '' : newUserIdSantri.trim()
       };
 
       await storageService.addUser(newUser);
@@ -630,6 +630,8 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                 const isSuperadmin = u.role === 'Superadmin';
                 const roleTone = u.role === 'Superadmin'
                   ? 'border-amber-200 bg-amber-50 text-amber-900'
+                  : u.role === 'Pimpinan'
+                  ? 'border-indigo-200 bg-indigo-50 text-indigo-900'
                   : u.role === 'Ustadz'
                   ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
                   : u.role === 'Wali'
@@ -709,6 +711,12 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                       roleBadge = (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-amber-100 text-amber-900 font-extrabold text-xs border border-amber-300 shadow-xs">
                           <Crown className="w-3 h-3 text-amber-600" /> Superadmin
+                        </span>
+                      );
+                    } else if (u.role === 'Pimpinan') {
+                      roleBadge = (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-indigo-100 text-indigo-900 font-extrabold text-xs border border-indigo-300 shadow-xs">
+                          <Shield className="w-3 h-3 text-indigo-700" /> Pimpinan (View-Only)
                         </span>
                       );
                     } else if (u.role === 'Ustadz') {
@@ -1026,6 +1034,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                   className="w-full p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-950 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 >
                   <option value="Superadmin">Superadmin (Akses Penuh Seluruh Sistem & Manajemen)</option>
+                  <option value="Pimpinan">Pimpinan (View-Only: Dashboard, Riwayat & Mushaf)</option>
                   <option value="Ustadz">Ustadz (Input Setoran, Kelola Santri & Akun)</option>
                   <option value="Wali">Wali Santri (Monitoring Mutaba'ah & Progres Ananda)</option>
                   <option value="Santri">Santri (View-Only: Lihat Progres Pribadi & Mushaf)</option>
@@ -1441,6 +1450,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
                   >
                     <option value="Superadmin">Superadmin</option>
+                    <option value="Pimpinan">Pimpinan</option>
                     <option value="Ustadz">Ustadz</option>
                     <option value="Wali">Wali Santri</option>
                     <option value="Santri">Santri (View-Only)</option>

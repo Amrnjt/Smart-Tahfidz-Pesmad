@@ -140,9 +140,10 @@ export default function App() {
   };
 
   const userRoleStr = String(currentUser?.role || '').trim().toLowerCase();
+  const isPimpinan = userRoleStr === 'pimpinan';
   const isWali = userRoleStr === 'wali' || userRoleStr.includes('wali');
   const isSantri = userRoleStr === 'santri';
-  const isUstadz = !isWali && !isSantri;
+  const isUstadz = !isWali && !isSantri && !isPimpinan;
   const isSetorActive = ['ziyadah', 'murojaah', 'binnadzor', 'pembelajaran'].includes(activeTab);
 
   const syncStatusCopy =
@@ -219,7 +220,7 @@ export default function App() {
             
             {/* Content per Tab */}
             {activeTab === 'dashboard' && (
-              isUstadz ? (
+              (isUstadz || isPimpinan) ? (
                 <UstadzDashboard
                   currentUser={currentUser}
                   santriList={santriList}

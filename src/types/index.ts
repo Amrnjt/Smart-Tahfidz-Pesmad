@@ -1,4 +1,4 @@
-export type UserRole = 'Superadmin' | 'Ustadz' | 'Wali' | 'Santri';
+export type UserRole = 'Superadmin' | 'Ustadz' | 'Pimpinan' | 'Wali' | 'Santri';
 
 export type PredikatNilai = 'Mengulang' | 'Kurang' | 'Baik' | 'Sangat Baik';
 

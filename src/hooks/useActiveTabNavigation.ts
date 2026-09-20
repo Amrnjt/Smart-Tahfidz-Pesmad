@@ -25,7 +25,7 @@ function readUrlTab(): ActiveTab {
 function isViewOnlyUser(user: User | null): boolean {
   if (!user) return false;
   const role = String(user.role || '').trim().toLowerCase();
-  return role === 'wali' || role.includes('wali') || role === 'santri';
+  return role === 'pimpinan' || role === 'wali' || role.includes('wali') || role === 'santri';
 }
 
 function sanitizeTab(user: User | null, tab: ActiveTab): ActiveTab {

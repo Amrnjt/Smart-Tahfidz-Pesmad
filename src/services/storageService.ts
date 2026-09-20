@@ -143,6 +143,14 @@ export const storageService = {
     }
   },
 
+  assertCanMutate(actionName = 'Mutasi data'): void {
+    const session = this.getSession();
+    const role = String(session?.role || '').trim().toLowerCase();
+    if (role === 'pimpinan') {
+      throw new Error(`Akses ditolak: Akun dengan role Pimpinan hanya memiliki hak akses view-only (${actionName} tidak diizinkan).`);
+    }
+  },
+
   async authenticate(usernameInput: string, passwordInput: string): Promise<{ success: boolean; user?: User; message?: string }> {
     const cleanUser = usernameInput.trim().toLowerCase();
     const cleanPass = passwordInput.trim();
@@ -181,6 +189,8 @@ export const storageService = {
       const r = String(matched.role || '').trim().toLowerCase();
       if (r === 'superadmin') {
         matched.role = 'Superadmin';
+      } else if (r === 'pimpinan') {
+        matched.role = 'Pimpinan';
       } else if (r === 'wali' || r.includes('wali')) {
         matched.role = 'Wali';
       } else if (r === 'santri') {
@@ -455,6 +465,7 @@ export const storageService = {
   },
 
   async saveZiyadah(record: Omit<ZiyadahRecord, 'id'> & { timestamp?: string }): Promise<ZiyadahRecord> {
+    this.assertCanMutate('Tambah setoran ziyadah');
     const records = this.getZiyadahRecords();
     const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
 
@@ -486,6 +497,7 @@ export const storageService = {
   },
 
   async saveMurojaah(record: Omit<MurojaahRecord, 'id'> & { timestamp?: string }): Promise<MurojaahRecord> {
+    this.assertCanMutate('Tambah setoran murojaah');
     const records = this.getMurojaahRecords();
     const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
 
@@ -517,6 +529,7 @@ export const storageService = {
   },
 
   async saveBinnadzor(record: Omit<BinnadzorRecord, 'id'> & { timestamp?: string }): Promise<BinnadzorRecord> {
+    this.assertCanMutate('Tambah setoran binnadzor');
     const records = this.getBinnadzorRecords();
     const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
 
@@ -548,6 +561,7 @@ export const storageService = {
   },
 
   async savePembelajaran(record: Omit<PembelajaranRecord, 'id'> & { timestamp?: string }): Promise<PembelajaranRecord> {
+    this.assertCanMutate('Tambah rekaman pembelajaran');
     const records = this.getPembelajaranRecords();
     const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
 
@@ -646,6 +660,7 @@ export const storageService = {
     id: string,
     deletedBy?: string
   ): Promise<boolean> {
+    this.assertCanMutate('Hapus riwayat setoran');
     if (!id) return false;
 
     const sourceCollection = type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
@@ -724,6 +739,7 @@ export const storageService = {
     items: { type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran'; id: string }[],
     deletedBy?: string
   ): Promise<boolean> {
+    this.assertCanMutate('Hapus masal riwayat setoran');
     if (!items || items.length === 0) return true;
 
     const now = new Date();
@@ -796,6 +812,7 @@ export const storageService = {
   },
 
   async restoreTrashRecord(trashId: string): Promise<{ success: boolean; message?: string; record?: any }> {
+    this.assertCanMutate('Pulihkan data dari sampah');
     try {
       let trashItem = this.getTrashRecords().find(t => t.id === trashId || t.recordId === trashId);
       if (!trashItem) {
@@ -883,6 +900,7 @@ export const storageService = {
   },
 
   async permanentlyDeleteTrashRecord(trashId: string): Promise<boolean> {
+    this.assertCanMutate('Hapus permanen data sampah');
     try {
       const trashItem = this.getTrashRecords().find(t => t.id === trashId);
       await deleteDoc(doc(db, COLLECTIONS.TRASH, trashId));
@@ -899,6 +917,7 @@ export const storageService = {
   },
 
   async emptyTrash(): Promise<boolean> {
+    this.assertCanMutate('Kosongkan tempat sampah');
     try {
       const trashList = await this.fetchTrashRecords();
       if (trashList.length === 0) return true;
@@ -922,6 +941,7 @@ export const storageService = {
   },
 
   async syncWithCloud(): Promise<{ success: boolean; message?: string }> {
+    this.assertCanMutate('Sinkronisasi manual cloud');
     try {
       const deletedIds = this.getDeletedRecordIds();
 
@@ -1259,6 +1279,7 @@ export const storageService = {
   },
 
   async updateRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran', id: string, updatedData: Partial<ZiyadahRecord | MurojaahRecord | BinnadzorRecord | PembelajaranRecord>): Promise<boolean> {
+    this.assertCanMutate('Ubah riwayat setoran');
     if (type === 'Ziyadah') {
       const records = this.getZiyadahRecords().map(r => r.id === id ? { ...r, ...updatedData } as ZiyadahRecord : r);
       writeArrayCache(STORAGE_KEYS.ZIYADAH, records);
@@ -1312,6 +1333,7 @@ export const storageService = {
   },
 
   async setProgramLiburanActive(active: boolean, updatedBy: string = 'Ustadz / Admin'): Promise<AppConfig> {
+    this.assertCanMutate('Ubah status program liburan');
     const prev = this.getAppConfig();
     const updated: AppConfig = {
       ...prev,
@@ -1331,6 +1353,7 @@ export const storageService = {
   },
 
   async savePantauanLiburan(record: Omit<PantauanLiburanRecord, 'id' | 'timestamp'> & { id?: string; timestamp?: string }): Promise<PantauanLiburanRecord> {
+    this.assertCanMutate('Simpan pantauan liburan');
     const records = this.getPantauanLiburanRecords();
     const santri = this.getSantriList().find(s => s.idSantri === record.idSantri);
 
@@ -1370,12 +1393,14 @@ export const storageService = {
   },
 
   async deletePantauanLiburan(id: string): Promise<boolean> {
+    this.assertCanMutate('Hapus pantauan liburan');
     await deleteDoc(doc(db, COLLECTIONS.PANTAUAN_LIBURAN, id));
     writeArrayCache(STORAGE_KEYS.PANTAUAN_LIBURAN, this.getPantauanLiburanRecords().filter(r => r.id !== id));
     return true;
   },
 
   async addSantri(santri: Santri, defaultPassword = '123'): Promise<Santri> {
+    this.assertCanMutate('Tambah data santri');
     const list = this.getSantriList();
     const existingIndex = list.findIndex(s => s.idSantri === santri.idSantri);
     if (existingIndex >= 0) {
@@ -1436,6 +1461,7 @@ export const storageService = {
   },
 
   async updateSantri(idSantri: string, updatedData: Partial<Santri>): Promise<boolean> {
+    this.assertCanMutate('Ubah data santri');
     const list = this.getSantriList().map(s => s.idSantri === idSantri ? { ...s, ...updatedData } : s);
     writeArrayCache(STORAGE_KEYS.SANTRI, list);
 
@@ -1452,6 +1478,7 @@ export const storageService = {
   },
 
   async deleteSantri(idSantri: string, deleteRelatedHistory = true): Promise<boolean> {
+    this.assertCanMutate('Hapus santri');
     const usersToDelete = this.getUsers().filter(u => u.idSantri === idSantri || u.username.toLowerCase() === idSantri.toLowerCase());
     const ziyadahToDelete = deleteRelatedHistory ? this.getZiyadahRecords().filter(r => r.idSantri === idSantri) : [];
     const murojaahToDelete = deleteRelatedHistory ? this.getMurojaahRecords().filter(r => r.idSantri === idSantri) : [];
@@ -1490,6 +1517,7 @@ export const storageService = {
   },
 
   async addUser(user: User): Promise<User> {
+    this.assertCanMutate('Tambah pengguna');
     const users = this.getUsers();
 
     const ensuredUser: User = {
@@ -1498,7 +1526,7 @@ export const storageService = {
       password: user.password ? user.password.trim() : '123',
       role: user.role || 'Ustadz',
       nama: user.nama ? user.nama.trim() : 'Ustadz Pengajar',
-      idSantri: (user.role === 'Ustadz' || user.role === 'Superadmin') ? '' : (user.idSantri || '')
+      idSantri: (user.role === 'Ustadz' || user.role === 'Superadmin' || user.role === 'Pimpinan') ? '' : (user.idSantri || '')
     };
 
     const existingIndex = users.findIndex(u => u.username.toLowerCase() === ensuredUser.username.toLowerCase());
@@ -1521,6 +1549,7 @@ export const storageService = {
   },
 
   async updateUser(id: string, updatedData: Partial<User>): Promise<boolean> {
+    this.assertCanMutate('Ubah pengguna');
     const cleanUpdate = { ...updatedData };
     if (cleanUpdate.username) cleanUpdate.username = cleanUpdate.username.trim().toLowerCase();
     if (cleanUpdate.password) cleanUpdate.password = cleanUpdate.password.trim();
@@ -1548,6 +1577,7 @@ export const storageService = {
   },
 
   async deleteUser(id: string): Promise<boolean> {
+    this.assertCanMutate('Hapus pengguna');
     await deleteDoc(doc(db, COLLECTIONS.USERS, id));
     writeArrayCache(STORAGE_KEYS.USERS, this.getUsers().filter(u => u.id !== id));
     return true;
@@ -1562,6 +1592,8 @@ export const storageService = {
         const r = String(user.role || '').trim().toLowerCase();
         if (r === 'superadmin') {
           user.role = 'Superadmin';
+        } else if (r === 'pimpinan') {
+          user.role = 'Pimpinan';
         } else if (r === 'wali' || r.includes('wali')) {
           user.role = 'Wali';
         } else if (r === 'santri') {
@@ -1585,6 +1617,7 @@ export const storageService = {
   },
 
   async addKelas(kelas: Kelas): Promise<Kelas> {
+    this.assertCanMutate('Tambah kelas');
     const list = this.getKelasList();
     const assignedIds = new Set(kelas.santriIds || []);
 
@@ -1637,6 +1670,7 @@ export const storageService = {
   },
 
   async updateKelas(id: string, updatedData: Partial<Kelas>): Promise<boolean> {
+    this.assertCanMutate('Ubah kelas');
     const list = this.getKelasList();
     const currentKelas = list.find(k => k.id === id);
     const oldSantriIds = new Set(currentKelas?.santriIds || []);
@@ -1704,6 +1738,7 @@ export const storageService = {
   },
 
   async deleteKelas(id: string): Promise<boolean> {
+    this.assertCanMutate('Hapus kelas');
     const list = this.getKelasList();
     const deletedKelas = list.find(k => k.id === id);
     const affectedSantriIds = new Set(deletedKelas?.santriIds || []);
@@ -1725,6 +1760,7 @@ export const storageService = {
   // Backwards-compatible name. This now clears local cache only; it never
   // restores sample/demo records into production state.
   async resetToDefault() {
+    this.assertCanMutate('Reset data lokal');
     writeArrayCache(STORAGE_KEYS.USERS, []);
     writeArrayCache(STORAGE_KEYS.SANTRI, []);
     writeArrayCache(STORAGE_KEYS.ZIYADAH, []);
