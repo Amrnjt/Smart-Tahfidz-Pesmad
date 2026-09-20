@@ -1707,6 +1707,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                             </>
                           )}
                         </div>
+                        <div className="mt-1 text-xs leading-4 text-slate-500 break-words">
+                          Penyimak: <span className="font-semibold text-slate-700">{item.inputBy?.trim() || 'Belum tercatat'}</span>
+                        </div>
                       </button>
                     </div>
 
@@ -1848,6 +1851,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     <div className="flex-1 min-w-0">
                       <div className="text-xs font-bold text-slate-800 truncate">{item.namaSantri}</div>
                       <div className="text-xs text-slate-500 truncate">{item.materi}</div>
+                      <div className="text-xs text-slate-500 truncate" title={`Penyimak: ${item.inputBy?.trim() || 'Belum tercatat'}`}>
+                        Penyimak: <span className="font-semibold text-slate-700">{item.inputBy?.trim() || 'Belum tercatat'}</span>
+                      </div>
                     </div>
 
                     {/* Nilai badge */}
@@ -1991,7 +1997,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                           <div className="pt-2 border-t border-slate-100">
                             <div className="flex items-center justify-between text-xs text-slate-500 mb-2">
-                              <span>Dicatat oleh: <b className="text-slate-700">{item.inputBy}</b></span>
+                              <span>Penyimak: <b className="text-slate-700">{item.inputBy?.trim() || 'Belum tercatat'}</b></span>
                               <span className="font-mono text-xs text-slate-400">{formatTanggalLengkap(item.timestamp)}</span>
                             </div>
 
