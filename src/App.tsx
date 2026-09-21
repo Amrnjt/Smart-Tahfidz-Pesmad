@@ -197,6 +197,7 @@ export default function App() {
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             isUstadz={isUstadz}
+            showPantauan={isUstadz || isWali}
             isSetorMenuOpen={isSetorMenuOpen}
             onOpenSetorMenu={() => setIsSetorMenuOpen(true)}
             onCloseSetorMenu={() => setIsSetorMenuOpen(false)}
@@ -240,7 +241,6 @@ export default function App() {
                   binnadzorRecords={binnadzorRecords}
                   pembelajaranRecords={pembelajaranRecords}
                   setActiveTab={setActiveTab}
-                  onNotify={notify}
                 />
               ) : (
                 <SantriDashboard
