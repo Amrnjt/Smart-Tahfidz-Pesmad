@@ -201,7 +201,7 @@ export interface SurahFullDetail extends SurahMeta {
   audioFull?: string;
 }
 
-export type ShalatJamaahStatus = 'Jama\'ah' | 'Berhalangan' | 'Sakit';
+export type ShalatJamaahStatus = 'Jama\'ah' | 'Berhalangan' | 'Sakit' | 'Tanpa Alasan';
 
 export const SHALAT_STATUS_OPTIONS: { value: ShalatJamaahStatus; label: string; color: string; emoji: string }[] = [
   { value: 'Jama\'ah', label: 'Jama\'ah', color: 'bg-emerald-100 text-emerald-800 border-emerald-300', emoji: '🕌' },
