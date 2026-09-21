@@ -176,7 +176,7 @@ export function useHistoryArchive(scope: HistoryQueryScope, enabled: boolean) {
       const result = await fetchHistoryPage(scope, state.cursor);
       if (requestId !== requestIdRef.current) return;
       setState(current => ({
-        records: deduplicateHistoryItems([...current.records, ...result.records]),
+        records: deduplicateHistoryItems([...current.records, ...result.records]).sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || '')),
         status: 'success',
         error: null,
         cursor: result.cursor,
