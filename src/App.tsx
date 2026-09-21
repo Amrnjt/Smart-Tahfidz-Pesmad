@@ -337,6 +337,7 @@ export default function App() {
 
             {activeTab === 'santri' && isUstadz && (
               <SantriManagement
+                currentUser={currentUser}
                 santriList={santriList}
                 onDataChanged={refreshData}
                 onNotify={notify}
