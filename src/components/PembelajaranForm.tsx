@@ -28,7 +28,8 @@ import {
   HeartHandshake, 
   AlertCircle,
   HelpCircle,
-  Award
+  Award,
+  ArrowLeft
 } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
@@ -56,6 +57,19 @@ const QUICK_NOTES_ISTIMEWA = [
   'Fokus pada ketenangan santri saat mengeja huruf berharakat sambung.',
   'Daya tangkap meningkat saat dibimbing secara perlahan dan sabar.',
   'Berikan apresiasi dan motivasi lebih agar tidak minder dalam belajar.'
+];
+
+const PETUNJUK_UMUM_UMMI = [
+  'Buku Metode Ummi untuk Dewasa terdiri dari 3 jilid yang masing-masing terdiri dari 40 halaman ditambah buku ghorib dan tajwid.',
+  'Setiap buku terdapat pokok bahasan, latihan/pemahaman dan ketrampilan.',
+  'Setiap kelas terdiri dari 10–15 murid dengan seorang guru.',
+  'Mengajar jilid 1 dengan klasikal individual atau klasikal baca simak.',
+  'Mengajar jilid 2–3, termasuk Al-Qur’an dengan klasikal baca simak atau baca simak murni.',
+  'Setiap murid harus melalui tahapan-tahapan tiap jilid, dengan standart yang telah ditentukan.',
+  'Murid diperbolehkan melanjutkan ke jilid/tingkat berikutnya jika benar-benar menguasai dan lancar serta tidak salah dalam membacanya, termasuk di halaman 20 dan halaman 40 juga harus dikuasai dengan baik.',
+  'Pengetesan naik jilid/naik tingkat diacak mulai dari halaman 1 sampai halaman 40 (tidak dibaca halaman akhir saja).',
+  'Pengetesan naik jilid/naik tingkat sebaiknya melalui koordinator/penguji.',
+  'Untuk mendapatkan hasil yang lebih maksimal dalam proses belajar mengajar sebaiknya dibantu dengan alat peraga.'
 ];
 
 export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
@@ -107,6 +121,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
   const [jilidUmmiIndex, setJilidUmmiIndex] = useState(0); // 0 = Jilid Dewasa 1, etc.
   const [halamanUmmi, setHalamanUmmi] = useState<number>(1);
   const [pokokBahasanUmmi, setPokokBahasanUmmi] = useState(KURIKULUM_JILID_UMMI_DEWASA[0]?.pokokBahasan[0] || '');
+  const [activeView, setActiveView] = useState<'setoran' | 'petunjuk'>('setoran');
 
   // Kelas Istimewa State
   const [tahapIstimewaIndex, setTahapIstimewaIndex] = useState(0);
@@ -221,8 +236,28 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
           </div>
         </div>
 
+        <div className="flex flex-wrap gap-2 border-b border-slate-100 pb-4" aria-label="Pembelajaran Ummi">
+          <button type="button" aria-pressed={activeView === 'setoran'} onClick={() => setActiveView('setoran')} className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${activeView === 'setoran' ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+            Form Setoran
+          </button>
+          <button type="button" aria-pressed={activeView === 'petunjuk'} onClick={() => setActiveView('petunjuk')} className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${activeView === 'petunjuk' ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>
+            Petunjuk Umum Mengajar Metode Ummi
+          </button>
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5" aria-busy={isSubmitting}>
+        {activeView === 'petunjuk' && (
+          <section aria-label="Petunjuk Umum Mengajar Metode Ummi" className="space-y-4">
+            <h4 className="text-lg font-bold text-emerald-950">Petunjuk Umum Mengajar Metode Ummi</h4>
+            <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-slate-700">
+              {PETUNJUK_UMUM_UMMI.map((petunjuk) => <li key={petunjuk} className="pl-1">{petunjuk}</li>)}
+            </ol>
+            <button type="button" onClick={() => setActiveView('setoran')} className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-800 hover:bg-emerald-50">
+              <ArrowLeft className="h-4 w-4" /> Kembali ke Form Setoran
+            </button>
+          </section>
+        )}
+
+        <form onSubmit={handleSubmit} className={`space-y-5 ${activeView === 'petunjuk' ? 'hidden' : ''}`} aria-busy={isSubmitting}>
           {/* 1. Pemilihan Tipe Kelas Non-Tahfidz */}
           <div className="space-y-1">
             <h4 className="text-sm font-bold text-slate-900">Program pembelajaran</h4>
