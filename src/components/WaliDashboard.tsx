@@ -24,9 +24,7 @@ import {
 } from 'lucide-react';
 import { formatTanggalWaktu } from '../utils/dateFormatter';
 import { ScrollReveal } from './ScrollReveal';
-import { PantauanLiburanWaliSection } from './PantauanLiburanWaliSection';
 import { storageService } from '../services/storageService';
-import type { NotifyFn } from './Snackbar';
 import { CompactDashboardHero, HeroAction } from './dashboard/CompactDashboardHero';
 import { CompactBentoKpiCard } from './dashboard/CompactBentoKpiCard';
 import { CompactTrenBulananChart } from './dashboard/CompactTrenBulananChart';
@@ -40,7 +38,6 @@ interface WaliDashboardProps {
   binnadzorRecords?: BinnadzorRecord[];
   pembelajaranRecords?: PembelajaranRecord[];
   setActiveTab: (tab: ActiveTab) => void;
-  onNotify: NotifyFn;
 }
 
 type ActivityCategory = 'Ziyadah' | "Muroja'ah" | 'Binnadzor' | 'Pembelajaran';
@@ -142,8 +139,7 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   murojaahRecords,
   binnadzorRecords = [],
   pembelajaranRecords = [],
-  setActiveTab,
-  onNotify
+  setActiveTab
 }) => {
   const targetSantri = santriList.find(santri => santri.idSantri === currentUser.idSantri);
 
@@ -238,29 +234,12 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   const latestRecency = getRecencyInfo(latestActivity?.timestamp);
   const programLiburanActive = storageService.getAppConfig().programLiburanActive;
 
-  const jumpToPantauanLiburan = () => {
-    if (typeof document === 'undefined') return;
-
-    const dateControl = document.getElementById('tanggal-pantauan');
-    const destination = dateControl?.closest('section') || dateControl;
-    if (!destination) return;
-
-    const reduceMotion = typeof window !== 'undefined'
-      && typeof window.matchMedia === 'function'
-      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    destination.scrollIntoView({
-      behavior: reduceMotion ? 'auto' : 'smooth',
-      block: 'start'
-    });
-  };
-
   const primaryAction = programLiburanActive
     ? {
         label: 'Isi Pantauan Liburan',
         description: 'Program pantauan liburan sedang aktif.',
         icon: CalendarCheck,
-        onClick: jumpToPantauanLiburan,
+        onClick: () => setActiveTab('pantauan'),
         variant: 'amber' as const
       }
     : {
@@ -502,18 +481,8 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
         </article>
       </section>
 
-      {/* 5. PANTAUAN LIBURAN WALI SECTION (Contextual feature) */}
-      <ScrollReveal delay={40}>
-        <PantauanLiburanWaliSection
-          currentUser={currentUser}
-          targetSantri={targetSantri}
-          isActive={programLiburanActive}
-          onNotify={onNotify}
-        />
-      </ScrollReveal>
-
-      {/* 6. TREN & AKTIVITAS BENTO SECTION */}
-      <ScrollReveal delay={60} className="space-y-3">
+      {/* 5. TREN & AKTIVITAS BENTO SECTION */}
+      <ScrollReveal delay={40} className="space-y-3">
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(300px,1.2fr)] gap-3 sm:gap-4 items-stretch">
           <CompactTrenBulananChart
             ziyadahRecords={santriZiyadah}
