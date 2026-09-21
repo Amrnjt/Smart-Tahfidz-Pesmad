@@ -11,7 +11,8 @@ const VALID_TABS: ActiveTab[] = [
   'riwayat',
   'mushaf',
   'santri',
-  'kelas'
+  'kelas',
+  'pantauan'
 ];
 
 const VIEW_ONLY_TABS = new Set<ActiveTab>(['dashboard', 'riwayat', 'mushaf']);
@@ -30,6 +31,11 @@ function isViewOnlyUser(user: User | null): boolean {
 
 function sanitizeTab(user: User | null, tab: ActiveTab): ActiveTab {
   if (!user) return 'dashboard';
+
+  const role = String(user.role || '').trim().toLowerCase();
+  const isWali = role === 'wali' || role.includes('wali');
+
+  if (isWali && tab === 'pantauan') return tab;
   return isViewOnlyUser(user) && !VIEW_ONLY_TABS.has(tab) ? 'dashboard' : tab;
 }
 
