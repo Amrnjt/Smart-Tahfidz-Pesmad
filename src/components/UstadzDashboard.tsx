@@ -338,7 +338,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
                 {todayBinnadzorCount} Binnadzor · {todayPembelajaranCount} Kelas
               </p>
               <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
-                Total {activities.length} setoran tersimpan
+                {activities.length} setoran · 12 bulan terakhir
               </p>
             </div>
             <ArrowRight className="h-4 w-4 text-slate-400" />
