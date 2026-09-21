@@ -4,7 +4,7 @@ import { storageService } from './services/storageService';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
 import { DesktopPrimaryNav } from './components/DesktopPrimaryNav';
-import { PantauanLiburanMonitorModal } from './components/PantauanLiburanMonitorModal';
+import { PantauanLiburanPage } from './components/PantauanLiburanPage';
 import { SetoranFormNav } from './components/SetoranFormNav';
 import { LoginView } from './components/LoginModal';
 import { UstadzDashboard } from './components/UstadzDashboard';
@@ -59,7 +59,6 @@ export default function App() {
   const isSyncing = syncState === 'syncing';
   const [snack, setSnack] = useState<SnackbarState | null>(null);
   const [isSetorMenuOpen, setIsSetorMenuOpen] = useState(false);
-  const [showPantauanModal, setShowPantauanModal] = useState(false);
 
   const notify: NotifyFn = (type, message, options = {}) => {
     setSnack({
@@ -201,7 +200,6 @@ export default function App() {
             isSetorMenuOpen={isSetorMenuOpen}
             onOpenSetorMenu={() => setIsSetorMenuOpen(true)}
             onCloseSetorMenu={() => setIsSetorMenuOpen(false)}
-            onOpenPantauanLiburan={() => setShowPantauanModal(true)}
           />
         )}
       </div>
@@ -333,6 +331,16 @@ export default function App() {
               />
             )}
 
+            {activeTab === 'pantauan' && (isUstadz || isWali) && (
+              <PantauanLiburanPage
+                currentUser={currentUser}
+                santriList={santriList}
+                mode={isWali ? 'wali' : 'monitor'}
+                onNotify={notify}
+                onDataChanged={refreshData}
+              />
+            )}
+
             {activeTab === 'mushaf' && <MushafQuran />}
 
             {activeTab === 'santri' && isUstadz && (
@@ -377,23 +385,11 @@ export default function App() {
         )}
       </main>
 
-      {/* Desktop/Tablet Pantauan Liburan Monitor Modal */}
-      {showPantauanModal && isUstadz && (
-        <PantauanLiburanMonitorModal
-          isOpen={showPantauanModal}
-          onClose={() => setShowPantauanModal(false)}
-          santriList={santriList}
-          onNotify={notify}
-        />
-      )}
-
       {/* Mobile Bottom Navigation */}
       <BottomNav
         currentUser={currentUser}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        santriList={santriList}
-        onNotify={notify}
       />
 
       {/* In-app notification toasts for Wali Santri */}
