@@ -20,7 +20,7 @@ test('batch soft delete resolves records missing from bounded cache before trash
   assert.ok(start >= 0 && end > start);
   const block = storage.slice(start, end);
   assert.match(block, /await getDoc\(doc\(db, sourceCollection, item\.id\)\)/);
-  assert.match(block, /payload: payload/);
+  assert.match(block, /payload,\n\s*deletedAt/);
 });
 
 test('delete santri with history queries Firestore by idSantri instead of bounded cache', () => {
