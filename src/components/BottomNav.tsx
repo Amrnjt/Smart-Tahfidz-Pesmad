@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { User, ActiveTab, Santri } from '../types';
+import { User, ActiveTab } from '../types';
 import {
   LayoutDashboard,
   History,
@@ -8,32 +8,26 @@ import {
   X,
   BookOpen,
   Settings2,
-  ChevronDown
+  ChevronDown,
+  Eye
 } from 'lucide-react';
 import { useRipple } from '../hooks/useRipple';
 import { ManageActionSheet } from './ManageActionSheet';
-import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
 import { SETOR_ACTIONS } from '../config/setorActions';
-import type { NotifyFn } from './Snackbar';
 
 interface BottomNavProps {
   currentUser: User | null;
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
-  santriList: Santri[];
-  onNotify: NotifyFn;
 }
 
 export const BottomNav: React.FC<BottomNavProps> = ({
   currentUser,
   activeTab,
-  setActiveTab,
-  santriList,
-  onNotify
+  setActiveTab
 }) => {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [isManageSheetOpen, setIsManageSheetOpen] = useState(false);
-  const [showMonitorModal, setShowMonitorModal] = useState(false);
   const fabRipple = useRipple<HTMLButtonElement>();
   const shouldReduceMotion = useReducedMotion();
 
@@ -70,9 +64,9 @@ export const BottomNav: React.FC<BottomNavProps> = ({
     activeTab === 'murojaah' ||
     activeTab === 'binnadzor' ||
     activeTab === 'pembelajaran';
-  const isManageActive = activeTab === 'kelas' || activeTab === 'santri';
+  const isManageActive = activeTab === 'kelas' || activeTab === 'santri' || activeTab === 'pantauan';
 
-  // 1. Wali, Santri & Pimpinan 3-Item Layout (Dashboard, Riwayat, Mushaf)
+  // 1. Wali, Santri & Pimpinan navigation. Wali gets a direct Pantauan page.
   if (!isUstadz) {
     const items = [
       {
@@ -81,6 +75,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         icon: LayoutDashboard
       },
       { id: 'riwayat' as ActiveTab, label: 'Riwayat', icon: History },
+      ...(isWali ? [{ id: 'pantauan' as ActiveTab, label: 'Pantauan', icon: Eye }] : []),
       { id: 'mushaf' as ActiveTab, label: 'Mushaf', icon: BookOpen }
     ];
 
@@ -88,7 +83,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
       <div className="fixed left-0 right-0 bottom-2.5 sm:bottom-3 z-40 px-3 pointer-events-none md:hidden select-none">
         <nav
           aria-label="Navigasi bawah"
-          className="pointer-events-auto w-full max-w-[320px] mx-auto grid grid-cols-3 items-center p-1.5 rounded-[26px] bg-white/98 backdrop-blur-md border border-slate-200/95 shadow-[0_12px_36px_rgba(15,23,42,0.12),0_2px_8px_rgba(15,23,42,0.06)]"
+          className={`pointer-events-auto w-full ${isWali ? 'max-w-[360px] grid-cols-4' : 'max-w-[320px] grid-cols-3'} mx-auto grid items-center p-1.5 rounded-[26px] bg-white/98 backdrop-blur-md border border-slate-200/95 shadow-[0_12px_36px_rgba(15,23,42,0.12),0_2px_8px_rgba(15,23,42,0.06)]`}
           style={{ paddingBottom: 'max(0.375rem, env(safe-area-inset-bottom))' }}
         >
           {items.map(item => (
@@ -263,10 +258,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
               isOpen={isManageSheetOpen}
               onClose={() => setIsManageSheetOpen(false)}
               onSelect={(tab) => navigateTo(tab)}
-              onOpenPantauanLiburan={() => {
-                setIsManageSheetOpen(false);
-                setShowMonitorModal(true);
-              }}
               activeTab={activeTab}
             />
           </div>
@@ -281,13 +272,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         </nav>
       </div>
 
-      {/* Pantauan Liburan Monitor Modal */}
-      <PantauanLiburanMonitorModal
-        isOpen={showMonitorModal}
-        onClose={() => setShowMonitorModal(false)}
-        santriList={santriList}
-        onNotify={onNotify}
-      />
     </>
   );
 };
