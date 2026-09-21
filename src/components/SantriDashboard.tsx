@@ -322,12 +322,12 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
         className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 lg:gap-3.5"
       >
         <CompactBentoKpiCard
-          label="Total Setoran"
+          label="Setoran 12 Bulan"
           value={totalRecords}
           icon={BookOpenCheck}
-          subtitle="Tercatat di sistem"
+          subtitle="12 bulan terakhir"
           iconTone="emerald"
-          badge="Total"
+          badge="12 Bln"
           onClick={() => setActiveTab('riwayat')}
         />
 
