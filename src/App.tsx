@@ -9,6 +9,8 @@ import { SetoranFormNav } from './components/SetoranFormNav';
 import { LoginView } from './components/LoginModal';
 import { UstadzDashboard } from './components/UstadzDashboard';
 import { WaliDashboard } from './components/WaliDashboard';
+import { WaliPantauanPage } from './components/WaliPantauanPage';
+import { PantauanLiburanMonitorModal } from './components/PantauanLiburanMonitorModal';
 import { SantriDashboard } from './components/SantriDashboard';
 import { ZiyadahForm } from './components/ZiyadahForm';
 import { MurojaahForm } from './components/MurojaahForm';
@@ -195,6 +197,7 @@ export default function App() {
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             isUstadz={isUstadz}
+            showPantauan={!isSantri}
             isSetorMenuOpen={isSetorMenuOpen}
             onOpenSetorMenu={() => setIsSetorMenuOpen(true)}
           />
@@ -237,7 +240,6 @@ export default function App() {
                   binnadzorRecords={binnadzorRecords}
                   pembelajaranRecords={pembelajaranRecords}
                   setActiveTab={setActiveTab}
-                  onNotify={notify}
                 />
               ) : (
                 <SantriDashboard
@@ -250,6 +252,22 @@ export default function App() {
                   setActiveTab={setActiveTab}
                 />
               )
+            )}
+
+            {activeTab === 'pantauan' && isWali && (
+              <WaliPantauanPage
+                currentUser={currentUser}
+                santriList={santriList}
+                onNotify={notify}
+              />
+            )}
+
+            {activeTab === 'pantauan' && isUstadz && (
+              <PantauanLiburanMonitorModal
+                variant="page"
+                santriList={santriList}
+                onNotify={notify}
+              />
             )}
 
             {isSetorActive && isUstadz && (
@@ -377,8 +395,6 @@ export default function App() {
           isOpen={isSetorMenuOpen}
           onClose={() => setIsSetorMenuOpen(false)}
           onSelect={(tab) => setActiveTab(tab)}
-          santriList={santriList}
-          onNotify={notify}
         />
       )}
 
@@ -387,8 +403,6 @@ export default function App() {
         currentUser={currentUser}
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        santriList={santriList}
-        onNotify={notify}
       />
 
       {/* In-app notification toasts for Wali Santri */}

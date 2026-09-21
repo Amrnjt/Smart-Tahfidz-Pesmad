@@ -4,6 +4,7 @@ import type { ActiveTab, User } from '../types';
 
 const VALID_TABS: ActiveTab[] = [
   'dashboard',
+  'pantauan',
   'ziyadah',
   'murojaah',
   'binnadzor',
@@ -14,7 +15,7 @@ const VALID_TABS: ActiveTab[] = [
   'kelas'
 ];
 
-const VIEW_ONLY_TABS = new Set<ActiveTab>(['dashboard', 'riwayat', 'mushaf']);
+const VIEW_ONLY_TABS = new Set<ActiveTab>(['dashboard', 'pantauan', 'riwayat', 'mushaf']);
 
 function readUrlTab(): ActiveTab {
   if (typeof window === 'undefined') return 'dashboard';
@@ -30,6 +31,8 @@ function isViewOnlyUser(user: User | null): boolean {
 
 function sanitizeTab(user: User | null, tab: ActiveTab): ActiveTab {
   if (!user) return 'dashboard';
+  const role = String(user.role || '').trim().toLowerCase();
+  if (tab === 'pantauan' && role === 'santri') return 'dashboard';
   return isViewOnlyUser(user) && !VIEW_ONLY_TABS.has(tab) ? 'dashboard' : tab;
 }
 

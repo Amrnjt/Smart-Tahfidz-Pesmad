@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { User, ActiveTab, Santri } from '../types';
+import { User, ActiveTab } from '../types';
 import {
   LayoutDashboard,
   History,
@@ -16,17 +16,12 @@ import {
 } from 'lucide-react';
 import { useRipple } from '../hooks/useRipple';
 import { ManageActionSheet } from './ManageActionSheet';
-import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
-import { storageService } from '../services/storageService';
-import type { NotifyFn } from './Snackbar';
 import { useDropdownTransition } from '../hooks/useDropdownTransition';
 
 interface BottomNavProps {
   currentUser: User | null;
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
-  santriList: Santri[];
-  onNotify: NotifyFn;
 }
 
 const SETOR_ACTIONS = [
@@ -39,23 +34,15 @@ const SETOR_ACTIONS = [
 export const BottomNav: React.FC<BottomNavProps> = ({
   currentUser,
   activeTab,
-  setActiveTab,
-  santriList,
-  onNotify
+  setActiveTab
 }) => {
   const [isActionSheetOpen, setIsActionSheetOpen] = useState(false);
   const [isManageSheetOpen, setIsManageSheetOpen] = useState(false);
-  const [showMonitorModal, setShowMonitorModal] = useState(false);
-  const [programLiburanActive, setProgramLiburanActive] = useState(false);
-  const [isProgramToggling, setIsProgramToggling] = useState(false);
   const fabRipple = useRipple<HTMLButtonElement>();
   const setorTransition = useDropdownTransition(isActionSheetOpen);
 
   useEffect(() => {
     if (!isActionSheetOpen) return;
-
-    const cfg = storageService.getAppConfig();
-    setProgramLiburanActive(Boolean(cfg.programLiburanActive));
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setIsActionSheetOpen(false);
@@ -87,13 +74,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   if (!isUstadz) {
     const items = [
       { id: 'dashboard' as ActiveTab, label: isWali ? 'Anak Saya' : 'Hafalan', icon: LayoutDashboard },
+      ...(isWali ? [{ id: 'pantauan' as ActiveTab, label: 'Pantauan', icon: Eye }] : []),
       { id: 'riwayat' as ActiveTab, label: 'Riwayat', icon: History },
       { id: 'mushaf' as ActiveTab, label: 'Mushaf', icon: BookOpen }
     ];
 
     return (
       <div className="p2-bottom-shell md:hidden">
-        <nav aria-label="Navigasi bawah" className="p2-bottom-dock p2-bottom-dock-bedimcode p2-bottom-dock-compact">
+        <nav aria-label="Navigasi bawah" className={`p2-bottom-dock p2-bottom-dock-bedimcode ${isWali ? 'p2-bottom-dock-wali' : 'p2-bottom-dock-compact'}`}>
           {items.map(item => (
             <NavButton
               key={item.id}
@@ -110,35 +98,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
 
   const chooseSetor = (tab: ActiveTab) => {
     navigateTo(tab);
-  };
-
-  const openPantauanMonitor = () => {
-    setIsActionSheetOpen(false);
-    setShowMonitorModal(true);
-  };
-
-  const toggleProgramLiburan = async () => {
-    if (isProgramToggling) return;
-
-    const nextStatus = !programLiburanActive;
-    setIsProgramToggling(true);
-
-    try {
-      const updated = await storageService.setProgramLiburanActive(nextStatus, 'Ustadz / Admin');
-      const storedStatus = Boolean(updated.programLiburanActive);
-      setProgramLiburanActive(storedStatus);
-      onNotify(
-        'success',
-        storedStatus
-          ? 'Program Pantauan Liburan aktif dan tersimpan di Cloud.'
-          : 'Program Pantauan Liburan dinonaktifkan dan tersimpan di Cloud.'
-      );
-    } catch (error) {
-      console.error(error);
-      onNotify('error', 'Status Program Pantauan Liburan gagal diperbarui di Cloud.');
-    } finally {
-      setIsProgramToggling(false);
-    }
   };
 
   return (
@@ -163,6 +122,13 @@ export const BottomNav: React.FC<BottomNavProps> = ({
           />
 
           <NavButton
+            label="Pantauan"
+            icon={Eye}
+            isActive={activeTab === 'pantauan'}
+            onClick={() => navigateTo('pantauan')}
+          />
+
+          <NavButton
             label="Riwayat"
             icon={History}
             isActive={activeTab === 'riwayat'}
@@ -181,43 +147,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                   aria-label="Pilih jenis setoran"
                   aria-hidden={!isActionSheetOpen}
                 >
-                  <div
-                    className="p2-setor-dropup-program"
-                    role="group"
-                    aria-label="Program Pantauan Liburan"
-                  >
-                    <button
-                      type="button"
-                      className="p2-setor-program-info"
-                      onClick={openPantauanMonitor}
-                      aria-haspopup="dialog"
-                      aria-label="Buka rekap Program Pantauan Liburan"
-                    >
-                      <span className="p2-setor-program-icon" aria-hidden="true">
-                        <Eye className="ui-icon-md" />
-                      </span>
-                      <span className="p2-setor-program-copy">
-                        <span className="p2-setor-program-title">Pantauan Liburan</span>
-                        <span className="p2-setor-program-status">
-                          {programLiburanActive ? 'Aktif' : 'Nonaktif'}
-                        </span>
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={programLiburanActive}
-                      aria-busy={isProgramToggling}
-                      aria-label={programLiburanActive ? 'Nonaktifkan Program Pantauan Liburan' : 'Aktifkan Program Pantauan Liburan'}
-                      className={`p2-setor-program-switch ${programLiburanActive ? 'is-active' : ''}`}
-                      onClick={toggleProgramLiburan}
-                      disabled={isProgramToggling}
-                    >
-                      <span className="p2-setor-program-switch-thumb" aria-hidden="true" />
-                    </button>
-                  </div>
-
                   {SETOR_ACTIONS.map((action) => {
                     const Icon = action.icon;
                     return (
@@ -293,12 +222,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         </nav>
       </div>
 
-      <PantauanLiburanMonitorModal
-        isOpen={showMonitorModal}
-        onClose={() => setShowMonitorModal(false)}
-        santriList={santriList}
-        onNotify={onNotify}
-      />
     </>
   );
 };

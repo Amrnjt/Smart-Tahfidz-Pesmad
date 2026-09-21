@@ -367,7 +367,9 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
                                 ? 'border-emerald-700 bg-emerald-700 text-white'
                                 : opt.value === 'Berhalangan'
                                   ? 'border-amber-700 bg-amber-100 text-amber-900'
-                                  : 'border-rose-700 bg-rose-100 text-rose-900'
+                                  : opt.value === 'Sakit'
+                                    ? 'border-rose-700 bg-rose-100 text-rose-900'
+                                    : 'border-slate-700 bg-slate-200 text-slate-950'
                               : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
                           }`}
                         >
@@ -535,10 +537,12 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
                                   ? 'font-medium text-emerald-800'
                                   : rec[waktu.key] === 'Berhalangan'
                                     ? 'font-medium text-amber-800'
-                                    : 'font-medium text-rose-800'
+                                    : rec[waktu.key] === 'Sakit'
+                                      ? 'font-medium text-rose-800'
+                                      : 'font-medium text-slate-800'
                               }
                             >
-                              {rec[waktu.key]}
+                              {SHALAT_STATUS_OPTIONS.find(option => option.value === rec[waktu.key])?.label ?? rec[waktu.key]}
                             </dd>
                           </div>
                         ))}

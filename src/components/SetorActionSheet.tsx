@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ActiveTab, Santri } from '../types';
+import { ActiveTab } from '../types';
 import {
   BookPlus,
   RotateCw,
@@ -7,29 +7,21 @@ import {
   BookOpen,
   X,
   ChevronRight,
-  GraduationCap,
-  Eye
+  GraduationCap
 } from 'lucide-react';
-import { PantauanLiburanMonitorModal } from './PantauanLiburanMonitorModal';
-import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
 
 interface SetorActionSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (tab: ActiveTab) => void;
-  santriList?: Santri[];
-  onNotify: NotifyFn;
 }
 
 export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
   isOpen,
   onClose,
-  onSelect,
-  santriList = [],
-  onNotify
+  onSelect
 }) => {
-  const [showMonitorModal, setShowMonitorModal] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
   const closingRef = useRef(false);
   const pendingTab = useRef<ActiveTab | undefined>(undefined);
@@ -199,31 +191,6 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
           </div>
         </section>
 
-        <section aria-labelledby="setor-supporting-actions-title" className="border-t border-slate-100 py-3">
-          <div className="mb-2 px-0.5">
-            <h3 id="setor-supporting-actions-title" className="text-xs font-bold uppercase tracking-[0.08em] text-slate-500">
-              Fitur pendukung
-            </h3>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => { if (!closingRef.current) setShowMonitorModal(true); }}
-            aria-haspopup="dialog"
-            aria-expanded={showMonitorModal}
-            className="group flex min-h-12 w-full items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-left transition-colors hover:border-slate-300 hover:bg-slate-100"
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white text-slate-700 border border-slate-200">
-              <Eye className="h-4 w-4" aria-hidden="true" />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold text-slate-800">Kelola Pantauan Liburan</span>
-              <span className="mt-0.5 block text-xs text-slate-500">Aktif/nonaktifkan program dan lihat rekap Wali</span>
-            </span>
-            <ChevronRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
-          </button>
-        </section>
-
         <div className="pt-1.5 border-t border-slate-100 flex items-center gap-2">
           <button
             type="button"
@@ -244,14 +211,6 @@ export const SetorActionSheet: React.FC<SetorActionSheetProps> = ({
         </div>
       </div>
 
-      {showMonitorModal && (
-        <PantauanLiburanMonitorModal
-          isOpen={showMonitorModal}
-          onClose={() => setShowMonitorModal(false)}
-          santriList={santriList}
-          onNotify={onNotify}
-        />
-      )}
     </div>
   );
 };

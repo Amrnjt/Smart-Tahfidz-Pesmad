@@ -1,11 +1,12 @@
 import React from 'react';
-import { BookOpen, CirclePlus as PlusCircle, History, LayoutDashboard, School, Users } from 'lucide-react';
+import { BookOpen, CirclePlus as PlusCircle, ClipboardCheck, History, LayoutDashboard, School, Users } from 'lucide-react';
 import type { ActiveTab } from '../types';
 
 interface DesktopPrimaryNavProps {
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
   isUstadz: boolean;
+  showPantauan: boolean;
   isSetorMenuOpen: boolean;
   onOpenSetorMenu: () => void;
 }
@@ -16,6 +17,7 @@ export const DesktopPrimaryNav: React.FC<DesktopPrimaryNavProps> = ({
   activeTab,
   setActiveTab,
   isUstadz,
+  showPantauan,
   isSetorMenuOpen,
   onOpenSetorMenu
 }) => {
@@ -42,6 +44,17 @@ export const DesktopPrimaryNav: React.FC<DesktopPrimaryNavProps> = ({
           <LayoutDashboard className="w-4 h-4 flex-shrink-0" />
           <span className="truncate">Beranda</span>
         </button>
+
+        {showPantauan && (
+          <button
+            onClick={() => setActiveTab('pantauan')}
+            aria-current={activeTab === 'pantauan' ? 'page' : undefined}
+            className={tabClass(activeTab === 'pantauan')}
+          >
+            <ClipboardCheck className="w-4 h-4 flex-shrink-0" />
+            <span className="truncate">Pantauan</span>
+          </button>
+        )}
 
         <button
           onClick={() => setActiveTab('riwayat')}

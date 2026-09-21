@@ -332,7 +332,8 @@ nav[aria-label="Navigasi utama"] > button svg { stroke-width: 1.9; }
 }
 
 .p2-bottom-dock-compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.p2-bottom-dock-ustadz { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.p2-bottom-dock-wali { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.p2-bottom-dock-ustadz { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 
 .p2-bottom-item {
   position: relative;

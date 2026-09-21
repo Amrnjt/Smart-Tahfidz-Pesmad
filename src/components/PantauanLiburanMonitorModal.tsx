@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { PantauanLiburanRecord, Santri, AppConfig } from '../types';
+import { PantauanLiburanRecord, Santri, AppConfig, SHALAT_STATUS_OPTIONS } from '../types';
 import { storageService } from '../services/storageService';
 import { X, Search, FileText, ToggleLeft, ToggleRight } from 'lucide-react';
 import { formatTanggalIndo } from '../utils/dateFormatter';
@@ -7,31 +7,34 @@ import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
 import type { NotifyFn } from './Snackbar';
 
 interface PantauanLiburanMonitorModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
   santriList: Santri[];
   onNotify: NotifyFn;
+  variant?: 'modal' | 'page';
 }
 
 export const PantauanLiburanMonitorModal: React.FC<PantauanLiburanMonitorModalProps> = ({
-  isOpen,
-  onClose,
+  isOpen = true,
+  onClose = () => undefined,
   santriList,
-  onNotify
+  onNotify,
+  variant = 'modal'
 }) => {
+  const isPage = variant === 'page';
   const [records, setRecords] = useState<PantauanLiburanRecord[]>([]);
   const [appConfig, setAppConfig] = useState<AppConfig>({ programLiburanActive: false });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedKelas, setSelectedKelas] = useState<string>('all');
   const [selectedTanggal, setSelectedTanggal] = useState<string>('all');
   const [isToggling, setIsToggling] = useState(false);
-  const dialogRef = useAccessibleDialog(isOpen, onClose);
+  const dialogRef = useAccessibleDialog(isOpen && !isPage, onClose);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen || isPage) {
       loadData();
     }
-  }, [isOpen]);
+  }, [isOpen, isPage]);
 
   const loadData = () => {
     const data = storageService.getPantauanLiburanRecords();
@@ -55,7 +58,7 @@ export const PantauanLiburanMonitorModal: React.FC<PantauanLiburanMonitorModalPr
     }
   };
 
-  if (!isOpen) return null;
+  if (!isPage && !isOpen) return null;
 
   // Extract unique classes & dates for filtering
   const uniqueClasses: string[] = (Array.from(new Set(santriList.map(s => s.kelas))).filter(Boolean) as string[]);
@@ -82,38 +85,44 @@ export const PantauanLiburanMonitorModal: React.FC<PantauanLiburanMonitorModalPr
 
 
   return (
-    <div className="ui-dialog-overlay">
-      <div className="fixed inset-0 bg-slate-900/60" onClick={onClose} aria-hidden="true" />
+    <div className={isPage ? 'w-full min-w-0' : 'ui-dialog-overlay'}>
+      {!isPage && <div className="fixed inset-0 bg-slate-900/60" onClick={onClose} aria-hidden="true" />}
       <div
         ref={dialogRef}
-        className="ui-dialog-frame relative z-10 flex max-w-5xl flex-col overscroll-contain"
-        role="dialog"
-        aria-modal="true"
+        className={isPage
+          ? 'ui-panel mx-auto w-full max-w-6xl overflow-hidden'
+          : 'ui-dialog-frame relative z-10 flex max-w-5xl flex-col overscroll-contain'}
+        role={isPage ? undefined : 'dialog'}
+        aria-modal={isPage ? undefined : true}
         aria-labelledby="pantauan-monitor-title"
         aria-describedby="pantauan-monitor-description"
-        tabIndex={-1}
+        tabIndex={isPage ? undefined : -1}
       >
         <header className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-200 p-4 sm:px-6">
           <div className="min-w-0">
-            <h3 id="pantauan-monitor-title" className="text-lg font-bold text-slate-900">
+            <h1 id="pantauan-monitor-title" className="text-xl font-bold text-slate-950 sm:text-2xl">
               Pantauan Liburan
-            </h3>
+            </h1>
             <p id="pantauan-monitor-description" className="mt-1 text-sm text-slate-600">
               Rekap amaliyah santri yang diisi oleh Wali.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100"
-            aria-label="Tutup rekap Pantauan Liburan"
-          >
-            <X className="h-5 w-5" aria-hidden="true" />
-          </button>
+          {!isPage && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100"
+              aria-label="Tutup rekap Pantauan Liburan"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+            </button>
+          )}
         </header>
 
         {/* Keep controls and records in one scroll area on short mobile viewports. */}
-        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain p-4 sm:p-6">
+        <div className={isPage
+          ? 'space-y-6 p-4 sm:p-6'
+          : 'min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain p-4 sm:p-6'}>
           <section
             aria-labelledby="pantauan-program-title"
             className={`flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between ${appConfig.programLiburanActive ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'}`}
@@ -341,10 +350,12 @@ export const PantauanLiburanMonitorModal: React.FC<PantauanLiburanMonitorModalPr
                                     ? 'font-medium text-emerald-800'
                                     : s.status === 'Berhalangan'
                                       ? 'font-medium text-amber-800'
-                                      : 'font-medium text-rose-800'
+                                      : s.status === 'Sakit'
+                                        ? 'font-medium text-rose-800'
+                                        : 'font-medium text-slate-800'
                                 }
                               >
-                                {s.status}
+                                {SHALAT_STATUS_OPTIONS.find(option => option.value === s.status)?.label ?? s.status}
                               </dd>
                             </div>
                           ))}
@@ -370,15 +381,17 @@ export const PantauanLiburanMonitorModal: React.FC<PantauanLiburanMonitorModalPr
             dilakukan oleh Wali Santri.
           </p>
         </div>
-        <footer className="flex shrink-0 justify-end border-t border-slate-200 bg-slate-50 px-4 py-3 sm:px-6">
-          <button
-            type="button"
-            onClick={onClose}
-            className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:w-auto"
-          >
-            Tutup rekap
-          </button>
-        </footer>
+        {!isPage && (
+          <footer className="flex shrink-0 justify-end border-t border-slate-200 bg-slate-50 px-4 py-3 sm:px-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="min-h-11 w-full rounded-lg border border-slate-300 bg-white px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 sm:w-auto"
+            >
+              Tutup rekap
+            </button>
+          </footer>
+        )}
       </div>
     </div>
   );
