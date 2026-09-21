@@ -35,6 +35,9 @@ import { TrashBinModal } from './TrashBinModal';
 import { getClassGroup } from '../utils/classUtils';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
+import { useHistoryArchive, useHistoryRange } from '../hooks/useHistoryRange';
+import { invalidateHistoryRangeCache } from '../services/historyRepository';
+import type { HistoryQueryScope, HistoryRangeRequest } from '../services/historyQueryTypes';
 import {
   deduplicateHistoryItems,
   getDefaultExpandedDateKey,
@@ -200,10 +203,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const [nilaiFilter, setNilaiFilter] = useState<string>('ALL');
   const [showReportModal, setShowReportModal] = useState(false);
   const [showTrashModal, setShowTrashModal] = useState(false);
-  const [activeMonthKey, setActiveMonthKey] = useState<string>('');
+  const [activeMonthKey, setActiveMonthKey] = useState<string>(() => getTodayInputFormat().slice(0, 7));
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [expandedDateKey, setExpandedDateKey] = useState<string | null>(null);
-  const [hasSetDefaultMonth, setHasSetDefaultMonth] = useState(false);
 
   // Custom date range state
   const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>('bulan');
@@ -255,81 +257,132 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const isViewOnly = isPersonalViewOnly || normalizedRole === 'Pimpinan';
   const targetSantriId = currentUser.idSantri || (normalizedRole === 'Santri' ? currentUser.username : '');
 
-  const actualBinnadzor = binnadzorRecords || storageService.getBinnadzorRecords();
-  const actualPembelajaran = pembelajaranRecords || storageService.getPembelajaranRecords();
-
-  const filteredZiyadah = useMemo(
-    () => isPersonalViewOnly ? ziyadahRecords.filter(r => r.idSantri === targetSantriId) : ziyadahRecords,
-    [isPersonalViewOnly, ziyadahRecords, targetSantriId]
-  );
-  const filteredMurojaah = useMemo(
-    () => isPersonalViewOnly ? murojaahRecords.filter(r => r.idSantri === targetSantriId) : murojaahRecords,
-    [isPersonalViewOnly, murojaahRecords, targetSantriId]
-  );
-  const filteredBinnadzor = useMemo(
-    () => isPersonalViewOnly ? actualBinnadzor.filter(r => r.idSantri === targetSantriId) : actualBinnadzor,
-    [isPersonalViewOnly, actualBinnadzor, targetSantriId]
-  );
-  const filteredPembelajaran = useMemo(
-    () => isPersonalViewOnly ? actualPembelajaran.filter(r => r.idSantri === targetSantriId) : actualPembelajaran,
-    [isPersonalViewOnly, actualPembelajaran, targetSantriId]
-  );
-
-  const combinedItems: CombinedHistoryItem[] = useMemo(() => {
-    const items: CombinedHistoryItem[] = [
-      ...filteredZiyadah.map(z => ({
-        id: z.id, type: 'Ziyadah' as const, timestamp: z.timestamp, idSantri: z.idSantri,
-        namaSantri: z.namaSantri || z.idSantri, materi: `${z.surah} (Ayat ${z.ayatAwal} - ${z.ayatAkhir})`,
-        nilai: z.nilai, catatan: z.catatan, inputBy: z.inputBy,
-        surah: z.surah, ayatAwal: z.ayatAwal, ayatAkhir: z.ayatAkhir
-      })),
-      ...filteredMurojaah.map(m => ({
-        id: m.id, type: 'Murojaah' as const, timestamp: m.timestamp, idSantri: m.idSantri,
-        namaSantri: m.namaSantri || m.idSantri, materi: m.surahAtauJuz,
-        nilai: m.nilai, catatan: m.catatan, inputBy: m.inputBy, surahAtauJuz: m.surahAtauJuz
-      })),
-      ...filteredBinnadzor.map(b => ({
-        id: b.id, type: 'Binnadzor' as const, timestamp: b.timestamp, idSantri: b.idSantri,
-        namaSantri: b.namaSantri || b.idSantri, materi: b.materi,
-        nilai: b.nilai, catatan: b.catatan, inputBy: b.inputBy,
-        surah: b.surah, ayatAwal: b.ayatAwal, ayatAkhir: b.ayatAkhir
-      })),
-      ...filteredPembelajaran.map(p => ({
-        id: p.id, type: 'Pembelajaran' as const, timestamp: p.timestamp, idSantri: p.idSantri,
-        namaSantri: p.namaSantri || p.idSantri,
-        materi: `${p.materi} ${p.statusKenaikan ? `[${p.statusKenaikan}]` : ''}`,
-        nilai: p.nilai, catatan: p.catatan, inputBy: p.inputBy,
-        tipeKelas: p.tipeKelas, statusKenaikan: p.statusKenaikan,
-        hukumTajwid: p.hukumTajwid, makhrojHuruf: p.makhrojHuruf,
-        kefasihan: p.kefasihan, kelancaran: p.kelancaran,
-        kendalaSantri: p.kendalaSantri, rekomendasiTindakLanjut: p.rekomendasiTindakLanjut
-      }))
-    ];
-    items.sort((a, b) => parseDateSafe(b.timestamp).getTime() - parseDateSafe(a.timestamp).getTime());
-    return deduplicateHistoryItems(items);
-  }, [filteredZiyadah, filteredMurojaah, filteredBinnadzor, filteredPembelajaran]);
-
-  // Build month list from data
-  const monthKeys = useMemo(() => {
-    const keys = new Set<string>();
-    combinedItems.forEach(item => {
-      const mk = getMonthKey(item.timestamp);
-      if (mk) keys.add(mk);
-    });
-    return Array.from(keys).sort((a, b) => b.localeCompare(a));
-  }, [combinedItems]);
-
-  // Default to current month on initial load only (not on every monthKeys change)
-  useEffect(() => {
-    if (hasSetDefaultMonth || monthKeys.length === 0) return;
-    const currentKey = getTodayInputFormat().slice(0, 7);
-    if (monthKeys.includes(currentKey)) {
-      setActiveMonthKey(currentKey);
-    } else {
-      setActiveMonthKey(monthKeys[0]);
+  const historyScope = useMemo<HistoryQueryScope>(() => {
+    if (isPersonalViewOnly) {
+      return { kind: 'student', idSantri: targetSantriId };
     }
-    setHasSetDefaultMonth(true);
-  }, [monthKeys, hasSetDefaultMonth]);
+    return { kind: 'staff' };
+  }, [isPersonalViewOnly, targetSantriId]);
+
+  const monthKeys = useMemo(() => {
+    const today = getTodayInputFormat();
+    const [year, month] = today.slice(0, 7).split('-').map(Number);
+    return Array.from({ length: 12 }, (_, index) => {
+      const shifted = new Date(Date.UTC(year, month - 1 - index, 1));
+      return `${shifted.getUTCFullYear()}-${String(shifted.getUTCMonth() + 1).padStart(2, '0')}`;
+    });
+  }, []);
+
+  const activeRangeRequest = useMemo<HistoryRangeRequest | null>(() => {
+    if (dateFilterMode === 'all') return null;
+
+    if (dateFilterMode === 'bulan') {
+      const [year, month] = activeMonthKey.split('-').map(Number);
+      const lastDay = new Date(Date.UTC(year, month, 0)).getUTCDate();
+      return {
+        startDate: `${activeMonthKey}-01`,
+        endDate: `${activeMonthKey}-${String(lastDay).padStart(2, '0')}`,
+        scope: historyScope,
+      };
+    }
+
+    const fallbackDate = getTodayInputFormat();
+    const startDate = customStartDate || customEndDate || fallbackDate;
+    const endDate = customEndDate || customStartDate || fallbackDate;
+    return {
+      startDate: startDate <= endDate ? startDate : endDate,
+      endDate: startDate <= endDate ? endDate : startDate,
+      scope: historyScope,
+    };
+  }, [dateFilterMode, activeMonthKey, customStartDate, customEndDate, historyScope]);
+
+  const rangeHistory = useHistoryRange(activeRangeRequest);
+  const archiveHistory = useHistoryArchive(historyScope, dateFilterMode === 'all');
+
+  const combinedItems: CombinedHistoryItem[] = useMemo(
+    () => dateFilterMode === 'all' ? archiveHistory.records : rangeHistory.records,
+    [dateFilterMode, archiveHistory.records, rangeHistory.records]
+  );
+
+  const historyStatus = dateFilterMode === 'all' ? archiveHistory.status : rangeHistory.status;
+  const historyError = dateFilterMode === 'all' ? archiveHistory.error : rangeHistory.error;
+  const historyHasMore = dateFilterMode === 'all' && archiveHistory.hasMore;
+  const refreshHistory = dateFilterMode === 'all' ? archiveHistory.refresh : rangeHistory.refresh;
+
+  const reportRecords = useMemo(() => {
+    const ziyadah: ZiyadahRecord[] = [];
+    const murojaah: MurojaahRecord[] = [];
+    const binnadzor: BinnadzorRecord[] = [];
+    const pembelajaran: PembelajaranRecord[] = [];
+
+    combinedItems.forEach(item => {
+      if (item.type === 'Ziyadah') {
+        ziyadah.push({
+          id: item.id,
+          timestamp: item.timestamp,
+          idSantri: item.idSantri,
+          namaSantri: item.namaSantri,
+          surah: item.surah || item.materi,
+          ayatAwal: item.ayatAwal || 1,
+          ayatAkhir: item.ayatAkhir || item.ayatAwal || 1,
+          nilai: item.nilai,
+          catatan: item.catatan,
+          inputBy: item.inputBy,
+        });
+      } else if (item.type === 'Murojaah') {
+        murojaah.push({
+          id: item.id,
+          timestamp: item.timestamp,
+          idSantri: item.idSantri,
+          namaSantri: item.namaSantri,
+          surahAtauJuz: item.surahAtauJuz || item.materi,
+          nilai: item.nilai,
+          catatan: item.catatan,
+          inputBy: item.inputBy,
+        });
+      } else if (item.type === 'Binnadzor') {
+        binnadzor.push({
+          id: item.id,
+          timestamp: item.timestamp,
+          idSantri: item.idSantri,
+          namaSantri: item.namaSantri,
+          surah: item.surah,
+          ayatAwal: item.ayatAwal,
+          ayatAkhir: item.ayatAkhir,
+          materi: item.materi,
+          surahAtauHalaman: item.surahAtauJuz,
+          nilai: item.nilai,
+          hukumTajwid: item.hukumTajwid,
+          makhrojHuruf: item.makhrojHuruf,
+          kefasihan: item.kefasihan,
+          kelancaran: item.kelancaran,
+          catatan: item.catatan,
+          inputBy: item.inputBy,
+        });
+      } else {
+        pembelajaran.push({
+          id: item.id,
+          timestamp: item.timestamp,
+          idSantri: item.idSantri,
+          namaSantri: item.namaSantri,
+          tipeKelas: item.tipeKelas || 'Jilid',
+          materi: item.materi,
+          nilai: item.nilai,
+          statusKenaikan: item.statusKenaikan,
+          hukumTajwid: item.hukumTajwid,
+          makhrojHuruf: item.makhrojHuruf,
+          kefasihan: item.kefasihan,
+          kelancaran: item.kelancaran,
+          kendalaSantri: item.kendalaSantri,
+          rekomendasiTindakLanjut: item.rekomendasiTindakLanjut,
+          catatan: item.catatan,
+          inputBy: item.inputBy,
+        });
+      }
+    });
+
+    return { ziyadah, murojaah, binnadzor, pembelajaran };
+  }, [combinedItems]);
 
   // Helper to extract YYYY-MM-DD from timestamp string
   const getItemDateString = (ts: string): string => {
@@ -595,6 +648,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     try {
       await storageService.deleteRecord(itemToDelete.type, itemToDelete.id, deleterName);
       onDataChanged();
+      invalidateHistoryRangeCache();
+      refreshHistory();
       onNotify('success', `Data setoran untuk ${itemToDelete.namaSantri} dipindahkan ke Tempat Sampah (dapat dipulihkan dalam 15 hari).`);
       setSelectedIds(prev => {
         const next = new Set(prev);
@@ -618,6 +673,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       const itemsToDel = displayedItems.filter(i => selectedIds.has(getHistoryItemKey(i))).map(i => ({ type: i.type, id: i.id }));
       await storageService.deleteRecordsBatch(itemsToDel, deleterName);
       onDataChanged();
+      invalidateHistoryRangeCache();
+      refreshHistory();
       onNotify('success', `${itemsToDel.length} rekaman berhasil dipindahkan ke Tempat Sampah (dapat dipulihkan dalam 15 hari).`);
       setSelectedIds(new Set());
       setIsBatchDeleteModalOpen(false);
@@ -689,6 +746,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         });
       }
       onDataChanged();
+      invalidateHistoryRangeCache();
+      refreshHistory();
       onNotify('success', `Perubahan ${editingItem.type} berhasil disimpan ke Cloud.`);
       closeEditModal();
     } catch (err) {
@@ -967,7 +1026,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                                 : 'bg-white text-slate-600 border-slate-200'
                             }`}
                           >
-                            {getMonthLabel(mk)} · {monthCounts[mk] || 0}
+                            {getMonthLabel(mk)}{activeMonthKey === mk ? ` · ${monthCounts[mk] || 0}` : ''}
                           </button>
                         ))
                       )}
@@ -1031,7 +1090,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                 {dateFilterMode === 'all' && (
                   <p className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs leading-4 text-slate-600">
-                    Menampilkan seluruh arsip tanpa pembatasan tanggal.
+                    Arsip dimuat bertahap (maks. 50 rekaman per kategori setiap batch) agar aplikasi tetap ringan.
                   </p>
                 )}
               </div>
@@ -1449,7 +1508,14 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       <div className="flex items-end justify-between gap-3 px-1 pt-1">
         <div>
           <h2 className="ui-section-title">Arsip setoran</h2>
-          <p className="ui-secondary mt-0.5">{displayedItems.length} rekaman · {activePeriodLabel}</p>
+          <p className="ui-secondary mt-0.5">
+            {displayedItems.length} rekaman · {activePeriodLabel}
+            {(historyStatus === 'refreshing' || (historyStatus === 'error' && combinedItems.length > 0)) && (
+              <span className="ml-1.5 text-amber-700">
+                {historyStatus === 'refreshing' ? '· memperbarui…' : '· data terakhir ditampilkan'}
+              </span>
+            )}
+          </p>
         </div>
         <span className="ui-meta hidden lg:inline">Klik baris untuk melihat detail</span>
       </div>
@@ -1499,7 +1565,25 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           </>
         )}
 
-        {displayedItems.length === 0 ? (
+        {historyStatus === 'loading' ? (
+          <div className="flex min-h-48 flex-col items-center justify-center gap-2 px-5 text-center text-slate-500">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-700 border-t-transparent" />
+            <p className="text-xs font-semibold text-slate-700">Memuat riwayat sesuai periode…</p>
+          </div>
+        ) : historyStatus === 'error' && combinedItems.length === 0 ? (
+          <div className="flex min-h-48 flex-col items-center justify-center gap-2 px-5 text-center">
+            <AlertTriangle className="h-6 w-6 text-amber-600" />
+            <p className="text-sm font-bold text-slate-800">Riwayat belum dapat dimuat</p>
+            <p className="max-w-md text-xs leading-relaxed text-slate-500">{historyError}</p>
+            <button
+              type="button"
+              onClick={refreshHistory}
+              className="ui-control mt-1 rounded-lg bg-emerald-800 px-4 text-xs font-bold text-white hover:bg-emerald-700"
+            >
+              Coba Lagi
+            </button>
+          </div>
+        ) : displayedItems.length === 0 ? (
           <>
             {/* Mobile compact empty state */}
             <div className="p2-history-empty lg:hidden flex flex-col items-center justify-center py-10 px-5 text-center">
@@ -2056,13 +2140,31 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         )}
       </div>
 
+      {dateFilterMode === 'all' && combinedItems.length > 0 && (
+        <div className="flex flex-col items-center gap-1.5 pt-2">
+          {historyHasMore ? (
+            <button
+              type="button"
+              onClick={archiveHistory.loadMore}
+              disabled={archiveHistory.status === 'refreshing'}
+              className="ui-control min-w-48 rounded-xl border border-slate-300 bg-white px-4 text-xs font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+            >
+              {archiveHistory.status === 'refreshing' ? 'Memuat arsip…' : 'Muat Riwayat Sebelumnya'}
+            </button>
+          ) : (
+            <span className="text-[11px] font-medium text-slate-400">Seluruh arsip telah dimuat.</span>
+          )}
+          <span className="text-[10px] text-slate-400">Mode Semua Waktu memakai pagination, bukan full-read koleksi.</span>
+        </div>
+      )}
+
       {/* Summary Footer - always visible */}
       <div className="flex items-center justify-between text-xs text-slate-500 pt-2.5 border-t border-slate-100 flex-shrink-0">
         <span>
           Menampilkan <b className="text-slate-800 font-extrabold">{displayedItems.length}</b> setoran
           {' '}(<b className="text-emerald-800">{activePeriodLabel}</b>
           {kategoriFilter !== 'ALL' && <> &bull; Kategori <b className="text-slate-700">{kategoriFilter}</b></>})
-          {' '}dari total {combinedItems.length} data rekaman
+          {' '}dari {combinedItems.length} data yang telah dimuat
         </span>
         <span className="text-xs text-emerald-800 font-semibold hidden lg:inline">Data Mutaba'ah Terverifikasi</span>
       </div>
@@ -2179,10 +2281,10 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         onClose={() => setShowReportModal(false)}
         currentUser={currentUser}
         santriList={santriList}
-        ziyadahRecords={ziyadahRecords}
-        murojaahRecords={murojaahRecords}
-        binnadzorRecords={binnadzorRecords || actualBinnadzor}
-        pembelajaranRecords={pembelajaranRecords || actualPembelajaran}
+        ziyadahRecords={reportRecords.ziyadah}
+        murojaahRecords={reportRecords.murojaah}
+        binnadzorRecords={reportRecords.binnadzor}
+        pembelajaranRecords={reportRecords.pembelajaran}
       />
 
       {/* Tempat Sampah Modal (15 Hari Soft Delete Retention) */}
