@@ -1259,11 +1259,11 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                   >
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{getMonthLabel(mk)}</span>
-                    <span className={`px-1.5 py-0.5 rounded-md text-xs font-bold ${
-                      activeMonthKey === mk ? 'bg-white/20 text-white' : 'bg-white text-slate-500'
-                    }`}>
-                      {monthCounts[mk] || 0}
-                    </span>
+                    {activeMonthKey === mk && (
+                      <span className="px-1.5 py-0.5 rounded-md text-xs font-bold bg-white/20 text-white">
+                        {monthCounts[mk] || 0}
+                      </span>
+                    )}
                   </button>
                 ))
               )}
@@ -1370,7 +1370,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         {/* Mode 3: All Time Banner */}
         {dateFilterMode === 'all' && (
           <div className="py-1 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 flex items-center justify-between">
-            <span>Menampilkan seluruh arsip data setoran tanpa pembatasan tanggal.</span>
+            <span>Arsip dimuat bertahap agar tidak membaca seluruh koleksi sekaligus.</span>
             <button
               onClick={() => setDateFilterMode('bulan')}
               className="text-emerald-800 font-bold hover:underline cursor-pointer"
