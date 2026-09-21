@@ -23,7 +23,7 @@ export interface HistoryRangeState {
 }
 
 export type HistoryRangeAction =
-  | { type: 'start'; requestId: number }
+  | { type: 'start'; requestId: number; preserveRecords: boolean }
   | { type: 'success'; requestId: number; records: CombinedHistoryItem[]; source: 'server' | 'scoped-cache' }
   | { type: 'error'; requestId: number; error: string };
 
@@ -37,11 +37,14 @@ export const initialHistoryRangeState: HistoryRangeState = {
 
 export function historyRangeReducer(state: HistoryRangeState, action: HistoryRangeAction): HistoryRangeState {
   if (action.type === 'start') {
+    const records = action.preserveRecords ? state.records : [];
     return {
       ...state,
+      records,
       activeRequestId: action.requestId,
-      status: state.records.length > 0 ? 'refreshing' : 'loading',
+      status: records.length > 0 ? 'refreshing' : 'loading',
       error: null,
+      source: action.preserveRecords ? state.source : null,
     };
   }
 
@@ -68,13 +71,16 @@ export function useHistoryRange(request: HistoryRangeRequest | null) {
   const [state, dispatch] = useReducer(historyRangeReducer, initialHistoryRangeState);
   const [refreshToken, setRefreshToken] = useState(0);
   const requestIdRef = useRef(0);
+  const previousKeyRef = useRef<string | null>(null);
   const requestKey = request ? createHistoryQueryKey(request) : 'disabled';
 
   useEffect(() => {
     if (!request) return;
     const requestId = ++requestIdRef.current;
+    const preserveRecords = previousKeyRef.current === requestKey;
+    previousKeyRef.current = requestKey;
     let cancelled = false;
-    dispatch({ type: 'start', requestId });
+    dispatch({ type: 'start', requestId, preserveRecords });
 
     fetchHistoryRange(request)
       .then(result => {
