@@ -6,7 +6,7 @@ import {
 } from '../src/hooks/useHistoryRange.ts';
 
 test('history range state distinguishes initial loading and refreshing', () => {
-  const loading = historyRangeReducer(initialHistoryRangeState, { type: 'start', requestId: 1 });
+  const loading = historyRangeReducer(initialHistoryRangeState, { type: 'start', requestId: 1, preserveRecords: false });
   assert.equal(loading.status, 'loading');
 
   const success = historyRangeReducer(loading, {
@@ -25,14 +25,14 @@ test('history range state distinguishes initial loading and refreshing', () => {
     }],
     source: 'server',
   });
-  const refreshing = historyRangeReducer(success, { type: 'start', requestId: 2 });
+  const refreshing = historyRangeReducer(success, { type: 'start', requestId: 2, preserveRecords: true });
   assert.equal(refreshing.status, 'refreshing');
   assert.equal(refreshing.records.length, 1);
 });
 
 test('stale history request cannot overwrite the latest result', () => {
-  const first = historyRangeReducer(initialHistoryRangeState, { type: 'start', requestId: 1 });
-  const second = historyRangeReducer(first, { type: 'start', requestId: 2 });
+  const first = historyRangeReducer(initialHistoryRangeState, { type: 'start', requestId: 1, preserveRecords: false });
+  const second = historyRangeReducer(first, { type: 'start', requestId: 2, preserveRecords: false });
   const stale = historyRangeReducer(second, {
     type: 'success',
     requestId: 1,
