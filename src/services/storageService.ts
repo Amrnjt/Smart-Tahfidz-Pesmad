@@ -151,6 +151,12 @@ export const storageService = {
     }
   },
 
+  assertCanManageAccounts(): void {
+    if (String(this.getSession()?.role || '').trim().toLowerCase() !== 'superadmin') {
+      throw new Error('Akses ditolak: Hanya Superadmin yang dapat mengubah akun pengguna.');
+    }
+  },
+
   async authenticate(usernameInput: string, passwordInput: string): Promise<{ success: boolean; user?: User; message?: string }> {
     const cleanUser = usernameInput.trim().toLowerCase();
     const cleanPass = passwordInput.trim();
@@ -1517,6 +1523,7 @@ export const storageService = {
   },
 
   async addUser(user: User): Promise<User> {
+    this.assertCanManageAccounts();
     this.assertCanMutate('Tambah pengguna');
     const users = this.getUsers();
 
@@ -1549,6 +1556,7 @@ export const storageService = {
   },
 
   async updateUser(id: string, updatedData: Partial<User>): Promise<boolean> {
+    this.assertCanManageAccounts();
     this.assertCanMutate('Ubah pengguna');
     const cleanUpdate = { ...updatedData };
     if (cleanUpdate.username) cleanUpdate.username = cleanUpdate.username.trim().toLowerCase();
@@ -1577,6 +1585,7 @@ export const storageService = {
   },
 
   async deleteUser(id: string): Promise<boolean> {
+    this.assertCanManageAccounts();
     this.assertCanMutate('Hapus pengguna');
     await deleteDoc(doc(db, COLLECTIONS.USERS, id));
     writeArrayCache(STORAGE_KEYS.USERS, this.getUsers().filter(u => u.id !== id));

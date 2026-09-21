@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ZiyadahRecord, MurojaahRecord, User, Santri } from '../types';
-import { storageService } from '../services/storageService';
 import { formatTanggalLengkap } from '../utils/dateFormatter';
 
 export interface SetoranNotificationData {
@@ -104,7 +103,6 @@ export function useSetoranNotifications(
       try {
         const result = await Notification.requestPermission();
         setPermission(result);
-        await storageService.updateUser(currentUser.id, { notificationPermission: result });
       } catch (err) {
         console.warn('Notification permission request failed:', err);
       }

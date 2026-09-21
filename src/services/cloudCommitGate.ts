@@ -315,6 +315,7 @@ export function installCloudCommitGate(): void {
   };
 
   storageService.addUser = async (user: User): Promise<User> => {
+    storageService.assertCanManageAccounts();
     const ensuredUser: User = {
       id: user.id || `USR-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`,
       username: user.username ? user.username.trim().toLowerCase() : '',
@@ -338,6 +339,7 @@ export function installCloudCommitGate(): void {
     id: string,
     updatedData: Partial<User>
   ): Promise<boolean> => {
+    storageService.assertCanManageAccounts();
     const cleanUpdate = { ...updatedData };
     if (cleanUpdate.username) cleanUpdate.username = cleanUpdate.username.trim().toLowerCase();
     if (cleanUpdate.password) cleanUpdate.password = cleanUpdate.password.trim();
