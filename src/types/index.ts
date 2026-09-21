@@ -201,12 +201,13 @@ export interface SurahFullDetail extends SurahMeta {
   audioFull?: string;
 }
 
-export type ShalatJamaahStatus = 'Jama\'ah' | 'Berhalangan' | 'Sakit';
+export type ShalatJamaahStatus = 'Jama\'ah' | 'Berhalangan' | 'Sakit' | 'Tanpa Alasan';
 
 export const SHALAT_STATUS_OPTIONS: { value: ShalatJamaahStatus; label: string; color: string; emoji: string }[] = [
   { value: 'Jama\'ah', label: 'Jama\'ah', color: 'bg-emerald-100 text-emerald-800 border-emerald-300', emoji: '🕌' },
-  { value: 'Berhalangan', label: 'Berhalangan', color: 'bg-amber-100 text-amber-800 border-amber-300', emoji: '⏳' },
+  { value: 'Berhalangan', label: 'Halangan', color: 'bg-amber-100 text-amber-800 border-amber-300', emoji: '⏳' },
   { value: 'Sakit', label: 'Sakit', color: 'bg-rose-100 text-rose-800 border-rose-300', emoji: '🩺' },
+  { value: 'Tanpa Alasan', label: 'Tanpa Alasan', color: 'bg-slate-200 text-slate-900 border-slate-400', emoji: '—' },
 ];
 
 export interface PantauanLiburanRecord {
@@ -220,7 +221,7 @@ export interface PantauanLiburanRecord {
   wiridWaqiah: boolean;
   wiridMulk: boolean;
   wiridInsyirah: boolean;
-  // Keaktifan Shalat Jama'ah 5 Waktu (Jama'ah | Berhalangan | Sakit)
+  // Keaktifan Shalat Jama'ah 5 Waktu (Jama'ah | Berhalangan/Halangan | Sakit | Tanpa Alasan)
   shalatSubuh: ShalatJamaahStatus;
   shalatDzuhur: ShalatJamaahStatus;
   shalatAshar: ShalatJamaahStatus;
@@ -237,7 +238,7 @@ export interface AppConfig {
   updatedBy?: string;
 }
 
-export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'binnadzor' | 'pembelajaran' | 'riwayat' | 'mushaf' | 'santri' | 'kelas';
+export type ActiveTab = 'dashboard' | 'ziyadah' | 'murojaah' | 'binnadzor' | 'pembelajaran' | 'riwayat' | 'mushaf' | 'santri' | 'kelas' | 'pantauan';
 
 export type TrashRecordType = 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran';
 

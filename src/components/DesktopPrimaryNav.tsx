@@ -17,10 +17,10 @@ interface DesktopPrimaryNavProps {
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
   isUstadz: boolean;
+  showPantauan: boolean;
   isSetorMenuOpen: boolean;
   onOpenSetorMenu: () => void;
   onCloseSetorMenu: () => void;
-  onOpenPantauanLiburan?: () => void;
 }
 
 interface NavItemConfig {
@@ -40,10 +40,10 @@ export const DesktopPrimaryNav: React.FC<DesktopPrimaryNavProps> = ({
   activeTab,
   setActiveTab,
   isUstadz,
+  showPantauan,
   isSetorMenuOpen,
   onOpenSetorMenu,
-  onCloseSetorMenu,
-  onOpenPantauanLiburan
+  onCloseSetorMenu
 }) => {
   const isSetorActive = ['ziyadah', 'murojaah', 'binnadzor', 'pembelajaran'].includes(activeTab);
   const setorButtonRef = useRef<HTMLButtonElement>(null);
@@ -101,15 +101,16 @@ export const DesktopPrimaryNav: React.FC<DesktopPrimaryNavProps> = ({
       onClick: () => setActiveTab('santri')
     });
 
-    if (onOpenPantauanLiburan) {
-      navItems.push({
-        id: 'pantauan',
-        label: 'Pantauan',
-        icon: Eye,
-        isActive: false,
-        onClick: onOpenPantauanLiburan
-      });
-    }
+  }
+
+  if (showPantauan) {
+    navItems.push({
+      id: 'pantauan',
+      label: 'Pantauan',
+      icon: Eye,
+      isActive: activeTab === 'pantauan',
+      onClick: () => setActiveTab('pantauan')
+    });
   }
 
   navItems.push({

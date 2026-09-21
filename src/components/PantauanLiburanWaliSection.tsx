@@ -349,10 +349,10 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
                     <span
                       className={`text-xs sm:mt-1 sm:block ${!currentVal && validationError ? 'text-rose-700' : 'text-slate-600'}`}
                     >
-                      {currentVal || 'Belum dipilih'}
+                      {currentVal === 'Berhalangan' ? 'Halangan' : currentVal || 'Belum dipilih'}
                     </span>
                   </div>
-                  <div className="grid grid-cols-[repeat(auto-fit,minmax(6.5rem,1fr))] gap-2 sm:w-full sm:max-w-md">
+                  <div className="grid grid-cols-2 gap-2 sm:w-full sm:max-w-xl sm:grid-cols-4">
                     {SHALAT_STATUS_OPTIONS.map((opt) => {
                       const isSelected = currentVal === opt.value;
                       return (
@@ -367,7 +367,9 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
                                 ? 'border-emerald-700 bg-emerald-700 text-white'
                                 : opt.value === 'Berhalangan'
                                   ? 'border-amber-700 bg-amber-100 text-amber-900'
-                                  : 'border-rose-700 bg-rose-100 text-rose-900'
+                                  : opt.value === 'Sakit'
+                                    ? 'border-rose-700 bg-rose-100 text-rose-900'
+                                    : 'border-slate-700 bg-slate-800 text-white'
                               : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
                           }`}
                         >
@@ -535,10 +537,12 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
                                   ? 'font-medium text-emerald-800'
                                   : rec[waktu.key] === 'Berhalangan'
                                     ? 'font-medium text-amber-800'
-                                    : 'font-medium text-rose-800'
+                                    : rec[waktu.key] === 'Sakit'
+                                      ? 'font-medium text-rose-800'
+                                      : 'font-medium text-slate-900'
                               }
                             >
-                              {rec[waktu.key]}
+                              {rec[waktu.key] === 'Berhalangan' ? 'Halangan' : rec[waktu.key]}
                             </dd>
                           </div>
                         ))}

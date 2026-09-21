@@ -9,6 +9,9 @@ const dropupCss = readFileSync(new URL('../src/setor-dropup.css', import.meta.ur
 const motionFinishCss = readFileSync(new URL('../src/motion-finish.css', import.meta.url), 'utf8');
 const chromeTransitionCss = readFileSync(new URL('../src/chrome-transition-fix.css', import.meta.url), 'utf8');
 const manageSheet = readFileSync(new URL('../src/components/ManageActionSheet.tsx', import.meta.url), 'utf8');
+const pantauanPage = readFileSync(new URL('../src/components/PantauanLiburanPage.tsx', import.meta.url), 'utf8');
+const pantauanWali = readFileSync(new URL('../src/components/PantauanLiburanWaliSection.tsx', import.meta.url), 'utf8');
+const types = readFileSync(new URL('../src/types/index.ts', import.meta.url), 'utf8');
 
 test('Setor launcher exposes an accessible command tray above the mobile FAB', () => {
   assert.match(bottomNav, /id="setor-dropup-menu"/);
@@ -51,15 +54,25 @@ test('Kelola is an anchored accessible popover with outside and Escape close', (
   assert.match(manageSheet, /initial=\{\{ opacity: 0, y: 8, scale: 0\.96 \}\}/);
 });
 
-test('Kelola keeps Kelas, Santri, and Pantauan Liburan destinations', () => {
+test('Kelola keeps Kelas, Santri, and dedicated Pantauan Liburan destinations', () => {
   assert.match(manageSheet, /onSelect\(tab\)/);
   assert.match(manageSheet, /chooseAction\(e, 'kelas'/);
   assert.match(manageSheet, /chooseAction\(e, 'santri'/);
-  assert.match(manageSheet, /onOpenPantauanLiburan\(\)/);
+  assert.match(manageSheet, /chooseAction\(e, 'pantauan'/);
   assert.match(manageSheet, /Pantauan Liburan/);
-  assert.match(bottomNav, /PantauanLiburanMonitorModal/);
-  assert.match(bottomNav, /santriList=\{santriList\}/);
-  assert.match(bottomNav, /onNotify=\{onNotify\}/);
+  assert.doesNotMatch(bottomNav, /PantauanLiburanMonitorModal/);
+  assert.match(app, /activeTab === 'pantauan'/);
+  assert.match(app, /<PantauanLiburanPage/);
+  assert.match(pantauanPage, /mode: 'monitor' \| 'wali'/);
+});
+
+test('Pantauan prayer status includes Tanpa Alasan while preserving old Halangan data', () => {
+  assert.match(types, /'Tanpa Alasan'/);
+  assert.match(types, /value: 'Berhalangan', label: 'Halangan'/);
+  assert.match(pantauanWali, /opt\.value === 'Sakit'/);
+  assert.match(pantauanWali, /bg-slate-800 text-white/);
+  assert.match(pantauanPage, /tanpaAlasan/);
+  assert.match(pantauanPage, /status === 'Berhalangan' \? 'Halangan'/);
 });
 
 test('Kelola trigger exposes open state and rotates its chevron', () => {
@@ -70,7 +83,8 @@ test('Kelola trigger exposes open state and rotates its chevron', () => {
 });
 
 test('Bottom navbar keeps role-specific item counts and Smart Tahfidz active colors', () => {
-  assert.match(bottomNav, /grid grid-cols-3/);
+  assert.match(bottomNav, /grid-cols-3/);
+  assert.match(bottomNav, /grid-cols-4/);
   assert.match(bottomNav, /grid grid-cols-5/);
   assert.match(bottomNav, /isActive[\s\S]*?bg-emerald-50\/90 text-emerald-800 font-bold/);
   assert.match(bottomNav, /aria-current=\{isActive \? 'page' : undefined\}/);
