@@ -1400,55 +1400,28 @@ export const storageService = {
 
   async updateRecord(type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran', id: string, updatedData: Partial<ZiyadahRecord | MurojaahRecord | BinnadzorRecord | PembelajaranRecord>): Promise<boolean> {
     this.assertCanMutate('Ubah riwayat setoran');
+    if (!id) return false;
+
+    const collectionName = type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
+      : type === 'Murojaah' ? COLLECTIONS.MUROJAAH
+      : type === 'Pembelajaran' ? COLLECTIONS.PEMBELAJARAN
+      : COLLECTIONS.BINNADZOR;
+
+    await setDoc(doc(db, collectionName, id), cleanForFirestore(updatedData), { merge: true });
+
+    // Keep the bounded operational cache coherent only when the record is
+    // already present. Historical records outside the window are updated
+    // directly in Firestore and remain outside the dashboard cache.
     if (type === 'Ziyadah') {
-      const records = this.getZiyadahRecords().map(r => r.id === id ? { ...r, ...updatedData } as ZiyadahRecord : r);
-      writeArrayCache(STORAGE_KEYS.ZIYADAH, records);
-      const target = records.find(r => r.id === id);
-      if (target) {
-        try {
-          await setDoc(doc(db, COLLECTIONS.ZIYADAH, id), cleanForFirestore(target), { merge: true });
-        } catch (e) {
-          console.error('Failed to update Ziyadah in Firestore:', e);
-          throw e;
-        }
-      }
+      writeArrayCache(STORAGE_KEYS.ZIYADAH, this.getZiyadahRecords().map(r => r.id === id ? { ...r, ...updatedData } as ZiyadahRecord : r));
     } else if (type === 'Murojaah') {
-      const records = this.getMurojaahRecords().map(r => r.id === id ? { ...r, ...updatedData } as MurojaahRecord : r);
-      writeArrayCache(STORAGE_KEYS.MUROJAAH, records);
-      const target = records.find(r => r.id === id);
-      if (target) {
-        try {
-          await setDoc(doc(db, COLLECTIONS.MUROJAAH, id), cleanForFirestore(target), { merge: true });
-        } catch (e) {
-          console.error('Failed to update Murojaah in Firestore:', e);
-          throw e;
-        }
-      }
+      writeArrayCache(STORAGE_KEYS.MUROJAAH, this.getMurojaahRecords().map(r => r.id === id ? { ...r, ...updatedData } as MurojaahRecord : r));
     } else if (type === 'Pembelajaran') {
-      const records = this.getPembelajaranRecords().map(r => r.id === id ? { ...r, ...updatedData } as PembelajaranRecord : r);
-      writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, records);
-      const target = records.find(r => r.id === id);
-      if (target) {
-        try {
-          await setDoc(doc(db, COLLECTIONS.PEMBELAJARAN, id), cleanForFirestore(target), { merge: true });
-        } catch (e) {
-          console.error('Failed to update Pembelajaran in Firestore:', e);
-          throw e;
-        }
-      }
+      writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, this.getPembelajaranRecords().map(r => r.id === id ? { ...r, ...updatedData } as PembelajaranRecord : r));
     } else {
-      const records = this.getBinnadzorRecords().map(r => r.id === id ? { ...r, ...updatedData } as BinnadzorRecord : r);
-      writeArrayCache(STORAGE_KEYS.BINNADZOR, records);
-      const target = records.find(r => r.id === id);
-      if (target) {
-        try {
-          await setDoc(doc(db, COLLECTIONS.BINNADZOR, id), cleanForFirestore(target), { merge: true });
-        } catch (e) {
-          console.error('Failed to update Binnadzor in Firestore:', e);
-          throw e;
-        }
-      }
+      writeArrayCache(STORAGE_KEYS.BINNADZOR, this.getBinnadzorRecords().map(r => r.id === id ? { ...r, ...updatedData } as BinnadzorRecord : r));
     }
+
     return true;
   },
 
@@ -1599,34 +1572,47 @@ export const storageService = {
 
   async deleteSantri(idSantri: string, deleteRelatedHistory = true): Promise<boolean> {
     this.assertCanMutate('Hapus santri');
-    const usersToDelete = this.getUsers().filter(u => u.idSantri === idSantri || u.username.toLowerCase() === idSantri.toLowerCase());
-    const ziyadahToDelete = deleteRelatedHistory ? this.getZiyadahRecords().filter(r => r.idSantri === idSantri) : [];
-    const murojaahToDelete = deleteRelatedHistory ? this.getMurojaahRecords().filter(r => r.idSantri === idSantri) : [];
-    const binnadzorToDelete = deleteRelatedHistory ? this.getBinnadzorRecords().filter(r => r.idSantri === idSantri) : [];
-    const pembelajaranToDelete = deleteRelatedHistory ? this.getPembelajaranRecords().filter(r => r.idSantri === idSantri) : [];
 
-    const operationCount = 1 + usersToDelete.length + ziyadahToDelete.length + murojaahToDelete.length + binnadzorToDelete.length + pembelajaranToDelete.length;
-    if (operationCount > 450) {
-      throw new Error('Data terkait santri terlalu banyak untuk satu operasi hapus Cloud.');
-    }
+    const usersToDelete = this.getUsers().filter(
+      u => u.idSantri === idSantri || u.username.toLowerCase() === idSantri.toLowerCase()
+    );
 
-    const batch = writeBatch(db);
-    batch.delete(doc(db, COLLECTIONS.SANTRI, idSantri));
-    usersToDelete.forEach(u => batch.delete(doc(db, COLLECTIONS.USERS, u.id)));
-    ziyadahToDelete.forEach(r => batch.delete(doc(db, COLLECTIONS.ZIYADAH, r.id)));
-    murojaahToDelete.forEach(r => batch.delete(doc(db, COLLECTIONS.MUROJAAH, r.id)));
-    binnadzorToDelete.forEach(r => batch.delete(doc(db, COLLECTIONS.BINNADZOR, r.id)));
-    pembelajaranToDelete.forEach(r => batch.delete(doc(db, COLLECTIONS.PEMBELAJARAN, r.id)));
-    await batch.commit();
+    const relatedSnapshots = deleteRelatedHistory
+      ? await Promise.all([
+          getDocs(query(collection(db, COLLECTIONS.ZIYADAH), where('idSantri', '==', idSantri))),
+          getDocs(query(collection(db, COLLECTIONS.MUROJAAH), where('idSantri', '==', idSantri))),
+          getDocs(query(collection(db, COLLECTIONS.BINNADZOR), where('idSantri', '==', idSantri))),
+          getDocs(query(collection(db, COLLECTIONS.PEMBELAJARAN), where('idSantri', '==', idSantri))),
+        ])
+      : [];
 
-    writeArrayCache(STORAGE_KEYS.SANTRI, this.getSantriList().filter(s => s.idSantri !== idSantri));
-    writeArrayCache(STORAGE_KEYS.USERS, this.getUsers().filter(u => u.idSantri !== idSantri && u.username.toLowerCase() !== idSantri.toLowerCase()));
+    const deleteRefs = [
+      doc(db, COLLECTIONS.SANTRI, idSantri),
+      ...usersToDelete.map(user => doc(db, COLLECTIONS.USERS, user.id)),
+    ];
 
     if (deleteRelatedHistory) {
-      ziyadahToDelete.forEach(r => this.markRecordDeleted(r.id));
-      murojaahToDelete.forEach(r => this.markRecordDeleted(r.id));
-      binnadzorToDelete.forEach(r => this.markRecordDeleted(r.id));
-      pembelajaranToDelete.forEach(r => this.markRecordDeleted(r.id));
+      relatedSnapshots.forEach(snapshot => {
+        snapshot.docs.forEach(docSnap => deleteRefs.push(docSnap.ref));
+      });
+    }
+
+    for (let index = 0; index < deleteRefs.length; index += 450) {
+      const batch = writeBatch(db);
+      deleteRefs.slice(index, index + 450).forEach(ref => batch.delete(ref));
+      await batch.commit();
+    }
+
+    writeArrayCache(STORAGE_KEYS.SANTRI, this.getSantriList().filter(s => s.idSantri !== idSantri));
+    writeArrayCache(
+      STORAGE_KEYS.USERS,
+      this.getUsers().filter(u => u.idSantri !== idSantri && u.username.toLowerCase() !== idSantri.toLowerCase())
+    );
+
+    if (deleteRelatedHistory) {
+      relatedSnapshots.forEach(snapshot => {
+        snapshot.docs.forEach(docSnap => this.markRecordDeleted(docSnap.id));
+      });
       writeArrayCache(STORAGE_KEYS.ZIYADAH, this.getZiyadahRecords().filter(r => r.idSantri !== idSantri));
       writeArrayCache(STORAGE_KEYS.MUROJAAH, this.getMurojaahRecords().filter(r => r.idSantri !== idSantri));
       writeArrayCache(STORAGE_KEYS.BINNADZOR, this.getBinnadzorRecords().filter(r => r.idSantri !== idSantri));
