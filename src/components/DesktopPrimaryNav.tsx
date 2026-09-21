@@ -17,6 +17,7 @@ interface DesktopPrimaryNavProps {
   activeTab: ActiveTab;
   setActiveTab: (tab: ActiveTab) => void;
   isUstadz: boolean;
+  showPantauan: boolean;
   isSetorMenuOpen: boolean;
   onOpenSetorMenu: () => void;
   onCloseSetorMenu: () => void;
@@ -39,6 +40,7 @@ export const DesktopPrimaryNav: React.FC<DesktopPrimaryNavProps> = ({
   activeTab,
   setActiveTab,
   isUstadz,
+  showPantauan,
   isSetorMenuOpen,
   onOpenSetorMenu,
   onCloseSetorMenu
@@ -99,6 +101,9 @@ export const DesktopPrimaryNav: React.FC<DesktopPrimaryNavProps> = ({
       onClick: () => setActiveTab('santri')
     });
 
+  }
+
+  if (showPantauan) {
     navItems.push({
       id: 'pantauan',
       label: 'Pantauan',
