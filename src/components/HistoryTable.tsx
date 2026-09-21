@@ -2292,7 +2292,11 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         isOpen={showTrashModal}
         onClose={() => setShowTrashModal(false)}
         currentUser={currentUser}
-        onDataChanged={onDataChanged}
+        onDataChanged={() => {
+          onDataChanged();
+          invalidateHistoryRangeCache();
+          refreshHistory();
+        }}
         onNotify={onNotify}
       />
 
