@@ -7,12 +7,14 @@ import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
 
 interface SantriManagementProps {
+  currentUser: User;
   santriList: Santri[];
   onDataChanged: () => void;
   onNotify: NotifyFn;
 }
 
 export const SantriManagement: React.FC<SantriManagementProps> = ({
+  currentUser,
   santriList,
   onDataChanged,
   onNotify
@@ -67,8 +69,16 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const [editIdSantri, setEditIdSantri] = useState('');
 
   const showToast = (type: 'success' | 'error', message: string) => onNotify(type, message);
+  const canManageAccounts = currentUser.role === 'Superadmin';
+
+  const requireAccountManager = () => {
+    if (canManageAccounts) return true;
+    showToast('error', 'Hanya Superadmin yang dapat mengubah pengaturan akun.');
+    return false;
+  };
 
   const handleOpenEditUser = (u: User) => {
+    if (!requireAccountManager()) return;
     setUserToEdit(u);
     setEditNama(u.nama);
     setEditUsername(u.username);
@@ -79,6 +89,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
 
   const handleSaveEditUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!requireAccountManager()) return;
     if (!userToEdit || !editNama.trim()) return;
 
     const isSuper = userToEdit.role === 'Superadmin';
@@ -185,6 +196,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!requireAccountManager()) return;
     const cleanUsername = newUsername.trim().toLowerCase();
     const cleanNama = newUserNama.trim();
     const cleanPassword = newUserPassword.trim();
@@ -244,6 +256,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   };
 
   const handleDeleteUser = async () => {
+    if (!requireAccountManager()) return;
     if (!userToDelete) return;
 
     setIsDeleting(true);
@@ -379,7 +392,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
             Santri & Akun
           </h3>
           <p className="text-xs text-slate-500">
-            Kelola identitas santri, data wali, target hafalan, kredensial, dan hak akses pengguna.
+            Kelola data santri serta salin dan bagikan kredensial. Pengaturan akun hanya untuk Superadmin.
           </p>
         </div>
 
@@ -438,7 +451,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
             <UserPlus className="w-4 h-4" />
             <span>Tambah Santri Baru</span>
           </button>
-        ) : (
+        ) : canManageAccounts ? (
           <button
             id="btn-tambah-user"
             onClick={() => setShowAddUserModal(true)}
@@ -447,7 +460,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
             <UserPlus className="w-4 h-4" />
             <span>Tambah Akun Baru</span>
           </button>
-        )}
+        ) : null}
       </div>
 
       {/* Tab 1: Santri Cards Grid */}
@@ -615,7 +628,9 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
             <div className="flex items-center gap-2">
               <Shield className="w-4 h-4 text-emerald-700 flex-shrink-0" />
               <span>
-                Gunakan tombol <b>Edit</b> pada setiap baris akun untuk <b>mengubah Role (Ustadz/Wali/Santri), Username, Password, dan Kaitan ID Santri</b> secara save-able.
+                {canManageAccounts
+                  ? 'Superadmin dapat membuat, mengedit, dan menghapus akun. Kredensial akun selain Superadmin dapat disalin atau dibagikan.'
+                  : 'Ustadz dapat menyalin dan membagikan kredensial akun selain Superadmin. Perubahan pengaturan akun hanya dapat dilakukan oleh Superadmin.'}
               </span>
             </div>
           </div>
@@ -670,12 +685,16 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                         <button type="button" onClick={() => handleShareUserCredentials(u)} className="min-h-11 rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-xs font-semibold text-emerald-800 flex items-center justify-center gap-1.5">
                           <Share2 className="w-3.5 h-3.5" /> Bagikan
                         </button>
-                        <button type="button" onClick={() => handleOpenEditUser(u)} className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 flex items-center justify-center gap-1.5">
-                          <SquarePen className="w-3.5 h-3.5" /> Edit
-                        </button>
-                        <button type="button" onClick={() => setUserToDelete(u)} className="min-h-11 rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 flex items-center justify-center gap-1.5">
-                          <Trash2 className="w-3.5 h-3.5" /> Hapus
-                        </button>
+                        {canManageAccounts && (
+                          <>
+                            <button type="button" onClick={() => handleOpenEditUser(u)} className="min-h-11 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 flex items-center justify-center gap-1.5">
+                              <SquarePen className="w-3.5 h-3.5" /> Edit
+                            </button>
+                            <button type="button" onClick={() => setUserToDelete(u)} className="min-h-11 rounded-lg border border-rose-200 bg-rose-50 px-3 text-xs font-semibold text-rose-700 flex items-center justify-center gap-1.5">
+                              <Trash2 className="w-3.5 h-3.5" /> Hapus
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
                   </article>
@@ -694,7 +713,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                   <th scope="col" className="py-3 px-3.5">Password</th>
                   <th scope="col" className="py-3 px-3.5">Role Hak Akses</th>
                   <th scope="col" className="py-3 px-3.5">Kaitan ID Santri</th>
-                  <th scope="col" className="py-3 px-3.5 text-center">Aksi / Setting Role</th>
+                  <th scope="col" className="py-3 px-3.5 text-center">Aksi Akun</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
@@ -797,7 +816,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                                 <Share2 className="w-3.5 h-3.5 text-emerald-700" />
                                 <span className="hidden sm:inline">Bagikan</span>
                               </button>
-                              <button
+                              {canManageAccounts && <button
                                 type="button"
                                 onClick={() => handleOpenEditUser(u)}
                                 className="p-1.5 px-2 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-lg transition cursor-pointer flex items-center gap-1 text-xs font-semibold border border-emerald-200"
@@ -805,8 +824,8 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                               >
                                 <SquarePen className="w-3.5 h-3.5 text-emerald-700" />
                                 <span>Edit</span>
-                              </button>
-                              <button
+                              </button>}
+                              {canManageAccounts && <button
                                 type="button"
                                 onClick={() => setUserToDelete(u)}
                                 aria-label={`Hapus akun ${u.nama}`}
@@ -814,7 +833,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                                 title="Hapus Akun"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              </button>}
                             </div>
                           )}
                         </td>
@@ -949,7 +968,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
       )}
 
       {/* Modal Setting Role & Edit User (Save-able) */}
-      {userToEdit && (
+      {canManageAccounts && userToEdit && (
         <div
           ref={editUserDialogRef}
           className="ui-dialog-overlay"
@@ -1035,7 +1054,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                 >
                   <option value="Superadmin">Superadmin (Akses Penuh Seluruh Sistem & Manajemen)</option>
                   <option value="Pimpinan">Pimpinan (View-Only: Dashboard, Riwayat & Mushaf)</option>
-                  <option value="Ustadz">Ustadz (Input Setoran, Kelola Santri & Akun)</option>
+                  <option value="Ustadz">Ustadz (Input Setoran, Kelola Santri & Bagikan Kredensial)</option>
                   <option value="Wali">Wali Santri (Monitoring Mutaba'ah & Progres Ananda)</option>
                   <option value="Santri">Santri (View-Only: Lihat Progres Pribadi & Mushaf)</option>
                 </select>
@@ -1176,7 +1195,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
       )}
 
       {/* Modal Konfirmasi Hapus User */}
-      {userToDelete && (
+      {canManageAccounts && userToDelete && (
         <div
           ref={deleteUserDialogRef}
           className="ui-dialog-overlay"
@@ -1386,7 +1405,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
       )}
 
       {/* Modal Tambah User Akun Baru */}
-      {showAddUserModal && (
+      {canManageAccounts && showAddUserModal && (
         <div
           ref={addUserDialogRef}
           className="ui-dialog-overlay"
