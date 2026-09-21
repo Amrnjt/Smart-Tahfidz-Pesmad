@@ -1,0 +1,37 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "ziyadah",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idSantri", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "murojaah",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idSantri", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "binnadzor",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idSantri", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "pembelajaran",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "idSantri", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
