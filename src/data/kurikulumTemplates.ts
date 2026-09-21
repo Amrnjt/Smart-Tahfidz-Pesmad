@@ -212,41 +212,58 @@ export const KURIKULUM_JILID_UMMI_DEWASA: JilidUmmiDewasaDetail[] = [
   {
     id: 'ummi-dewasa-1',
     tingkat: 'Ummi Dewasa Jilid 1',
-    deskripsi: 'Pengenalan Huruf Tunggal Hijaiyah, Harakat Pokok (Fathah, Kasrah, Dhammah), & Mad Thabi\'i',
-    totalHalaman: 32,
+    deskripsi: 'Huruf tunggal dan sambung, harokat serta tanwin.',
+    totalHalaman: 40,
     pokokBahasan: [
-      'Huruf Tunggal Hijaiyah Berharakat Fathah (A)',
-      'Harakat Kasrah (I) & Dhammah (U) & Kombinasi Vokal',
-      'Mad Thabi\'i Alif, Ya Sukun, & Wawu Sukun (2 Harakat)',
-      'Kelancaran Sambung Huruf 2-4 Karakter & Evaluasi Jilid 1'
+      'Pengenalan huruf tunggal berharokat fathah A–Ya',
+      'Membaca 2–3 huruf tunggal berharokat fathah A–Ya',
+      'Pengenalan huruf sambung Alif–Ya’',
+      'Membaca 3–5 huruf sambung berharokat fathah, kasroh, dlommah, fathah tanwin, kasroh tanwin dan dlommah tanwin',
+      'Pengenalan harokat fathah, kasroh, dlommah, fathah tanwin, kasroh tanwin dan dlommah tanwin',
+      'Pengenalan huruf tunggal (hijaiyah) Alif–Ya’',
+      'Pengenalan angka Arab 1–99'
     ],
-    targetCapaian: 'Membaca huruf hijaiyah berharakat pokok dan mad 2 harakat secara tartil tanpa mengeja'
+    targetCapaian: 'Membaca huruf tunggal dan sambung secara pendek tanpa mengeja; mengenal harokat, tanwin, huruf hijaiyah dan angka Arab.'
   },
   {
     id: 'ummi-dewasa-2',
     tingkat: 'Ummi Dewasa Jilid 2',
-    deskripsi: 'Sukun, Qalqalah, Tasydid, Tanwin, Alif Lam Syamsiyah/Qamariyah, & Tanda Waqaf',
-    totalHalaman: 38,
+    deskripsi: 'Bacaan panjang, sukun, tasydid dan pembedaan bunyi huruf.',
+    totalHalaman: 40,
     pokokBahasan: [
-      'Huruf Mati (Sukun) & Pantulan Qalqalah (Baju Di Toko)',
-      'Tasydid (Penekanan) & Tanwin (Fathatain, Kasratain, Dhammatain)',
-      'Alif Lam Qamariyah (Jelas) vs Alif Lam Syamsiyah (Idgham)',
-      'Tanda Waqaf Dasar & Evaluasi Kesiapan Naik Jilid 3'
+      'Pengenalan tanda baca panjang (Mad Thobi’i): fathah diikuti alif atau fathah panjang; kasroh diikuti ya’ sukun atau kasroh panjang; dlommah diikuti wawu sukun atau dlommah panjang; dlommah diikuti wawu sukun dan alif',
+      'Pengenalan tanda baca panjang (Mad Wajib Muttashil dan Mad Jaiz Munfashil)',
+      'Pengenalan huruf yang disukun dan ditekan membacanya (Lam, Tsa’, Sin, Syin, Mim, Wawu, Ya’, Ro’, ‘Ain, Hamzah, Ha’, Kho’, Hha’, Ghoin, Ta’, Fa’ dan Kaf sukun)',
+      'Pengenalan tanda tasydid/syiddah dan penekanan bacaannya',
+      'Membedakan bacaan Tsa’, Sin dan Syin yang disukun',
+      'Membedakan bacaan ‘Ain dan Hamzah yang disukun',
+      'Membedakan bacaan Ha’, Kho’ dan Hha’ yang disukun',
+      'Pengenalan angka Arab 100–500',
+      'Pengenalan fathah panjang, kasroh panjang, dlommah panjang dan tanda sukun'
     ],
-    targetCapaian: 'Menguasai huruf sukun, tasydid, pembedaan alif lam, serta jeda tanda waqaf'
+    targetCapaian: 'Membedakan bacaan pendek dan panjang, membaca huruf sukun serta tasydid dengan benar, dan membedakan bunyi huruf yang mirip.'
   },
   {
     id: 'ummi-dewasa-3',
     tingkat: 'Ummi Dewasa Jilid 3',
-    deskripsi: 'Hukum Nun/Mim Sukun, Ikhfa, Idgham, Mad Wajib/Jaiz, Gharib & Munaqosyah',
+    deskripsi: 'Waqof, ghunnah, hukum nun sukun/tanwin, lafadz Alloh dan latihan tartil.',
     totalHalaman: 40,
     pokokBahasan: [
-      'Hukum Nun Sukun & Tanwin: Idzhar, Idgham Bighunnah/Bilaghunnah',
-      'Iqlab & Ikhfa Haqiqi 15 Huruf Hijaiyah',
-      'Hukum Mim Sukun & Mad Far\'i (Mad Wajib/Jaiz/Aridh)',
-      'Bacaan Khusus (Gharib & Musykilat) Menuju Al-Qur\'an Binnadzor'
+      'Pengenalan cara membaca waqof/mewaqofkan',
+      'Pengenalan bacaan ghunnah/dengung',
+      'Pengenalan bacaan ikhfa’/samar',
+      'Pengenalan bacaan idghom bighunnah',
+      'Pengenalan bacaan iqlab',
+      'Pengenalan cara membaca lafadz Alloh (tafkhim/tarqiq)',
+      'Pengenalan bacaan qolqolah (mantul)',
+      'Pengenalan bacaan idghom bilaghunnah',
+      'Pengenalan bacaan idz-har/jelas',
+      'Cara membaca nun iwadl, di awal ayat dan di tengah ayat',
+      'Membaca Ana, Na-nya dibaca pendek',
+      'Pengenalan macam-macam tanda waqof/washol',
+      'Latihan membaca tartil Al-Qur’an di surat Al-Baqarah ayat 1–7'
     ],
-    targetCapaian: 'Khatam metode Ummi Dewasa, siap membaca Al-Qur\'an 30 Juz secara Binnadzor Tartil'
+    targetCapaian: 'Menerapkan bacaan waqof dan hukum tajwid yang dipelajari saat membaca tartil Al-Baqarah ayat 1–7.'
   }
 ];
 
