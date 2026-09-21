@@ -36,7 +36,7 @@ jobs:
       - name: Verify bounded History regressions
         run: |
           npx tsx --test tests/history-query-contract.test.ts tests/history-range-state.test.ts
-          node --test tests/history-repository-source.test.mjs tests/realtime-scope-regression.test.mjs tests/no-unbounded-setoran-read.test.mjs
+          node --test tests/history-repository-source.test.mjs tests/realtime-scope-regression.test.mjs tests/no-unbounded-setoran-read.test.mjs tests/historical-mutation-regression.test.mjs
 
       - name: Verify P0 repository cleanup
         run: node --test tests/p0-repo-cleanup.test.mjs
