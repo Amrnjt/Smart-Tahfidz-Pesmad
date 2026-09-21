@@ -928,43 +928,53 @@ export const storageService = {
     const binnadzorCache = this.getBinnadzorRecords();
     const pembelajaranCache = this.getPembelajaranRecords();
 
-    const trashItems: TrashRecord[] = [];
-    const batch = writeBatch(db);
-
-    items.forEach(item => {
-      const sourceCollection = item.type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
-        : item.type === 'Murojaah' ? COLLECTIONS.MUROJAAH
-        : item.type === 'Pembelajaran' ? COLLECTIONS.PEMBELAJARAN
+    const getSourceCollection = (type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran') =>
+      type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
+        : type === 'Murojaah' ? COLLECTIONS.MUROJAAH
+        : type === 'Pembelajaran' ? COLLECTIONS.PEMBELAJARAN
         : COLLECTIONS.BINNADZOR;
 
-      let existingRecord: any = null;
-      if (item.type === 'Ziyadah') existingRecord = ziyadahCache.find(r => r.id === item.id);
-      else if (item.type === 'Murojaah') existingRecord = murojaahCache.find(r => r.id === item.id);
-      else if (item.type === 'Pembelajaran') existingRecord = pembelajaranCache.find(r => r.id === item.id);
-      else existingRecord = binnadzorCache.find(r => r.id === item.id);
+    const getCachedRecord = (item: { type: 'Ziyadah' | 'Murojaah' | 'Binnadzor' | 'Pembelajaran'; id: string }) => {
+      if (item.type === 'Ziyadah') return ziyadahCache.find(r => r.id === item.id);
+      if (item.type === 'Murojaah') return murojaahCache.find(r => r.id === item.id);
+      if (item.type === 'Pembelajaran') return pembelajaranCache.find(r => r.id === item.id);
+      return binnadzorCache.find(r => r.id === item.id);
+    };
 
-      if (!existingRecord) {
-        existingRecord = { id: item.id };
+    // Historical rows may live outside the 12-month dashboard cache. Resolve any
+    // missing payload directly from Firestore before moving it to Trash.
+    const resolved = await Promise.all(items.map(async item => {
+      const sourceCollection = getSourceCollection(item.type);
+      let payload: any = getCachedRecord(item);
+      if (!payload) {
+        const snap = await getDoc(doc(db, sourceCollection, item.id));
+        payload = snap.exists() ? { ...snap.data(), id: snap.id } : { id: item.id };
       }
+      return { item, sourceCollection, payload };
+    }));
 
-      const trashDocId = `trash_${item.id}`;
-      const trashItem: TrashRecord = {
-        id: trashDocId,
-        recordId: item.id,
-        recordType: item.type,
-        sourceCollection,
-        payload: existingRecord,
-        deletedAt,
-        deletedBy: author,
-        expiresAt,
-      };
+    const trashItems: TrashRecord[] = resolved.map(({ item, sourceCollection, payload }) => ({
+      id: `trash_${item.id}`,
+      recordId: item.id,
+      recordType: item.type,
+      sourceCollection,
+      payload,
+      deletedAt,
+      deletedBy: author,
+      expiresAt,
+    }));
 
-      trashItems.push(trashItem);
-      batch.set(doc(db, COLLECTIONS.TRASH, trashDocId), cleanForFirestore(trashItem));
-      batch.delete(doc(db, sourceCollection, item.id));
-    });
-
-    await batch.commit();
+    // Each item uses two writes (Trash set + source delete). 225 items keeps each
+    // Firestore batch comfortably below the 500-operation limit.
+    for (let index = 0; index < resolved.length; index += 225) {
+      const batch = writeBatch(db);
+      resolved.slice(index, index + 225).forEach(({ item, sourceCollection }, chunkIndex) => {
+        const trashItem = trashItems[index + chunkIndex];
+        batch.set(doc(db, COLLECTIONS.TRASH, trashItem.id), cleanForFirestore(trashItem));
+        batch.delete(doc(db, sourceCollection, item.id));
+      });
+      await batch.commit();
+    }
 
     items.forEach(item => {
       if (item.id) this.markRecordDeleted(item.id);
@@ -1007,64 +1017,8 @@ export const storageService = {
 
       // Ensure no active record with this original ID already exists
       let existingActive = false;
-      if (trashItem.recordType === 'Ziyadah') {
-        existingActive = this.getZiyadahRecords().some(r => r.id === originalId);
-      } else if (trashItem.recordType === 'Murojaah') {
-        existingActive = this.getMurojaahRecords().some(r => r.id === originalId);
-      } else if (trashItem.recordType === 'Pembelajaran') {
-        existingActive = this.getPembelajaranRecords().some(r => r.id === originalId);
-      } else {
-        existingActive = this.getBinnadzorRecords().some(r => r.id === originalId);
-      }
-
-      if (!existingActive) {
-        const checkSnap = await getDoc(doc(db, targetCollection, originalId));
-        if (checkSnap.exists()) {
-          existingActive = true;
-        }
-      }
-
-      if (existingActive) {
-        return {
-          success: false,
-          message: `Record aktif dengan ID '${originalId}' sudah ada dalam sistem. Pemulihan dibatalkan agar tidak menimpa data aktif.`
-        };
-      }
-
-      const payloadToRestore = {
-        ...trashItem.payload,
-        id: originalId
-      };
-
-      const batch = writeBatch(db);
-      batch.set(doc(db, targetCollection, originalId), cleanForFirestore(payloadToRestore));
-      batch.delete(doc(db, COLLECTIONS.TRASH, trashItem.id));
-      await batch.commit();
-
-      this.unmarkRecordDeleted(originalId);
-
-      if (trashItem.recordType === 'Ziyadah') {
-        const list = this.getZiyadahRecords().filter(r => r.id !== originalId);
-        list.unshift(payloadToRestore as ZiyadahRecord);
-        list.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
-        writeArrayCache(STORAGE_KEYS.ZIYADAH, list);
-      } else if (trashItem.recordType === 'Murojaah') {
-        const list = this.getMurojaahRecords().filter(r => r.id !== originalId);
-        list.unshift(payloadToRestore as MurojaahRecord);
-        list.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
-        writeArrayCache(STORAGE_KEYS.MUROJAAH, list);
-      } else if (trashItem.recordType === 'Pembelajaran') {
-        const list = this.getPembelajaranRecords().filter(r => r.id !== originalId);
-        list.unshift(payloadToRestore as PembelajaranRecord);
-        list.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
-        writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, list);
-      } else {
-        const list = this.getBinnadzorRecords().filter(r => r.id !== originalId);
-        list.unshift(payloadToRestore as BinnadzorRecord);
-        list.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
-        writeArrayCache(STORAGE_KEYS.BINNADZOR, list);
-      }
-
+      // The bounded realtime listener owns operational setoran caches. Do not
+      // inject an old restored record into the 12-month dashboard window here.
       const updatedTrash = this.getTrashRecords().filter(t => t.id !== trashItem?.id && t.recordId !== originalId);
       writeArrayCache(STORAGE_KEYS.TRASH, updatedTrash);
 
