@@ -101,8 +101,8 @@ export const PantauanLiburanPage: React.FC<PantauanLiburanPageProps> = ({
     );
   }
 
-  const uniqueClasses = Array.from(new Set(santriList.map((s) => s.kelas).filter(Boolean))).sort();
-  const uniqueDates = Array.from(new Set(records.map((r) => r.tanggal).filter(Boolean))).sort((a, b) => b.localeCompare(a));
+  const uniqueClasses = Array.from(new Set<string>(santriList.map((s) => s.kelas))).sort((a, b) => a.localeCompare(b));
+  const uniqueDates = Array.from(new Set<string>(records.map((r) => r.tanggal))).sort((a, b) => b.localeCompare(a));
 
   const filteredRecords = records.filter((record) => {
     const query = searchQuery.trim().toLowerCase();
