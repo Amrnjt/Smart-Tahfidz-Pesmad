@@ -11,6 +11,7 @@ import {
   StatusKenaikan
 } from '../../types';
 import { MeasuredChartFrame } from '../MeasuredChartFrame';
+import { WeeklyQualityChart } from './WeeklyQualityChart';
 import {
   AreaChart,
   Area,
@@ -84,6 +85,7 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
   // Determine selected class
   const [selectedKelasId, setSelectedKelasId] = useState<string>('ALL');
   const [selectedTipeFilter, setSelectedTipeFilter] = useState<TipeKelas>('Tahfidz');
+  const [selectedSantriId, setSelectedSantriId] = useState<string>('ALL');
 
   const selectedKelas = useMemo(() => {
     if (selectedKelasId === 'ALL') return null;
@@ -100,9 +102,15 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
 
   // Allowed santri IDs for current filter
   const allowedSantriIds = useMemo(() => {
-    if (!selectedKelas) return null;
-    return new Set(selectedKelas.santriIds || []);
-  }, [selectedKelas]);
+    if (selectedKelas) return new Set(selectedKelas.santriIds || []);
+    const matchingClasses = kelasList.filter(k => k.tipeKelas === activeTipeKelas ||
+      (activeTipeKelas === 'Binnadzor' && k.tipeKelas.startsWith('Binnadzor')));
+    return matchingClasses.length ? new Set(matchingClasses.flatMap(k => k.santriIds || [])) : null;
+  }, [selectedKelas, kelasList, activeTipeKelas]);
+
+  const availableSantri = useMemo(() => santriList
+    .filter(s => !allowedSantriIds || allowedSantriIds.has(s.idSantri))
+    .sort((a, b) => a.namaSantri.localeCompare(b.namaSantri)), [santriList, allowedSantriIds]);
 
   // Santri name resolver
   const santriMap = useMemo(() => {
@@ -127,6 +135,7 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
     if (allowedSantriIds) {
       records = records.filter(r => allowedSantriIds.has(r.idSantri));
     }
+    if (selectedSantriId !== 'ALL') records = records.filter(r => r.idSantri === selectedSantriId);
 
     const sorted = [...records].sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
     // Group or sample recent 15 data points
@@ -156,13 +165,13 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
       if (q === 'Mutqin' || q === 'Sangat Baik') mutqinCount++;
     });
 
-    const avgScore = total > 0 ? (sumScore / total) : 3;
+    const avgScore = total > 0 ? (sumScore / total) : 0;
     const roundedAvg = Math.min(5, Math.max(1, Math.round(avgScore)));
-    const avgQualityLabel = SCORE_TO_QUALITY[roundedAvg] || 'Baik';
+    const avgQualityLabel = total > 0 ? SCORE_TO_QUALITY[roundedAvg] : '-';
     const mutqinRatio = total > 0 ? Math.round((mutqinCount / total) * 100) : 0;
 
     return { points, total, avgScore: avgScore.toFixed(1), avgQualityLabel, mutqinRatio };
-  }, [ziyadahRecords, allowedSantriIds, santriMap]);
+  }, [ziyadahRecords, allowedSantriIds, selectedSantriId, santriMap]);
 
   // 2. BINNADZOR: Tren Kelancaran dari kualitas Binnadzor
   const binnadzorData = useMemo(() => {
@@ -170,6 +179,7 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
     if (allowedSantriIds) {
       records = records.filter(r => allowedSantriIds.has(r.idSantri));
     }
+    if (selectedSantriId !== 'ALL') records = records.filter(r => r.idSantri === selectedSantriId);
 
     const sorted = [...records].sort((a, b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
     const points = sorted.slice(-20).map((b, idx) => {
@@ -202,7 +212,13 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
     const tajwidRatio = total > 0 ? Math.round((mutqinTajwid / total) * 100) : 0;
 
     return { points, total, kelancaranRatio, tajwidRatio };
-  }, [binnadzorRecords, allowedSantriIds, santriMap]);
+  }, [binnadzorRecords, allowedSantriIds, selectedSantriId, santriMap]);
+
+  const weeklyQualityRecords = useMemo(() => {
+    const records = activeTipeKelas === 'Tahfidz' ? ziyadahRecords : binnadzorRecords;
+    return records.filter(r => (!allowedSantriIds || allowedSantriIds.has(r.idSantri)) &&
+      (selectedSantriId === 'ALL' || r.idSantri === selectedSantriId));
+  }, [activeTipeKelas, ziyadahRecords, binnadzorRecords, allowedSantriIds, selectedSantriId]);
 
   // 3. JILID / MATERI PEMBELAJARAN: Tren Progres Pembelajaran
   const jilidData = useMemo(() => {
@@ -283,8 +299,8 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
             </span>
           </div>
           <h3 className="text-base font-bold text-slate-900 mt-1">
-            {activeTipeKelas === 'Tahfidz' && 'Tren Kelancaran Hafalan Ziyadah'}
-            {(activeTipeKelas === 'Binnadzor' || activeTipeKelas === 'Binnadzor A' || activeTipeKelas === 'Binnadzor B') && 'Tren Kelancaran & Kualitas Binnadzor'}
+            {activeTipeKelas === 'Tahfidz' && (selectedSantriId === 'ALL' ? 'Perkembangan Nilai Setoran Ziyadah' : 'Kelancaran Hafalan Santri')}
+            {(activeTipeKelas === 'Binnadzor' || activeTipeKelas === 'Binnadzor A' || activeTipeKelas === 'Binnadzor B') && (selectedSantriId === 'ALL' ? 'Perkembangan Nilai Setoran Binnadzor' : 'Kelancaran Bacaan Santri')}
             {activeTipeKelas === 'Jilid' && 'Tren Progres Pembelajaran Jilid'}
             {activeTipeKelas === 'Kelas Istimewa' && 'Tren Pendampingan Santri Istimewa'}
           </h3>
@@ -300,6 +316,7 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
                 onChange={(e) => {
                   const val = e.target.value;
                   setSelectedKelasId(val);
+                  setSelectedSantriId('ALL');
                   if (val !== 'ALL') {
                     const k = kelasList.find(c => c.id === val);
                     if (k) setSelectedTipeFilter(k.tipeKelas);
@@ -317,6 +334,18 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
             </div>
           )}
 
+          {(activeTipeKelas === 'Tahfidz' || activeTipeKelas.startsWith('Binnadzor')) && (
+            <select
+              aria-label="Pilih santri untuk melihat perkembangan individu"
+              value={selectedSantriId}
+              onChange={e => setSelectedSantriId(e.target.value)}
+              className="ui-control px-2.5 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800"
+            >
+              <option value="ALL">Semua santri</option>
+              {availableSantri.map(s => <option key={s.idSantri} value={s.idSantri}>{s.namaSantri}</option>)}
+            </select>
+          )}
+
           {/* If ALL is selected, allow explicit switching of context */}
           {selectedKelasId === 'ALL' && (
             <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs font-semibold">
@@ -324,7 +353,7 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
                 <button
                   key={tipe}
                   type="button"
-                  onClick={() => setSelectedTipeFilter(tipe)}
+                  onClick={() => { setSelectedTipeFilter(tipe); setSelectedSantriId('ALL'); }}
                   className={`px-2.5 py-1 rounded-md transition cursor-pointer ${
                     activeTipeKelas === tipe
                       ? 'bg-white text-emerald-800 shadow-2xs font-bold'
@@ -373,77 +402,81 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
             </div>
           </div>
 
-          {/* Chart Container */}
-          <div className="h-64 w-full pt-2">
-            {tahfidzData.points.length === 0 ? (
-              <div className="flex h-full items-center justify-center rounded-xl bg-slate-50 text-xs text-slate-500">
-                Belum ada data setoran Ziyadah untuk kelas/tipe ini.
-              </div>
-            ) : (
-              <MeasuredChartFrame>
-                <AreaChart
-                  data={tahfidzData.points}
-                  margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
-                >
-                  <defs>
-                    <linearGradient id="tahfidzGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#059669" stopOpacity={0.25} />
-                      <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                  <XAxis
-                    dataKey="dateStr"
-                    tickLine={false}
-                    axisLine={{ stroke: '#CBD5E1' }}
-                    tick={{ fontSize: 11, fill: '#64748B' }}
-                  />
-                  <YAxis
-                    domain={[1, 5]}
-                    ticks={[1, 2, 3, 4, 5]}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(val: number) => {
-                      const q = SCORE_TO_QUALITY[Math.round(val)];
-                      if (q === 'Perlu Bimbingan') return 'Bimbingan';
-                      if (q === 'Sangat Baik') return 'Sgt Baik';
-                      return q || '';
-                    }}
-                    tick={{ fontSize: 10, fill: '#475569', fontWeight: 600 }}
-                  />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (!active || !payload || !payload.length) return null;
-                      const data = payload[0].payload;
-                      return (
-                        <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-md text-xs">
-                          <div className="font-bold text-slate-900">{data.santri}</div>
-                          <div className="text-slate-500 text-[11px]">{data.surah}</div>
-                          <div className="mt-1.5 flex items-center justify-between gap-3 pt-1 border-t border-slate-100">
-                            <span className="text-slate-600">Kelancaran:</span>
-                            <span className={`px-2 py-0.5 rounded font-bold ${QUALITY_COLOR_MAP[data.quality as AspekKualitas] || 'text-slate-800'}`}>
-                              {data.quality}
-                            </span>
+          {/* Class view compares weekly distributions; the original line remains for one santri. */}
+          {selectedSantriId === 'ALL' ? (
+            <WeeklyQualityChart records={weeklyQualityRecords} label="Ziyadah" />
+          ) : (
+            <div className="h-64 w-full pt-2">
+              {tahfidzData.points.length === 0 ? (
+                <div className="flex h-full items-center justify-center rounded-xl bg-slate-50 text-xs text-slate-500">
+                  Belum ada data setoran Ziyadah untuk kelas/tipe ini.
+                </div>
+              ) : (
+                <MeasuredChartFrame>
+                  <AreaChart
+                    data={tahfidzData.points}
+                    margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+                  >
+                    <defs>
+                      <linearGradient id="tahfidzGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#059669" stopOpacity={0.25} />
+                        <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis
+                      dataKey="dateStr"
+                      tickLine={false}
+                      axisLine={{ stroke: '#CBD5E1' }}
+                      tick={{ fontSize: 11, fill: '#64748B' }}
+                    />
+                    <YAxis
+                      domain={[1, 5]}
+                      ticks={[1, 2, 3, 4, 5]}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(val: number) => {
+                        const q = SCORE_TO_QUALITY[Math.round(val)];
+                        if (q === 'Perlu Bimbingan') return 'Bimbingan';
+                        if (q === 'Sangat Baik') return 'Sgt Baik';
+                        return q || '';
+                      }}
+                      tick={{ fontSize: 10, fill: '#475569', fontWeight: 600 }}
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload || !payload.length) return null;
+                        const data = payload[0].payload;
+                        return (
+                          <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-md text-xs">
+                            <div className="font-bold text-slate-900">{data.santri}</div>
+                            <div className="text-slate-500 text-[11px]">{data.surah}</div>
+                            <div className="mt-1.5 flex items-center justify-between gap-3 pt-1 border-t border-slate-100">
+                              <span className="text-slate-600">Kelancaran:</span>
+                              <span className={`px-2 py-0.5 rounded font-bold ${QUALITY_COLOR_MAP[data.quality as AspekKualitas] || 'text-slate-800'}`}>
+                                {data.quality}
+                              </span>
+                            </div>
+                            <div className="text-[10px] text-slate-400 mt-1">{data.rawDate}</div>
                           </div>
-                          <div className="text-[10px] text-slate-400 mt-1">{data.rawDate}</div>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="score"
-                    stroke="#059669"
-                    strokeWidth={2.5}
-                    fillOpacity={1}
-                    fill="url(#tahfidzGrad)"
-                    dot={{ fill: '#059669', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, fill: '#047857' }}
-                  />
-                </AreaChart>
-              </MeasuredChartFrame>
+                        );
+                      }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="score"
+                      stroke="#059669"
+                      strokeWidth={2.5}
+                      fillOpacity={1}
+                      fill="url(#tahfidzGrad)"
+                      dot={{ fill: '#059669', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, fill: '#047857' }}
+                    />
+                  </AreaChart>
+                </MeasuredChartFrame>
             )}
           </div>
+          )}
         </div>
       )}
 
@@ -477,75 +510,79 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
             </div>
           </div>
 
-          <div className="h-64 w-full pt-2">
-            {binnadzorData.points.length === 0 ? (
-              <div className="flex h-full items-center justify-center rounded-xl bg-slate-50 text-xs text-slate-500">
-                Belum ada data setoran Binnadzor untuk kelas/tipe ini.
-              </div>
-            ) : (
-              <MeasuredChartFrame>
-                <LineChart
-                  data={binnadzorData.points}
-                  margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
-                  <XAxis
-                    dataKey="dateStr"
-                    tickLine={false}
-                    axisLine={{ stroke: '#CBD5E1' }}
-                    tick={{ fontSize: 11, fill: '#64748B' }}
-                  />
-                  <YAxis
-                    domain={[1, 5]}
-                    ticks={[1, 2, 3, 4, 5]}
-                    axisLine={false}
-                    tickLine={false}
-                    tickFormatter={(val: number) => {
-                      const q = SCORE_TO_QUALITY[Math.round(val)];
-                      if (q === 'Perlu Bimbingan') return 'Bimbingan';
-                      if (q === 'Sangat Baik') return 'Sgt Baik';
-                      return q || '';
-                    }}
-                    tick={{ fontSize: 10, fill: '#475569', fontWeight: 600 }}
-                  />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (!active || !payload || !payload.length) return null;
-                      const data = payload[0].payload;
-                      return (
-                        <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-md text-xs space-y-1">
-                          <div className="font-bold text-slate-900">{data.santri}</div>
-                          <div className="text-slate-500 text-[11px]">{data.materi}</div>
-                          <div className="pt-1.5 border-t border-slate-100 space-y-1">
-                            <div className="flex justify-between gap-3">
-                              <span className="text-slate-600">Kelancaran:</span>
-                              <span className="font-bold text-indigo-700">{data.quality}</span>
-                            </div>
-                            <div className="flex justify-between gap-3 text-[11px]">
-                              <span className="text-slate-500">Tajwid:</span>
-                              <span className="font-semibold text-slate-700">{data.tajwid}</span>
-                            </div>
-                            <div className="flex justify-between gap-3 text-[11px]">
-                              <span className="text-slate-500">Makhroj:</span>
-                              <span className="font-semibold text-slate-700">{data.makhroj}</span>
+          {selectedSantriId === 'ALL' ? (
+            <WeeklyQualityChart records={weeklyQualityRecords} label="Binnadzor" />
+          ) : (
+            <div className="h-64 w-full pt-2">
+              {binnadzorData.points.length === 0 ? (
+                <div className="flex h-full items-center justify-center rounded-xl bg-slate-50 text-xs text-slate-500">
+                  Belum ada data setoran Binnadzor untuk kelas/tipe ini.
+                </div>
+              ) : (
+                <MeasuredChartFrame>
+                  <LineChart
+                    data={binnadzorData.points}
+                    margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                    <XAxis
+                      dataKey="dateStr"
+                      tickLine={false}
+                      axisLine={{ stroke: '#CBD5E1' }}
+                      tick={{ fontSize: 11, fill: '#64748B' }}
+                    />
+                    <YAxis
+                      domain={[1, 5]}
+                      ticks={[1, 2, 3, 4, 5]}
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(val: number) => {
+                        const q = SCORE_TO_QUALITY[Math.round(val)];
+                        if (q === 'Perlu Bimbingan') return 'Bimbingan';
+                        if (q === 'Sangat Baik') return 'Sgt Baik';
+                        return q || '';
+                      }}
+                      tick={{ fontSize: 10, fill: '#475569', fontWeight: 600 }}
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (!active || !payload || !payload.length) return null;
+                        const data = payload[0].payload;
+                        return (
+                          <div className="rounded-xl border border-slate-200 bg-white p-2.5 shadow-md text-xs space-y-1">
+                            <div className="font-bold text-slate-900">{data.santri}</div>
+                            <div className="text-slate-500 text-[11px]">{data.materi}</div>
+                            <div className="pt-1.5 border-t border-slate-100 space-y-1">
+                              <div className="flex justify-between gap-3">
+                                <span className="text-slate-600">Kelancaran:</span>
+                                <span className="font-bold text-indigo-700">{data.quality}</span>
+                              </div>
+                              <div className="flex justify-between gap-3 text-[11px]">
+                                <span className="text-slate-500">Tajwid:</span>
+                                <span className="font-semibold text-slate-700">{data.tajwid}</span>
+                              </div>
+                              <div className="flex justify-between gap-3 text-[11px]">
+                                <span className="text-slate-500">Makhroj:</span>
+                                <span className="font-semibold text-slate-700">{data.makhroj}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="score"
-                    stroke="#4338CA"
-                    strokeWidth={2.5}
-                    dot={{ fill: '#4338CA', strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, fill: '#3730A3' }}
-                  />
-                </LineChart>
-              </MeasuredChartFrame>
+                        );
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="score"
+                      stroke="#4338CA"
+                      strokeWidth={2.5}
+                      dot={{ fill: '#4338CA', strokeWidth: 2, r: 4 }}
+                      activeDot={{ r: 6, fill: '#3730A3' }}
+                    />
+                  </LineChart>
+                </MeasuredChartFrame>
             )}
           </div>
+          )}
         </div>
       )}
 
