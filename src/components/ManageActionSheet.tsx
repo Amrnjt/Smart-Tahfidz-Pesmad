@@ -8,7 +8,6 @@ interface ManageActionSheetProps {
   isOpen: boolean;
   onClose: () => void;
   onSelect: (tab: ActiveTab) => void;
-  onOpenPantauanLiburan: () => void;
   activeTab?: ActiveTab;
 }
 
@@ -16,7 +15,6 @@ export const ManageActionSheet: React.FC<ManageActionSheetProps> = ({
   isOpen,
   onClose,
   onSelect,
-  onOpenPantauanLiburan,
   activeTab
 }) => {
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -67,12 +65,6 @@ export const ManageActionSheet: React.FC<ManageActionSheetProps> = ({
   ) => {
     rippleHandler(event);
     onSelect(tab);
-    onClose();
-  };
-
-  const handlePantauanClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    pantauanRipple.createRipple(event);
-    onOpenPantauanLiburan();
     onClose();
   };
 
@@ -171,9 +163,13 @@ export const ManageActionSheet: React.FC<ManageActionSheetProps> = ({
               role="menuitem"
               id="manage-option-pantauan"
               ref={pantauanRipple.elementRef}
-              onClick={handlePantauanClick}
-              className="ripple-container relative z-10 w-full min-h-[42px] px-2.5 py-1.5 rounded-xl flex items-center justify-between text-left text-xs transition-all duration-150 cursor-pointer text-slate-700 hover:text-emerald-900 hover:bg-emerald-50/70 active:bg-emerald-100/60 font-semibold group"
-              aria-label="Buka Rekap Pantauan Liburan"
+              onClick={(e) => chooseAction(e, 'pantauan', pantauanRipple.createRipple)}
+              className={`ripple-container relative z-10 w-full min-h-[42px] px-2.5 py-1.5 rounded-xl flex items-center justify-between text-left text-xs transition-all duration-150 cursor-pointer font-semibold group ${
+                activeTab === 'pantauan'
+                  ? 'bg-emerald-50 text-emerald-900 border border-emerald-200/60'
+                  : 'text-slate-700 hover:text-emerald-900 hover:bg-emerald-50/70 active:bg-emerald-100/60'
+              }`}
+              aria-label="Buka halaman Pantauan Liburan"
               tabIndex={0}
             >
               <div className="flex items-center gap-2 min-w-0">
