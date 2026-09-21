@@ -1090,7 +1090,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
                 {dateFilterMode === 'all' && (
                   <p className="rounded-lg border border-slate-200 bg-white px-2.5 py-2 text-xs leading-4 text-slate-600">
-                    Arsip dimuat bertahap (maks. 50 rekaman per kategori setiap batch) agar aplikasi tetap ringan.
+                    Arsip dimuat bertahap (maks. 50 rekaman per kategori setiap batch) agar aplikasi tetap ringan. Pencarian dan filter berlaku pada arsip yang sudah dimuat.
                   </p>
                 )}
               </div>
@@ -1370,7 +1370,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
         {/* Mode 3: All Time Banner */}
         {dateFilterMode === 'all' && (
           <div className="py-1 px-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-600 flex items-center justify-between">
-            <span>Arsip dimuat bertahap agar tidak membaca seluruh koleksi sekaligus.</span>
+            <span>Arsip dimuat bertahap agar tidak membaca seluruh koleksi sekaligus. Pencarian berlaku pada arsip yang sudah dimuat.</span>
             <button
               onClick={() => setDateFilterMode('bulan')}
               className="text-emerald-800 font-bold hover:underline cursor-pointer"
