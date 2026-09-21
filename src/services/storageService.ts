@@ -1,6 +1,7 @@
 import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas, PantauanLiburanRecord, AppConfig, TrashRecord, CombinedHistoryItem } from '../types';
 import { getClassGroup } from '../utils/classUtils';
 import { getTodayInputFormat, getCurrentTimeInputFormat } from '../utils/dateFormatter';
+import type { HistoryRangeRequest } from './historyQueryTypes';
 import { db } from './firebase';
 import {
   collection,
@@ -14,7 +15,8 @@ import {
   query,
   where,
   orderBy,
-  limit
+  limit,
+  type QueryConstraint
 } from 'firebase/firestore';
 
 function normalizeKelas(kelas: string): string {
@@ -297,6 +299,174 @@ export const storageService = {
 
   getPantauanLiburanRecords(): PantauanLiburanRecord[] {
     return readArrayCache<PantauanLiburanRecord>(STORAGE_KEYS.PANTAUAN_LIBURAN);
+  },
+
+  subscribeMasterData(onUpdate?: () => void): () => void {
+    const notifyUpdate = () => {
+      if (onUpdate) onUpdate();
+    };
+
+    const unsubUsers = onSnapshot(collection(db, COLLECTIONS.USERS), (snapshot) => {
+      const users: User[] = [];
+      const userMap = new Map<string, User>();
+      snapshot.forEach((docSnap) => {
+        const u = docSnap.data() as User;
+        if (u && u.id && !userMap.has(u.id)) {
+          userMap.set(u.id, u);
+          users.push(u);
+        }
+      });
+      writeArrayCache(STORAGE_KEYS.USERS, users);
+      notifyUpdate();
+    }, (err) => console.warn('Users firestore sync error:', err));
+
+    const unsubSantri = onSnapshot(collection(db, COLLECTIONS.SANTRI), (snapshot) => {
+      const santri: Santri[] = [];
+      const santriMap = new Map<string, Santri>();
+      snapshot.forEach((docSnap) => {
+        const s = docSnap.data() as Santri;
+        if (s && s.idSantri && !santriMap.has(s.idSantri)) {
+          const normalizedS = { ...s, kelas: normalizeKelas(s.kelas) };
+          santriMap.set(s.idSantri, normalizedS);
+          santri.push(normalizedS);
+        }
+      });
+      writeArrayCache(STORAGE_KEYS.SANTRI, santri);
+      notifyUpdate();
+    }, (err) => console.warn('Santri firestore sync error:', err));
+
+    const unsubKelas = onSnapshot(collection(db, COLLECTIONS.KELAS), (snapshot) => {
+      const kelasList: Kelas[] = [];
+      const kelasMap = new Map<string, Kelas>();
+      snapshot.forEach((docSnap) => {
+        const k = docSnap.data() as Kelas;
+        if (k && k.id && !kelasMap.has(k.id)) {
+          const normalizedK = { ...k, tipeKelas: normalizeTipeKelas(k.tipeKelas) };
+          kelasMap.set(k.id, normalizedK);
+          kelasList.push(normalizedK);
+        }
+      });
+      writeArrayCache(STORAGE_KEYS.KELAS, kelasList);
+      notifyUpdate();
+    }, (err) => console.warn('Kelas firestore sync error:', err));
+
+    const unsubAppConfig = onSnapshot(doc(db, COLLECTIONS.APP_CONFIG, 'global_settings'), (docSnap) => {
+      const config = docSnap.exists() ? docSnap.data() as AppConfig : createDefaultAppConfig();
+      localStorage.setItem(STORAGE_KEYS.APP_CONFIG, JSON.stringify(config));
+      notifyUpdate();
+    }, (err) => console.warn('AppConfig firestore sync error:', err));
+
+    const unsubPantauanLiburan = onSnapshot(collection(db, COLLECTIONS.PANTAUAN_LIBURAN), (snapshot) => {
+      const records: PantauanLiburanRecord[] = [];
+      const recordMap = new Map<string, PantauanLiburanRecord>();
+      snapshot.forEach((docSnap) => {
+        const record = docSnap.data() as PantauanLiburanRecord;
+        if (record && record.id && !recordMap.has(record.id)) {
+          recordMap.set(record.id, record);
+          records.push(record);
+        }
+      });
+      records.sort((a, b) => b.tanggal.localeCompare(a.tanggal) || b.timestamp.localeCompare(a.timestamp));
+      writeArrayCache(STORAGE_KEYS.PANTAUAN_LIBURAN, records);
+      notifyUpdate();
+    }, (err) => console.warn('Pantauan Liburan firestore sync error:', err));
+
+    return () => {
+      unsubUsers();
+      unsubSantri();
+      unsubKelas();
+      unsubAppConfig();
+      unsubPantauanLiburan();
+    };
+  },
+
+  subscribeRecentSetoran(request: HistoryRangeRequest, onUpdate?: () => void): () => void {
+    if (request.scope.kind === 'student' && !request.scope.idSantri.trim()) {
+      console.warn('Recent setoran subscription skipped because idSantri is empty.');
+      return () => undefined;
+    }
+
+    // Discard legacy all-time cache before the bounded listeners repopulate it.
+    writeArrayCache(STORAGE_KEYS.ZIYADAH, []);
+    writeArrayCache(STORAGE_KEYS.MUROJAAH, []);
+    writeArrayCache(STORAGE_KEYS.BINNADZOR, []);
+    writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, []);
+
+    const buildConstraints = (): QueryConstraint[] => {
+      const constraints: QueryConstraint[] = [];
+      if (request.scope.kind === 'student') {
+        constraints.push(where('idSantri', '==', request.scope.idSantri));
+      }
+      constraints.push(
+        where('timestamp', '>=', `${request.startDate} 00:00`),
+        where('timestamp', '<=', `${request.endDate} 23:59:59`),
+        orderBy('timestamp', 'desc'),
+      );
+      return constraints;
+    };
+
+    const notifyUpdate = () => {
+      if (onUpdate) onUpdate();
+    };
+
+    const unsubZiyadah = onSnapshot(
+      query(collection(db, COLLECTIONS.ZIYADAH), ...buildConstraints()),
+      (snapshot) => {
+        const records = snapshot.docs.map(docSnap => {
+          const data = docSnap.data() as ZiyadahRecord;
+          return { ...data, id: data.id || docSnap.id };
+        }).filter(record => !this.isDeletedRecord(record.id));
+        writeArrayCache(STORAGE_KEYS.ZIYADAH, records);
+        notifyUpdate();
+      },
+      (err) => console.warn('Bounded Ziyadah sync error:', err),
+    );
+
+    const unsubMurojaah = onSnapshot(
+      query(collection(db, COLLECTIONS.MUROJAAH), ...buildConstraints()),
+      (snapshot) => {
+        const records = snapshot.docs.map(docSnap => {
+          const data = docSnap.data() as MurojaahRecord;
+          return { ...data, id: data.id || docSnap.id };
+        }).filter(record => !this.isDeletedRecord(record.id));
+        writeArrayCache(STORAGE_KEYS.MUROJAAH, records);
+        notifyUpdate();
+      },
+      (err) => console.warn('Bounded Murojaah sync error:', err),
+    );
+
+    const unsubBinnadzor = onSnapshot(
+      query(collection(db, COLLECTIONS.BINNADZOR), ...buildConstraints()),
+      (snapshot) => {
+        const records = snapshot.docs.map(docSnap => {
+          const data = docSnap.data() as BinnadzorRecord;
+          return { ...data, id: data.id || docSnap.id };
+        }).filter(record => !this.isDeletedRecord(record.id));
+        writeArrayCache(STORAGE_KEYS.BINNADZOR, records);
+        notifyUpdate();
+      },
+      (err) => console.warn('Bounded Binnadzor sync error:', err),
+    );
+
+    const unsubPembelajaran = onSnapshot(
+      query(collection(db, COLLECTIONS.PEMBELAJARAN), ...buildConstraints()),
+      (snapshot) => {
+        const records = snapshot.docs.map(docSnap => {
+          const data = docSnap.data() as PembelajaranRecord;
+          return { ...data, id: data.id || docSnap.id };
+        }).filter(record => !this.isDeletedRecord(record.id));
+        writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, records);
+        notifyUpdate();
+      },
+      (err) => console.warn('Bounded Pembelajaran sync error:', err),
+    );
+
+    return () => {
+      unsubZiyadah();
+      unsubMurojaah();
+      unsubBinnadzor();
+      unsubPembelajaran();
+    };
   },
 
   // Cloud Firestore is the single source of truth. This function never seeds
@@ -949,106 +1119,50 @@ export const storageService = {
   async syncWithCloud(): Promise<{ success: boolean; message?: string }> {
     this.assertCanMutate('Sinkronisasi manual cloud');
     try {
-      const deletedIds = this.getDeletedRecordIds();
+      const [userSnap, santriSnap, kelasSnap, appConfigSnap] = await Promise.all([
+        getDocs(collection(db, COLLECTIONS.USERS)),
+        getDocs(collection(db, COLLECTIONS.SANTRI)),
+        getDocs(collection(db, COLLECTIONS.KELAS)),
+        getDoc(doc(db, COLLECTIONS.APP_CONFIG, 'global_settings')),
+      ]);
 
-      const userSnap = await getDocs(collection(db, COLLECTIONS.USERS));
       const users: User[] = [];
       const userMap = new Map<string, User>();
       userSnap.forEach((docSnap) => {
-        const u = docSnap.data() as User;
-        if (u && u.id && !userMap.has(u.id)) {
-          userMap.set(u.id, u);
-          users.push(u);
+        const user = docSnap.data() as User;
+        if (user && user.id && !userMap.has(user.id)) {
+          userMap.set(user.id, user);
+          users.push(user);
         }
       });
       writeArrayCache(STORAGE_KEYS.USERS, users);
 
-      const santriSnap = await getDocs(collection(db, COLLECTIONS.SANTRI));
       const santriList: Santri[] = [];
       const santriMap = new Map<string, Santri>();
       santriSnap.forEach((docSnap) => {
-        const s = docSnap.data() as Santri;
-        if (s && s.idSantri && !santriMap.has(s.idSantri)) {
-          const normalizedS = { ...s, kelas: normalizeKelas(s.kelas) };
-          santriMap.set(s.idSantri, normalizedS);
-          santriList.push(normalizedS);
+        const santri = docSnap.data() as Santri;
+        if (santri && santri.idSantri && !santriMap.has(santri.idSantri)) {
+          const normalized = { ...santri, kelas: normalizeKelas(santri.kelas) };
+          santriMap.set(santri.idSantri, normalized);
+          santriList.push(normalized);
         }
       });
       writeArrayCache(STORAGE_KEYS.SANTRI, santriList);
 
-      const ziyadahSnap = await getDocs(collection(db, COLLECTIONS.ZIYADAH));
-      const ziyadahRecords: ZiyadahRecord[] = [];
-      const ziyadahSeen = new Set<string>();
-      ziyadahSnap.forEach((docSnap) => {
-        const data = docSnap.data() as ZiyadahRecord;
-        const id = data.id || docSnap.id;
-        if (id && !deletedIds.has(id) && !ziyadahSeen.has(id)) {
-          ziyadahSeen.add(id);
-          ziyadahRecords.push({ ...data, id });
-        }
-      });
-      ziyadahRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
-      writeArrayCache(STORAGE_KEYS.ZIYADAH, ziyadahRecords);
-
-      const murojaahSnap = await getDocs(collection(db, COLLECTIONS.MUROJAAH));
-      const murojaahRecords: MurojaahRecord[] = [];
-      const murojaahSeen = new Set<string>();
-      murojaahSnap.forEach((docSnap) => {
-        const data = docSnap.data() as MurojaahRecord;
-        const id = data.id || docSnap.id;
-        if (id && !deletedIds.has(id) && !murojaahSeen.has(id)) {
-          murojaahSeen.add(id);
-          murojaahRecords.push({ ...data, id });
-        }
-      });
-      murojaahRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
-      writeArrayCache(STORAGE_KEYS.MUROJAAH, murojaahRecords);
-
-      const binnadzorSnap = await getDocs(collection(db, COLLECTIONS.BINNADZOR));
-      const binnadzorRecords: BinnadzorRecord[] = [];
-      const binnadzorSeen = new Set<string>();
-      binnadzorSnap.forEach((docSnap) => {
-        const data = docSnap.data() as BinnadzorRecord;
-        const id = data.id || docSnap.id;
-        if (id && !deletedIds.has(id) && !binnadzorSeen.has(id)) {
-          binnadzorSeen.add(id);
-          binnadzorRecords.push({ ...data, id });
-        }
-      });
-      binnadzorRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
-      writeArrayCache(STORAGE_KEYS.BINNADZOR, binnadzorRecords);
-
-      const pembelajaranSnap = await getDocs(collection(db, COLLECTIONS.PEMBELAJARAN));
-      const pembelajaranRecords: PembelajaranRecord[] = [];
-      const pembelajaranSeen = new Set<string>();
-      pembelajaranSnap.forEach((docSnap) => {
-        const data = docSnap.data() as PembelajaranRecord;
-        const id = data.id || docSnap.id;
-        if (id && !deletedIds.has(id) && !pembelajaranSeen.has(id)) {
-          pembelajaranSeen.add(id);
-          pembelajaranRecords.push({ ...data, id });
-        }
-      });
-      pembelajaranRecords.sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''));
-      writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, pembelajaranRecords);
-
-      const kelasSnap = await getDocs(collection(db, COLLECTIONS.KELAS));
       const kelasList: Kelas[] = [];
-      const kelasSeen = new Set<string>();
+      const kelasMap = new Map<string, Kelas>();
       kelasSnap.forEach((docSnap) => {
-        const k = docSnap.data() as Kelas;
-        if (k && k.id && !kelasSeen.has(k.id)) {
-          kelasSeen.add(k.id);
-          kelasList.push({ ...k, tipeKelas: normalizeTipeKelas(k.tipeKelas) });
+        const kelas = docSnap.data() as Kelas;
+        if (kelas && kelas.id && !kelasMap.has(kelas.id)) {
+          const normalized = { ...kelas, tipeKelas: normalizeTipeKelas(kelas.tipeKelas) };
+          kelasMap.set(kelas.id, normalized);
+          kelasList.push(normalized);
         }
       });
       writeArrayCache(STORAGE_KEYS.KELAS, kelasList);
 
-      try {
-        await this.purgeExpiredTrash();
-      } catch (trashErr) {
-        console.warn('Failed to purge expired trash during sync:', trashErr);
-      }
+      const config = appConfigSnap.exists() ? appConfigSnap.data() as AppConfig : createDefaultAppConfig();
+      localStorage.setItem(STORAGE_KEYS.APP_CONFIG, JSON.stringify(config));
 
       return { success: true };
     } catch (err) {
