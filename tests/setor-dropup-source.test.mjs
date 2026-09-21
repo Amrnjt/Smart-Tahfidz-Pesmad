@@ -42,14 +42,11 @@ test('Setor drop-up uses the origin-aware transitions.dev lifecycle and an outsi
   assert.match(dropdownHook, /setIsMounted\(false\)/);
 });
 
-test('Setor drop-up restores the live Pantauan Liburan switch and monitor access', () => {
-  assert.match(bottomNav, /Pantauan Liburan/);
-  assert.match(bottomNav, /role="switch"/);
-  assert.match(bottomNav, /storageService\.getAppConfig\(\)/);
-  assert.match(bottomNav, /storageService\.setProgramLiburanActive/);
-  assert.match(bottomNav, /PantauanLiburanMonitorModal/);
-  assert.match(bottomNav, /santriList=\{santriList\}/);
-  assert.match(bottomNav, /onNotify=\{onNotify\}/);
+test('Pantauan Liburan opens as its own page outside the Setor drop-up', () => {
+  assert.match(bottomNav, /label="Pantauan"/);
+  assert.doesNotMatch(bottomNav, /PantauanLiburanMonitorModal/);
+  assert.match(app, /activeTab === 'pantauan'/);
+  assert.match(app, /variant="page"/);
 });
 
 test('Setor drop-up centers the menu and uses balanced balloon widths', () => {
