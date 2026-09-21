@@ -39,6 +39,7 @@ import {
   Filter
 } from 'lucide-react';
 import { formatTanggalRingkas, parseDateSafe } from '../../utils/dateFormatter';
+import { getDevelopmentAllowedSantriIds } from '../../utils/developmentScope';
 
 interface AdaptiveDevelopmentTrendProps {
   kelasList: Kelas[];
@@ -100,13 +101,14 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
     return selectedTipeFilter;
   }, [selectedKelas, selectedTipeFilter]);
 
-  // Allowed santri IDs for current filter
-  const allowedSantriIds = useMemo(() => {
-    if (selectedKelas) return new Set(selectedKelas.santriIds || []);
-    const matchingClasses = kelasList.filter(k => k.tipeKelas === activeTipeKelas ||
-      (activeTipeKelas === 'Binnadzor' && k.tipeKelas.startsWith('Binnadzor')));
-    return matchingClasses.length ? new Set(matchingClasses.flatMap(k => k.santriIds || [])) : null;
-  }, [selectedKelas, kelasList, activeTipeKelas]);
+  // Allowed santri IDs for current filter. Aggregate Binnadzor intentionally
+  // keeps all Binnadzor records even when class membership arrays are incomplete.
+  const allowedSantriIds = useMemo(() => getDevelopmentAllowedSantriIds({
+    selectedKelas,
+    kelasList,
+    santriList,
+    activeTipeKelas,
+  }), [selectedKelas, kelasList, santriList, activeTipeKelas]);
 
   const availableSantri = useMemo(() => santriList
     .filter(s => !allowedSantriIds || allowedSantriIds.has(s.idSantri))
