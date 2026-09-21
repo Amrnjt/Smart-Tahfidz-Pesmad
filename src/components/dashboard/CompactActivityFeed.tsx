@@ -163,7 +163,7 @@ export const CompactActivityFeed: React.FC<CompactActivityFeedProps> = ({
           </div>
 
           <span className="rounded-md bg-slate-100/90 px-2 py-0.5 text-[10px] font-semibold text-slate-600 border border-slate-200/70 flex-shrink-0">
-            {activities.length} total
+            {activities.length} termuat
           </span>
         </div>
 
