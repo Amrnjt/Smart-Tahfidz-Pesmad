@@ -1015,10 +1015,31 @@ export const storageService = {
       const originalId = trashItem.recordId;
       const targetCollection = trashItem.sourceCollection;
 
-      // Ensure no active record with this original ID already exists
-      let existingActive = false;
+      // Check Firestore directly because bounded operational caches may not contain
+      // historical records outside the active dashboard window.
+      const activeSnap = await getDoc(doc(db, targetCollection, originalId));
+      if (activeSnap.exists()) {
+        return {
+          success: false,
+          message: `Record aktif dengan ID '${originalId}' sudah ada dalam sistem. Pemulihan dibatalkan agar tidak menimpa data aktif.`
+        };
+      }
+
+      const payloadToRestore = {
+        ...trashItem.payload,
+        id: originalId
+      };
+
+      const batch = writeBatch(db);
+      batch.set(doc(db, targetCollection, originalId), cleanForFirestore(payloadToRestore));
+      batch.delete(doc(db, COLLECTIONS.TRASH, trashItem.id));
+      await batch.commit();
+
+      this.unmarkRecordDeleted(originalId);
+
       // The bounded realtime listener owns operational setoran caches. Do not
-      // inject an old restored record into the 12-month dashboard window here.
+      // inject an old restored record into the dashboard window here; History
+      // will retrieve it through its scoped query after refresh.
       const updatedTrash = this.getTrashRecords().filter(t => t.id !== trashItem?.id && t.recordId !== originalId);
       writeArrayCache(STORAGE_KEYS.TRASH, updatedTrash);
 
