@@ -1,29 +1,66 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas } from './types';
 import { storageService } from './services/storageService';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
 import { DesktopPrimaryNav } from './components/DesktopPrimaryNav';
-import { PantauanLiburanPage } from './components/PantauanLiburanPage';
 import { SetoranFormNav } from './components/SetoranFormNav';
 import { LoginView } from './components/LoginModal';
-import { UstadzDashboard } from './components/UstadzDashboard';
-import { WaliDashboard } from './components/WaliDashboard';
-import { SantriDashboard } from './components/SantriDashboard';
-import { ZiyadahForm } from './components/ZiyadahForm';
-import { MurojaahForm } from './components/MurojaahForm';
-import { BinnadzorForm } from './components/BinnadzorForm';
-import { PembelajaranForm } from './components/PembelajaranForm';
-import { HistoryTable } from './components/HistoryTable';
-import { MushafQuran } from './components/MushafQuran';
-import { SantriManagement } from './components/SantriManagement';
-import { KelasManagement } from './components/KelasManagement';
 import { NotificationToastContainer } from './components/NotificationToastContainer';
 import { Snackbar, SnackbarState, NotifyFn } from './components/Snackbar';
 import { useSetoranNotifications } from './hooks/useSetoranNotifications';
 import { useActiveTabNavigation } from './hooks/useActiveTabNavigation';
 import { Cloud } from 'lucide-react';
 import { addDaysToDateInput, getTodayInputFormat } from './utils/dateFormatter';
+
+const PantauanLiburanPage = lazy(() =>
+  import('./components/PantauanLiburanPage').then((module) => ({ default: module.PantauanLiburanPage }))
+);
+const UstadzDashboard = lazy(() =>
+  import('./components/UstadzDashboard').then((module) => ({ default: module.UstadzDashboard }))
+);
+const WaliDashboard = lazy(() =>
+  import('./components/WaliDashboard').then((module) => ({ default: module.WaliDashboard }))
+);
+const SantriDashboard = lazy(() =>
+  import('./components/SantriDashboard').then((module) => ({ default: module.SantriDashboard }))
+);
+const ZiyadahForm = lazy(() =>
+  import('./components/ZiyadahForm').then((module) => ({ default: module.ZiyadahForm }))
+);
+const MurojaahForm = lazy(() =>
+  import('./components/MurojaahForm').then((module) => ({ default: module.MurojaahForm }))
+);
+const BinnadzorForm = lazy(() =>
+  import('./components/BinnadzorForm').then((module) => ({ default: module.BinnadzorForm }))
+);
+const PembelajaranForm = lazy(() =>
+  import('./components/PembelajaranForm').then((module) => ({ default: module.PembelajaranForm }))
+);
+const HistoryTable = lazy(() =>
+  import('./components/HistoryTable').then((module) => ({ default: module.HistoryTable }))
+);
+const MushafQuran = lazy(() =>
+  import('./components/MushafQuran').then((module) => ({ default: module.MushafQuran }))
+);
+const SantriManagement = lazy(() =>
+  import('./components/SantriManagement').then((module) => ({ default: module.SantriManagement }))
+);
+const KelasManagement = lazy(() =>
+  import('./components/KelasManagement').then((module) => ({ default: module.KelasManagement }))
+);
+
+function RouteLoadingFallback() {
+  return (
+    <div
+      className="ui-bento-card flex min-h-56 items-center justify-center p-6 text-sm font-semibold text-slate-500"
+      role="status"
+      aria-live="polite"
+    >
+      Memuat halaman...
+    </div>
+  );
+}
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -35,6 +72,7 @@ export default function App() {
   });
   const [activeTab, setActiveTab] = useActiveTabNavigation(currentUser);
   const [santriList, setSantriList] = useState<Santri[]>(() => {
+    if (!currentUser) return [];
     try { return storageService.getSantriList(); } catch { return []; }
   });
   const [ziyadahRecords, setZiyadahRecords] = useState<ZiyadahRecord[]>([]);
@@ -42,9 +80,11 @@ export default function App() {
   const [binnadzorRecords, setBinnadzorRecords] = useState<BinnadzorRecord[]>([]);
   const [pembelajaranRecords, setPembelajaranRecords] = useState<PembelajaranRecord[]>([]);
   const [kelasList, setKelasList] = useState<Kelas[]>(() => {
+    if (!currentUser) return [];
     try { return storageService.getKelasList(); } catch { return []; }
   });
   const [userList, setUserList] = useState<User[]>(() => {
+    if (!currentUser) return [];
     try { return storageService.getUsers(); } catch { return []; }
   });
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
@@ -80,13 +120,15 @@ export default function App() {
     refreshRecentSetoran();
   };
 
-  // Master data remains realtime, but the four setoran collections are no longer
-  // subscribed without bounds at application startup.
+  // Keep the login shell light: master-data listeners start only after a valid
+  // session exists. Existing sessions still subscribe immediately on app mount.
   useEffect(() => {
+    if (!currentUser) return undefined;
+
     refreshMasterData();
     const unsubscribe = storageService.subscribeMasterData(refreshMasterData);
     return unsubscribe;
-  }, []);
+  }, [currentUser?.id]);
 
   // Dashboard consumers receive a bounded 12-month operational window. This keeps
   // the existing 3/6/12-month charts accurate without downloading lifetime history.
@@ -249,7 +291,8 @@ export default function App() {
             onNotify={notify}
           />
         ) : (
-          <div className="p3-page-content space-y-5 min-w-0 w-full max-w-full">
+          <Suspense fallback={<RouteLoadingFallback />}>
+            <div className="p3-page-content space-y-5 min-w-0 w-full max-w-full">
             
             {/* Content per Tab */}
             {activeTab === 'dashboard' && (
@@ -415,7 +458,8 @@ export default function App() {
               </div>
             </div>
 
-          </div>
+            </div>
+          </Suspense>
         )}
       </main>
 
