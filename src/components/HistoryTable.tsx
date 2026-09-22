@@ -1690,6 +1690,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               const santri = santriList.find(s => s.idSantri === item.idSantri);
               const kelasGroup = santri ? getClassGroup(santri.kelas) : '';
               const isIstimewa = item.type === 'Pembelajaran' && !!item.tipeKelas && item.tipeKelas.toLowerCase().includes('istimewa');
+              const hasBinnadzorQualityDetails =
+                item.type === 'Binnadzor' &&
+                Boolean(item.hukumTajwid || item.makhrojHuruf || item.kefasihan || item.kelancaran);
               const mobileTypeMeta =
                 item.type === 'Ziyadah'
                   ? { label: 'Ziyadah', dot: 'bg-emerald-500', text: 'text-emerald-700' }
@@ -1802,6 +1805,38 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                         <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-x-3 gap-y-2 text-xs leading-5">
                           <span className="text-slate-400">ID Santri</span>
                           <span className="font-mono text-slate-600">{item.idSantri}</span>
+
+                          {hasBinnadzorQualityDetails && (
+                            <>
+                              <span className="text-slate-400">Kualitas Bacaan</span>
+                              <div className="grid grid-cols-2 gap-1.5">
+                                {item.hukumTajwid && (
+                                  <div className="rounded-md border border-indigo-100 bg-white px-2 py-1.5">
+                                    <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Tajwid</span>
+                                    <span className="text-xs font-bold text-slate-800">{item.hukumTajwid}</span>
+                                  </div>
+                                )}
+                                {item.makhrojHuruf && (
+                                  <div className="rounded-md border border-indigo-100 bg-white px-2 py-1.5">
+                                    <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Makhroj</span>
+                                    <span className="text-xs font-bold text-slate-800">{item.makhrojHuruf}</span>
+                                  </div>
+                                )}
+                                {item.kefasihan && (
+                                  <div className="rounded-md border border-indigo-100 bg-white px-2 py-1.5">
+                                    <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Fashohah</span>
+                                    <span className="text-xs font-bold text-slate-800">{item.kefasihan}</span>
+                                  </div>
+                                )}
+                                {item.kelancaran && (
+                                  <div className="rounded-md border border-indigo-100 bg-white px-2 py-1.5">
+                                    <span className="block text-[10px] font-semibold uppercase tracking-wide text-slate-400">Kelancaran</span>
+                                    <span className="text-xs font-bold text-slate-800">{item.kelancaran}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </>
+                          )}
 
                           {item.kendalaSantri && (
                             <>
@@ -2015,7 +2050,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                           {/* 4 Aspek Kualitas Penilaian */}
                           {(item.hukumTajwid || item.makhrojHuruf || item.kefasihan || item.kelancaran) && (
                             <div className="pt-2 border-t border-slate-100">
-                              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">4 Aspek Penilaian</span>
+                              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">
+                                {item.type === 'Binnadzor' ? 'Kualitas Bacaan' : '4 Aspek Penilaian'}
+                              </span>
                               <div className="grid grid-cols-2 gap-1">
                                 {item.hukumTajwid && (
                                   <div className="bg-slate-50 p-1 rounded-md border border-slate-200/60">
