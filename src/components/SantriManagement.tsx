@@ -298,11 +298,11 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   };
 
   const satuanPendidikanOptions = Array.from(
-    new Set(santriList.map(s => (s.satuanPendidikan || '').trim()).filter(Boolean))
+    new Set<string>(santriList.map(s => (s.satuanPendidikan || '').trim()).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b));
 
   const kelasFormalOptions = Array.from(
-    new Set(santriList.map(s => (s.kelasFormal || '').trim()).filter(Boolean))
+    new Set<string>(santriList.map(s => (s.kelasFormal || '').trim()).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b, 'id', { numeric: true }));
 
   const getFormalLabel = (santri: Santri) => {
