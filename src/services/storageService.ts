@@ -403,6 +403,33 @@ export const storageService = {
     );
   },
 
+  async fetchAcademicHistoryByPeriod(
+    tahunPelajaran: string,
+    semester?: SemesterAkademik
+  ): Promise<RiwayatAkademikRecord[]> {
+    const constraints: QueryConstraint[] = [
+      where('tahunPelajaran', '==', tahunPelajaran.trim())
+    ];
+    if (semester) {
+      constraints.push(where('semester', '==', semester));
+    }
+
+    const snapshot = await getDocs(
+      query(collection(db, COLLECTIONS.ACADEMIC_HISTORY), ...constraints)
+    );
+    const records = snapshot.docs.map((docSnap) => {
+      const data = docSnap.data() as RiwayatAkademikRecord;
+      return { ...data, id: data.id || docSnap.id };
+    });
+
+    const semesterRank: Record<SemesterAkademik, number> = { Ganjil: 1, Genap: 2 };
+    return records.sort((a, b) =>
+      a.namaSantri.localeCompare(b.namaSantri, 'id') ||
+      semesterRank[a.semester] - semesterRank[b.semester] ||
+      a.recordedAt.localeCompare(b.recordedAt)
+    );
+  },
+
   async getFormalPromotionRun(
     tahunPelajaranAsal: string,
     kelasAsal: KelasFormal
