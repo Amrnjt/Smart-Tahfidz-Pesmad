@@ -429,6 +429,9 @@ export default function App() {
               <SantriManagement
                 currentUser={currentUser}
                 santriList={santriList}
+                usersList={userList}
+                ziyadahRecords={ziyadahRecords}
+                murojaahRecords={murojaahRecords}
                 onDataChanged={refreshData}
                 onNotify={notify}
               />
