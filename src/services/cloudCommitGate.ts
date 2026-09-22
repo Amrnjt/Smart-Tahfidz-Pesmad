@@ -9,7 +9,7 @@ import type {
   User,
   ZiyadahRecord
 } from '../types';
-import { getTodayInputFormat, getCurrentTimeInputFormat } from '../utils/dateFormatter';
+import { addDaysToDateInput, getTodayInputFormat, getCurrentTimeInputFormat } from '../utils/dateFormatter';
 import { db } from './firebase';
 import { storageService } from './storageService';
 import { doc, setDoc, writeBatch } from 'firebase/firestore';
@@ -55,6 +55,13 @@ function nowTimestamp(timestamp?: string): string {
   return timestamp || `${getTodayInputFormat()} ${getCurrentTimeInputFormat()}`;
 }
 
+function isInOperationalSetoranWindow(timestamp: string): boolean {
+  const datePart = timestamp.slice(0, 10);
+  const today = getTodayInputFormat();
+  const startDate = addDaysToDateInput(today, -364);
+  return /^\d{4}-\d{2}-\d{2}$/.test(datePart) && datePart >= startDate && datePart <= today;
+}
+
 /**
  * P0.3 Data Truth gate.
  *
@@ -84,9 +91,11 @@ export function installCloudCommitGate(): void {
 
     await setDoc(doc(db, COLLECTIONS.ZIYADAH, newRecord.id), cleanForFirestore(newRecord));
 
-    const records = storageService.getZiyadahRecords().filter((r) => r.id !== newRecord.id);
-    records.unshift(newRecord);
-    writeArrayCache(STORAGE_KEYS.ZIYADAH, records);
+    if (isInOperationalSetoranWindow(newRecord.timestamp)) {
+      const records = storageService.getZiyadahRecords().filter((r) => r.id !== newRecord.id);
+      records.unshift(newRecord);
+      writeArrayCache(STORAGE_KEYS.ZIYADAH, records);
+    }
     return newRecord;
   };
 
@@ -103,9 +112,11 @@ export function installCloudCommitGate(): void {
 
     await setDoc(doc(db, COLLECTIONS.MUROJAAH, newRecord.id), cleanForFirestore(newRecord));
 
-    const records = storageService.getMurojaahRecords().filter((r) => r.id !== newRecord.id);
-    records.unshift(newRecord);
-    writeArrayCache(STORAGE_KEYS.MUROJAAH, records);
+    if (isInOperationalSetoranWindow(newRecord.timestamp)) {
+      const records = storageService.getMurojaahRecords().filter((r) => r.id !== newRecord.id);
+      records.unshift(newRecord);
+      writeArrayCache(STORAGE_KEYS.MUROJAAH, records);
+    }
     return newRecord;
   };
 
@@ -122,9 +133,11 @@ export function installCloudCommitGate(): void {
 
     await setDoc(doc(db, COLLECTIONS.BINNADZOR, newRecord.id), cleanForFirestore(newRecord));
 
-    const records = storageService.getBinnadzorRecords().filter((r) => r.id !== newRecord.id);
-    records.unshift(newRecord);
-    writeArrayCache(STORAGE_KEYS.BINNADZOR, records);
+    if (isInOperationalSetoranWindow(newRecord.timestamp)) {
+      const records = storageService.getBinnadzorRecords().filter((r) => r.id !== newRecord.id);
+      records.unshift(newRecord);
+      writeArrayCache(STORAGE_KEYS.BINNADZOR, records);
+    }
     return newRecord;
   };
 
@@ -141,9 +154,11 @@ export function installCloudCommitGate(): void {
 
     await setDoc(doc(db, COLLECTIONS.PEMBELAJARAN, newRecord.id), cleanForFirestore(newRecord));
 
-    const records = storageService.getPembelajaranRecords().filter((r) => r.id !== newRecord.id);
-    records.unshift(newRecord);
-    writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, records);
+    if (isInOperationalSetoranWindow(newRecord.timestamp)) {
+      const records = storageService.getPembelajaranRecords().filter((r) => r.id !== newRecord.id);
+      records.unshift(newRecord);
+      writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, records);
+    }
     return newRecord;
   };
 
@@ -152,42 +167,29 @@ export function installCloudCommitGate(): void {
     id: string,
     updatedData: Partial<ZiyadahRecord | MurojaahRecord | BinnadzorRecord | PembelajaranRecord>
   ): Promise<boolean> => {
+    const collectionName = type === 'Ziyadah' ? COLLECTIONS.ZIYADAH
+      : type === 'Murojaah' ? COLLECTIONS.MUROJAAH
+      : type === 'Pembelajaran' ? COLLECTIONS.PEMBELAJARAN
+      : COLLECTIONS.BINNADZOR;
+
+    // Historical records may not exist in the bounded dashboard cache. Commit
+    // the partial update directly to Firestore, then patch cache only if present.
+    await setDoc(doc(db, collectionName, id), cleanForFirestore(updatedData), { merge: true });
+
     if (type === 'Ziyadah') {
       const records = storageService.getZiyadahRecords();
-      const current = records.find((r) => r.id === id);
-      if (!current) return false;
-      const target = { ...current, ...updatedData } as ZiyadahRecord;
-      await setDoc(doc(db, COLLECTIONS.ZIYADAH, id), cleanForFirestore(target), { merge: true });
-      writeArrayCache(STORAGE_KEYS.ZIYADAH, records.map((r) => r.id === id ? target : r));
-      return true;
-    }
-
-    if (type === 'Murojaah') {
+      writeArrayCache(STORAGE_KEYS.ZIYADAH, records.map((r) => r.id === id ? { ...r, ...updatedData } as ZiyadahRecord : r));
+    } else if (type === 'Murojaah') {
       const records = storageService.getMurojaahRecords();
-      const current = records.find((r) => r.id === id);
-      if (!current) return false;
-      const target = { ...current, ...updatedData } as MurojaahRecord;
-      await setDoc(doc(db, COLLECTIONS.MUROJAAH, id), cleanForFirestore(target), { merge: true });
-      writeArrayCache(STORAGE_KEYS.MUROJAAH, records.map((r) => r.id === id ? target : r));
-      return true;
-    }
-
-    if (type === 'Pembelajaran') {
+      writeArrayCache(STORAGE_KEYS.MUROJAAH, records.map((r) => r.id === id ? { ...r, ...updatedData } as MurojaahRecord : r));
+    } else if (type === 'Pembelajaran') {
       const records = storageService.getPembelajaranRecords();
-      const current = records.find((r) => r.id === id);
-      if (!current) return false;
-      const target = { ...current, ...updatedData } as PembelajaranRecord;
-      await setDoc(doc(db, COLLECTIONS.PEMBELAJARAN, id), cleanForFirestore(target), { merge: true });
-      writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, records.map((r) => r.id === id ? target : r));
-      return true;
+      writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, records.map((r) => r.id === id ? { ...r, ...updatedData } as PembelajaranRecord : r));
+    } else {
+      const records = storageService.getBinnadzorRecords();
+      writeArrayCache(STORAGE_KEYS.BINNADZOR, records.map((r) => r.id === id ? { ...r, ...updatedData } as BinnadzorRecord : r));
     }
 
-    const records = storageService.getBinnadzorRecords();
-    const current = records.find((r) => r.id === id);
-    if (!current) return false;
-    const target = { ...current, ...updatedData } as BinnadzorRecord;
-    await setDoc(doc(db, COLLECTIONS.BINNADZOR, id), cleanForFirestore(target), { merge: true });
-    writeArrayCache(STORAGE_KEYS.BINNADZOR, records.map((r) => r.id === id ? target : r));
     return true;
   };
 

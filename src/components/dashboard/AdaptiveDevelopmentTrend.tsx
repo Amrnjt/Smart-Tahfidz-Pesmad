@@ -391,7 +391,7 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
               </div>
             </div>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-              <span className="text-[11px] font-semibold text-slate-600">Total Setoran Dinilai</span>
+              <span className="text-[11px] font-semibold text-slate-600">Setoran Dinilai (12 Bln)</span>
               <div className="text-lg font-extrabold text-slate-900 mt-0.5">
                 {tahfidzData.total}
               </div>
@@ -499,7 +499,7 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
               </div>
             </div>
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-              <span className="text-[11px] font-semibold text-slate-600">Total Tilawah Dievaluasi</span>
+              <span className="text-[11px] font-semibold text-slate-600">Tilawah Dievaluasi (12 Bln)</span>
               <div className="text-lg font-extrabold text-slate-900 mt-0.5">
                 {binnadzorData.total}
               </div>

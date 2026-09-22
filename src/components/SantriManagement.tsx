@@ -544,13 +544,13 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                         <span>Target: <b>{santri.targetHafalan}</b></span>
                       </div>
 
-                      {/* Riwayat count summary */}
+                      {/* Aktivitas setoran dalam cache operasional 12 bulan */}
                       <div className="flex items-center gap-2 pt-1">
                         <span className="text-xs font-medium px-2 py-0.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800">
-                          {stats.totalZiyadah} Ziyadah
+                          {stats.totalZiyadah} Ziyadah · 12 bln
                         </span>
                         <span className="text-xs font-medium px-2 py-0.5 rounded-lg bg-teal-50 border border-teal-200 text-teal-800">
-                          {stats.totalMurojaah} Muroja'ah
+                          {stats.totalMurojaah} Muroja'ah · 12 bln
                         </span>
                       </div>
                     </div>

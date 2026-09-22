@@ -104,7 +104,7 @@ export const CompactAttentionBento: React.FC<CompactAttentionBentoProps> = ({
           className="group inline-flex w-full items-center justify-between text-xs font-semibold text-emerald-700 hover:text-emerald-900"
         >
           <span>
-            Lihat semua riwayat evaluasi{' '}
+            Lihat riwayat evaluasi{' '}
             {totalAttentionCount > 0 && `(${totalAttentionCount})`}
           </span>
           <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />

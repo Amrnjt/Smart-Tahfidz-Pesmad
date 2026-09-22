@@ -23,6 +23,7 @@ import { Snackbar, SnackbarState, NotifyFn } from './components/Snackbar';
 import { useSetoranNotifications } from './hooks/useSetoranNotifications';
 import { useActiveTabNavigation } from './hooks/useActiveTabNavigation';
 import { Cloud } from 'lucide-react';
+import { addDaysToDateInput, getTodayInputFormat } from './utils/dateFormatter';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
@@ -36,18 +37,10 @@ export default function App() {
   const [santriList, setSantriList] = useState<Santri[]>(() => {
     try { return storageService.getSantriList(); } catch { return []; }
   });
-  const [ziyadahRecords, setZiyadahRecords] = useState<ZiyadahRecord[]>(() => {
-    try { return storageService.getZiyadahRecords(); } catch { return []; }
-  });
-  const [murojaahRecords, setMurojaahRecords] = useState<MurojaahRecord[]>(() => {
-    try { return storageService.getMurojaahRecords(); } catch { return []; }
-  });
-  const [binnadzorRecords, setBinnadzorRecords] = useState<BinnadzorRecord[]>(() => {
-    try { return storageService.getBinnadzorRecords(); } catch { return []; }
-  });
-  const [pembelajaranRecords, setPembelajaranRecords] = useState<PembelajaranRecord[]>(() => {
-    try { return storageService.getPembelajaranRecords(); } catch { return []; }
-  });
+  const [ziyadahRecords, setZiyadahRecords] = useState<ZiyadahRecord[]>([]);
+  const [murojaahRecords, setMurojaahRecords] = useState<MurojaahRecord[]>([]);
+  const [binnadzorRecords, setBinnadzorRecords] = useState<BinnadzorRecord[]>([]);
+  const [pembelajaranRecords, setPembelajaranRecords] = useState<PembelajaranRecord[]>([]);
   const [kelasList, setKelasList] = useState<Kelas[]>(() => {
     try { return storageService.getKelasList(); } catch { return []; }
   });
@@ -69,34 +62,75 @@ export default function App() {
     });
   };
 
-  const refreshData = () => {
+  const refreshMasterData = () => {
     setSantriList(storageService.getSantriList());
-    setZiyadahRecords(storageService.getZiyadahRecords());
-    setMurojaahRecords(storageService.getMurojaahRecords());
-    setBinnadzorRecords(storageService.getBinnadzorRecords());
-    setPembelajaranRecords(storageService.getPembelajaranRecords());
     setKelasList(storageService.getKelasList());
     setUserList(storageService.getUsers());
   };
 
-  // Setup real-time Firebase Firestore synchronization across all devices
+  const refreshRecentSetoran = () => {
+    setZiyadahRecords(storageService.getZiyadahRecords());
+    setMurojaahRecords(storageService.getMurojaahRecords());
+    setBinnadzorRecords(storageService.getBinnadzorRecords());
+    setPembelajaranRecords(storageService.getPembelajaranRecords());
+  };
+
+  const refreshData = () => {
+    refreshMasterData();
+    refreshRecentSetoran();
+  };
+
+  // Master data remains realtime, but the four setoran collections are no longer
+  // subscribed without bounds at application startup.
   useEffect(() => {
-    refreshData();
-
-    // Subscribe to real-time changes from Firestore database
-    const unsubscribe = storageService.initRealtimeSync(() => {
-      refreshData();
-    });
-
-    return () => {
-      unsubscribe();
-    };
+    refreshMasterData();
+    const unsubscribe = storageService.subscribeMasterData(refreshMasterData);
+    return unsubscribe;
   }, []);
+
+  // Dashboard consumers receive a bounded 12-month operational window. This keeps
+  // the existing 3/6/12-month charts accurate without downloading lifetime history.
+  useEffect(() => {
+    if (!currentUser) {
+      setZiyadahRecords([]);
+      setMurojaahRecords([]);
+      setBinnadzorRecords([]);
+      setPembelajaranRecords([]);
+      return;
+    }
+
+    const today = getTodayInputFormat();
+    const startDate = addDaysToDateInput(today, -364);
+    const normalizedRole = String(currentUser.role || '').trim().toLowerCase();
+    const isPersonal = normalizedRole === 'santri' || normalizedRole === 'wali' || normalizedRole.includes('wali');
+    const idSantri = currentUser.idSantri || (normalizedRole === 'santri' ? currentUser.username : '');
+
+    if (isPersonal && !idSantri) {
+      setZiyadahRecords([]);
+      setMurojaahRecords([]);
+      setBinnadzorRecords([]);
+      setPembelajaranRecords([]);
+      return;
+    }
+
+    setZiyadahRecords([]);
+    setMurojaahRecords([]);
+    setBinnadzorRecords([]);
+    setPembelajaranRecords([]);
+
+    const unsubscribe = storageService.subscribeRecentSetoran({
+      startDate,
+      endDate: today,
+      scope: isPersonal ? { kind: 'student', idSantri } : { kind: 'staff' },
+    }, refreshRecentSetoran);
+
+    return unsubscribe;
+  }, [currentUser?.id, currentUser?.role, currentUser?.idSantri, currentUser?.username]);
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
     setActiveTab('dashboard');
-    refreshData();
+    refreshMasterData();
   };
 
   const handleLogout = () => {
@@ -113,7 +147,7 @@ export default function App() {
       if (!result.success) {
         throw new Error(result.message || 'Cloud tidak dapat dijangkau.');
       }
-      refreshData();
+      refreshMasterData();
       setSyncState('success');
       setSnack({
         id: `sync-${Date.now()}`,
@@ -122,7 +156,7 @@ export default function App() {
       });
     } catch (err) {
       console.error(err);
-      refreshData();
+      refreshMasterData();
       setSyncState('error');
       setSnack({
         id: `sync-err-${Date.now()}`,
