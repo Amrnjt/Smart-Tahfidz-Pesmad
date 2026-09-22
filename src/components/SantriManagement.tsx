@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { Santri, User, UserRole } from '../types';
+import {
+  KELAS_FORMAL_OPTIONS,
+  SATUAN_PENDIDIKAN_FORMAL_OPTIONS,
+  Santri,
+  User,
+  UserRole,
+  type KelasFormal,
+  type SatuanPendidikanFormal
+} from '../types';
 import { storageService } from '../services/storageService';
 import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, SquarePen, UserCheck, Save, Phone, Copy, Share2, Crown, Lock } from 'lucide-react';
 import { getClassGroup } from '../utils/classUtils';
@@ -28,15 +36,15 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [deleteWithHistory, setDeleteWithHistory] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [satuanPendidikanFilter, setSatuanPendidikanFilter] = useState('');
-  const [kelasFormalFilter, setKelasFormalFilter] = useState('');
+  const [satuanPendidikanFilter, setSatuanPendidikanFilter] = useState<SatuanPendidikanFormal | ''>('');
+  const [kelasFormalFilter, setKelasFormalFilter] = useState<KelasFormal | ''>('');
 
   // New Santri Form State
   const [newId, setNewId] = useState('');
   const [newNama, setNewNama] = useState('');
   const [newKelas, setNewKelas] = useState('Tahfidz');
-  const [newSatuanPendidikan, setNewSatuanPendidikan] = useState('');
-  const [newKelasFormal, setNewKelasFormal] = useState('');
+  const [newSatuanPendidikan, setNewSatuanPendidikan] = useState<SatuanPendidikanFormal>('MTs');
+  const [newKelasFormal, setNewKelasFormal] = useState<KelasFormal | ''>('');
   const [newTarget, setNewTarget] = useState('Juz 30 (37 Surah)');
   const [newWaliNama, setNewWaliNama] = useState('');
   const [newWaliKontak, setNewWaliKontak] = useState('');
@@ -54,8 +62,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   // Edit Santri Form State
   const [editSantriNama, setEditSantriNama] = useState('');
   const [editSantriKelas, setEditSantriKelas] = useState('');
-  const [editSantriSatuanPendidikan, setEditSantriSatuanPendidikan] = useState('');
-  const [editSantriKelasFormal, setEditSantriKelasFormal] = useState('');
+  const [editSantriSatuanPendidikan, setEditSantriSatuanPendidikan] = useState<SatuanPendidikanFormal | ''>('');
+  const [editSantriKelasFormal, setEditSantriKelasFormal] = useState<KelasFormal | ''>('');
   const [editSantriTarget, setEditSantriTarget] = useState('');
   const [editSantriWaliNama, setEditSantriWaliNama] = useState('');
   const [editSantriWaliKontak, setEditSantriWaliKontak] = useState('');
@@ -154,8 +162,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       await storageService.updateSantri(santriToEdit.idSantri, {
         namaSantri: editSantriNama.trim(),
         kelas: editSantriKelas,
-        satuanPendidikan: editSantriSatuanPendidikan.trim(),
-        kelasFormal: editSantriKelasFormal.trim(),
+        satuanPendidikan: editSantriSatuanPendidikan || undefined,
+        kelasFormal: editSantriKelasFormal || undefined,
         targetHafalan: editSantriTarget.trim() || 'Juz 30 (37 Surah)',
         waliNama: editSantriWaliNama.trim() || '',
         waliKontak: editSantriWaliKontak.trim() || ''
@@ -183,8 +191,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
         idSantri: generatedId,
         namaSantri: newNama.trim(),
         kelas: newKelas,
-        satuanPendidikan: newSatuanPendidikan.trim(),
-        kelasFormal: newKelasFormal.trim(),
+        satuanPendidikan: newSatuanPendidikan,
+        kelasFormal: newKelasFormal || undefined,
         targetHafalan: newTarget.trim() || 'Juz 30 (37 Surah)',
         totalHafalanSelesai: 0,
         waliNama: newWaliNama.trim() || '',
@@ -196,7 +204,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       setShowAddModal(false);
       setNewNama('');
       setNewId('');
-      setNewSatuanPendidikan('');
+      setNewSatuanPendidikan('MTs');
       setNewKelasFormal('');
       setNewWaliNama('');
       setNewWaliKontak('');
@@ -297,13 +305,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     return { totalZiyadah, totalMurojaah, total: totalZiyadah + totalMurojaah };
   };
 
-  const satuanPendidikanOptions = Array.from(
-    new Set<string>(santriList.map(s => (s.satuanPendidikan || '').trim()).filter(Boolean))
-  ).sort((a, b) => a.localeCompare(b));
-
-  const kelasFormalOptions = Array.from(
-    new Set<string>(santriList.map(s => (s.kelasFormal || '').trim()).filter(Boolean))
-  ).sort((a, b) => a.localeCompare(b, 'id', { numeric: true }));
+  const satuanPendidikanOptions = SATUAN_PENDIDIKAN_FORMAL_OPTIONS;
+  const kelasFormalOptions = KELAS_FORMAL_OPTIONS;
 
   const getFormalLabel = (santri: Santri) => {
     const parts = [
@@ -510,7 +513,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
             <select
               id="filter-satuan-pendidikan"
               value={satuanPendidikanFilter}
-              onChange={(e) => setSatuanPendidikanFilter(e.target.value)}
+              onChange={(e) => setSatuanPendidikanFilter(e.target.value as SatuanPendidikanFormal | '')}
               className="ui-control w-full px-3 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-700"
             >
               <option value="">Semua satuan pendidikan</option>
@@ -523,7 +526,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
             <select
               id="filter-kelas-formal"
               value={kelasFormalFilter}
-              onChange={(e) => setKelasFormalFilter(e.target.value)}
+              onChange={(e) => setKelasFormalFilter(e.target.value as KelasFormal | '')}
               className="ui-control w-full px-3 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-700"
             >
               <option value="">Semua kelas formal</option>
@@ -998,26 +1001,32 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Satuan Pendidikan
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={editSantriSatuanPendidikan}
-                    onChange={(e) => setEditSantriSatuanPendidikan(e.target.value)}
-                    placeholder="Contoh: MTs/SMP"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                    onChange={(e) => setEditSantriSatuanPendidikan(e.target.value as SatuanPendidikanFormal | '')}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
+                  >
+                    <option value="">Belum ditetapkan</option>
+                    {SATUAN_PENDIDIKAN_FORMAL_OPTIONS.map(value => (
+                      <option key={value} value={value}>{value}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Kelas Formal
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={editSantriKelasFormal}
-                    onChange={(e) => setEditSantriKelasFormal(e.target.value)}
-                    placeholder="Contoh: VIII"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                    onChange={(e) => setEditSantriKelasFormal(e.target.value as KelasFormal | '')}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
+                  >
+                    <option value="">Belum ditetapkan</option>
+                    {KELAS_FORMAL_OPTIONS.map(value => (
+                      <option key={value} value={value}>Kelas {value}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -1451,26 +1460,32 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Satuan Pendidikan
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={newSatuanPendidikan}
-                    onChange={(e) => setNewSatuanPendidikan(e.target.value)}
-                    placeholder="Contoh: MTs/SMP"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                    onChange={(e) => setNewSatuanPendidikan(e.target.value as SatuanPendidikanFormal)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
+                  >
+                    {SATUAN_PENDIDIKAN_FORMAL_OPTIONS.map(value => (
+                      <option key={value} value={value}>{value}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Kelas Formal
                   </label>
-                  <input
-                    type="text"
+                  <select
+                    required
                     value={newKelasFormal}
-                    onChange={(e) => setNewKelasFormal(e.target.value)}
-                    placeholder="Contoh: VIII"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
+                    onChange={(e) => setNewKelasFormal(e.target.value as KelasFormal | '')}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
+                  >
+                    <option value="">-- Pilih Kelas Formal --</option>
+                    {KELAS_FORMAL_OPTIONS.map(value => (
+                      <option key={value} value={value}>Kelas {value}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
