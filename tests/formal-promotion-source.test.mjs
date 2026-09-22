@@ -78,6 +78,22 @@ test('processed cohorts are disabled in the UI and cannot be previewed again', (
 });
 
 
+test('audit preview stays available outside Genap while execution remains locked', () => {
+  assert.match(santriManagement, /Mode audit aktif/);
+  assert.match(
+    santriManagement,
+    /const previewDisabled = Boolean\(processed\) \|\| candidates\.length === 0 \|\| isLoadingPromotionRuns;/
+  );
+  assert.match(santriManagement, /disabled=\{previewDisabled\}/);
+  assert.match(santriManagement, /Preview Audit Kenaikan/);
+  assert.match(santriManagement, /Preview Audit Kelulusan/);
+  assert.match(
+    santriManagement,
+    /disabled=\{isProcessingPromotion \|\| candidates\.length === 0 \|\| savedAcademicSemester !== 'Genap'\}/
+  );
+});
+
+
 test('promotion keeps a bounded cloud batch and commits before local cache is treated as updated', () => {
   const start = storage.indexOf('async promoteFormalCohort');
   const end = storage.indexOf('subscribeMasterData', start);
