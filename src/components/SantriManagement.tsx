@@ -13,11 +13,12 @@ import {
   type SemesterAkademik
 } from '../types';
 import { storageService } from '../services/storageService';
-import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, SquarePen, UserCheck, Save, Phone, Copy, Share2, Crown, Lock, CalendarRange, History, RefreshCw, ArrowUpCircle, GraduationCap, FileText } from 'lucide-react';
+import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, SquarePen, UserCheck, Save, Phone, Copy, Share2, Crown, Lock, CalendarRange, History, RefreshCw, ArrowUpCircle, GraduationCap, FileText, FileSpreadsheet } from 'lucide-react';
 import { getClassGroup } from '../utils/classUtils';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
 import { AcademicReportModal } from './AcademicReportModal';
+import { CollectiveAcademicReportModal } from './CollectiveAcademicReportModal';
 
 interface SantriManagementProps {
   currentUser: User;
@@ -57,6 +58,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const [isLoadingPromotionRuns, setIsLoadingPromotionRuns] = useState(false);
   const [isProcessingPromotion, setIsProcessingPromotion] = useState(false);
   const [reportSantri, setReportSantri] = useState<Santri | null>(null);
+  const [showCollectiveReport, setShowCollectiveReport] = useState(false);
 
   // New Santri Form State
   const [newId, setNewId] = useState('');
@@ -652,14 +654,24 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
           </div>
 
           {activeSubTab === 'santri' ? (
-            <button
-              id="btn-tambah-santri"
-              onClick={() => setShowAddModal(true)}
-              className="ui-control w-full sm:w-auto px-4 bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
-            >
-              <UserPlus className="w-4 h-4" />
-              <span>Tambah Santri Baru</span>
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={() => setShowCollectiveReport(true)}
+                className="ui-control w-full sm:w-auto px-4 bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+              >
+                <FileSpreadsheet className="w-4 h-4" />
+                <span>Rekap Kolektif</span>
+              </button>
+              <button
+                id="btn-tambah-santri"
+                onClick={() => setShowAddModal(true)}
+                className="ui-control w-full sm:w-auto px-4 bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Tambah Santri Baru</span>
+              </button>
+            </div>
           ) : canManageAccounts ? (
             <button
               id="btn-tambah-user"
@@ -1256,6 +1268,15 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
           santri={reportSantri}
           currentUser={currentUser}
           onClose={() => setReportSantri(null)}
+          onNotify={onNotify}
+        />
+      )}
+
+      {showCollectiveReport && (
+        <CollectiveAcademicReportModal
+          santriList={santriList}
+          currentUser={currentUser}
+          onClose={() => setShowCollectiveReport(false)}
           onNotify={onNotify}
         />
       )}
