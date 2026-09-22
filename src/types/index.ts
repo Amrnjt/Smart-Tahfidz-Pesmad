@@ -71,6 +71,22 @@ export const SATUAN_PENDIDIKAN_FORMAL_OPTIONS: SatuanPendidikanFormal[] = ['MTs'
 export type KelasFormal = 'VII' | 'VIII' | 'IX';
 export const KELAS_FORMAL_OPTIONS: KelasFormal[] = ['VII', 'VIII', 'IX'];
 
+export type SemesterAkademik = 'Ganjil' | 'Genap';
+export const SEMESTER_AKADEMIK_OPTIONS: SemesterAkademik[] = ['Ganjil', 'Genap'];
+
+export interface RiwayatAkademikRecord {
+  id: string;
+  idSantri: string;
+  namaSantri: string;
+  satuanPendidikan: SatuanPendidikanFormal;
+  kelasFormal: KelasFormal;
+  kelasAlQuran?: string;
+  tahunPelajaran: string;
+  semester: SemesterAkademik;
+  recordedAt: string;
+  recordedBy: string;
+}
+
 export interface Santri {
   idSantri: string;
   namaSantri: string;
@@ -248,6 +264,8 @@ export interface PantauanLiburanRecord {
 export interface AppConfig {
   programLiburanActive: boolean;
   programLiburanJudul?: string;
+  tahunPelajaranAktif?: string;
+  semesterAkademikAktif?: SemesterAkademik;
   updatedAt?: string;
   updatedBy?: string;
 }

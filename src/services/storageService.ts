@@ -1,4 +1,4 @@
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas, PantauanLiburanRecord, AppConfig, TrashRecord, CombinedHistoryItem } from '../types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas, PantauanLiburanRecord, AppConfig, TrashRecord, CombinedHistoryItem, RiwayatAkademikRecord, SemesterAkademik } from '../types';
 import { getClassGroup } from '../utils/classUtils';
 import { getTodayInputFormat, getCurrentTimeInputFormat } from '../utils/dateFormatter';
 import type { HistoryRangeRequest } from './historyQueryTypes';
@@ -57,6 +57,7 @@ const COLLECTIONS = {
   KELAS: 'kelas',
   PANTAUAN_LIBURAN: 'pantauan_liburan',
   APP_CONFIG: 'app_config',
+  ACADEMIC_HISTORY: 'academic_history',
   TRASH: 'trash_records'
 };
 
@@ -96,10 +97,28 @@ function writeArrayCache<T>(key: string, items: T[]): void {
   localStorage.setItem(key, JSON.stringify(items));
 }
 
+function getDefaultAcademicPeriod(now = new Date()): { tahunPelajaran: string; semester: SemesterAkademik } {
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const startYear = month >= 7 ? year : year - 1;
+  return {
+    tahunPelajaran: `${startYear}/${startYear + 1}`,
+    semester: month >= 7 ? 'Ganjil' : 'Genap'
+  };
+}
+
+function isValidTahunPelajaran(value: string): boolean {
+  const match = /^(\d{4})\/(\d{4})$/.exec(value.trim());
+  return Boolean(match && Number(match[2]) === Number(match[1]) + 1);
+}
+
 function createDefaultAppConfig(): AppConfig {
+  const academic = getDefaultAcademicPeriod();
   return {
     programLiburanActive: false,
     programLiburanJudul: 'Program Pantauan Liburan Santri',
+    tahunPelajaranAktif: academic.tahunPelajaran,
+    semesterAkademikAktif: academic.semester,
     updatedAt: new Date().toISOString()
   };
 }
@@ -290,7 +309,7 @@ export const storageService = {
     try {
       const parsed = JSON.parse(data);
       return parsed && typeof parsed.programLiburanActive === 'boolean'
-        ? parsed
+        ? { ...createDefaultAppConfig(), ...parsed }
         : createDefaultAppConfig();
     } catch {
       return createDefaultAppConfig();
@@ -299,6 +318,78 @@ export const storageService = {
 
   getPantauanLiburanRecords(): PantauanLiburanRecord[] {
     return readArrayCache<PantauanLiburanRecord>(STORAGE_KEYS.PANTAUAN_LIBURAN);
+  },
+
+  async setAcademicPeriod(
+    tahunPelajaran: string,
+    semester: SemesterAkademik,
+    updatedBy: string = 'Ustadz / Admin'
+  ): Promise<AppConfig> {
+    this.assertCanMutate('Ubah periode akademik');
+    const cleanYear = tahunPelajaran.trim();
+    if (!isValidTahunPelajaran(cleanYear)) {
+      throw new Error('Tahun pelajaran harus berformat YYYY/YYYY dan tahun kedua harus berurutan.');
+    }
+
+    const updated: AppConfig = {
+      ...this.getAppConfig(),
+      tahunPelajaranAktif: cleanYear,
+      semesterAkademikAktif: semester,
+      updatedAt: new Date().toISOString(),
+      updatedBy
+    };
+
+    await setDoc(doc(db, COLLECTIONS.APP_CONFIG, 'global_settings'), cleanForFirestore(updated), { merge: true });
+    localStorage.setItem(STORAGE_KEYS.APP_CONFIG, JSON.stringify(updated));
+    return updated;
+  },
+
+  async upsertAcademicHistory(
+    santri: Santri,
+    recordedBy: string = 'Ustadz / Admin'
+  ): Promise<RiwayatAkademikRecord | null> {
+    this.assertCanMutate('Simpan riwayat akademik');
+    if (!santri.satuanPendidikan || !santri.kelasFormal) return null;
+
+    const config = this.getAppConfig();
+    const tahunPelajaran = config.tahunPelajaranAktif || createDefaultAppConfig().tahunPelajaranAktif!;
+    const semester = config.semesterAkademikAktif || createDefaultAppConfig().semesterAkademikAktif!;
+    const safeYear = tahunPelajaran.replace('/', '-');
+    const id = `${santri.idSantri}_${safeYear}_${semester.toLowerCase()}`;
+
+    const record: RiwayatAkademikRecord = {
+      id,
+      idSantri: santri.idSantri,
+      namaSantri: santri.namaSantri,
+      satuanPendidikan: santri.satuanPendidikan,
+      kelasFormal: santri.kelasFormal,
+      kelasAlQuran: santri.kelas || '',
+      tahunPelajaran,
+      semester,
+      recordedAt: new Date().toISOString(),
+      recordedBy
+    };
+
+    await setDoc(doc(db, COLLECTIONS.ACADEMIC_HISTORY, id), cleanForFirestore(record), { merge: true });
+    return record;
+  },
+
+  async fetchAcademicHistory(idSantri?: string): Promise<RiwayatAkademikRecord[]> {
+    const source = idSantri
+      ? query(collection(db, COLLECTIONS.ACADEMIC_HISTORY), where('idSantri', '==', idSantri))
+      : collection(db, COLLECTIONS.ACADEMIC_HISTORY);
+    const snapshot = await getDocs(source);
+    const records = snapshot.docs.map((docSnap) => {
+      const data = docSnap.data() as RiwayatAkademikRecord;
+      return { ...data, id: data.id || docSnap.id };
+    });
+
+    const semesterRank: Record<SemesterAkademik, number> = { Ganjil: 1, Genap: 2 };
+    return records.sort((a, b) =>
+      b.tahunPelajaran.localeCompare(a.tahunPelajaran) ||
+      semesterRank[b.semester] - semesterRank[a.semester] ||
+      b.recordedAt.localeCompare(a.recordedAt)
+    );
   },
 
   subscribeMasterData(onUpdate?: () => void): () => void {
