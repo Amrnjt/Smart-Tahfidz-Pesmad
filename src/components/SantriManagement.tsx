@@ -13,10 +13,11 @@ import {
   type SemesterAkademik
 } from '../types';
 import { storageService } from '../services/storageService';
-import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, SquarePen, UserCheck, Save, Phone, Copy, Share2, Crown, Lock, CalendarRange, History, RefreshCw, ArrowUpCircle, GraduationCap } from 'lucide-react';
+import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, SquarePen, UserCheck, Save, Phone, Copy, Share2, Crown, Lock, CalendarRange, History, RefreshCw, ArrowUpCircle, GraduationCap, FileText } from 'lucide-react';
 import { getClassGroup } from '../utils/classUtils';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
+import { AcademicReportModal } from './AcademicReportModal';
 
 interface SantriManagementProps {
   currentUser: User;
@@ -55,6 +56,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const [promotionRuns, setPromotionRuns] = useState<Partial<Record<KelasFormal, KenaikanKelasFormalRecord>>>({});
   const [isLoadingPromotionRuns, setIsLoadingPromotionRuns] = useState(false);
   const [isProcessingPromotion, setIsProcessingPromotion] = useState(false);
+  const [reportSantri, setReportSantri] = useState<Santri | null>(null);
 
   // New Santri Form State
   const [newId, setNewId] = useState('');
@@ -969,6 +971,16 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
 
                         <button
                           type="button"
+                          onClick={() => setReportSantri(santri)}
+                          title={`Buka rekap akademik dan PDF ${santri.namaSantri}`}
+                          className="min-h-9 px-3 text-emerald-800 hover:bg-emerald-50 border border-emerald-200 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          <span>Rekap & PDF</span>
+                        </button>
+
+                        <button
+                          type="button"
                           onClick={() => void loadAcademicHistory(santri)}
                           title={`Lihat riwayat formal ${santri.namaSantri}`}
                           className="min-h-9 px-3 text-indigo-700 hover:bg-indigo-50 border border-indigo-200 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
@@ -1237,6 +1249,15 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
             </table>
           </div>
         </div>
+      )}
+
+      {reportSantri && (
+        <AcademicReportModal
+          santri={reportSantri}
+          currentUser={currentUser}
+          onClose={() => setReportSantri(null)}
+          onNotify={onNotify}
+        />
       )}
 
       {/* Modal Preview Kenaikan / Kelulusan Formal */}
