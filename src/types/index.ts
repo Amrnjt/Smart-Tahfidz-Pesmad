@@ -68,7 +68,15 @@ export interface User {
 export interface Santri {
   idSantri: string;
   namaSantri: string;
+  /**
+   * Kelompok pembelajaran Al-Qur'an berdasarkan kemampuan/kecakapan santri.
+   * Bukan jenjang kelas formal.
+   */
   kelas: string;
+  /** Satuan pendidikan formal, mis. MTs/SMP atau MA/SMA/SMK. */
+  satuanPendidikan?: string;
+  /** Kelas pada pendidikan formal, mis. VII, VIII, IX, X, XI, XII. */
+  kelasFormal?: string;
   targetHafalan: string;
   totalHafalanSelesai?: number;
   waliNama?: string;
