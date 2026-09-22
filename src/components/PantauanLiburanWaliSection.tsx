@@ -9,6 +9,7 @@ import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
 interface PantauanLiburanWaliSectionProps {
   currentUser: User;
   targetSantri: Santri;
+  records: PantauanLiburanRecord[];
   isActive: boolean;
   onDataChanged?: () => void;
   onNotify: NotifyFn;
@@ -25,6 +26,7 @@ const WAKTU_SHALAT: { key: 'shalatSubuh' | 'shalatDzuhur' | 'shalatAshar' | 'sha
 export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProps> = ({
   currentUser,
   targetSantri,
+  records,
   isActive,
   onDataChanged,
   onNotify
@@ -51,21 +53,9 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
   const [isDeletingRecord, setIsDeletingRecord] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  // Local state of records for target santri
-  const [records, setRecords] = useState<PantauanLiburanRecord[]>([]);
   const deleteDialogRef = useAccessibleDialog(Boolean(recordToDelete), () => {
     if (!isDeletingRecord) setRecordToDelete(null);
   });
-
-  const loadRecords = () => {
-    const all = storageService.getPantauanLiburanRecords();
-    const filtered = all.filter(r => r.idSantri === targetSantri.idSantri);
-    setRecords(filtered);
-  };
-
-  useEffect(() => {
-    loadRecords();
-  }, [targetSantri.idSantri]);
 
   // When date changes, check if there is an existing record for this date to preload
   useEffect(() => {
@@ -120,7 +110,6 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
     setIsDeletingRecord(true);
     try {
       await storageService.deletePantauanLiburan(recordToDelete.id);
-      loadRecords();
       if (editingRecordId === recordToDelete.id) resetForm();
       if (onDataChanged) onDataChanged();
       onNotify('success', 'Catatan amaliyah liburan berhasil dihapus dari Cloud.');
@@ -163,7 +152,6 @@ export const PantauanLiburanWaliSection: React.FC<PantauanLiburanWaliSectionProp
         inputByWali: currentUser.nama
       });
 
-      loadRecords();
       onNotify('success', `Laporan amaliyah ${formatTanggalIndo(selectedTanggal)} berhasil disimpan ke Cloud.`);
       if (onDataChanged) onDataChanged();
     } catch (err) {
