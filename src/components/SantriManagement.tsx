@@ -799,7 +799,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
           {savedAcademicSemester !== 'Genap' && (
             <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-              <span>Kenaikan kelas dikunci. Ubah dan simpan periode aktif ke Semester Genap ketika tahun pelajaran telah selesai.</span>
+              <span>Mode audit aktif. Preview kandidat tetap dapat dibuka, tetapi eksekusi kenaikan/kelulusan dikunci sampai periode aktif disimpan sebagai Semester Genap.</span>
             </div>
           )}
 
@@ -809,7 +809,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
               const processed = promotionRuns[kelas];
               const destination = kelas === 'VII' ? 'VIII' : kelas === 'VIII' ? 'IX' : 'Lulus';
               const isGraduation = kelas === 'IX';
-              const disabled = savedAcademicSemester !== 'Genap' || Boolean(processed) || candidates.length === 0 || isLoadingPromotionRuns;
+              const previewDisabled = Boolean(processed) || candidates.length === 0 || isLoadingPromotionRuns;
 
               return (
                 <article key={kelas} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-3">
@@ -838,10 +838,12 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                     <button
                       type="button"
                       onClick={() => setPromotionPreviewClass(kelas)}
-                      disabled={disabled}
+                      disabled={previewDisabled}
                       className="ui-control w-full px-3 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isGraduation ? 'Preview Kelulusan' : 'Preview Kenaikan'}
+                      {savedAcademicSemester !== 'Genap'
+                        ? (isGraduation ? 'Preview Audit Kelulusan' : 'Preview Audit Kenaikan')
+                        : (isGraduation ? 'Preview Kelulusan' : 'Preview Kenaikan')}
                     </button>
                   )}
                 </article>
@@ -1320,6 +1322,15 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                   ✕
                 </button>
               </div>
+
+              {savedAcademicSemester !== 'Genap' && (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>
+                    <span className="font-bold">Mode audit.</span> Daftar kandidat dapat diperiksa sekarang, tetapi tombol eksekusi tetap terkunci sampai periode aktif disimpan sebagai Semester Genap.
+                  </span>
+                </div>
+              )}
 
               <div className={`rounded-xl border px-3 py-3 text-xs ${
                 isGraduation
