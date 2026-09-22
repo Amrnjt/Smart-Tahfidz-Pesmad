@@ -46,19 +46,29 @@ export const PantauanLiburanPage: React.FC<PantauanLiburanPageProps> = ({
   const [selectedTanggal, setSelectedTanggal] = useState('all');
   const [isToggling, setIsToggling] = useState(false);
 
+  const targetSantri = useMemo(
+    () => santriList.find((santri) => santri.idSantri === currentUser.idSantri),
+    [santriList, currentUser.idSantri]
+  );
+
   const loadData = () => {
     setRecords(storageService.getPantauanLiburanRecords());
     setAppConfig(storageService.getAppConfig());
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    setAppConfig(storageService.getAppConfig());
+    setRecords([]);
 
-  const targetSantri = useMemo(
-    () => santriList.find((santri) => santri.idSantri === currentUser.idSantri),
-    [santriList, currentUser.idSantri]
-  );
+    if (mode === 'wali' && !targetSantri?.idSantri) return undefined;
+
+    return storageService.subscribePantauanLiburan(
+      mode === 'wali'
+        ? { scope: { kind: 'student', idSantri: targetSantri!.idSantri } }
+        : { scope: { kind: 'monitor' }, maxRecords: 500 },
+      setRecords
+    );
+  }, [mode, targetSantri?.idSantri]);
 
   if (mode === 'wali') {
     return (
@@ -82,6 +92,7 @@ export const PantauanLiburanPage: React.FC<PantauanLiburanPageProps> = ({
           <PantauanLiburanWaliSection
             currentUser={currentUser}
             targetSantri={targetSantri}
+            records={records}
             isActive={appConfig.programLiburanActive}
             onDataChanged={() => {
               loadData();
