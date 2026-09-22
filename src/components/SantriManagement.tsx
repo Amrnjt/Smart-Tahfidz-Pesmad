@@ -28,11 +28,15 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [deleteWithHistory, setDeleteWithHistory] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [satuanPendidikanFilter, setSatuanPendidikanFilter] = useState('');
+  const [kelasFormalFilter, setKelasFormalFilter] = useState('');
 
   // New Santri Form State
   const [newId, setNewId] = useState('');
   const [newNama, setNewNama] = useState('');
   const [newKelas, setNewKelas] = useState('Tahfidz');
+  const [newSatuanPendidikan, setNewSatuanPendidikan] = useState('');
+  const [newKelasFormal, setNewKelasFormal] = useState('');
   const [newTarget, setNewTarget] = useState('Juz 30 (37 Surah)');
   const [newWaliNama, setNewWaliNama] = useState('');
   const [newWaliKontak, setNewWaliKontak] = useState('');
@@ -50,6 +54,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   // Edit Santri Form State
   const [editSantriNama, setEditSantriNama] = useState('');
   const [editSantriKelas, setEditSantriKelas] = useState('');
+  const [editSantriSatuanPendidikan, setEditSantriSatuanPendidikan] = useState('');
+  const [editSantriKelasFormal, setEditSantriKelasFormal] = useState('');
   const [editSantriTarget, setEditSantriTarget] = useState('');
   const [editSantriWaliNama, setEditSantriWaliNama] = useState('');
   const [editSantriWaliKontak, setEditSantriWaliKontak] = useState('');
@@ -132,6 +138,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     setSantriToEdit(s);
     setEditSantriNama(s.namaSantri);
     setEditSantriKelas(s.kelas);
+    setEditSantriSatuanPendidikan(s.satuanPendidikan || '');
+    setEditSantriKelasFormal(s.kelasFormal || '');
     setEditSantriTarget(s.targetHafalan);
     setEditSantriWaliNama(s.waliNama || '');
     setEditSantriWaliKontak(s.waliKontak || '');
@@ -146,6 +154,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       await storageService.updateSantri(santriToEdit.idSantri, {
         namaSantri: editSantriNama.trim(),
         kelas: editSantriKelas,
+        satuanPendidikan: editSantriSatuanPendidikan.trim(),
+        kelasFormal: editSantriKelasFormal.trim(),
         targetHafalan: editSantriTarget.trim() || 'Juz 30 (37 Surah)',
         waliNama: editSantriWaliNama.trim() || '',
         waliKontak: editSantriWaliKontak.trim() || ''
@@ -173,6 +183,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
         idSantri: generatedId,
         namaSantri: newNama.trim(),
         kelas: newKelas,
+        satuanPendidikan: newSatuanPendidikan.trim(),
+        kelasFormal: newKelasFormal.trim(),
         targetHafalan: newTarget.trim() || 'Juz 30 (37 Surah)',
         totalHafalanSelesai: 0,
         waliNama: newWaliNama.trim() || '',
@@ -184,6 +196,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       setShowAddModal(false);
       setNewNama('');
       setNewId('');
+      setNewSatuanPendidikan('');
+      setNewKelasFormal('');
       setNewWaliNama('');
       setNewWaliKontak('');
       onDataChanged();
@@ -283,11 +297,37 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     return { totalZiyadah, totalMurojaah, total: totalZiyadah + totalMurojaah };
   };
 
-  const filteredSantri = santriList.filter(s =>
-    s.namaSantri.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.idSantri.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    s.kelas.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const satuanPendidikanOptions = Array.from(
+    new Set(santriList.map(s => (s.satuanPendidikan || '').trim()).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b));
+
+  const kelasFormalOptions = Array.from(
+    new Set(santriList.map(s => (s.kelasFormal || '').trim()).filter(Boolean))
+  ).sort((a, b) => a.localeCompare(b, 'id', { numeric: true }));
+
+  const getFormalLabel = (santri: Santri) => {
+    const parts = [
+      santri.satuanPendidikan?.trim(),
+      santri.kelasFormal?.trim() ? `Kelas ${santri.kelasFormal.trim()}` : ''
+    ].filter(Boolean);
+    return parts.length > 0 ? parts.join(' · ') : 'Belum diisi';
+  };
+
+  const filteredSantri = santriList.filter(s => {
+    const query = searchQuery.trim().toLowerCase();
+    const matchesSearch = !query || [
+      s.namaSantri,
+      s.idSantri,
+      s.kelas,
+      s.satuanPendidikan || '',
+      s.kelasFormal || ''
+    ].some(value => value.toLowerCase().includes(query));
+
+    const matchesSatuan = !satuanPendidikanFilter || s.satuanPendidikan === satuanPendidikanFilter;
+    const matchesKelasFormal = !kelasFormalFilter || s.kelasFormal === kelasFormalFilter;
+
+    return matchesSearch && matchesSatuan && matchesKelasFormal;
+  });
 
   const filteredUsers = usersList.filter(u =>
     u.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -303,7 +343,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     const appUrl = 'https://tahfidzpesmad.my.id';
 
     return `Assalamu'alaikum Warahmatullahi Wabarakatuh,
-Yth. Bapak/Ibu Wali dari Ananda *${santri.namaSantri}* (Kelas: ${santri.kelas}),
+Yth. Bapak/Ibu Wali dari Ananda *${santri.namaSantri}* (Kelas Al-Qur'an: ${santri.kelas}; Jenjang formal: ${getFormalLabel(santri)}),
 
 Berikut informasi akses akun Portal Wali Santri Madrasah Darul Fikri:
 🌐 *Link Portal:* ${appUrl}
@@ -427,40 +467,72 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
         </div>
       </div>
 
-      {/* Controls: Search & Add Button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="relative w-full sm:max-w-md sm:flex-1">
-          <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
-          <input
-            id="search-santri-input"
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={activeSubTab === 'santri' ? 'Cari nama, ID, kelas...' : 'Cari user, nama, role, NIS...'}
-            aria-label={activeSubTab === 'santri' ? 'Cari data santri' : 'Cari akun pengguna'}
-            className="ui-control w-full pl-10 pr-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 placeholder-slate-400"
-          />
+      {/* Controls: Search, formal filters & Add Button */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="relative w-full sm:max-w-md sm:flex-1">
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+            <input
+              id="search-santri-input"
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={activeSubTab === 'santri' ? "Cari nama, ID, Kelas Al-Qur'an, atau jenjang formal..." : 'Cari user, nama, role, NIS...'}
+              aria-label={activeSubTab === 'santri' ? 'Cari data santri' : 'Cari akun pengguna'}
+              className="ui-control w-full pl-10 pr-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 placeholder-slate-400"
+            />
+          </div>
+
+          {activeSubTab === 'santri' ? (
+            <button
+              id="btn-tambah-santri"
+              onClick={() => setShowAddModal(true)}
+              className="ui-control w-full sm:w-auto px-4 bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Tambah Santri Baru</span>
+            </button>
+          ) : canManageAccounts ? (
+            <button
+              id="btn-tambah-user"
+              onClick={() => setShowAddUserModal(true)}
+              className="ui-control w-full sm:w-auto px-4 bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+            >
+              <UserPlus className="w-4 h-4" />
+              <span>Tambah Akun Baru</span>
+            </button>
+          ) : null}
         </div>
 
-        {activeSubTab === 'santri' ? (
-          <button
-            id="btn-tambah-santri"
-            onClick={() => setShowAddModal(true)}
-            className="ui-control w-full sm:w-auto px-4 bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Tambah Santri Baru</span>
-          </button>
-        ) : canManageAccounts ? (
-          <button
-            id="btn-tambah-user"
-            onClick={() => setShowAddUserModal(true)}
-            className="ui-control w-full sm:w-auto px-4 bg-emerald-800 hover:bg-emerald-700 active:bg-emerald-950 text-white rounded-xl text-sm font-bold transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>Tambah Akun Baru</span>
-          </button>
-        ) : null}
+        {activeSubTab === 'santri' && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label className="sr-only" htmlFor="filter-satuan-pendidikan">Filter satuan pendidikan</label>
+            <select
+              id="filter-satuan-pendidikan"
+              value={satuanPendidikanFilter}
+              onChange={(e) => setSatuanPendidikanFilter(e.target.value)}
+              className="ui-control w-full px-3 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-700"
+            >
+              <option value="">Semua satuan pendidikan</option>
+              {satuanPendidikanOptions.map(value => (
+                <option key={value} value={value}>{value}</option>
+              ))}
+            </select>
+
+            <label className="sr-only" htmlFor="filter-kelas-formal">Filter kelas formal</label>
+            <select
+              id="filter-kelas-formal"
+              value={kelasFormalFilter}
+              onChange={(e) => setKelasFormalFilter(e.target.value)}
+              className="ui-control w-full px-3 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-700"
+            >
+              <option value="">Semua kelas formal</option>
+              {kelasFormalOptions.map(value => (
+                <option key={value} value={value}>Kelas {value}</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>
 
       {/* Tab 1: Santri Cards Grid */}
@@ -520,7 +592,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                         </span>
                         {santri.kelas && santri.kelas !== '-' ? (
                           <span className="text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md truncate max-w-[150px]">
-                            {santri.kelas}
+                            Al-Qur'an · {santri.kelas}
                           </span>
                         ) : (
                           <span className="text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
@@ -537,6 +609,10 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                             {santri.waliKontak ? ` (${santri.waliKontak})` : ''}
                           </p>
                         )}
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                        <span className="font-semibold text-slate-700">Jenjang formal:</span> {getFormalLabel(santri)}
                       </div>
 
                       <div className="flex items-center gap-1.5 text-xs text-slate-600">
@@ -889,7 +965,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Kelas Bimbingan
+                    Kelas Al-Qur'an
                   </label>
                   <select
                     value={editSantriKelas}
@@ -912,6 +988,34 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                     type="text"
                     value={editSantriTarget}
                     onChange={(e) => setEditSantriTarget(e.target.value)}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Satuan Pendidikan
+                  </label>
+                  <input
+                    type="text"
+                    value={editSantriSatuanPendidikan}
+                    onChange={(e) => setEditSantriSatuanPendidikan(e.target.value)}
+                    placeholder="Contoh: MTs/SMP"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Kelas Formal
+                  </label>
+                  <input
+                    type="text"
+                    value={editSantriKelasFormal}
+                    onChange={(e) => setEditSantriKelasFormal(e.target.value)}
+                    placeholder="Contoh: VIII"
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
@@ -1147,8 +1251,12 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                 <span className="font-mono font-bold text-emerald-800">{santriToDelete.idSantri}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-500">Kelas:</span>
+                <span className="text-slate-500">Kelas Al-Qur'an:</span>
                 <span className="font-medium text-slate-700">{getClassGroup(santriToDelete.kelas)}</span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="text-slate-500">Jenjang Formal:</span>
+                <span className="font-medium text-slate-700 text-right">{getFormalLabel(santriToDelete)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Target Hafalan:</span>
@@ -1309,7 +1417,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
-                    Kelas Bimbingan
+                    Kelas Al-Qur'an
                   </label>
                   <select
                     value={newKelas}
@@ -1333,6 +1441,34 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                     value={newTarget}
                     onChange={(e) => setNewTarget(e.target.value)}
                     placeholder="Contoh: Juz 30 (37 Surah)"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Satuan Pendidikan
+                  </label>
+                  <input
+                    type="text"
+                    value={newSatuanPendidikan}
+                    onChange={(e) => setNewSatuanPendidikan(e.target.value)}
+                    placeholder="Contoh: MTs/SMP"
+                    className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Kelas Formal
+                  </label>
+                  <input
+                    type="text"
+                    value={newKelasFormal}
+                    onChange={(e) => setNewKelasFormal(e.target.value)}
+                    placeholder="Contoh: VIII"
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   />
                 </div>
