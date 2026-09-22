@@ -65,6 +65,12 @@ export interface User {
   notificationPermission?: 'default' | 'granted' | 'denied';
 }
 
+export type SatuanPendidikanFormal = 'MTs';
+export const SATUAN_PENDIDIKAN_FORMAL_OPTIONS: SatuanPendidikanFormal[] = ['MTs'];
+
+export type KelasFormal = 'VII' | 'VIII' | 'IX';
+export const KELAS_FORMAL_OPTIONS: KelasFormal[] = ['VII', 'VIII', 'IX'];
+
 export interface Santri {
   idSantri: string;
   namaSantri: string;
@@ -73,10 +79,10 @@ export interface Santri {
    * Bukan jenjang kelas formal.
    */
   kelas: string;
-  /** Satuan pendidikan formal, mis. MTs/SMP atau MA/SMA/SMK. */
-  satuanPendidikan?: string;
-  /** Kelas pada pendidikan formal, mis. VII, VIII, IX, X, XI, XII. */
-  kelasFormal?: string;
+  /** Satuan pendidikan formal. Tahap awal Smart Tahfidz menggunakan MTs. */
+  satuanPendidikan?: SatuanPendidikanFormal;
+  /** Kelas formal MTs. Terpisah dari kelas kemampuan Al-Qur'an. */
+  kelasFormal?: KelasFormal;
   targetHafalan: string;
   totalHafalanSelesai?: number;
   waliNama?: string;
