@@ -7,7 +7,7 @@ const app = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8');
 
 test('master realtime subscription excludes setoran collections', () => {
   const start = storage.indexOf('subscribeMasterData(');
-  const end = storage.indexOf('subscribeRecentSetoran(', start);
+  const end = storage.indexOf('subscribePantauanLiburan(', start);
   assert.ok(start >= 0 && end > start);
   const masterBody = storage.slice(start, end);
   for (const collection of ['COLLECTIONS.ZIYADAH', 'COLLECTIONS.MUROJAAH', 'COLLECTIONS.BINNADZOR', 'COLLECTIONS.PEMBELAJARAN', 'COLLECTIONS.PANTAUAN_LIBURAN']) {
