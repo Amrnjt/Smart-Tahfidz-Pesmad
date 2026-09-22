@@ -164,7 +164,12 @@ export default function App() {
       startDate,
       endDate: today,
       scope: isPersonal ? { kind: 'student', idSantri } : { kind: 'staff' },
-    }, refreshRecentSetoran);
+    }, (update) => {
+      if (update.type === 'ziyadah') setZiyadahRecords(update.records);
+      else if (update.type === 'murojaah') setMurojaahRecords(update.records);
+      else if (update.type === 'binnadzor') setBinnadzorRecords(update.records);
+      else setPembelajaranRecords(update.records);
+    });
 
     return unsubscribe;
   }, [currentUser?.id, currentUser?.role, currentUser?.idSantri, currentUser?.username]);
