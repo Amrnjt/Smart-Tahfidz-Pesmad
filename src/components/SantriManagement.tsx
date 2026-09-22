@@ -171,7 +171,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
         kelasList.map(async kelas => [kelas, await storageService.getFormalPromotionRun(savedYear, kelas)] as const)
       );
       setPromotionRuns(Object.fromEntries(entries.filter(([, record]) => Boolean(record))) as Partial<Record<KelasFormal, KenaikanKelasFormalRecord>>);
-    } catch {
+    } catch (error) {
+      console.error('Failed to load formal promotion runs:', error);
       setPromotionRuns({});
       showToast('error', 'Gagal memeriksa status kenaikan kelas formal.');
     } finally {
