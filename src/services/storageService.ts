@@ -1,4 +1,4 @@
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas, PantauanLiburanRecord, AppConfig, TrashRecord, CombinedHistoryItem, RiwayatAkademikRecord, SemesterAkademik } from '../types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, TipeKelas, PantauanLiburanRecord, AppConfig, TrashRecord, CombinedHistoryItem, RiwayatAkademikRecord, SemesterAkademik, KenaikanKelasFormalRecord, KelasFormal } from '../types';
 import { getClassGroup } from '../utils/classUtils';
 import { getTodayInputFormat, getCurrentTimeInputFormat } from '../utils/dateFormatter';
 import type { HistoryRangeRequest } from './historyQueryTypes';
@@ -58,6 +58,7 @@ const COLLECTIONS = {
   PANTAUAN_LIBURAN: 'pantauan_liburan',
   APP_CONFIG: 'app_config',
   ACADEMIC_HISTORY: 'academic_history',
+  ACADEMIC_PROMOTIONS: 'academic_promotions',
   TRASH: 'trash_records'
 };
 
@@ -110,6 +111,15 @@ function getDefaultAcademicPeriod(now = new Date()): { tahunPelajaran: string; s
 function isValidTahunPelajaran(value: string): boolean {
   const match = /^(\d{4})\/(\d{4})$/.exec(value.trim());
   return Boolean(match && Number(match[2]) === Number(match[1]) + 1);
+}
+
+function getNextTahunPelajaran(value: string): string {
+  const match = /^(\d{4})\/(\d{4})$/.exec(value.trim());
+  if (!match || Number(match[2]) !== Number(match[1]) + 1) {
+    throw new Error('Tahun pelajaran aktif tidak valid.');
+  }
+  const nextStart = Number(match[2]);
+  return `${nextStart}/${nextStart + 1}`;
 }
 
 function createDefaultAppConfig(): AppConfig {
@@ -366,6 +376,7 @@ export const storageService = {
       kelasAlQuran: santri.kelas || '',
       tahunPelajaran,
       semester,
+      statusAkademikFormal: santri.statusAkademikFormal || 'Aktif',
       recordedAt: new Date().toISOString(),
       recordedBy
     };
@@ -390,6 +401,155 @@ export const storageService = {
       semesterRank[b.semester] - semesterRank[a.semester] ||
       b.recordedAt.localeCompare(a.recordedAt)
     );
+  },
+
+  async getFormalPromotionRun(
+    tahunPelajaranAsal: string,
+    kelasAsal: KelasFormal
+  ): Promise<KenaikanKelasFormalRecord | null> {
+    const id = `${tahunPelajaranAsal.replace('/', '-')}_${kelasAsal}`;
+    const snapshot = await getDoc(doc(db, COLLECTIONS.ACADEMIC_PROMOTIONS, id));
+    if (!snapshot.exists()) return null;
+    return snapshot.data() as KenaikanKelasFormalRecord;
+  },
+
+  async promoteFormalCohort(
+    kelasAsal: KelasFormal,
+    processedBy: string = 'Ustadz / Admin'
+  ): Promise<KenaikanKelasFormalRecord> {
+    this.assertCanMutate(kelasAsal === 'IX' ? 'Luluskan kelas formal IX' : 'Naikkan kelas formal');
+
+    const config = this.getAppConfig();
+    const tahunPelajaranAsal = config.tahunPelajaranAktif || '';
+    const semester = config.semesterAkademikAktif;
+    if (!isValidTahunPelajaran(tahunPelajaranAsal)) {
+      throw new Error('Tahun pelajaran aktif belum valid.');
+    }
+    if (semester !== 'Genap') {
+      throw new Error('Kenaikan kelas formal hanya dapat diproses pada Semester Genap.');
+    }
+
+    const tahunPelajaranTujuan = getNextTahunPelajaran(tahunPelajaranAsal);
+    const kelasTujuan: KelasFormal | 'Lulus' =
+      kelasAsal === 'VII' ? 'VIII' :
+      kelasAsal === 'VIII' ? 'IX' :
+      'Lulus';
+
+    const promotionId = `${tahunPelajaranAsal.replace('/', '-')}_${kelasAsal}`;
+    const promotionRef = doc(db, COLLECTIONS.ACADEMIC_PROMOTIONS, promotionId);
+    const existingPromotion = await getDoc(promotionRef);
+    if (existingPromotion.exists()) {
+      throw new Error(`Kelas ${kelasAsal} sudah diproses untuk Tahun Pelajaran ${tahunPelajaranAsal}.`);
+    }
+
+    const cloudSantriSnapshot = await getDocs(collection(db, COLLECTIONS.SANTRI));
+    const candidates = cloudSantriSnapshot.docs
+      .map(docSnap => docSnap.data() as Santri)
+      .filter(santri =>
+        santri.satuanPendidikan === 'MTs' &&
+        santri.kelasFormal === kelasAsal &&
+        (santri.statusAkademikFormal || 'Aktif') === 'Aktif'
+      );
+
+    if (candidates.length === 0) {
+      throw new Error(`Tidak ada santri aktif kelas ${kelasAsal} yang dapat diproses.`);
+    }
+    if (candidates.length > 150) {
+      throw new Error('Jumlah santri dalam satu angkatan melebihi batas aman batch. Pecah proses sebelum melanjutkan.');
+    }
+
+    const processedAt = new Date().toISOString();
+    const sourceSafeYear = tahunPelajaranAsal.replace('/', '-');
+    const targetSafeYear = tahunPelajaranTujuan.replace('/', '-');
+    const batch = writeBatch(db);
+
+    for (const santri of candidates) {
+      const sourceHistoryId = `${santri.idSantri}_${sourceSafeYear}_genap`;
+      const sourceHistory: RiwayatAkademikRecord = {
+        id: sourceHistoryId,
+        idSantri: santri.idSantri,
+        namaSantri: santri.namaSantri,
+        satuanPendidikan: 'MTs',
+        kelasFormal: kelasAsal,
+        kelasAlQuran: santri.kelas || '',
+        tahunPelajaran: tahunPelajaranAsal,
+        semester: 'Genap',
+        statusAkademikFormal: kelasAsal === 'IX' ? 'Lulus' : 'Aktif',
+        recordedAt: processedAt,
+        recordedBy: processedBy
+      };
+      batch.set(doc(db, COLLECTIONS.ACADEMIC_HISTORY, sourceHistoryId), cleanForFirestore(sourceHistory), { merge: true });
+
+      if (kelasTujuan === 'Lulus') {
+        batch.set(doc(db, COLLECTIONS.SANTRI, santri.idSantri), cleanForFirestore({
+          statusAkademikFormal: 'Lulus',
+          tahunLulus: tahunPelajaranAsal.split('/')[1],
+          tanggalLulus: processedAt
+        }), { merge: true });
+      } else {
+        batch.set(doc(db, COLLECTIONS.SANTRI, santri.idSantri), cleanForFirestore({
+          kelasFormal: kelasTujuan,
+          statusAkademikFormal: 'Aktif',
+          tahunLulus: '',
+          tanggalLulus: ''
+        }), { merge: true });
+
+        const targetHistoryId = `${santri.idSantri}_${targetSafeYear}_ganjil`;
+        const targetHistory: RiwayatAkademikRecord = {
+          id: targetHistoryId,
+          idSantri: santri.idSantri,
+          namaSantri: santri.namaSantri,
+          satuanPendidikan: 'MTs',
+          kelasFormal: kelasTujuan,
+          kelasAlQuran: santri.kelas || '',
+          tahunPelajaran: tahunPelajaranTujuan,
+          semester: 'Ganjil',
+          statusAkademikFormal: 'Aktif',
+          recordedAt: processedAt,
+          recordedBy: processedBy
+        };
+        batch.set(doc(db, COLLECTIONS.ACADEMIC_HISTORY, targetHistoryId), cleanForFirestore(targetHistory), { merge: true });
+      }
+    }
+
+    const promotionRecord: KenaikanKelasFormalRecord = {
+      id: promotionId,
+      satuanPendidikan: 'MTs',
+      kelasAsal,
+      kelasTujuan,
+      tahunPelajaranAsal,
+      tahunPelajaranTujuan,
+      jumlahSantri: candidates.length,
+      idSantri: candidates.map(santri => santri.idSantri),
+      processedAt,
+      processedBy
+    };
+    batch.set(promotionRef, cleanForFirestore(promotionRecord));
+
+    await batch.commit();
+
+    const promotedIds = new Set(candidates.map(santri => santri.idSantri));
+    const localSantri = this.getSantriList().map(santri => {
+      if (!promotedIds.has(santri.idSantri)) return santri;
+      if (kelasTujuan === 'Lulus') {
+        return {
+          ...santri,
+          statusAkademikFormal: 'Lulus' as const,
+          tahunLulus: tahunPelajaranAsal.split('/')[1],
+          tanggalLulus: processedAt
+        };
+      }
+      return {
+        ...santri,
+        kelasFormal: kelasTujuan,
+        statusAkademikFormal: 'Aktif' as const,
+        tahunLulus: '',
+        tanggalLulus: ''
+      };
+    });
+    writeArrayCache(STORAGE_KEYS.SANTRI, localSantri);
+
+    return promotionRecord;
   },
 
   subscribeMasterData(onUpdate?: () => void): () => void {

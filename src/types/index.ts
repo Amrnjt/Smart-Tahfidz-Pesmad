@@ -74,6 +74,8 @@ export const KELAS_FORMAL_OPTIONS: KelasFormal[] = ['VII', 'VIII', 'IX'];
 export type SemesterAkademik = 'Ganjil' | 'Genap';
 export const SEMESTER_AKADEMIK_OPTIONS: SemesterAkademik[] = ['Ganjil', 'Genap'];
 
+export type StatusAkademikFormal = 'Aktif' | 'Lulus';
+
 export interface RiwayatAkademikRecord {
   id: string;
   idSantri: string;
@@ -83,8 +85,22 @@ export interface RiwayatAkademikRecord {
   kelasAlQuran?: string;
   tahunPelajaran: string;
   semester: SemesterAkademik;
+  statusAkademikFormal?: StatusAkademikFormal;
   recordedAt: string;
   recordedBy: string;
+}
+
+export interface KenaikanKelasFormalRecord {
+  id: string;
+  satuanPendidikan: SatuanPendidikanFormal;
+  kelasAsal: KelasFormal;
+  kelasTujuan: KelasFormal | 'Lulus';
+  tahunPelajaranAsal: string;
+  tahunPelajaranTujuan: string;
+  jumlahSantri: number;
+  idSantri: string[];
+  processedAt: string;
+  processedBy: string;
 }
 
 export interface Santri {
@@ -99,6 +115,9 @@ export interface Santri {
   satuanPendidikan?: SatuanPendidikanFormal;
   /** Kelas formal MTs. Terpisah dari kelas kemampuan Al-Qur'an. */
   kelasFormal?: KelasFormal;
+  statusAkademikFormal?: StatusAkademikFormal;
+  tahunLulus?: string;
+  tanggalLulus?: string;
   targetHafalan: string;
   totalHafalanSelesai?: number;
   waliNama?: string;

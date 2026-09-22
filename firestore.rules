@@ -31,6 +31,9 @@ service cloud.firestore {
     match /academic_history/{id} {
       allow read, write: if true;
     }
+    match /academic_promotions/{id} {
+      allow read, write: if true;
+    }
     match /trash_records/{trashId} {
       allow read, write: if true;
     }

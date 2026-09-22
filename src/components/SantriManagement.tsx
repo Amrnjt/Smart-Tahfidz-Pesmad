@@ -7,12 +7,13 @@ import {
   User,
   UserRole,
   type KelasFormal,
+  type KenaikanKelasFormalRecord,
   type RiwayatAkademikRecord,
   type SatuanPendidikanFormal,
   type SemesterAkademik
 } from '../types';
 import { storageService } from '../services/storageService';
-import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, SquarePen, UserCheck, Save, Phone, Copy, Share2, Crown, Lock, CalendarRange, History, RefreshCw } from 'lucide-react';
+import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, SquarePen, UserCheck, Save, Phone, Copy, Share2, Crown, Lock, CalendarRange, History, RefreshCw, ArrowUpCircle, GraduationCap } from 'lucide-react';
 import { getClassGroup } from '../utils/classUtils';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
@@ -50,6 +51,10 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const [academicHistoryRecords, setAcademicHistoryRecords] = useState<RiwayatAkademikRecord[]>([]);
   const [isLoadingAcademicHistory, setIsLoadingAcademicHistory] = useState(false);
   const [isSavingAcademicSnapshot, setIsSavingAcademicSnapshot] = useState(false);
+  const [promotionPreviewClass, setPromotionPreviewClass] = useState<KelasFormal | null>(null);
+  const [promotionRuns, setPromotionRuns] = useState<Partial<Record<KelasFormal, KenaikanKelasFormalRecord>>>({});
+  const [isLoadingPromotionRuns, setIsLoadingPromotionRuns] = useState(false);
+  const [isProcessingPromotion, setIsProcessingPromotion] = useState(false);
 
   // New Santri Form State
   const [newId, setNewId] = useState('');
@@ -71,6 +76,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const deleteSantriDialogRef = useAccessibleDialog(Boolean(santriToDelete), () => { if (!isDeleting) setSantriToDelete(null); });
   const deleteUserDialogRef = useAccessibleDialog(Boolean(userToDelete), () => { if (!isDeleting) setUserToDelete(null); });
   const academicHistoryDialogRef = useAccessibleDialog(Boolean(historySantri), () => { if (!isSavingAcademicSnapshot) setHistorySantri(null); });
+  const promotionPreviewDialogRef = useAccessibleDialog(Boolean(promotionPreviewClass), () => { if (!isProcessingPromotion) setPromotionPreviewClass(null); });
 
   useEffect(() => {
     setAcademicYear(appConfig.tahunPelajaranAktif || '');
@@ -104,6 +110,13 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const canManageAccounts = currentUser.role === 'Superadmin';
 
   const currentCalendarYear = new Date().getFullYear();
+  const savedAcademicYear = appConfig.tahunPelajaranAktif || academicYear;
+  const savedAcademicSemester = appConfig.semesterAkademikAktif || academicSemester;
+  const savedAcademicYearMatch = /^(\d{4})\/(\d{4})$/.exec(savedAcademicYear);
+  const nextAcademicYear = savedAcademicYearMatch
+    ? `${savedAcademicYearMatch[2]}/${Number(savedAcademicYearMatch[2]) + 1}`
+    : 'Tahun berikutnya';
+
   const academicYearOptions = Array.from(new Set([
     academicYear,
     ...Array.from({ length: 7 }, (_, index) => {
@@ -137,6 +150,63 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       showToast('error', 'Gagal memuat riwayat akademik santri.');
     } finally {
       setIsLoadingAcademicHistory(false);
+    }
+  };
+
+  const loadPromotionRuns = async () => {
+    const savedYear = storageService.getAppConfig().tahunPelajaranAktif;
+    if (!savedYear) {
+      setPromotionRuns({});
+      return;
+    }
+
+    setIsLoadingPromotionRuns(true);
+    try {
+      const kelasList: KelasFormal[] = ['VII', 'VIII', 'IX'];
+      const entries = await Promise.all(
+        kelasList.map(async kelas => [kelas, await storageService.getFormalPromotionRun(savedYear, kelas)] as const)
+      );
+      setPromotionRuns(Object.fromEntries(entries.filter(([, record]) => Boolean(record))) as Partial<Record<KelasFormal, KenaikanKelasFormalRecord>>);
+    } catch {
+      setPromotionRuns({});
+      showToast('error', 'Gagal memeriksa status kenaikan kelas formal.');
+    } finally {
+      setIsLoadingPromotionRuns(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadPromotionRuns();
+  }, [appConfig.tahunPelajaranAktif, appConfig.semesterAkademikAktif]);
+
+  const getPromotionCandidates = (kelas: KelasFormal) =>
+    santriList.filter(santri =>
+      santri.satuanPendidikan === 'MTs' &&
+      santri.kelasFormal === kelas &&
+      (santri.statusAkademikFormal || 'Aktif') === 'Aktif'
+    );
+
+  const handleProcessPromotion = async () => {
+    if (!promotionPreviewClass) return;
+    setIsProcessingPromotion(true);
+    try {
+      const result = await storageService.promoteFormalCohort(
+        promotionPreviewClass,
+        currentUser.nama || 'Ustadz / Admin'
+      );
+      await loadPromotionRuns();
+      setPromotionPreviewClass(null);
+      onDataChanged();
+      showToast(
+        'success',
+        result.kelasTujuan === 'Lulus'
+          ? `${result.jumlahSantri} santri kelas IX berhasil diluluskan.`
+          : `${result.jumlahSantri} santri kelas ${result.kelasAsal} berhasil naik ke kelas ${result.kelasTujuan}.`
+      );
+    } catch (err) {
+      showToast('error', err instanceof Error ? err.message : 'Gagal memproses kenaikan kelas formal.');
+    } finally {
+      setIsProcessingPromotion(false);
     }
   };
 
@@ -690,6 +760,82 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
         </section>
       )}
 
+      {activeSubTab === 'santri' && (
+        <section id="formal-promotion-card" className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+            <div>
+              <h4 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <ArrowUpCircle className="w-4 h-4 text-indigo-700" />
+                Kenaikan Kelas Formal
+              </h4>
+              <p className="mt-1 text-xs text-slate-500">
+                Proses per angkatan dengan preview. Kelas IX diproses sebagai kelulusan dan tetap tersimpan sebagai alumni.
+              </p>
+            </div>
+            <span className={`inline-flex self-start rounded-lg border px-2.5 py-1 text-xs font-bold ${
+              savedAcademicSemester === 'Genap'
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                : 'border-amber-200 bg-amber-50 text-amber-800'
+            }`}>
+              {savedAcademicYear} · {savedAcademicSemester}
+            </span>
+          </div>
+
+          {savedAcademicSemester !== 'Genap' && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span>Kenaikan kelas dikunci. Ubah dan simpan periode aktif ke Semester Genap ketika tahun pelajaran telah selesai.</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {(['VII', 'VIII', 'IX'] as KelasFormal[]).map(kelas => {
+              const candidates = getPromotionCandidates(kelas);
+              const processed = promotionRuns[kelas];
+              const destination = kelas === 'VII' ? 'VIII' : kelas === 'VIII' ? 'IX' : 'Lulus';
+              const isGraduation = kelas === 'IX';
+              const disabled = savedAcademicSemester !== 'Genap' || Boolean(processed) || candidates.length === 0 || isLoadingPromotionRuns;
+
+              return (
+                <article key={kelas} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-semibold text-slate-500">MTs · Kelas {kelas}</p>
+                      <p className="mt-1 text-lg font-extrabold text-slate-900">{candidates.length} santri aktif</p>
+                    </div>
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                      isGraduation ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'
+                    }`}>
+                      {isGraduation ? <GraduationCap className="w-5 h-5" /> : <ArrowUpCircle className="w-5 h-5" />}
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-slate-600">
+                    {kelas} <span className="mx-1 text-slate-400">→</span> <span className="font-bold text-slate-800">{destination}</span>
+                    {!isGraduation && <span className="text-slate-400"> · {nextAcademicYear}</span>}
+                  </div>
+
+                  {processed ? (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-2.5 py-2 text-xs text-emerald-800">
+                      <span className="font-bold">Sudah diproses.</span> {processed.jumlahSantri} santri · {new Date(processed.processedAt).toLocaleDateString('id-ID')}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setPromotionPreviewClass(kelas)}
+                      disabled={disabled}
+                      className="ui-control w-full px-3 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 text-xs font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isGraduation ? 'Preview Kelulusan' : 'Preview Kenaikan'}
+                    </button>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Tab 1: Santri Cards Grid */}
       {activeSubTab === 'santri' && (
         <>
@@ -766,8 +912,13 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                         )}
                       </div>
 
-                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-                        <span className="font-semibold text-slate-700">Jenjang formal:</span> {getFormalLabel(santri)}
+                      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 flex items-center justify-between gap-2">
+                        <span><span className="font-semibold text-slate-700">Jenjang formal:</span> {getFormalLabel(santri)}</span>
+                        {(santri.statusAkademikFormal || 'Aktif') === 'Lulus' && (
+                          <span className="flex-shrink-0 rounded-md border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-bold text-indigo-700">
+                            Lulus{santri.tahunLulus ? ` · ${santri.tahunLulus}` : ''}
+                          </span>
+                        )}
                       </div>
 
                       <div className="flex items-center gap-1.5 text-xs text-slate-600">
@@ -1087,6 +1238,125 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
           </div>
         </div>
       )}
+
+      {/* Modal Preview Kenaikan / Kelulusan Formal */}
+      {promotionPreviewClass && (() => {
+        const candidates = getPromotionCandidates(promotionPreviewClass);
+        const destination = promotionPreviewClass === 'VII' ? 'VIII' : promotionPreviewClass === 'VIII' ? 'IX' : 'Lulus';
+        const isGraduation = promotionPreviewClass === 'IX';
+
+        return (
+          <div
+            ref={promotionPreviewDialogRef}
+            className="ui-dialog-overlay"
+            role="dialog"
+            aria-modal="true"
+            aria-label={isGraduation ? 'Preview kelulusan kelas IX' : `Preview kenaikan kelas ${promotionPreviewClass}`}
+            tabIndex={-1}
+          >
+            <div className="ui-dialog-panel max-w-lg p-5 sm:p-6 space-y-5">
+              <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
+                <div>
+                  <h4 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                    {isGraduation
+                      ? <GraduationCap className="w-5 h-5 text-indigo-700" />
+                      : <ArrowUpCircle className="w-5 h-5 text-emerald-700" />}
+                    {isGraduation ? 'Preview Kelulusan Kelas IX' : `Preview Kenaikan ${promotionPreviewClass} → ${destination}`}
+                  </h4>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Tahun Pelajaran {savedAcademicYear} · Semester {savedAcademicSemester}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPromotionPreviewClass(null)}
+                  disabled={isProcessingPromotion}
+                  aria-label="Tutup preview kenaikan kelas"
+                  className="ui-dialog-close cursor-pointer text-lg disabled:opacity-50"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className={`rounded-xl border px-3 py-3 text-xs ${
+                isGraduation
+                  ? 'border-indigo-200 bg-indigo-50 text-indigo-900'
+                  : 'border-emerald-200 bg-emerald-50 text-emerald-900'
+              }`}>
+                <p className="font-bold">
+                  {isGraduation
+                    ? `${candidates.length} santri akan diubah menjadi status Lulus/Alumni.`
+                    : `${candidates.length} santri akan naik dari kelas ${promotionPreviewClass} ke kelas ${destination}.`}
+                </p>
+                <p className="mt-1 leading-relaxed opacity-80">
+                  Riwayat Semester Genap {savedAcademicYear} akan disimpan terlebih dahulu.
+                  {!isGraduation && ` Sistem juga menyiapkan snapshot kelas ${destination} untuk Semester Ganjil ${nextAcademicYear}.`}
+                  {isGraduation && ' Data setoran dan Kelas Al-Qur’an tidak dihapus.'}
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+                <div className="px-3 py-2.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
+                  <span className="text-xs font-bold text-slate-700">Santri yang akan diproses</span>
+                  <span className="text-xs font-semibold text-slate-500">{candidates.length} santri</span>
+                </div>
+                <div className="max-h-64 overflow-y-auto divide-y divide-slate-100">
+                  {candidates.map((santri, index) => (
+                    <div key={santri.idSantri} className="px-3 py-2.5 flex items-center justify-between gap-3 text-xs">
+                      <div className="min-w-0">
+                        <p className="font-bold text-slate-800 truncate">{index + 1}. {santri.namaSantri}</p>
+                        <p className="mt-0.5 text-slate-500 font-mono">{santri.idSantri}</p>
+                      </div>
+                      <span className="flex-shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 font-semibold text-slate-600">
+                        {santri.kelas || 'Kelas Al-Qur’an —'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>
+                  Proses ini dicatat untuk {savedAcademicYear} dan tidak dapat dijalankan ulang pada angkatan kelas {promotionPreviewClass} yang sama.
+                </span>
+              </div>
+
+              <div className="ui-dialog-footer">
+                <button
+                  type="button"
+                  onClick={() => setPromotionPreviewClass(null)}
+                  disabled={isProcessingPromotion}
+                  className="ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer disabled:opacity-50"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleProcessPromotion}
+                  disabled={isProcessingPromotion || candidates.length === 0 || savedAcademicSemester !== 'Genap'}
+                  className={`ui-control w-full sm:w-auto px-5 rounded-lg text-white text-sm font-bold cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50 ${
+                    isGraduation ? 'bg-indigo-700 hover:bg-indigo-600' : 'bg-emerald-800 hover:bg-emerald-700'
+                  }`}
+                >
+                  {isProcessingPromotion ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : isGraduation ? (
+                    <GraduationCap className="w-4 h-4" />
+                  ) : (
+                    <ArrowUpCircle className="w-4 h-4" />
+                  )}
+                  {isProcessingPromotion
+                    ? 'Memproses...'
+                    : isGraduation
+                    ? `Luluskan ${candidates.length} Santri`
+                    : `Naikkan ${candidates.length} Santri ke ${destination}`}
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Modal Riwayat Akademik Formal */}
       {historySantri && (
