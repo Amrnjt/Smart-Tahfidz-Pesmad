@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   KELAS_FORMAL_OPTIONS,
   SATUAN_PENDIDIKAN_FORMAL_OPTIONS,
+  SEMESTER_AKADEMIK_OPTIONS,
   Santri,
   User,
   UserRole,
   type KelasFormal,
-  type SatuanPendidikanFormal
+  type RiwayatAkademikRecord,
+  type SatuanPendidikanFormal,
+  type SemesterAkademik
 } from '../types';
 import { storageService } from '../services/storageService';
-import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, SquarePen, UserCheck, Save, Phone, Copy, Share2, Crown, Lock } from 'lucide-react';
+import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle2, Shield, Key, SquarePen, UserCheck, Save, Phone, Copy, Share2, Crown, Lock, CalendarRange, History, RefreshCw } from 'lucide-react';
 import { getClassGroup } from '../utils/classUtils';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
@@ -39,6 +42,15 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const [satuanPendidikanFilter, setSatuanPendidikanFilter] = useState<SatuanPendidikanFormal | ''>('');
   const [kelasFormalFilter, setKelasFormalFilter] = useState<KelasFormal | ''>('');
 
+  const appConfig = storageService.getAppConfig();
+  const [academicYear, setAcademicYear] = useState(appConfig.tahunPelajaranAktif || '');
+  const [academicSemester, setAcademicSemester] = useState<SemesterAkademik>(appConfig.semesterAkademikAktif || 'Ganjil');
+  const [isSavingAcademicPeriod, setIsSavingAcademicPeriod] = useState(false);
+  const [historySantri, setHistorySantri] = useState<Santri | null>(null);
+  const [academicHistoryRecords, setAcademicHistoryRecords] = useState<RiwayatAkademikRecord[]>([]);
+  const [isLoadingAcademicHistory, setIsLoadingAcademicHistory] = useState(false);
+  const [isSavingAcademicSnapshot, setIsSavingAcademicSnapshot] = useState(false);
+
   // New Santri Form State
   const [newId, setNewId] = useState('');
   const [newNama, setNewNama] = useState('');
@@ -58,6 +70,12 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
   const editUserDialogRef = useAccessibleDialog(Boolean(userToEdit), () => { if (!isSaving) setUserToEdit(null); });
   const deleteSantriDialogRef = useAccessibleDialog(Boolean(santriToDelete), () => { if (!isDeleting) setSantriToDelete(null); });
   const deleteUserDialogRef = useAccessibleDialog(Boolean(userToDelete), () => { if (!isDeleting) setUserToDelete(null); });
+  const academicHistoryDialogRef = useAccessibleDialog(Boolean(historySantri), () => { if (!isSavingAcademicSnapshot) setHistorySantri(null); });
+
+  useEffect(() => {
+    setAcademicYear(appConfig.tahunPelajaranAktif || '');
+    setAcademicSemester(appConfig.semesterAkademikAktif || 'Ganjil');
+  }, [appConfig.tahunPelajaranAktif, appConfig.semesterAkademikAktif]);
 
   // Edit Santri Form State
   const [editSantriNama, setEditSantriNama] = useState('');
@@ -84,6 +102,65 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
 
   const showToast = (type: 'success' | 'error', message: string) => onNotify(type, message);
   const canManageAccounts = currentUser.role === 'Superadmin';
+
+  const currentCalendarYear = new Date().getFullYear();
+  const academicYearOptions = Array.from(new Set([
+    academicYear,
+    ...Array.from({ length: 7 }, (_, index) => {
+      const start = currentCalendarYear - 3 + index;
+      return `${start}/${start + 1}`;
+    })
+  ].filter(Boolean))).sort((a, b) => a.localeCompare(b));
+
+  const handleSaveAcademicPeriod = async () => {
+    if (!academicYear) return;
+    setIsSavingAcademicPeriod(true);
+    try {
+      await storageService.setAcademicPeriod(academicYear, academicSemester, currentUser.nama || 'Ustadz / Admin');
+      onDataChanged();
+      showToast('success', `Periode akademik aktif disimpan: ${academicYear} · Semester ${academicSemester}.`);
+    } catch (err) {
+      showToast('error', err instanceof Error ? err.message : 'Gagal menyimpan periode akademik.');
+    } finally {
+      setIsSavingAcademicPeriod(false);
+    }
+  };
+
+  const loadAcademicHistory = async (santri: Santri) => {
+    setHistorySantri(santri);
+    setIsLoadingAcademicHistory(true);
+    try {
+      const records = await storageService.fetchAcademicHistory(santri.idSantri);
+      setAcademicHistoryRecords(records);
+    } catch {
+      setAcademicHistoryRecords([]);
+      showToast('error', 'Gagal memuat riwayat akademik santri.');
+    } finally {
+      setIsLoadingAcademicHistory(false);
+    }
+  };
+
+  const handleSaveCurrentAcademicSnapshot = async () => {
+    if (!historySantri) return;
+    const currentSantri = santriList.find(s => s.idSantri === historySantri.idSantri) || historySantri;
+    if (!currentSantri.satuanPendidikan || !currentSantri.kelasFormal) {
+      showToast('error', 'Lengkapi Satuan Pendidikan dan Kelas Formal terlebih dahulu.');
+      return;
+    }
+
+    setIsSavingAcademicSnapshot(true);
+    try {
+      await storageService.upsertAcademicHistory(currentSantri, currentUser.nama || 'Ustadz / Admin');
+      const records = await storageService.fetchAcademicHistory(currentSantri.idSantri);
+      setAcademicHistoryRecords(records);
+      setHistorySantri(currentSantri);
+      showToast('success', `Snapshot ${currentSantri.kelasFormal} untuk ${academicYear} · ${academicSemester} tersimpan.`);
+    } catch {
+      showToast('error', 'Gagal menyimpan snapshot riwayat akademik.');
+    } finally {
+      setIsSavingAcademicSnapshot(false);
+    }
+  };
 
   const requireAccountManager = () => {
     if (canManageAccounts) return true;
@@ -157,25 +234,34 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     e.preventDefault();
     if (!santriToEdit || !editSantriNama.trim()) return;
 
+    const updatedSantri: Santri = {
+      ...santriToEdit,
+      namaSantri: editSantriNama.trim(),
+      kelas: editSantriKelas,
+      satuanPendidikan: editSantriSatuanPendidikan || undefined,
+      kelasFormal: editSantriKelasFormal || undefined,
+      targetHafalan: editSantriTarget.trim() || 'Juz 30 (37 Surah)',
+      waliNama: editSantriWaliNama.trim() || '',
+      waliKontak: editSantriWaliKontak.trim() || ''
+    };
+
     setIsSaving(true);
     try {
-      await storageService.updateSantri(santriToEdit.idSantri, {
-        namaSantri: editSantriNama.trim(),
-        kelas: editSantriKelas,
-        satuanPendidikan: editSantriSatuanPendidikan || undefined,
-        kelasFormal: editSantriKelasFormal || undefined,
-        targetHafalan: editSantriTarget.trim() || 'Juz 30 (37 Surah)',
-        waliNama: editSantriWaliNama.trim() || '',
-        waliKontak: editSantriWaliKontak.trim() || ''
-      });
+      await storageService.updateSantri(santriToEdit.idSantri, updatedSantri);
 
-      setIsSaving(false);
+      try {
+        await storageService.upsertAcademicHistory(updatedSantri, currentUser.nama || 'Ustadz / Admin');
+      } catch {
+        showToast('error', 'Data santri tersimpan, tetapi snapshot riwayat akademik gagal disimpan.');
+      }
+
       setSantriToEdit(null);
       onDataChanged();
-      showToast('success', `Data santri ${editSantriNama.trim()} (${santriToEdit.idSantri}) berhasil diperbarui.`);
+      showToast('success', `Data santri ${updatedSantri.namaSantri} (${updatedSantri.idSantri}) berhasil diperbarui.`);
     } catch (err) {
-      setIsSaving(false);
       showToast('error', 'Gagal memperbarui data santri.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -200,7 +286,13 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       };
 
       await storageService.addSantri(newSantri, defaultPassword.trim() || '123');
-      setIsSaving(false);
+
+      try {
+        await storageService.upsertAcademicHistory(newSantri, currentUser.nama || 'Ustadz / Admin');
+      } catch {
+        showToast('error', 'Santri berhasil ditambahkan, tetapi snapshot riwayat akademik awal gagal disimpan.');
+      }
+
       setShowAddModal(false);
       setNewNama('');
       setNewId('');
@@ -211,8 +303,9 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       onDataChanged();
       showToast('success', `Santri ${newNama.trim()} (${generatedId}) berhasil ditambahkan dan disimpan permanen.`);
     } catch (err) {
-      setIsSaving(false);
       showToast('error', 'Gagal menambahkan data santri.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -538,6 +631,65 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
         )}
       </div>
 
+      {activeSubTab === 'santri' && (
+        <section id="academic-period-card" className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 sm:p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+            <div>
+              <h4 className="text-sm font-extrabold text-emerald-950 flex items-center gap-2">
+                <CalendarRange className="w-4 h-4 text-emerald-700" />
+                Periode Akademik Aktif
+              </h4>
+              <p className="mt-1 text-xs text-emerald-900/70">
+                Periode ini menjadi identitas snapshot riwayat formal. Mengubah periode tidak otomatis menaikkan kelas santri.
+              </p>
+            </div>
+            <span className="inline-flex self-start rounded-lg border border-emerald-200 bg-white px-2.5 py-1 text-xs font-bold text-emerald-800">
+              {academicYear} · {academicSemester}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2">
+            <div>
+              <label htmlFor="academic-year-select" className="block text-xs font-bold text-slate-700 mb-1">Tahun Pelajaran</label>
+              <select
+                id="academic-year-select"
+                value={academicYear}
+                onChange={(e) => setAcademicYear(e.target.value)}
+                className="ui-control w-full px-3 bg-white border border-emerald-200 rounded-xl text-sm font-medium text-slate-800"
+              >
+                {academicYearOptions.map(value => (
+                  <option key={value} value={value}>{value}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="academic-semester-select" className="block text-xs font-bold text-slate-700 mb-1">Semester</label>
+              <select
+                id="academic-semester-select"
+                value={academicSemester}
+                onChange={(e) => setAcademicSemester(e.target.value as SemesterAkademik)}
+                className="ui-control w-full px-3 bg-white border border-emerald-200 rounded-xl text-sm font-medium text-slate-800"
+              >
+                {SEMESTER_AKADEMIK_OPTIONS.map(value => (
+                  <option key={value} value={value}>{value}</option>
+                ))}
+              </select>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSaveAcademicPeriod}
+              disabled={isSavingAcademicPeriod}
+              className="ui-control self-end w-full sm:w-auto px-4 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <Save className="w-4 h-4" />
+              {isSavingAcademicPeriod ? 'Menyimpan...' : 'Simpan Periode'}
+            </button>
+          </div>
+        </section>
+      )}
+
       {/* Tab 1: Santri Cards Grid */}
       {activeSubTab === 'santri' && (
         <>
@@ -663,6 +815,16 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                             <Share2 className="w-3.5 h-3.5" />
                           </a>
                         )}
+
+                        <button
+                          type="button"
+                          onClick={() => void loadAcademicHistory(santri)}
+                          title={`Lihat riwayat formal ${santri.namaSantri}`}
+                          className="min-h-9 px-3 text-indigo-700 hover:bg-indigo-50 border border-indigo-200 rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-semibold"
+                        >
+                          <History className="w-3.5 h-3.5" />
+                          <span>Riwayat Formal</span>
+                        </button>
 
                         <button
                           onClick={() => handleOpenEditSantri(santri)}
@@ -922,6 +1084,104 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Riwayat Akademik Formal */}
+      {historySantri && (
+        <div
+          ref={academicHistoryDialogRef}
+          className="ui-dialog-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Riwayat akademik ${historySantri.namaSantri}`}
+          tabIndex={-1}
+        >
+          <div className="ui-dialog-panel max-w-lg p-5 sm:p-6 space-y-5">
+            <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
+              <div>
+                <h4 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                  <History className="w-5 h-5 text-indigo-700" />
+                  Riwayat Akademik Formal
+                </h4>
+                <p className="mt-1 text-xs text-slate-500">
+                  {historySantri.namaSantri} · {historySantri.idSantri}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setHistorySantri(null)}
+                aria-label="Tutup riwayat akademik"
+                className="ui-dialog-close cursor-pointer text-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-900">
+              Periode aktif: <span className="font-bold">{academicYear} · Semester {academicSemester}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSaveCurrentAcademicSnapshot}
+              disabled={isSavingAcademicSnapshot || !historySantri.satuanPendidikan || !historySantri.kelasFormal}
+              className="ui-control w-full px-4 rounded-xl border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-800 text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${isSavingAcademicSnapshot ? 'animate-spin' : ''}`} />
+              {isSavingAcademicSnapshot ? 'Menyimpan Snapshot...' : 'Simpan Snapshot Periode Aktif'}
+            </button>
+
+            <div className="space-y-2 max-h-[52vh] overflow-y-auto pr-1">
+              {isLoadingAcademicHistory ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+                  Memuat riwayat akademik...
+                </div>
+              ) : academicHistoryRecords.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center">
+                  <History className="w-7 h-7 mx-auto text-slate-400" />
+                  <p className="mt-2 text-sm font-bold text-slate-700">Belum ada riwayat akademik</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Simpan snapshot periode aktif atau edit data formal santri untuk membuat catatan pertama.
+                  </p>
+                </div>
+              ) : (
+                academicHistoryRecords.map(record => (
+                  <article key={record.id} className="rounded-xl border border-slate-200 bg-white p-3.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-extrabold text-slate-900">
+                          {record.satuanPendidikan} · Kelas {record.kelasFormal}
+                        </p>
+                        <p className="mt-1 text-xs font-semibold text-indigo-700">
+                          {record.tahunPelajaran} · Semester {record.semester}
+                        </p>
+                      </div>
+                      <span className="rounded-md bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600">
+                        {record.kelasAlQuran ? `Al-Qur'an · ${record.kelasAlQuran}` : 'Kelas Al-Qur’an —'}
+                      </span>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-500">
+                      <span>Dicatat oleh {record.recordedBy || 'Sistem'}</span>
+                      <span>
+                        {new Date(record.recordedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </span>
+                    </div>
+                  </article>
+                ))
+              )}
+            </div>
+
+            <div className="ui-dialog-footer">
+              <button
+                type="button"
+                onClick={() => setHistorySantri(null)}
+                className="ui-control w-full sm:w-auto px-4 rounded-lg border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-100 cursor-pointer"
+              >
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}
