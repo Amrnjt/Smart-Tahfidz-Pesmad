@@ -8,7 +8,7 @@ test('M3 switches to a two-page spread on wide screens', () => {
   assert.match(reader, /matchMedia\('\(min-width: 900px\)'\)/);
   assert.match(reader, /data-mushaf-layout=\{isSpreadLayout \? 'spread' : 'single'\}/);
   assert.match(reader, /aspect-\[4\/3\] grid-cols-2/);
-  assert.match(reader, /aspect-\[2\/3\]/);
+  assert.match(reader, /aspect-\[6\/13\] sm:aspect-\[2\/3\]/);
 });
 
 test('M3 preserves physical RTL page placement', () => {
@@ -35,7 +35,9 @@ test('M3 loads the companion page and matching QCF page font', () => {
 });
 
 test('M3 spread fits immersive viewport and keeps a physical gutter', () => {
+  assert.match(reader, /46\.154dvh/);
   assert.match(reader, /133\.334dvh/);
+  assert.match(reader, /bottom-\[4%\] top-\[4\.5%\]/);
   assert.match(reader, /left-1\/2 z-20/);
   assert.match(reader, /rounded-l-\[1\.35rem\] rounded-r-\[0\.35rem\]/);
   assert.match(reader, /rounded-l-\[0\.35rem\] rounded-r-\[1\.35rem\]/);
