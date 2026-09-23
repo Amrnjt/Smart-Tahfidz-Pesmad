@@ -54,6 +54,11 @@ function clampPage(value: number): number {
   return Math.min(TOTAL_MUSHAF_PAGES, Math.max(1, Math.round(value)));
 }
 
+function getSpreadRightPage(value: number): number {
+  const safePage = clampPage(value);
+  return safePage % 2 === 0 ? safePage - 1 : safePage;
+}
+
 function getInitialPage(): number {
   if (typeof window === 'undefined') return 1;
   return clampPage(Number(window.localStorage.getItem(LAST_PAGE_KEY) || 1));
@@ -216,6 +221,13 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [fontError, setFontError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const [isSpreadLayout, setIsSpreadLayout] = useState(() =>
+    typeof window !== 'undefined' && window.matchMedia('(min-width: 900px)').matches
+  );
+  const [companionPageData, setCompanionPageData] = useState<QcfPageResponse | null>(null);
+  const [companionFontFamily, setCompanionFontFamily] = useState('');
+  const [companionReady, setCompanionReady] = useState(false);
+  const [companionError, setCompanionError] = useState<string | null>(null);
   const [readerTheme, setReaderTheme] = useState<ReaderTheme>(() => getInitialTheme(isNightMode));
   const [bookmarks, setBookmarks] = useState<number[]>(getInitialBookmarks);
   const [controlsVisible, setControlsVisible] = useState(true);
@@ -232,12 +244,24 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
   }, []);
 
   const goNextPage = useCallback(() => {
-    setPage((current) => clampPage(current + 1));
-  }, []);
+    setPage((current) => {
+      if (!isSpreadLayout) return clampPage(current + 1);
+      const spreadRightPage = getSpreadRightPage(current);
+      return spreadRightPage >= TOTAL_MUSHAF_PAGES - 1
+        ? current
+        : clampPage(spreadRightPage + 2);
+    });
+  }, [isSpreadLayout]);
 
   const goPreviousPage = useCallback(() => {
-    setPage((current) => clampPage(current - 1));
-  }, []);
+    setPage((current) => {
+      if (!isSpreadLayout) return clampPage(current - 1);
+      const spreadRightPage = getSpreadRightPage(current);
+      return spreadRightPage <= 1
+        ? current
+        : clampPage(spreadRightPage - 2);
+    });
+  }, [isSpreadLayout]);
 
   const showControls = useCallback(() => {
     setControlsVisible(true);
@@ -341,6 +365,15 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
   useEffect(() => {
     window.localStorage.setItem(LAST_PAGE_KEY, String(page));
   }, [page]);
+
+  useEffect(() => {
+    const media = window.matchMedia('(min-width: 900px)');
+    const syncLayout = () => setIsSpreadLayout(media.matches);
+
+    syncLayout();
+    media.addEventListener?.('change', syncLayout);
+    return () => media.removeEventListener?.('change', syncLayout);
+  }, []);
 
   useEffect(() => {
     const shouldUseNightMode = readerTheme === 'night';
