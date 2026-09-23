@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { 
   User, 
   Santri, 
@@ -29,6 +29,7 @@ import {
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
 import { isNonTahfidzClass } from '../utils/classUtils';
+import { getNextPembelajaranContinuation } from '../utils/setoranContinuation';
 
 interface PembelajaranFormProps {
   currentUser: User;
@@ -131,6 +132,65 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
   const [statusKenaikan, setStatusKenaikan] = useState<StatusKenaikan>('Lanjut Halaman');
   const [catatan, setCatatan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!idSantri) return;
+
+    const target = santriList.find(s => s.idSantri === idSantri);
+    const targetClass = target?.kelas
+      ? kelasList.find(k => k.namaKelas.toLowerCase() === target.kelas.toLowerCase())
+      : undefined;
+    const expectedType = defaultTipeKelas
+      || (targetClass && isNonTahfidzClass(targetClass.tipeKelas) ? targetClass.tipeKelas : undefined);
+
+    let active = true;
+    void storageService.getLatestPembelajaranForSantri(idSantri).then((latest) => {
+      if (!active) return;
+
+      if (!latest) {
+        if (expectedType === 'Jilid' || expectedType === 'Kelas Istimewa') {
+          setTipeKelas(expectedType);
+        }
+        setJilidUmmiIndex(0);
+        setHalamanUmmi(1);
+        setPokokBahasanUmmi(KURIKULUM_JILID_UMMI_DEWASA[0]?.pokokBahasan[0] || '');
+        setTahapIstimewaIndex(0);
+        setHalamanIstimewa(1);
+        return;
+      }
+
+      if (
+        (expectedType === 'Jilid' || expectedType === 'Kelas Istimewa')
+        && latest.tipeKelas !== expectedType
+      ) {
+        setTipeKelas(expectedType);
+        setJilidUmmiIndex(0);
+        setHalamanUmmi(1);
+        setPokokBahasanUmmi(KURIKULUM_JILID_UMMI_DEWASA[0]?.pokokBahasan[0] || '');
+        setTahapIstimewaIndex(0);
+        setHalamanIstimewa(1);
+        return;
+      }
+
+      const next = getNextPembelajaranContinuation(latest);
+      if (!next) return;
+
+      setTipeKelas(next.tipeKelas);
+      if (next.tipeKelas === 'Jilid') {
+        setJilidUmmiIndex(next.index);
+        setHalamanUmmi(next.halaman);
+        setPokokBahasanUmmi(next.pokokBahasan);
+      } else {
+        setTahapIstimewaIndex(next.index);
+        setHalamanIstimewa(next.halaman);
+      }
+      setStatusKenaikan('Lanjut Halaman');
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [idSantri, santriList, kelasList, defaultTipeKelas]);
 
   // Switch santri
   const handleSantriChange = (newSantriId: string) => {

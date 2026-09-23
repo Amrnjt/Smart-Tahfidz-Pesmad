@@ -144,6 +144,11 @@ export interface MurojaahRecord {
   idSantri: string;
   namaSantri?: string;
   surahAtauJuz: string;
+  // Field terstruktur agar titik awal Muroja'ah berikutnya dapat dihitung tanpa parsing teks.
+  surah?: string;
+  surahNumber?: number;
+  ayatAwal?: number;
+  ayatAkhir?: number;
   nilai: PredikatNilai;
   catatan: string;
   inputBy: string;

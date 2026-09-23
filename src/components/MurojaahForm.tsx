@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, Kelas } from '../types';
 import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
 import { RotateCw, Save, RotateCcw, Calendar, Clock, BookOpen } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
+import { getNextMurojaahContinuation } from '../utils/setoranContinuation';
 
 interface MurojaahFormProps {
   currentUser: User;
@@ -14,6 +15,14 @@ interface MurojaahFormProps {
   onSuccess: () => void;
   onNotify: NotifyFn;
 }
+
+const QUICK_NOTES = [
+  "Muroja'ah lancar dan mutqin, pertahankan.",
+  'Masih perlu pengulangan pada bagian yang tersendat.',
+  'Perhatikan ketepatan tajwid dan panjang pendek bacaan.',
+  'Kelancaran meningkat, lanjutkan pengulangan secara mandiri.',
+  'Ulangi kembali sebelum menambah materi berikutnya.'
+];
 
 export const MurojaahForm: React.FC<MurojaahFormProps> = ({
   currentUser,
@@ -34,12 +43,39 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
   const [waktuSetor, setWaktuSetor] = useState(getCurrentTimeInputFormat());
   const [surahName, setSurahName] = useState(SURAH_LIST[77].nameLatin); // default An-Naba
   const [ayatAwal, setAyatAwal] = useState<number>(1);
-  const [ayatAkhir, setAyatAkhir] = useState<number>(20);
+  const [ayatAkhir, setAyatAkhir] = useState<number | ''>(20);
   const [nilai, setNilai] = useState<PredikatNilai>('Sangat Baik');
   const [catatan, setCatatan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedSurah = SURAH_LIST.find(s => s.nameLatin === surahName) || SURAH_LIST[0];
+
+  useEffect(() => {
+    if (!idSantri) return;
+
+    let active = true;
+    void storageService.getLatestMurojaahForSantri(idSantri).then((latest) => {
+      if (!active) return;
+
+      if (!latest) {
+        setSurahName(SURAH_LIST[77].nameLatin);
+        setAyatAwal(1);
+        setAyatAkhir(20);
+        return;
+      }
+
+      const next = getNextMurojaahContinuation(latest);
+      if (!next) return;
+
+      setSurahName(next.surahName);
+      setAyatAwal(next.ayatAwal);
+      setAyatAkhir('');
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [idSantri]);
 
   const handleSurahChange = (name: string) => {
     setSurahName(name);
@@ -52,7 +88,10 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!idSantri || !surahName) return;
+    if (!idSantri || !surahName || ayatAkhir === '') {
+      onNotify('error', 'Lengkapi ayat akhir sebelum menyimpan Muroja\'ah.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -62,6 +101,10 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
         idSantri,
         timestamp: customTimestamp,
         surahAtauJuz,
+        surah: surahName,
+        surahNumber: selectedSurah.number,
+        ayatAwal: Number(ayatAwal),
+        ayatAkhir: Number(ayatAkhir),
         nilai,
         catatan: catatan.trim() || 'Murojaah tertib dan mutqin.',
         inputBy: currentUser.nama
@@ -246,7 +289,7 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
                 required
                 aria-label="Ayat Akhir"
                 value={ayatAkhir}
-                onChange={(e) => setAyatAkhir(Number(e.target.value))}
+                onChange={(e) => setAyatAkhir(e.target.value === '' ? '' : Number(e.target.value))}
                 className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-teal-500"
               />
             </div>
@@ -273,6 +316,18 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
             <label className="block text-sm font-semibold text-slate-800 mb-2">
               Catatan Evaluasi / Rekomendasi
             </label>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {QUICK_NOTES.map((note) => (
+                <button
+                  key={note}
+                  type="button"
+                  onClick={() => setCatatan(prev => prev.trim() ? (prev.includes(note) ? prev : `${prev.trim()} ${note}`) : note)}
+                  className="min-h-10 px-3 py-1.5 rounded-lg border border-teal-200 bg-teal-50 text-xs font-semibold text-teal-900 hover:bg-teal-100 transition-colors"
+                >
+                  + {note}
+                </button>
+              ))}
+            </div>
             <textarea
               rows={3}
               aria-label="Catatan Evaluasi atau Rekomendasi"

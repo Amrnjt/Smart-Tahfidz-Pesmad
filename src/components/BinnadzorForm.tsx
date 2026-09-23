@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, Kelas, AspekKualitas, ASPEK_KUALITAS_OPTIONS } from '../types';
 import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
 import { BookOpenCheck, Save, RotateCcw, Calendar, Clock, BookOpen, Layers, Bookmark, Check } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
+import { getNextBinnadzorContinuation } from '../utils/setoranContinuation';
 
 interface BinnadzorFormProps {
   currentUser: User;
@@ -47,11 +48,11 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
   // Mode Surah
   const [surahName, setSurahName] = useState(SURAH_LIST[0].nameLatin); // default Al-Fatihah
   const [ayatAwal, setAyatAwal] = useState<number>(1);
-  const [ayatAkhir, setAyatAkhir] = useState<number>(7);
+  const [ayatAkhir, setAyatAkhir] = useState<number | ''>(7);
 
   // Mode Halaman
   const [halamanAwal, setHalamanAwal] = useState<number>(1);
-  const [halamanAkhir, setHalamanAkhir] = useState<number>(1);
+  const [halamanAkhir, setHalamanAkhir] = useState<number | ''>(1);
 
   // Mode Juz
   const [juzNumber, setJuzNumber] = useState<number>(1);
@@ -68,6 +69,44 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedSurah = SURAH_LIST.find(s => s.nameLatin === surahName) || SURAH_LIST[0];
+
+  useEffect(() => {
+    if (!idSantri) return;
+
+    let active = true;
+    void storageService.getLatestBinnadzorForSantri(idSantri).then((latest) => {
+      if (!active) return;
+
+      if (!latest) {
+        setModeInput('surah');
+        setSurahName(SURAH_LIST[0].nameLatin);
+        setAyatAwal(1);
+        setAyatAkhir(7);
+        setHalamanAwal(1);
+        setHalamanAkhir(1);
+        setJuzNumber(1);
+        return;
+      }
+
+      const next = getNextBinnadzorContinuation(latest);
+      setModeInput(next.mode);
+
+      if (next.mode === 'surah') {
+        setSurahName(next.surahName);
+        setAyatAwal(next.ayatAwal);
+        setAyatAkhir('');
+      } else if (next.mode === 'halaman') {
+        setHalamanAwal(next.halamanAwal);
+        setHalamanAkhir('');
+      } else {
+        setJuzNumber(next.juzNumber);
+      }
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [idSantri]);
 
   const handleSurahChange = (name: string) => {
     setSurahName(name);
@@ -93,6 +132,14 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!idSantri) return;
+    if (modeInput === 'surah' && ayatAkhir === '') {
+      onNotify('error', 'Lengkapi ayat akhir sebelum menyimpan Binnadzor.');
+      return;
+    }
+    if (modeInput === 'halaman' && halamanAkhir === '') {
+      onNotify('error', 'Lengkapi halaman akhir sebelum menyimpan Binnadzor.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -342,7 +389,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                     max={selectedSurah.numberOfAyahs}
                     aria-label="Ayat Akhir Binnadzor"
                 value={ayatAkhir}
-                    onChange={(e) => setAyatAkhir(Number(e.target.value))}
+                    onChange={(e) => setAyatAkhir(e.target.value === '' ? '' : Number(e.target.value))}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-medium focus:ring-2 focus:ring-indigo-700"
                   />
                 </div>
@@ -377,7 +424,7 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
                     max={604}
                     aria-label="Halaman Akhir Binnadzor"
                 value={halamanAkhir}
-                    onChange={(e) => setHalamanAkhir(Number(e.target.value))}
+                    onChange={(e) => setHalamanAkhir(e.target.value === '' ? '' : Number(e.target.value))}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-sm font-medium focus:ring-2 focus:ring-indigo-700"
                   />
                 </div>
