@@ -20,6 +20,7 @@ on:
       - 'public/quran/qcf_surah_starts.json'
       - 'tests/mushaf-m1-source.test.mjs'
       - 'tests/mushaf-m2-source.test.mjs'
+      - 'tests/mushaf-m3-source.test.mjs'
       - 'src/components/WaliDashboard.tsx'
       - 'src/components/SantriDashboard.tsx'
       - 'src/components/UstadzDashboard.tsx'
@@ -61,6 +62,9 @@ jobs:
 
       - name: Verify Mushaf M2 immersive reader
         run: node --test tests/mushaf-m2-source.test.mjs
+
+      - name: Verify Mushaf M3 responsive spread
+        run: node --test tests/mushaf-m3-source.test.mjs
 
       - name: Verify P3 surface contract
         run: |
