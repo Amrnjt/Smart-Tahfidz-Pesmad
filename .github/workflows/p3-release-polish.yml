@@ -25,6 +25,7 @@ on:
       - 'src/hooks/useActiveTabNavigation.ts'
       - 'tests/navigation-jank-regression.test.mjs'
       - 'src/main.tsx'
+      - 'src/styles/app.css'
       - '.github/workflows/p3-release-polish.yml'
   push:
     branches:
@@ -53,7 +54,7 @@ jobs:
 
       - name: Verify P3 surface contract
         run: |
-          grep -q "import './release-polish.css'" src/main.tsx
+          grep -q "@import '../release-polish.css'" src/styles/app.css
           grep -q 'p3-management-page p3-santri-management' src/components/SantriManagement.tsx
           grep -q 'p3-management-page p3-kelas-management' src/components/KelasManagement.tsx
           grep -q 'p3-mushaf-page' src/components/MushafQuran.tsx
@@ -77,7 +78,7 @@ jobs:
 
       - name: Verify navbar transition layering
         run: |
-          grep -q "import './chrome-transition-fix.css'" src/main.tsx
+          grep -q "@import '../chrome-transition-fix.css'" src/styles/app.css
           grep -q 'p3-chrome-stack' src/chrome-transition-fix.css
           grep -q 'view-transition-name: none' src/chrome-transition-fix.css
           grep -q 'commitLocalNavigation' src/hooks/useActiveTabNavigation.ts
@@ -101,7 +102,7 @@ jobs:
 
       - name: Verify responsive accessibility contract
         run: |
-          grep -q "import './responsive-accessibility.css'" src/main.tsx
+          grep -q "@import '../responsive-accessibility.css'" src/styles/app.css
           grep -q "padding-bottom: calc(7rem + var(--safe-bottom))" src/responsive-accessibility.css
           grep -q 'font-size: 16px !important' src/responsive-accessibility.css
           grep -q '@media (max-width: 389px)' src/responsive-accessibility.css
@@ -127,7 +128,7 @@ jobs:
 
       - name: Verify P3.2.2 Santri experience contract
         run: |
-          grep -q "import './santri-experience-finish.css'" src/main.tsx
+          grep -q "@import '../santri-experience-finish.css'" src/styles/app.css
           grep -q 'CompactDashboardHero' src/components/SantriDashboard.tsx
           grep -q 'Santri ·' src/components/SantriDashboard.tsx
           grep -q 'getRecencyInfo' src/components/SantriDashboard.tsx
@@ -149,7 +150,7 @@ jobs:
 
       - name: Verify P3.2.3 Ustadz experience contract
         run: |
-          grep -q "import './ustadz-experience-finish.css'" src/main.tsx
+          grep -q "@import '../ustadz-experience-finish.css'" src/styles/app.css
           grep -q 'CompactDashboardHero' src/components/UstadzDashboard.tsx
           grep -q 'Dashboard ${currentUser.role' src/components/UstadzDashboard.tsx
           grep -q 'todayActivities' src/components/UstadzDashboard.tsx
@@ -180,7 +181,7 @@ jobs:
 
       - name: Verify P3.2.4 setoran workflow contract
         run: |
-          grep -q "import './setoran-workflow-finish.css'" src/main.tsx
+          grep -q "@import '../setoran-workflow-finish.css'" src/styles/app.css
           grep -q 'ui-form-identity' src/components/ZiyadahForm.tsx
           grep -q 'ui-form-identity' src/components/MurojaahForm.tsx
           grep -q 'ui-form-identity' src/components/BinnadzorForm.tsx

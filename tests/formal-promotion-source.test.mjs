@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const types = readFileSync(new URL('../src/types/index.ts', import.meta.url), 'utf8');
 const storage = readFileSync(new URL('../src/services/storageService.ts', import.meta.url), 'utf8');
+const storageCore = readFileSync(new URL('../src/services/storageCore.ts', import.meta.url), 'utf8');
 const santriManagement = readFileSync(new URL('../src/components/SantriManagement.tsx', import.meta.url), 'utf8');
 const rules = readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8');
 
@@ -28,7 +29,7 @@ test('promotion only runs from a saved Genap period and derives the next school 
 });
 
 test('promotion uses deterministic run log to block duplicate cohort processing', () => {
-  assert.match(storage, /ACADEMIC_PROMOTIONS: 'academic_promotions'/);
+  assert.match(storageCore, /ACADEMIC_PROMOTIONS: 'academic_promotions'/);
   assert.match(storage, /const promotionId = `\$\{tahunPelajaranAsal\.replace\('\/', '-'\)\}_\$\{kelasAsal\}`/);
   assert.match(storage, /existingPromotion\.exists\(\)/);
   assert.match(storage, /sudah diproses untuk Tahun Pelajaran/);

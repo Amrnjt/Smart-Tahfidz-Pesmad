@@ -29,8 +29,10 @@ on:
       - 'src/components/HistoryTable.tsx'
       - 'src/hooks/useActiveTabNavigation.ts'
       - 'src/main.tsx'
+      - 'src/styles/app.css'
       - 'tests/setor-dropup-source.test.mjs'
       - 'tests/navigation-jank-regression.test.mjs'
+      - 'tests/p2-structural-cleanup.test.mjs'
       - 'P2_DESIGN_FOUNDATION.md'
       - '.github/workflows/p2-design-foundation.yml'
   push:
@@ -59,7 +61,7 @@ jobs:
         run: npm run build
 
       - name: Verify Setor, Kelola, and navigation regression contracts
-        run: node --test tests/setor-dropup-source.test.mjs tests/navigation-jank-regression.test.mjs
+        run: node --test tests/setor-dropup-source.test.mjs tests/navigation-jank-regression.test.mjs tests/p2-structural-cleanup.test.mjs
 
       - name: Verify P2 accessibility contract
         run: |
