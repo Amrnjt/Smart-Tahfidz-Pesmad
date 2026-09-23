@@ -8,7 +8,8 @@ import {
   PembelajaranRecord,
   ActiveTab,
   Kelas,
-  PredikatNilai
+  PredikatNilai,
+  AppConfig
 } from '../types';
 import {
   AlertTriangle,
@@ -31,6 +32,7 @@ import { QualityRingBento } from './dashboard/QualityRingBento';
 import { CompactTrenBulananChart } from './dashboard/CompactTrenBulananChart';
 import { CompactActivityFeed } from './dashboard/CompactActivityFeed';
 import { ScrollReveal } from './ScrollReveal';
+import { AcademicContextStrip } from './dashboard/AcademicContextStrip';
 
 const HafalanStatsChart = lazy(() =>
   import('./HafalanStatsChart').then((module) => ({ default: module.HafalanStatsChart }))
@@ -47,6 +49,7 @@ interface UstadzDashboardProps {
   binnadzorRecords?: BinnadzorRecord[];
   pembelajaranRecords?: PembelajaranRecord[];
   kelasList: Kelas[];
+  appConfig: AppConfig;
   setActiveTab: (tab: ActiveTab) => void;
   onSelectSantriForZiyadah?: (idSantri: string) => void;
   onOpenSetorMenu: () => void;
@@ -72,6 +75,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   binnadzorRecords = [],
   pembelajaranRecords = [],
   kelasList,
+  appConfig,
   setActiveTab,
   onOpenSetorMenu
 }) => {
@@ -319,6 +323,8 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           </button>
         }
       />
+
+      <AcademicContextStrip appConfig={appConfig} />
 
       {/* 2. COMPACT BENTO KPI GRID (2 columns on mobile, 4 columns on tablet & desktop) */}
       <section
