@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { Suspense, lazy, useMemo, useState } from 'react';
 import {
   User,
   Santri,
@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import { getTodayInputFormat } from '../utils/dateFormatter';
 import { calculateSetoranMomentum, isSetoranActiveDay } from '../utils/scheduleHelper';
-import { HafalanStatsChart } from './HafalanStatsChart';
 import { CompactDashboardHero, HeroAction } from './dashboard/CompactDashboardHero';
 import { CompactBentoKpiCard } from './dashboard/CompactBentoKpiCard';
 import { CompactAttentionBento, AttentionItem } from './dashboard/CompactAttentionBento';
@@ -31,8 +30,14 @@ import { SevenDayRhythmBento } from './dashboard/SevenDayRhythmBento';
 import { QualityRingBento } from './dashboard/QualityRingBento';
 import { CompactTrenBulananChart } from './dashboard/CompactTrenBulananChart';
 import { CompactActivityFeed } from './dashboard/CompactActivityFeed';
-import { AdaptiveDevelopmentTrend } from './dashboard/AdaptiveDevelopmentTrend';
 import { ScrollReveal } from './ScrollReveal';
+
+const HafalanStatsChart = lazy(() =>
+  import('./HafalanStatsChart').then((module) => ({ default: module.HafalanStatsChart }))
+);
+const AdaptiveDevelopmentTrend = lazy(() =>
+  import('./dashboard/AdaptiveDevelopmentTrend').then((module) => ({ default: module.AdaptiveDevelopmentTrend }))
+);
 
 interface UstadzDashboardProps {
   currentUser: User;
@@ -75,62 +80,80 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   const isPimpinan = String(currentUser?.role || '').trim().toLowerCase() === 'pimpinan';
 
   const today = getTodayInputFormat();
-  const santriById = new Map<string, Santri>(santriList.map(santri => [santri.idSantri, santri]));
-  const resolveName = (idSantri: string, fallback?: string) => fallback || santriById.get(idSantri)?.namaSantri || idSantri;
+  const santriById = useMemo(
+    () => new Map<string, Santri>(santriList.map(santri => [santri.idSantri, santri])),
+    [santriList]
+  );
 
-  const rawActivities: DashboardActivity[] = [
-    ...ziyadahRecords.map(record => ({
-      id: record.id,
-      timestamp: record.timestamp,
-      idSantri: record.idSantri,
-      namaSantri: resolveName(record.idSantri, record.namaSantri),
-      category: 'Ziyadah' as const,
-      material: `${record.surah} • ayat ${record.ayatAwal}-${record.ayatAkhir}`,
-      nilai: record.nilai
-    })),
-    ...murojaahRecords.map(record => ({
-      id: record.id,
-      timestamp: record.timestamp,
-      idSantri: record.idSantri,
-      namaSantri: resolveName(record.idSantri, record.namaSantri),
-      category: "Muroja'ah" as const,
-      material: record.surahAtauJuz,
-      nilai: record.nilai
-    })),
-    ...binnadzorRecords.map(record => ({
-      id: record.id,
-      timestamp: record.timestamp,
-      idSantri: record.idSantri,
-      namaSantri: resolveName(record.idSantri, record.namaSantri),
-      category: 'Binnadzor' as const,
-      material: record.materi || record.surahAtauHalaman || 'Materi Binnadzor',
-      nilai: record.nilai
-    })),
-    ...pembelajaranRecords.map(record => ({
-      id: record.id,
-      timestamp: record.timestamp,
-      idSantri: record.idSantri,
-      namaSantri: resolveName(record.idSantri, record.namaSantri),
-      category: 'Pembelajaran' as const,
-      material: record.materiPokok || record.materi || record.jilidAtauKategori || record.namaKelas || 'Pembelajaran',
-      nilai: record.nilai
-    }))
-  ];
+  const activities = useMemo<DashboardActivity[]>(() => {
+    const resolveName = (idSantri: string, fallback?: string) =>
+      fallback || santriById.get(idSantri)?.namaSantri || idSantri;
+    const rawActivities: DashboardActivity[] = [
+      ...ziyadahRecords.map(record => ({
+        id: record.id,
+        timestamp: record.timestamp,
+        idSantri: record.idSantri,
+        namaSantri: resolveName(record.idSantri, record.namaSantri),
+        category: 'Ziyadah' as const,
+        material: `${record.surah} • ayat ${record.ayatAwal}-${record.ayatAkhir}`,
+        nilai: record.nilai
+      })),
+      ...murojaahRecords.map(record => ({
+        id: record.id,
+        timestamp: record.timestamp,
+        idSantri: record.idSantri,
+        namaSantri: resolveName(record.idSantri, record.namaSantri),
+        category: "Muroja'ah" as const,
+        material: record.surahAtauJuz,
+        nilai: record.nilai
+      })),
+      ...binnadzorRecords.map(record => ({
+        id: record.id,
+        timestamp: record.timestamp,
+        idSantri: record.idSantri,
+        namaSantri: resolveName(record.idSantri, record.namaSantri),
+        category: 'Binnadzor' as const,
+        material: record.materi || record.surahAtauHalaman || 'Materi Binnadzor',
+        nilai: record.nilai
+      })),
+      ...pembelajaranRecords.map(record => ({
+        id: record.id,
+        timestamp: record.timestamp,
+        idSantri: record.idSantri,
+        namaSantri: resolveName(record.idSantri, record.namaSantri),
+        category: 'Pembelajaran' as const,
+        material: record.materiPokok || record.materi || record.jilidAtauKategori || record.namaKelas || 'Pembelajaran',
+        nilai: record.nilai
+      }))
+    ];
 
-  const seenActivityIds = new Set<string>();
-  const activities: DashboardActivity[] = rawActivities
-    .filter(record => {
-      const key = `${record.category}-${record.id}`;
-      if (seenActivityIds.has(key)) return false;
-      seenActivityIds.add(key);
-      return true;
-    })
-    .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    const seenActivityIds = new Set<string>();
+    return rawActivities
+      .filter(record => {
+        const key = `${record.category}-${record.id}`;
+        if (seenActivityIds.has(key)) return false;
+        seenActivityIds.add(key);
+        return true;
+      })
+      .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+  }, [ziyadahRecords, murojaahRecords, binnadzorRecords, pembelajaranRecords, santriById]);
 
-  const todayActivities = activities.filter(record => record.timestamp.startsWith(today));
-  const attentionActivities = activities.filter(record => record.nilai === 'Kurang' || record.nilai === 'Mengulang');
-  const todayAttention = attentionActivities.filter(record => record.timestamp.startsWith(today));
-  const sangatBaikCount = activities.filter(record => record.nilai === 'Sangat Baik').length;
+  const todayActivities = useMemo(
+    () => activities.filter(record => record.timestamp.startsWith(today)),
+    [activities, today]
+  );
+  const attentionActivities = useMemo(
+    () => activities.filter(record => record.nilai === 'Kurang' || record.nilai === 'Mengulang'),
+    [activities]
+  );
+  const todayAttention = useMemo(
+    () => attentionActivities.filter(record => record.timestamp.startsWith(today)),
+    [attentionActivities, today]
+  );
+  const sangatBaikCount = useMemo(
+    () => activities.filter(record => record.nilai === 'Sangat Baik').length,
+    [activities]
+  );
   const sangatBaikPercent = activities.length > 0 ? Math.round((sangatBaikCount / activities.length) * 100) : null;
 
   const todayZiyadahCount = todayActivities.filter(record => record.category === 'Ziyadah').length;
@@ -138,7 +161,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   const todayBinnadzorCount = todayActivities.filter(record => record.category === 'Binnadzor').length;
   const todayPembelajaranCount = todayActivities.filter(record => record.category === 'Pembelajaran').length;
 
-  const sevenDayPulse = Array.from({ length: 7 }, (_, index) => {
+  const sevenDayPulse = useMemo(() => Array.from({ length: 7 }, (_, index) => {
     const date = new Date(`${today}T12:00:00+07:00`);
     date.setUTCDate(date.getUTCDate() - (6 - index));
     const key = date.toISOString().slice(0, 10);
@@ -149,7 +172,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
     }).format(date).replace('.', '');
     const isActiveDay = isSetoranActiveDay(key);
     return { key, label, count, isActiveDay };
-  });
+  }), [activities, today]);
 
   const sevenDayTotal = sevenDayPulse.reduce((sum, day) => sum + day.count, 0);
   const todayCount = sevenDayPulse[6]?.count ?? todayActivities.length;
@@ -213,7 +236,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
       }
     : null;
 
-  const attentionItems: AttentionItem[] = attentionActivities.map(item => ({
+  const attentionItems = useMemo<AttentionItem[]>(() => attentionActivities.map(item => ({
     id: item.id,
     idSantri: item.idSantri,
     namaSantri: item.namaSantri,
@@ -221,7 +244,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
     material: item.material,
     nilai: item.nilai,
     timestamp: item.timestamp,
-  }));
+  })), [attentionActivities]);
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-3 sm:space-y-4 lg:space-y-5">
@@ -437,27 +460,31 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
         )}
 
         {chartView === 'tren_perkembangan' && (
-          <AdaptiveDevelopmentTrend
-            kelasList={kelasList}
-            santriList={santriList}
-            ziyadahRecords={ziyadahRecords}
-            murojaahRecords={murojaahRecords}
-            binnadzorRecords={binnadzorRecords}
-            pembelajaranRecords={pembelajaranRecords}
-          />
-        )}
-
-        {chartView === 'analisis_detail' && (
-          <div className="ui-bento-card overflow-hidden p-3 sm:p-5">
-            <HafalanStatsChart
+          <Suspense fallback={<div className="ui-bento-card p-6 text-sm text-slate-500">Memuat tren perkembangan...</div>}>
+            <AdaptiveDevelopmentTrend
+              kelasList={kelasList}
               santriList={santriList}
               ziyadahRecords={ziyadahRecords}
               murojaahRecords={murojaahRecords}
               binnadzorRecords={binnadzorRecords}
               pembelajaranRecords={pembelajaranRecords}
-              kelasList={kelasList}
             />
-          </div>
+          </Suspense>
+        )}
+
+        {chartView === 'analisis_detail' && (
+          <Suspense fallback={<div className="ui-bento-card p-6 text-sm text-slate-500">Memuat analitik hafalan...</div>}>
+            <div className="ui-bento-card overflow-hidden p-3 sm:p-5">
+              <HafalanStatsChart
+                santriList={santriList}
+                ziyadahRecords={ziyadahRecords}
+                murojaahRecords={murojaahRecords}
+                binnadzorRecords={binnadzorRecords}
+                pembelajaranRecords={pembelajaranRecords}
+                kelasList={kelasList}
+              />
+            </div>
+          </Suspense>
         )}
       </ScrollReveal>
     </div>

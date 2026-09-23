@@ -47,6 +47,17 @@ const STORAGE_KEYS = {
   TRASH: 'tahfidz_trash_records_v2'
 };
 
+type RecentSetoranUpdate =
+  | { type: 'ziyadah'; records: ZiyadahRecord[] }
+  | { type: 'murojaah'; records: MurojaahRecord[] }
+  | { type: 'binnadzor'; records: BinnadzorRecord[] }
+  | { type: 'pembelajaran'; records: PembelajaranRecord[] };
+
+type PantauanLiburanSubscriptionRequest = {
+  scope: { kind: 'student'; idSantri: string } | { kind: 'monitor' };
+  maxRecords?: number;
+};
+
 const COLLECTIONS = {
   USERS: 'users',
   SANTRI: 'santri',
@@ -634,31 +645,51 @@ export const storageService = {
       notifyUpdate();
     }, (err) => console.warn('AppConfig firestore sync error:', err));
 
-    const unsubPantauanLiburan = onSnapshot(collection(db, COLLECTIONS.PANTAUAN_LIBURAN), (snapshot) => {
-      const records: PantauanLiburanRecord[] = [];
-      const recordMap = new Map<string, PantauanLiburanRecord>();
-      snapshot.forEach((docSnap) => {
-        const record = docSnap.data() as PantauanLiburanRecord;
-        if (record && record.id && !recordMap.has(record.id)) {
-          recordMap.set(record.id, record);
-          records.push(record);
-        }
-      });
-      records.sort((a, b) => b.tanggal.localeCompare(a.tanggal) || b.timestamp.localeCompare(a.timestamp));
-      writeArrayCache(STORAGE_KEYS.PANTAUAN_LIBURAN, records);
-      notifyUpdate();
-    }, (err) => console.warn('Pantauan Liburan firestore sync error:', err));
-
     return () => {
       unsubUsers();
       unsubSantri();
       unsubKelas();
       unsubAppConfig();
-      unsubPantauanLiburan();
     };
   },
 
-  subscribeRecentSetoran(request: HistoryRangeRequest, onUpdate?: () => void): () => void {
+  subscribePantauanLiburan(
+    request: PantauanLiburanSubscriptionRequest,
+    onUpdate?: (records: PantauanLiburanRecord[]) => void
+  ): () => void {
+    if (request.scope.kind === 'student' && !request.scope.idSantri.trim()) {
+      console.warn('Pantauan Liburan subscription skipped because idSantri is empty.');
+      writeArrayCache(STORAGE_KEYS.PANTAUAN_LIBURAN, []);
+      onUpdate?.([]);
+      return () => undefined;
+    }
+
+    const constraints: QueryConstraint[] = request.scope.kind === 'student'
+      ? [where('idSantri', '==', request.scope.idSantri)]
+      : [orderBy('tanggal', 'desc'), limit(Math.max(1, request.maxRecords ?? 500))];
+
+    return onSnapshot(
+      query(collection(db, COLLECTIONS.PANTAUAN_LIBURAN), ...constraints),
+      (snapshot) => {
+        const records: PantauanLiburanRecord[] = [];
+        const recordMap = new Map<string, PantauanLiburanRecord>();
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data() as PantauanLiburanRecord;
+          const record = { ...data, id: data.id || docSnap.id };
+          if (record.id && !recordMap.has(record.id)) {
+            recordMap.set(record.id, record);
+            records.push(record);
+          }
+        });
+        records.sort((a, b) => b.tanggal.localeCompare(a.tanggal) || b.timestamp.localeCompare(a.timestamp));
+        writeArrayCache(STORAGE_KEYS.PANTAUAN_LIBURAN, records);
+        onUpdate?.(records);
+      },
+      (err) => console.warn('Scoped Pantauan Liburan sync error:', err),
+    );
+  },
+
+  subscribeRecentSetoran(request: HistoryRangeRequest, onUpdate?: (update: RecentSetoranUpdate) => void): () => void {
     if (request.scope.kind === 'student' && !request.scope.idSantri.trim()) {
       console.warn('Recent setoran subscription skipped because idSantri is empty.');
       return () => undefined;
@@ -683,10 +714,6 @@ export const storageService = {
       return constraints;
     };
 
-    const notifyUpdate = () => {
-      if (onUpdate) onUpdate();
-    };
-
     const unsubZiyadah = onSnapshot(
       query(collection(db, COLLECTIONS.ZIYADAH), ...buildConstraints()),
       (snapshot) => {
@@ -695,7 +722,7 @@ export const storageService = {
           return { ...data, id: data.id || docSnap.id };
         }).filter(record => !this.isDeletedRecord(record.id));
         writeArrayCache(STORAGE_KEYS.ZIYADAH, records);
-        notifyUpdate();
+        onUpdate?.({ type: 'ziyadah', records });
       },
       (err) => console.warn('Bounded Ziyadah sync error:', err),
     );
@@ -708,7 +735,7 @@ export const storageService = {
           return { ...data, id: data.id || docSnap.id };
         }).filter(record => !this.isDeletedRecord(record.id));
         writeArrayCache(STORAGE_KEYS.MUROJAAH, records);
-        notifyUpdate();
+        onUpdate?.({ type: 'murojaah', records });
       },
       (err) => console.warn('Bounded Murojaah sync error:', err),
     );
@@ -721,7 +748,7 @@ export const storageService = {
           return { ...data, id: data.id || docSnap.id };
         }).filter(record => !this.isDeletedRecord(record.id));
         writeArrayCache(STORAGE_KEYS.BINNADZOR, records);
-        notifyUpdate();
+        onUpdate?.({ type: 'binnadzor', records });
       },
       (err) => console.warn('Bounded Binnadzor sync error:', err),
     );
@@ -734,7 +761,7 @@ export const storageService = {
           return { ...data, id: data.id || docSnap.id };
         }).filter(record => !this.isDeletedRecord(record.id));
         writeArrayCache(STORAGE_KEYS.PEMBELAJARAN, records);
-        notifyUpdate();
+        onUpdate?.({ type: 'pembelajaran', records });
       },
       (err) => console.warn('Bounded Pembelajaran sync error:', err),
     );

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import {
   KELAS_FORMAL_OPTIONS,
   SATUAN_PENDIDIKAN_FORMAL_OPTIONS,
@@ -6,6 +6,8 @@ import {
   Santri,
   User,
   UserRole,
+  type ZiyadahRecord,
+  type MurojaahRecord,
   type KelasFormal,
   type KenaikanKelasFormalRecord,
   type RiwayatAkademikRecord,
@@ -17,12 +19,20 @@ import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle
 import { getClassGroup } from '../utils/classUtils';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
-import { AcademicReportModal } from './AcademicReportModal';
-import { CollectiveAcademicReportModal } from './CollectiveAcademicReportModal';
+const AcademicReportModal = lazy(() =>
+  import('./AcademicReportModal').then((module) => ({ default: module.AcademicReportModal }))
+);
+const CollectiveAcademicReportModal = lazy(() =>
+  import('./CollectiveAcademicReportModal').then((module) => ({ default: module.CollectiveAcademicReportModal }))
+);
+
 
 interface SantriManagementProps {
   currentUser: User;
   santriList: Santri[];
+  usersList: User[];
+  ziyadahRecords: ZiyadahRecord[];
+  murojaahRecords: MurojaahRecord[];
   onDataChanged: () => void;
   onNotify: NotifyFn;
 }
@@ -30,6 +40,9 @@ interface SantriManagementProps {
 export const SantriManagement: React.FC<SantriManagementProps> = ({
   currentUser,
   santriList,
+  usersList,
+  ziyadahRecords,
+  murojaahRecords,
   onDataChanged,
   onNotify
 }) => {
@@ -463,15 +476,25 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     }
   };
 
-  const usersList = storageService.getUsers();
-  const ziyadahRecords = storageService.getZiyadahRecords();
-  const murojaahRecords = storageService.getMurojaahRecords();
+  const statsBySantri = useMemo(() => {
+    const stats = new Map<string, { totalZiyadah: number; totalMurojaah: number; total: number }>();
+    for (const record of ziyadahRecords) {
+      const current = stats.get(record.idSantri) || { totalZiyadah: 0, totalMurojaah: 0, total: 0 };
+      current.totalZiyadah += 1;
+      current.total += 1;
+      stats.set(record.idSantri, current);
+    }
+    for (const record of murojaahRecords) {
+      const current = stats.get(record.idSantri) || { totalZiyadah: 0, totalMurojaah: 0, total: 0 };
+      current.totalMurojaah += 1;
+      current.total += 1;
+      stats.set(record.idSantri, current);
+    }
+    return stats;
+  }, [ziyadahRecords, murojaahRecords]);
 
-  const getSantriStats = (idSantri: string) => {
-    const totalZiyadah = ziyadahRecords.filter(r => r.idSantri === idSantri).length;
-    const totalMurojaah = murojaahRecords.filter(r => r.idSantri === idSantri).length;
-    return { totalZiyadah, totalMurojaah, total: totalZiyadah + totalMurojaah };
-  };
+  const getSantriStats = (idSantri: string) =>
+    statsBySantri.get(idSantri) || { totalZiyadah: 0, totalMurojaah: 0, total: 0 };
 
   const satuanPendidikanOptions = SATUAN_PENDIDIKAN_FORMAL_OPTIONS;
   const kelasFormalOptions = KELAS_FORMAL_OPTIONS;
@@ -484,28 +507,28 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     return parts.length > 0 ? parts.join(' · ') : 'Belum diisi';
   };
 
-  const filteredSantri = santriList.filter(s => {
-    const query = searchQuery.trim().toLowerCase();
-    const matchesSearch = !query || [
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  const filteredSantri = useMemo(() => santriList.filter(s => {
+    const matchesSearch = !normalizedSearchQuery || [
       s.namaSantri,
       s.idSantri,
       s.kelas,
       s.satuanPendidikan || '',
       s.kelasFormal || ''
-    ].some(value => value.toLowerCase().includes(query));
+    ].some(value => value.toLowerCase().includes(normalizedSearchQuery));
 
     const matchesSatuan = !satuanPendidikanFilter || s.satuanPendidikan === satuanPendidikanFilter;
     const matchesKelasFormal = !kelasFormalFilter || s.kelasFormal === kelasFormalFilter;
 
     return matchesSearch && matchesSatuan && matchesKelasFormal;
-  });
+  }), [santriList, normalizedSearchQuery, satuanPendidikanFilter, kelasFormalFilter]);
 
-  const filteredUsers = usersList.filter(u =>
-    u.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    u.role.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (u.idSantri && u.idSantri.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredUsers = useMemo(() => usersList.filter(u =>
+    u.nama.toLowerCase().includes(normalizedSearchQuery) ||
+    u.username.toLowerCase().includes(normalizedSearchQuery) ||
+    u.role.toLowerCase().includes(normalizedSearchQuery) ||
+    (u.idSantri && u.idSantri.toLowerCase().includes(normalizedSearchQuery))
+  ), [usersList, normalizedSearchQuery]);
 
   const getWaliCredentialText = (santri: Santri) => {
     const waliUsername = `wali_${santri.idSantri.toLowerCase()}`;
@@ -1267,21 +1290,25 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
       )}
 
       {reportSantri && (
-        <AcademicReportModal
-          santri={reportSantri}
-          currentUser={currentUser}
-          onClose={() => setReportSantri(null)}
-          onNotify={onNotify}
-        />
+        <Suspense fallback={null}>
+          <AcademicReportModal
+            santri={reportSantri}
+            currentUser={currentUser}
+            onClose={() => setReportSantri(null)}
+            onNotify={onNotify}
+          />
+        </Suspense>
       )}
 
       {showCollectiveReport && (
-        <CollectiveAcademicReportModal
-          santriList={santriList}
-          currentUser={currentUser}
-          onClose={() => setShowCollectiveReport(false)}
-          onNotify={onNotify}
-        />
+        <Suspense fallback={null}>
+          <CollectiveAcademicReportModal
+            santriList={santriList}
+            currentUser={currentUser}
+            onClose={() => setShowCollectiveReport(false)}
+            onNotify={onNotify}
+          />
+        </Suspense>
       )}
 
       {/* Modal Preview Kenaikan / Kelulusan Formal */}

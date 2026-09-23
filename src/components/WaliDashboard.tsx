@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   User,
   Santri,
@@ -141,7 +141,79 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   pembelajaranRecords = [],
   setActiveTab
 }) => {
-  const targetSantri = santriList.find(santri => santri.idSantri === currentUser.idSantri);
+  const targetSantri = useMemo(
+    () => santriList.find(santri => santri.idSantri === currentUser.idSantri),
+    [santriList, currentUser.idSantri]
+  );
+  const targetSantriId = targetSantri?.idSantri || '';
+
+  const santriZiyadah = useMemo(
+    () => targetSantriId ? ziyadahRecords.filter(record => record.idSantri === targetSantriId) : [],
+    [ziyadahRecords, targetSantriId]
+  );
+  const santriMurojaah = useMemo(
+    () => targetSantriId ? murojaahRecords.filter(record => record.idSantri === targetSantriId) : [],
+    [murojaahRecords, targetSantriId]
+  );
+  const santriBinnadzor = useMemo(
+    () => targetSantriId ? binnadzorRecords.filter(record => record.idSantri === targetSantriId) : [],
+    [binnadzorRecords, targetSantriId]
+  );
+  const santriPembelajaran = useMemo(
+    () => targetSantriId ? pembelajaranRecords.filter(record => record.idSantri === targetSantriId) : [],
+    [pembelajaranRecords, targetSantriId]
+  );
+
+  const activities = useMemo<WaliActivity[]>(() => {
+    const rawActivities: WaliActivity[] = [
+      ...santriZiyadah.map(record => ({
+        id: record.id,
+        timestamp: record.timestamp,
+        category: 'Ziyadah' as const,
+        material: `${record.surah} · Ayat ${record.ayatAwal}-${record.ayatAkhir}`,
+        nilai: record.nilai,
+        catatan: record.catatan?.trim() || '',
+        inputBy: record.inputBy
+      })),
+      ...santriMurojaah.map(record => ({
+        id: record.id,
+        timestamp: record.timestamp,
+        category: "Muroja'ah" as const,
+        material: record.surahAtauJuz,
+        nilai: record.nilai,
+        catatan: record.catatan?.trim() || '',
+        inputBy: record.inputBy
+      })),
+      ...santriBinnadzor.map(record => ({
+        id: record.id,
+        timestamp: record.timestamp,
+        category: 'Binnadzor' as const,
+        material: record.surahAtauHalaman || record.materi || 'Materi Binnadzor',
+        nilai: record.nilai,
+        catatan: record.catatan?.trim() || '',
+        inputBy: record.inputBy
+      })),
+      ...santriPembelajaran.map(record => ({
+        id: record.id,
+        timestamp: record.timestamp,
+        category: 'Pembelajaran' as const,
+        material: record.materiPokok || record.materi || record.jilidAtauKategori || record.namaKelas || 'Pembelajaran',
+        nilai: record.nilai,
+        catatan: (record.catatanBimbingan || record.catatan || '').trim(),
+        inputBy: record.inputBy
+      }))
+    ];
+
+    const seenWaliActivityIds = new Set<string>();
+    return rawActivities
+      .filter(record => {
+        const key = `${record.category}-${record.id}`;
+        if (seenWaliActivityIds.has(key)) return false;
+        seenWaliActivityIds.add(key);
+        return true;
+      })
+      .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+  }, [santriZiyadah, santriMurojaah, santriBinnadzor, santriPembelajaran]);
 
   if (!targetSantri) {
     return (
@@ -163,60 +235,6 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
       </div>
     );
   }
-
-  const santriZiyadah = ziyadahRecords.filter(record => record.idSantri === targetSantri.idSantri);
-  const santriMurojaah = murojaahRecords.filter(record => record.idSantri === targetSantri.idSantri);
-  const santriBinnadzor = binnadzorRecords.filter(record => record.idSantri === targetSantri.idSantri);
-  const santriPembelajaran = pembelajaranRecords.filter(record => record.idSantri === targetSantri.idSantri);
-
-  const rawActivities: WaliActivity[] = [
-    ...santriZiyadah.map(record => ({
-      id: record.id,
-      timestamp: record.timestamp,
-      category: 'Ziyadah' as const,
-      material: `${record.surah} · Ayat ${record.ayatAwal}-${record.ayatAkhir}`,
-      nilai: record.nilai,
-      catatan: record.catatan?.trim() || '',
-      inputBy: record.inputBy
-    })),
-    ...santriMurojaah.map(record => ({
-      id: record.id,
-      timestamp: record.timestamp,
-      category: "Muroja'ah" as const,
-      material: record.surahAtauJuz,
-      nilai: record.nilai,
-      catatan: record.catatan?.trim() || '',
-      inputBy: record.inputBy
-    })),
-    ...santriBinnadzor.map(record => ({
-      id: record.id,
-      timestamp: record.timestamp,
-      category: 'Binnadzor' as const,
-      material: record.surahAtauHalaman || record.materi || 'Materi Binnadzor',
-      nilai: record.nilai,
-      catatan: record.catatan?.trim() || '',
-      inputBy: record.inputBy
-    })),
-    ...santriPembelajaran.map(record => ({
-      id: record.id,
-      timestamp: record.timestamp,
-      category: 'Pembelajaran' as const,
-      material: record.materiPokok || record.materi || record.jilidAtauKategori || record.namaKelas || 'Pembelajaran',
-      nilai: record.nilai,
-      catatan: (record.catatanBimbingan || record.catatan || '').trim(),
-      inputBy: record.inputBy
-    }))
-  ];
-
-  const seenWaliActivityIds = new Set<string>();
-  const activities: WaliActivity[] = rawActivities
-    .filter(record => {
-      const key = `${record.category}-${record.id}`;
-      if (seenWaliActivityIds.has(key)) return false;
-      seenWaliActivityIds.add(key);
-      return true;
-    })
-    .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
 
   const latestActivity = activities[0];
   const latestNote = activities.find(activity => Boolean(activity.catatan));

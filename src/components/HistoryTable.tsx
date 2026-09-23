@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { Suspense, lazy, useState, useMemo, useEffect } from 'react';
 import { User, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, CombinedHistoryItem } from '../types';
 import { storageService } from '../services/storageService';
 import { SURAH_LIST } from '../data/quranSurahs';
@@ -30,8 +30,13 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { addDaysToDateInput, formatTanggalLengkap, formatTanggalRingkas, getTodayInputFormat, parseDateSafe } from '../utils/dateFormatter';
-import { UnduhLaporanModal } from './UnduhLaporanModal';
-import { TrashBinModal } from './TrashBinModal';
+const UnduhLaporanModal = lazy(() =>
+  import('./UnduhLaporanModal').then((module) => ({ default: module.UnduhLaporanModal }))
+);
+const TrashBinModal = lazy(() =>
+  import('./TrashBinModal').then((module) => ({ default: module.TrashBinModal }))
+);
+
 import { getClassGroup } from '../utils/classUtils';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
@@ -2313,29 +2318,37 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       )}
 
       {/* Unduh Laporan Modal */}
-      <UnduhLaporanModal
-        isOpen={showReportModal}
-        onClose={() => setShowReportModal(false)}
-        currentUser={currentUser}
-        santriList={santriList}
-        ziyadahRecords={reportRecords.ziyadah}
-        murojaahRecords={reportRecords.murojaah}
-        binnadzorRecords={reportRecords.binnadzor}
-        pembelajaranRecords={reportRecords.pembelajaran}
-      />
+      {showReportModal && (
+        <Suspense fallback={null}>
+          <UnduhLaporanModal
+            isOpen={true}
+            onClose={() => setShowReportModal(false)}
+            currentUser={currentUser}
+            santriList={santriList}
+            ziyadahRecords={reportRecords.ziyadah}
+            murojaahRecords={reportRecords.murojaah}
+            binnadzorRecords={reportRecords.binnadzor}
+            pembelajaranRecords={reportRecords.pembelajaran}
+          />
+        </Suspense>
+      )}
 
       {/* Tempat Sampah Modal (15 Hari Soft Delete Retention) */}
-      <TrashBinModal
-        isOpen={showTrashModal}
-        onClose={() => setShowTrashModal(false)}
-        currentUser={currentUser}
-        onDataChanged={() => {
-          onDataChanged();
-          invalidateHistoryRangeCache();
-          refreshHistory();
-        }}
-        onNotify={onNotify}
-      />
+      {showTrashModal && (
+        <Suspense fallback={null}>
+          <TrashBinModal
+            isOpen={true}
+            onClose={() => setShowTrashModal(false)}
+            currentUser={currentUser}
+            onDataChanged={() => {
+              onDataChanged();
+              invalidateHistoryRangeCache();
+              refreshHistory();
+            }}
+            onNotify={onNotify}
+          />
+        </Suspense>
+      )}
 
       {/* Single Item Delete Confirmation Modal */}
       {itemToDelete && (
