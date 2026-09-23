@@ -58,7 +58,7 @@ test('P2 centralizes CSS ordering without dropping release layers', () => {
 });
 
 test('P2 creates stable vendor chunks for heavy runtime dependencies', () => {
-  for (const chunk of ['react-vendor', 'firebase-vendor', 'charts-vendor', 'motion-vendor', 'icons-vendor']) {
+  for (const chunk of ['react-vendor', 'firebase-core', 'firestore-vendor', 'charts-vendor', 'motion-vendor', 'icons-vendor']) {
     assert.match(vite, new RegExp(`['"]${chunk}['"]`));
   }
 });
