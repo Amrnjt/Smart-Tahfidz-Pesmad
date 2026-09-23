@@ -263,6 +263,14 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
     });
   }, [isSpreadLayout]);
 
+  const spreadRightPage = getSpreadRightPage(page);
+  const spreadLeftPage = Math.min(TOTAL_MUSHAF_PAGES, spreadRightPage + 1);
+  const companionPage = isSpreadLayout
+    ? (page === spreadRightPage ? spreadLeftPage : spreadRightPage)
+    : null;
+  const canGoPrevious = isSpreadLayout ? spreadRightPage > 1 : page > 1;
+  const canGoNext = isSpreadLayout ? spreadRightPage < TOTAL_MUSHAF_PAGES - 1 : page < TOTAL_MUSHAF_PAGES;
+
   const showControls = useCallback(() => {
     setControlsVisible(true);
     if (controlsTimerRef.current !== null) {
@@ -476,6 +484,43 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
   }, [page, retryKey]);
 
   useEffect(() => {
+    if (!isSpreadLayout || companionPage === null || companionPage === page) {
+      setCompanionPageData(null);
+      setCompanionFontFamily('');
+      setCompanionReady(false);
+      setCompanionError(null);
+      return;
+    }
+
+    let active = true;
+    setCompanionReady(false);
+    setCompanionError(null);
+
+    Promise.all([
+      loadOfficialQcfPage(companionPage),
+      loadQcfV2PageFont(companionPage),
+    ])
+      .then(([data, family]) => {
+        if (!active) return;
+        setCompanionPageData(data);
+        setCompanionFontFamily(family);
+        setCompanionReady(true);
+      })
+      .catch((error) => {
+        if (!active) return;
+        console.warn(`Companion QCF page ${companionPage} could not be loaded:`, error);
+        setCompanionPageData(null);
+        setCompanionFontFamily('');
+        setCompanionReady(false);
+        setCompanionError('Halaman pasangan belum dapat dimuat.');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [companionPage, isSpreadLayout, page, retryKey]);
+
+  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target?.tagName === 'INPUT' || target?.tagName === 'SELECT') return;
@@ -527,14 +572,33 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
     ? startsOnCurrentPage.map((marker) => marker.surah.nameLatin).join(' · ')
     : currentSurah.nameLatin;
 
-  const lineMap = useMemo(() => groupWordsByLine(pageData), [pageData]);
   const currentJuz = pageData?.verses[0]?.juz_number;
   const readerReady = pageReady && fontReady && !loadError && !fontError;
 
-  const headerRows = useMemo(() => {
+  const getPageMarkers = (targetPage: number) => {
+    const markers = surahStarts?.[String(targetPage)] || [];
+    return markers
+      .map((marker) => ({
+        ...marker,
+        surah: SURAH_LIST.find((surah) => surah.number === marker.s),
+      }))
+      .filter((marker): marker is SurahStartMarker & { surah: (typeof SURAH_LIST)[number] } =>
+        Boolean(marker.surah)
+      );
+  };
+
+  const getPageLabel = (targetPage: number) => {
+    const markers = getPageMarkers(targetPage);
+    if (markers.length > 0) {
+      return markers.map((marker) => marker.surah.nameLatin).join(' · ');
+    }
+    return findCurrentSurah(targetPage, surahPageIndex).nameLatin;
+  };
+
+  const getHeaderRows = (targetPage: number) => {
     const headers = new Map<number, { kind: 'surah' | 'bismillah'; surahNumber: number }>();
 
-    startsOnCurrentPage.forEach((marker) => {
+    getPageMarkers(targetPage).forEach((marker) => {
       const headerLine = marker.l + 1;
       headers.set(headerLine, { kind: 'surah', surahNumber: marker.s });
       if (marker.b === 1 && headerLine < 15) {
@@ -543,7 +607,7 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
     });
 
     return headers;
-  }, [startsOnCurrentPage]);
+  };
 
   const isBookmarked = bookmarks.includes(page);
   const isDarkReader = readerTheme === 'night';
