@@ -40,7 +40,7 @@ test('binnadzor history preserves and renders all four quality dimensions', () =
 
 test('non-tahfidz history preserves progress and renders assessment details on mobile and desktop', () => {
   for (const field of ['jilid', 'halaman', 'pokokBahasan', 'tahapIstimewa', 'statusKenaikan']) {
-    assert.match(source, new RegExp(`\\b${field}: record\\.${field}\\b|${field}: record\\.${field} \\|\\|`));
+    assert.match(source, new RegExp(`\\b${field}:\\s*record\\.${field}\\b`));
     assert.match(historyTable, new RegExp(`item\\.${field}`));
   }
 
