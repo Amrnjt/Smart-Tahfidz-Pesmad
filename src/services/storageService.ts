@@ -12,6 +12,8 @@ import {
   writeBatch,
   query,
   where,
+  orderBy,
+  limit,
   type QueryConstraint
 } from 'firebase/firestore';
 import {
@@ -34,6 +36,41 @@ import {
   type PantauanLiburanSubscriptionRequest,
   type RecentSetoranUpdate
 } from './realtimeService';
+
+type StudentSetoranRecord = {
+  id: string;
+  idSantri: string;
+  timestamp: string;
+};
+
+async function fetchLatestSetoranRecord<T extends StudentSetoranRecord>(
+  collectionName: string,
+  idSantri: string,
+  localRecords: T[]
+): Promise<T | null> {
+  if (!idSantri) return null;
+
+  try {
+    const latestQuery = query(
+      collection(db, collectionName),
+      where('idSantri', '==', idSantri),
+      orderBy('timestamp', 'desc'),
+      limit(1)
+    );
+    const snapshot = await getDocs(latestQuery);
+    const latestDoc = snapshot.docs[0];
+    if (latestDoc) {
+      const data = latestDoc.data() as T;
+      return { ...data, id: data.id || latestDoc.id };
+    }
+  } catch (error) {
+    console.warn(`Latest setoran lookup failed for ${collectionName}, falling back to cache:`, error);
+  }
+
+  return localRecords
+    .filter(record => record.idSantri === idSantri)
+    .sort((a, b) => String(b.timestamp || '').localeCompare(String(a.timestamp || '')))[0] || null;
+}
 
 export const storageService = {
   getDeletedRecordIds(): Set<string> {
@@ -500,6 +537,38 @@ export const storageService = {
       request,
       (id) => this.isDeletedRecord(id),
       onUpdate
+    );
+  },
+
+  async getLatestZiyadahForSantri(idSantri: string): Promise<ZiyadahRecord | null> {
+    return fetchLatestSetoranRecord(
+      COLLECTIONS.ZIYADAH,
+      idSantri,
+      this.getZiyadahRecords()
+    );
+  },
+
+  async getLatestMurojaahForSantri(idSantri: string): Promise<MurojaahRecord | null> {
+    return fetchLatestSetoranRecord(
+      COLLECTIONS.MUROJAAH,
+      idSantri,
+      this.getMurojaahRecords()
+    );
+  },
+
+  async getLatestBinnadzorForSantri(idSantri: string): Promise<BinnadzorRecord | null> {
+    return fetchLatestSetoranRecord(
+      COLLECTIONS.BINNADZOR,
+      idSantri,
+      this.getBinnadzorRecords()
+    );
+  },
+
+  async getLatestPembelajaranForSantri(idSantri: string): Promise<PembelajaranRecord | null> {
+    return fetchLatestSetoranRecord(
+      COLLECTIONS.PEMBELAJARAN,
+      idSantri,
+      this.getPembelajaranRecords()
     );
   },
 
