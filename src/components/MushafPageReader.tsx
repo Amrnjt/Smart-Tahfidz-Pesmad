@@ -70,10 +70,9 @@ export function loadQcfV2PageFont(page: number): Promise<string> {
     return Promise.resolve(family);
   }
 
-  if (document.fonts.check(`16px "${family}"`)) {
-    return Promise.resolve(family);
-  }
-
+  // Do not use document.fonts.check() before registering the page font.
+  // For an unknown family browsers can report that text is renderable via fallback,
+  // which would skip the QCF FontFace registration and expose raw glyph codes.
   const promise = new FontFace(
     family,
     `url("${QCF_V2_FONT_BASE}/p${safePage}.woff2") format("woff2")`
