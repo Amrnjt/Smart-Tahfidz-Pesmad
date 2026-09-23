@@ -167,38 +167,19 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
         );
 
     const uniqueSantriIds = new Set<string>();
-    const santriIdsByType = new Map<string, Set<string>>();
-
     scopedClasses.forEach(kelas => {
-      const tipeKelas = String(kelas.tipeKelas || 'Lainnya').trim() || 'Lainnya';
-      const typeBucket = santriIdsByType.get(tipeKelas) ?? new Set<string>();
-
       (kelas.santriIds || []).forEach(idSantri => {
-        if (!idSantri) return;
-        uniqueSantriIds.add(idSantri);
-        typeBucket.add(idSantri);
+        if (idSantri) uniqueSantriIds.add(idSantri);
       });
-
-      santriIdsByType.set(tipeKelas, typeBucket);
     });
-
-    const preferredTypeOrder = ['Tahfidz', 'Binnadzor', 'Jilid', 'Kelas Istimewa'];
-    const typeSummary = Array.from(santriIdsByType.entries())
-      .filter(([, ids]) => ids.size > 0)
-      .sort(([a], [b]) => {
-        const aIndex = preferredTypeOrder.indexOf(a);
-        const bIndex = preferredTypeOrder.indexOf(b);
-        if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
-        if (aIndex === -1) return 1;
-        if (bIndex === -1) return -1;
-        return aIndex - bIndex;
-      })
-      .map(([tipe, ids]) => `${tipe === 'Kelas Istimewa' ? 'Istimewa' : tipe} ${ids.size}`)
-      .join(' · ');
 
     const classNames = scopedClasses
       .map(kelas => kelas.namaKelas)
       .filter(Boolean);
+
+    const todayScopedActivityCount = todayActivities.filter(activity =>
+      uniqueSantriIds.has(activity.idSantri)
+    ).length;
 
     const primary = scopedClasses.length === 0
       ? (hasGlobalClassView ? 'Belum ada kelas' : 'Belum ada kelas diampu')
@@ -210,7 +191,9 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
 
     const secondary = scopedClasses.length === 0
       ? (hasGlobalClassView ? 'Belum ada kelompok pembelajaran' : 'Atur musyrif pada Kelola Kelas')
-      : `${uniqueSantriIds.size} santri${typeSummary ? ` · ${typeSummary}` : ''}`;
+      : hasGlobalClassView
+        ? `${todayScopedActivityCount} Aktivitas Hari Ini`
+        : `${uniqueSantriIds.size} Santri • ${todayScopedActivityCount} Aktivitas Hari Ini`;
 
     return {
       label: hasGlobalClassView ? 'Kelompok Pembelajaran' : 'Kelas Diampu',
@@ -218,7 +201,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
       secondary,
       classNames: classNames.join(', '),
     };
-  }, [kelasList, currentUser.id, currentUser.kelasId, hasGlobalClassView]);
+  }, [kelasList, currentUser.id, currentUser.kelasId, hasGlobalClassView, todayActivities]);
 
   const todayZiyadahCount = todayActivities.filter(record => record.category === 'Ziyadah').length;
   const todayMurojaahCount = todayActivities.filter(record => record.category === "Muroja'ah").length;
