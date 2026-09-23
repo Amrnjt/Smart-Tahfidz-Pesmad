@@ -77,7 +77,9 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
 }) => {
   const [chartView, setChartView] = useState<'tren_setor' | 'tren_perkembangan' | 'analisis_detail'>('tren_setor');
 
-  const isPimpinan = String(currentUser?.role || '').trim().toLowerCase() === 'pimpinan';
+  const normalizedRole = String(currentUser?.role || '').trim().toLowerCase();
+  const isPimpinan = normalizedRole === 'pimpinan';
+  const hasGlobalClassView = ['pimpinan', 'admin', 'superadmin'].includes(normalizedRole);
 
   const today = getTodayInputFormat();
   const santriById = useMemo(
@@ -156,10 +158,70 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   );
   const sangatBaikPercent = activities.length > 0 ? Math.round((sangatBaikCount / activities.length) * 100) : null;
 
+  const classOverview = useMemo(() => {
+    const scopedClasses = hasGlobalClassView
+      ? kelasList
+      : kelasList.filter(kelas =>
+          kelas.musyrifId === currentUser.id
+          || (!!currentUser.kelasId && kelas.id === currentUser.kelasId)
+        );
+
+    const uniqueSantriIds = new Set<string>();
+    const santriIdsByType = new Map<string, Set<string>>();
+
+    scopedClasses.forEach(kelas => {
+      const tipeKelas = String(kelas.tipeKelas || 'Lainnya').trim() || 'Lainnya';
+      const typeBucket = santriIdsByType.get(tipeKelas) ?? new Set<string>();
+
+      (kelas.santriIds || []).forEach(idSantri => {
+        if (!idSantri) return;
+        uniqueSantriIds.add(idSantri);
+        typeBucket.add(idSantri);
+      });
+
+      santriIdsByType.set(tipeKelas, typeBucket);
+    });
+
+    const preferredTypeOrder = ['Tahfidz', 'Binnadzor', 'Jilid', 'Kelas Istimewa'];
+    const typeSummary = Array.from(santriIdsByType.entries())
+      .filter(([, ids]) => ids.size > 0)
+      .sort(([a], [b]) => {
+        const aIndex = preferredTypeOrder.indexOf(a);
+        const bIndex = preferredTypeOrder.indexOf(b);
+        if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+        if (aIndex === -1) return 1;
+        if (bIndex === -1) return -1;
+        return aIndex - bIndex;
+      })
+      .map(([tipe, ids]) => `${tipe === 'Kelas Istimewa' ? 'Istimewa' : tipe} ${ids.size}`)
+      .join(' · ');
+
+    const classNames = scopedClasses
+      .map(kelas => kelas.namaKelas)
+      .filter(Boolean);
+
+    const primary = scopedClasses.length === 0
+      ? (hasGlobalClassView ? 'Belum ada kelas' : 'Belum ada kelas diampu')
+      : hasGlobalClassView
+        ? `${uniqueSantriIds.size} Santri · ${scopedClasses.length} Kelas`
+        : scopedClasses.length === 1
+          ? classNames[0] || '1 Kelas'
+          : `${classNames[0] || 'Kelas'} +${scopedClasses.length - 1} lainnya`;
+
+    const secondary = scopedClasses.length === 0
+      ? (hasGlobalClassView ? 'Belum ada kelompok pembelajaran' : 'Atur musyrif pada Kelola Kelas')
+      : `${uniqueSantriIds.size} santri${typeSummary ? ` · ${typeSummary}` : ''}`;
+
+    return {
+      label: hasGlobalClassView ? 'Kelompok Pembelajaran' : 'Kelas Diampu',
+      primary,
+      secondary,
+      classNames: classNames.join(', '),
+    };
+  }, [kelasList, currentUser.id, currentUser.kelasId, hasGlobalClassView]);
+
   const todayZiyadahCount = todayActivities.filter(record => record.category === 'Ziyadah').length;
   const todayMurojaahCount = todayActivities.filter(record => record.category === "Muroja'ah").length;
-  const todayBinnadzorCount = todayActivities.filter(record => record.category === 'Binnadzor').length;
-  const todayPembelajaranCount = todayActivities.filter(record => record.category === 'Pembelajaran').length;
 
   const sevenDayPulse = useMemo(() => Array.from({ length: 7 }, (_, index) => {
     const date = new Date(`${today}T12:00:00+07:00`);
@@ -350,21 +412,23 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
 
           <button
             type="button"
-            onClick={() => setActiveTab('riwayat')}
+            onClick={() => setActiveTab(isPimpinan ? 'riwayat' : 'kelas')}
             className="ripple-container ui-bento-card ui-bento-card-interactive flex flex-1 items-center justify-between p-3.5 sm:p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            aria-label={`${classOverview.label}: ${classOverview.primary}. ${classOverview.secondary}`}
+            title={classOverview.classNames || undefined}
           >
             <div className="min-w-0">
               <p className="text-[10px] sm:text-[11px] font-bold tracking-wider text-slate-500 uppercase">
-                Binnadzor & Kelas
+                {classOverview.label}
               </p>
-              <p className="text-sm font-bold text-slate-900 mt-0.5">
-                {todayBinnadzorCount} Binnadzor · {todayPembelajaranCount} Kelas
+              <p className="text-sm font-bold text-slate-900 mt-0.5 truncate">
+                {classOverview.primary}
               </p>
-              <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5">
-                {activities.length} setoran · 12 bulan terakhir
+              <p className="text-[10px] sm:text-[11px] text-slate-500 mt-0.5 truncate">
+                {classOverview.secondary}
               </p>
             </div>
-            <ArrowRight className="h-4 w-4 text-slate-400" />
+            <ArrowRight className="h-4 w-4 text-slate-400 flex-shrink-0" />
           </button>
         </div>
       </section>
