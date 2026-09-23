@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, ChevronLeft, ChevronRight, Moon, RotateCcw, Sun } from 'lucide-react';
+import { Bookmark, BookOpen, ChevronLeft, ChevronRight, Maximize2, Minimize2, Moon, RotateCcw, Sun } from 'lucide-react';
 import { SURAH_LIST } from '../data/quranSurahs';
 
 const TOTAL_MUSHAF_PAGES = 604;
@@ -7,6 +7,11 @@ const QURAN_PAGE_API = 'https://api.quran.com/api/v4/verses/by_page';
 const SURAH_STARTS_URL = '/quran/qcf_surah_starts.json';
 const QCF_V2_FONT_BASE = 'https://static.qurancdn.com/fonts/quran/hafs/v2/woff2';
 const LAST_PAGE_KEY = 'mushaf_qcf_v2_last_page';
+const BOOKMARKS_KEY = 'mushaf_qcf_v2_bookmarks';
+const READER_THEME_KEY = 'mushaf_qcf_v2_theme';
+const CONTROL_HIDE_DELAY = 3200;
+
+type ReaderTheme = 'light' | 'sepia' | 'night';
 
 type QcfWord = {
   code_v2: string;
@@ -52,6 +57,27 @@ function clampPage(value: number): number {
 function getInitialPage(): number {
   if (typeof window === 'undefined') return 1;
   return clampPage(Number(window.localStorage.getItem(LAST_PAGE_KEY) || 1));
+}
+
+function getInitialTheme(isNightMode: boolean): ReaderTheme {
+  if (typeof window === 'undefined') return isNightMode ? 'night' : 'light';
+  const saved = window.localStorage.getItem(READER_THEME_KEY);
+  if (saved === 'light' || saved === 'sepia' || saved === 'night') return saved;
+  return isNightMode ? 'night' : 'light';
+}
+
+function getInitialBookmarks(): number[] {
+  if (typeof window === 'undefined') return [];
+
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(BOOKMARKS_KEY) || '[]');
+    if (!Array.isArray(parsed)) return [];
+    return [...new Set(parsed.map(Number).filter((value) =>
+      Number.isFinite(value) && value >= 1 && value <= TOTAL_MUSHAF_PAGES
+    ))].sort((a, b) => a - b);
+  } catch {
+    return [];
+  }
 }
 
 async function loadJson<T>(url: string): Promise<T> {
@@ -190,7 +216,16 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [fontError, setFontError] = useState<string | null>(null);
   const [retryKey, setRetryKey] = useState(0);
+  const [readerTheme, setReaderTheme] = useState<ReaderTheme>(() => getInitialTheme(isNightMode));
+  const [bookmarks, setBookmarks] = useState<number[]>(getInitialBookmarks);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [isNativeFullscreen, setIsNativeFullscreen] = useState(false);
   const touchStartX = useRef<number | null>(null);
+  const didSwipeRef = useRef(false);
+  const readerShellRef = useRef<HTMLElement | null>(null);
+  const controlsTimerRef = useRef<number | null>(null);
+  const nativeFullscreenRef = useRef(false);
 
   const setSafePage = useCallback((nextPage: number) => {
     setPage(clampPage(nextPage));
@@ -202,6 +237,87 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
 
   const goPreviousPage = useCallback(() => {
     setPage((current) => clampPage(current - 1));
+  }, []);
+
+  const showControls = useCallback(() => {
+    setControlsVisible(true);
+    if (controlsTimerRef.current !== null) {
+      window.clearTimeout(controlsTimerRef.current);
+      controlsTimerRef.current = null;
+    }
+    if (isFocusMode) {
+      controlsTimerRef.current = window.setTimeout(() => {
+        setControlsVisible(false);
+        controlsTimerRef.current = null;
+      }, CONTROL_HIDE_DELAY);
+    }
+  }, [isFocusMode]);
+
+  const toggleReaderControls = useCallback(() => {
+    if (!isFocusMode) return;
+    if (didSwipeRef.current) {
+      didSwipeRef.current = false;
+      return;
+    }
+
+    setControlsVisible((visible) => {
+      const next = !visible;
+      if (controlsTimerRef.current !== null) {
+        window.clearTimeout(controlsTimerRef.current);
+        controlsTimerRef.current = null;
+      }
+      if (next) {
+        controlsTimerRef.current = window.setTimeout(() => {
+          setControlsVisible(false);
+          controlsTimerRef.current = null;
+        }, CONTROL_HIDE_DELAY);
+      }
+      return next;
+    });
+  }, [isFocusMode]);
+
+  const selectTheme = useCallback((theme: ReaderTheme) => {
+    setReaderTheme(theme);
+    window.localStorage.setItem(READER_THEME_KEY, theme);
+    setControlsVisible(true);
+  }, []);
+
+  const toggleBookmark = useCallback(() => {
+    setBookmarks((current) => {
+      const next = current.includes(page)
+        ? current.filter((savedPage) => savedPage !== page)
+        : [...current, page].sort((a, b) => a - b);
+      window.localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, [page]);
+
+  const enterImmersiveMode = useCallback(async () => {
+    setIsFocusMode(true);
+    setControlsVisible(true);
+
+    const shell = readerShellRef.current;
+    if (!shell?.requestFullscreen) return;
+
+    try {
+      await shell.requestFullscreen();
+    } catch {
+      // CSS focus mode remains active when the browser does not allow native fullscreen.
+    }
+  }, []);
+
+  const exitImmersiveMode = useCallback(async () => {
+    if (document.fullscreenElement) {
+      try {
+        await document.exitFullscreen();
+      } catch {
+        // Continue with CSS focus-mode cleanup.
+      }
+    }
+    nativeFullscreenRef.current = false;
+    setIsNativeFullscreen(false);
+    setIsFocusMode(false);
+    setControlsVisible(true);
   }, []);
 
   useEffect(() => {
@@ -225,6 +341,58 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
   useEffect(() => {
     window.localStorage.setItem(LAST_PAGE_KEY, String(page));
   }, [page]);
+
+  useEffect(() => {
+    const shouldUseNightMode = readerTheme === 'night';
+    if (shouldUseNightMode !== isNightMode) {
+      onToggleNightMode();
+    }
+  }, [readerTheme, isNightMode, onToggleNightMode]);
+
+  useEffect(() => {
+    if (!isFocusMode) {
+      if (controlsTimerRef.current !== null) {
+        window.clearTimeout(controlsTimerRef.current);
+        controlsTimerRef.current = null;
+      }
+      setControlsVisible(true);
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    showControls();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isFocusMode, showControls]);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const active = document.fullscreenElement === readerShellRef.current;
+      if (active) {
+        nativeFullscreenRef.current = true;
+        setIsNativeFullscreen(true);
+        setIsFocusMode(true);
+        showControls();
+      } else if (nativeFullscreenRef.current) {
+        nativeFullscreenRef.current = false;
+        setIsNativeFullscreen(false);
+        setIsFocusMode(false);
+        setControlsVisible(true);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, [showControls]);
+
+  useEffect(() => () => {
+    if (controlsTimerRef.current !== null) {
+      window.clearTimeout(controlsTimerRef.current);
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -279,18 +447,26 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
       const target = event.target as HTMLElement | null;
       if (target?.tagName === 'INPUT' || target?.tagName === 'SELECT') return;
 
+      if (event.key === 'Escape' && isFocusMode && !document.fullscreenElement) {
+        event.preventDefault();
+        void exitImmersiveMode();
+        return;
+      }
+
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
         goNextPage();
+        showControls();
       } else if (event.key === 'ArrowRight') {
         event.preventDefault();
         goPreviousPage();
+        showControls();
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goNextPage, goPreviousPage]);
+  }, [exitImmersiveMode, goNextPage, goPreviousPage, isFocusMode, showControls]);
 
   const surahPageIndex = useMemo(
     () => (surahStarts ? buildSurahPageIndex(surahStarts) : new Map<number, number>()),
@@ -336,17 +512,44 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
     return headers;
   }, [startsOnCurrentPage]);
 
-  const surfaceClass = isNightMode
-    ? 'border-slate-700 bg-slate-950 text-slate-100'
-    : 'border-amber-200/80 bg-[#fffdf6] text-slate-950';
-  const controlClass = isNightMode
+  const isBookmarked = bookmarks.includes(page);
+  const isDarkReader = readerTheme === 'night';
+  const surfaceClass =
+    readerTheme === 'night'
+      ? 'border-slate-700 bg-slate-950 text-slate-100'
+      : readerTheme === 'sepia'
+        ? 'border-[#cbb88f] bg-[#f4ecd8] text-[#2b2116]'
+        : 'border-amber-200/80 bg-[#fffdf6] text-slate-950';
+  const chromeClass =
+    readerTheme === 'night'
+      ? 'border-slate-800 bg-slate-950 text-slate-100'
+      : readerTheme === 'sepia'
+        ? 'border-[#d7c39a] bg-[#efe2c5] text-[#2b2116]'
+        : 'border-slate-200 bg-white text-slate-900';
+  const focusBackgroundClass =
+    readerTheme === 'night'
+      ? 'bg-slate-950'
+      : readerTheme === 'sepia'
+        ? 'bg-[#d8c7a4]'
+        : 'bg-slate-100';
+  const controlClass = isDarkReader
     ? 'border-slate-700 bg-slate-900 text-slate-100 hover:bg-slate-800'
-    : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50';
-  const mutedClass = isNightMode ? 'text-slate-400' : 'text-slate-500';
+    : readerTheme === 'sepia'
+      ? 'border-[#c9b486] bg-[#f8f0dd] text-[#2b2116] hover:bg-[#eadbbd]'
+      : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50';
+  const mutedClass = isDarkReader ? 'text-slate-400' : readerTheme === 'sepia' ? 'text-[#756247]' : 'text-slate-500';
 
   return (
-    <section className="space-y-3" aria-label="Mushaf halaman QCF V2">
-      <div className={`rounded-xl border p-3 sm:p-4 ${isNightMode ? 'border-slate-800 bg-slate-950' : 'border-slate-200 bg-white'}`}>
+    <section
+      ref={readerShellRef}
+      data-reader-theme={readerTheme}
+      data-focus-mode={isFocusMode ? 'true' : 'false'}
+      className={isFocusMode ? `fixed inset-0 z-[80] flex items-center justify-center overflow-hidden p-2 sm:p-4 ${focusBackgroundClass}` : 'space-y-3'}
+      aria-label="Mushaf halaman QCF V2"
+      onMouseMove={isFocusMode ? showControls : undefined}
+    >
+      {!isFocusMode && (
+      <div className={`rounded-xl border p-3 sm:p-4 ${chromeClass}`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -358,15 +561,25 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
               {currentJuz ? ` · Juz ${currentJuz}` : ''}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onToggleNightMode}
-            aria-pressed={isNightMode}
-            className={`inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold sm:text-sm ${controlClass}`}
-          >
-            {isNightMode ? <Sun className="h-4 w-4" aria-hidden="true" /> : <Moon className="h-4 w-4" aria-hidden="true" />}
-            {isNightMode ? 'Terang' : 'Malam'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleBookmark}
+              aria-pressed={isBookmarked}
+              className={`inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold sm:text-sm ${controlClass}`}
+            >
+              <Bookmark className="h-4 w-4" fill={isBookmarked ? 'currentColor' : 'none'} aria-hidden="true" />
+              {isBookmarked ? 'Tersimpan' : 'Bookmark'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void enterImmersiveMode()}
+              className={`inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-semibold sm:text-sm ${controlClass}`}
+            >
+              <Maximize2 className="h-4 w-4" aria-hidden="true" />
+              Fokus baca
+            </button>
+          </div>
         </div>
 
         <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_9rem]">
@@ -402,11 +615,57 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
             <span className={`pointer-events-none absolute right-3 top-3 text-xs ${mutedClass}`}>/604</span>
           </label>
         </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <span className={`text-xs font-semibold ${mutedClass}`}>Tema baca</span>
+          {([
+            ['light', 'Terang'],
+            ['sepia', 'Sepia'],
+            ['night', 'Malam'],
+          ] as const).map(([theme, label]) => (
+            <button
+              key={theme}
+              type="button"
+              onClick={() => selectTheme(theme)}
+              aria-pressed={readerTheme === theme}
+              className={`min-h-9 rounded-lg border px-3 py-1.5 text-xs font-semibold ${readerTheme === theme ? 'border-emerald-700 bg-emerald-700 text-white' : controlClass}`}
+            >
+              {theme === 'light' && <Sun className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />}
+              {theme === 'night' && <Moon className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />}
+              {label}
+            </button>
+          ))}
+
+          {bookmarks.length > 0 && (
+            <label className="ml-auto min-w-[10rem]">
+              <span className="sr-only">Buka bookmark halaman</span>
+              <select
+                value=""
+                onChange={(event) => {
+                  const targetPage = Number(event.target.value);
+                  if (targetPage) setSafePage(targetPage);
+                }}
+                className={`min-h-9 w-full rounded-lg border px-2 py-1.5 text-xs ${controlClass}`}
+              >
+                <option value="">Bookmark ({bookmarks.length})</option>
+                {bookmarks.map((savedPage) => (
+                  <option key={savedPage} value={savedPage}>
+                    Halaman {savedPage}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
       </div>
+      )}
 
       <div
-        className={`relative mx-auto aspect-[2/3] w-full max-w-[640px] overflow-hidden rounded-[1.35rem] border shadow-[0_20px_55px_rgba(15,23,42,0.10)] ${surfaceClass}`}
+        className={`relative mx-auto aspect-[2/3] overflow-hidden rounded-[1.35rem] border ${isFocusMode ? 'max-w-none shadow-none' : 'w-full max-w-[640px] shadow-[0_20px_55px_rgba(15,23,42,0.10)]'} ${surfaceClass}`}
+        style={isFocusMode ? { width: 'min(calc(100vw - 1rem), 66.667dvh)' } : undefined}
+        onClick={toggleReaderControls}
         onTouchStart={(event) => {
+          didSwipeRef.current = false;
           touchStartX.current = event.changedTouches[0]?.clientX ?? null;
         }}
         onTouchEnd={(event) => {
@@ -416,13 +675,20 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
 
           const endX = event.changedTouches[0]?.clientX ?? startX;
           const deltaX = endX - startX;
-          if (deltaX <= -48) goNextPage();
-          else if (deltaX >= 48) goPreviousPage();
+          if (deltaX <= -48) {
+            didSwipeRef.current = true;
+            goNextPage();
+            showControls();
+          } else if (deltaX >= 48) {
+            didSwipeRef.current = true;
+            goPreviousPage();
+            showControls();
+          }
         }}
       >
         <div
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-2.5 rounded-[1rem] border sm:inset-4 ${isNightMode ? 'border-amber-200/15' : 'border-amber-700/20'}`}
+          className={`pointer-events-none absolute inset-2.5 rounded-[1rem] border sm:inset-4 ${isDarkReader ? 'border-amber-200/15' : readerTheme === 'sepia' ? 'border-[#9b7d4d]/30' : 'border-amber-700/20'}`}
         />
 
         <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 pt-3 text-[10px] font-semibold uppercase tracking-[0.16em] sm:px-7 sm:pt-5 sm:text-xs">
@@ -463,7 +729,7 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
                 return (
                   <div
                     key={`header-${page}-${lineNumber}`}
-                    className={`flex items-center justify-center px-3 text-center font-arabic text-[clamp(0.9rem,3.5vw,1.35rem)] font-semibold ${isNightMode ? 'text-amber-100' : 'text-emerald-950'}`}
+                    className={`flex items-center justify-center px-3 text-center font-arabic text-[clamp(0.9rem,3.5vw,1.35rem)] font-semibold ${isDarkReader ? 'text-amber-100' : 'text-emerald-950'}`}
                   >
                     سورة {surah?.nameArabic || ''}
                   </div>
@@ -474,7 +740,7 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
                 return (
                   <div
                     key={`bismillah-${page}-${lineNumber}`}
-                    className={`flex items-center justify-center px-3 text-center font-arabic text-[clamp(0.95rem,3.7vw,1.45rem)] ${isNightMode ? 'text-amber-50' : 'text-slate-950'}`}
+                    className={`flex items-center justify-center px-3 text-center font-arabic text-[clamp(0.95rem,3.7vw,1.45rem)] ${isDarkReader ? 'text-amber-50' : 'text-slate-950'}`}
                   >
                     بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
                   </div>
@@ -510,8 +776,102 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
         <div className={`absolute inset-x-0 bottom-2.5 text-center text-xs font-semibold tabular-nums sm:bottom-4 ${mutedClass}`}>
           {page}
         </div>
+
+        {isFocusMode && (
+          <>
+            <div
+              className={`absolute inset-x-2 top-2 z-30 transition-opacity duration-200 sm:inset-x-3 sm:top-3 ${controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="mx-auto flex max-w-[560px] items-center justify-between gap-2 rounded-2xl border border-white/10 bg-slate-950/75 px-2 py-2 text-white shadow-xl backdrop-blur-md">
+                <div className="min-w-0 px-2">
+                  <p className="truncate text-xs font-semibold sm:text-sm">{pageLabel}</p>
+                  <p className="text-[10px] text-slate-300">Halaman {page}{currentJuz ? ` · Juz ${currentJuz}` : ''}</p>
+                </div>
+                <div className="flex shrink-0 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      toggleBookmark();
+                      showControls();
+                    }}
+                    aria-label={isBookmarked ? 'Hapus bookmark halaman' : 'Bookmark halaman'}
+                    aria-pressed={isBookmarked}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-white/10"
+                  >
+                    <Bookmark className="h-4 w-4" fill={isBookmarked ? 'currentColor' : 'none'} aria-hidden="true" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void exitImmersiveMode()}
+                    aria-label={isNativeFullscreen ? 'Keluar layar penuh' : 'Keluar mode fokus'}
+                    className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-white/10"
+                  >
+                    <Minimize2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className={`absolute inset-x-2 bottom-8 z-30 transition-opacity duration-200 sm:inset-x-3 sm:bottom-10 ${controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="mx-auto flex max-w-[560px] flex-col gap-2 rounded-2xl border border-white/10 bg-slate-950/75 p-2 text-white shadow-xl backdrop-blur-md">
+                <div className="flex items-center justify-center gap-1">
+                  {([
+                    ['light', 'Terang'],
+                    ['sepia', 'Sepia'],
+                    ['night', 'Malam'],
+                  ] as const).map(([theme, label]) => (
+                    <button
+                      key={theme}
+                      type="button"
+                      onClick={() => {
+                        selectTheme(theme);
+                        showControls();
+                      }}
+                      aria-pressed={readerTheme === theme}
+                      className={`min-h-9 rounded-lg px-3 py-1.5 text-xs font-semibold ${readerTheme === theme ? 'bg-emerald-600 text-white' : 'text-slate-200 hover:bg-white/10'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      goPreviousPage();
+                      showControls();
+                    }}
+                    disabled={page <= 1}
+                    aria-label="Halaman sebelumnya"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-white/10 disabled:opacity-30"
+                  >
+                    <ChevronRight className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                  <p className="text-xs font-semibold tabular-nums">{page} / {TOTAL_MUSHAF_PAGES}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      goNextPage();
+                      showControls();
+                    }}
+                    disabled={page >= TOTAL_MUSHAF_PAGES}
+                    aria-label="Halaman berikutnya"
+                    className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-white/10 disabled:opacity-30"
+                  >
+                    <ChevronLeft className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
+      {!isFocusMode && (
       <nav
         aria-label="Navigasi halaman mushaf"
         className="mx-auto flex w-full max-w-[640px] flex-row-reverse items-center justify-between gap-2"
@@ -540,10 +900,13 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
           <ChevronLeft className="h-4 w-4" aria-hidden="true" />
         </button>
       </nav>
+      )}
 
+      {!isFocusMode && (
       <p className={`mx-auto max-w-[640px] text-center text-[10px] leading-relaxed ${mutedClass}`}>
-        M1 · QCF V2 resmi per halaman, 15 baris, font halaman dimuat sesuai kode glyph Quran.com.
+        M2 · Reader imersif: tap untuk menyembunyikan kontrol, bookmark halaman, tema terang/sepia/malam, dan mode fokus/layar penuh.
       </p>
+      )}
     </section>
   );
 };
