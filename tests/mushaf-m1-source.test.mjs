@@ -29,6 +29,8 @@ test('surah start map covers all 114 surahs', () => {
 test('reader loads one QCF V2 font per page and prefetches adjacent pages', () => {
   assert.match(reader, /fonts\/quran\/hafs\/v2\/woff2/);
   assert.match(reader, /new FontFace/);
+  assert.doesNotMatch(reader, /document\.fonts\.check/);
+  assert.match(reader, /document\.fonts\.add\(font\)/);
   assert.match(reader, /\[page - 1, page \+ 1\]/);
   assert.match(reader, /Promise\.allSettled/);
 });
