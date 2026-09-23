@@ -17,7 +17,6 @@ on:
       - 'src/components/KelasManagement.tsx'
       - 'src/components/MushafQuran.tsx'
       - 'src/components/MushafPageReader.tsx'
-      - 'public/quran/qcf_v2_pages.json'
       - 'public/quran/qcf_surah_starts.json'
       - 'tests/mushaf-m1-source.test.mjs'
       - 'src/components/WaliDashboard.tsx'
