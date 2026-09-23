@@ -7,7 +7,8 @@ import {
   BinnadzorRecord,
   PembelajaranRecord,
   ActiveTab,
-  PredikatNilai
+  PredikatNilai,
+  AppConfig
 } from '../types';
 import {
   ArrowRight,
@@ -27,6 +28,7 @@ import { CompactDashboardHero, HeroAction } from './dashboard/CompactDashboardHe
 import { CompactBentoKpiCard } from './dashboard/CompactBentoKpiCard';
 import { CompactTrenBulananChart } from './dashboard/CompactTrenBulananChart';
 import { CompactActivityFeed } from './dashboard/CompactActivityFeed';
+import { AcademicContextStrip } from './dashboard/AcademicContextStrip';
 
 interface SantriDashboardProps {
   currentUser: User;
@@ -35,6 +37,7 @@ interface SantriDashboardProps {
   murojaahRecords: MurojaahRecord[];
   binnadzorRecords?: BinnadzorRecord[];
   pembelajaranRecords?: PembelajaranRecord[];
+  appConfig: AppConfig;
   setActiveTab: (tab: ActiveTab) => void;
 }
 
@@ -144,6 +147,7 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   murojaahRecords,
   binnadzorRecords = [],
   pembelajaranRecords = [],
+  appConfig,
   setActiveTab
 }) => {
   const currentSantri = useMemo(
@@ -333,6 +337,8 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
         }
         actions={heroActions}
       />
+
+      <AcademicContextStrip appConfig={appConfig} santri={currentSantri} />
 
       {/* 2. COMPACT BENTO KPI GRID (2 columns mobile, 4 columns tablet & desktop) */}
       <section
