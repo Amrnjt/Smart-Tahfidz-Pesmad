@@ -19,6 +19,16 @@ import { Users, UserPlus, Target, Trash2, Search, TriangleAlert as AlertTriangle
 import { getClassGroup } from '../utils/classUtils';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
+import {
+  buildStatsBySantri,
+  buildUserCredentialText,
+  buildWaliCredentialText,
+  buildWaliWhatsAppUrl,
+  filterSantriList,
+  filterUsersList,
+  getFormalLabel,
+  getSantriStats as resolveSantriStats
+} from './santri/santriManagementModel';
 const AcademicReportModal = lazy(() =>
   import('./AcademicReportModal').then((module) => ({ default: module.AcademicReportModal }))
 );
@@ -476,85 +486,34 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     }
   };
 
-  const statsBySantri = useMemo(() => {
-    const stats = new Map<string, { totalZiyadah: number; totalMurojaah: number; total: number }>();
-    for (const record of ziyadahRecords) {
-      const current = stats.get(record.idSantri) || { totalZiyadah: 0, totalMurojaah: 0, total: 0 };
-      current.totalZiyadah += 1;
-      current.total += 1;
-      stats.set(record.idSantri, current);
-    }
-    for (const record of murojaahRecords) {
-      const current = stats.get(record.idSantri) || { totalZiyadah: 0, totalMurojaah: 0, total: 0 };
-      current.totalMurojaah += 1;
-      current.total += 1;
-      stats.set(record.idSantri, current);
-    }
-    return stats;
-  }, [ziyadahRecords, murojaahRecords]);
+  const statsBySantri = useMemo(
+    () => buildStatsBySantri(ziyadahRecords, murojaahRecords),
+    [ziyadahRecords, murojaahRecords]
+  );
 
-  const getSantriStats = (idSantri: string) =>
-    statsBySantri.get(idSantri) || { totalZiyadah: 0, totalMurojaah: 0, total: 0 };
+  const getSantriStats = (idSantri: string) => resolveSantriStats(statsBySantri, idSantri);
 
   const satuanPendidikanOptions = SATUAN_PENDIDIKAN_FORMAL_OPTIONS;
   const kelasFormalOptions = KELAS_FORMAL_OPTIONS;
-
-  const getFormalLabel = (santri: Santri) => {
-    const parts = [
-      santri.satuanPendidikan?.trim(),
-      santri.kelasFormal?.trim() ? `Kelas ${santri.kelasFormal.trim()}` : ''
-    ].filter(Boolean);
-    return parts.length > 0 ? parts.join(' · ') : 'Belum diisi';
-  };
-
   const normalizedSearchQuery = searchQuery.trim().toLowerCase();
-  const filteredSantri = useMemo(() => santriList.filter(s => {
-    const matchesSearch = !normalizedSearchQuery || [
-      s.namaSantri,
-      s.idSantri,
-      s.kelas,
-      s.satuanPendidikan || '',
-      s.kelasFormal || ''
-    ].some(value => value.toLowerCase().includes(normalizedSearchQuery));
 
-    const matchesSatuan = !satuanPendidikanFilter || s.satuanPendidikan === satuanPendidikanFilter;
-    const matchesKelasFormal = !kelasFormalFilter || s.kelasFormal === kelasFormalFilter;
+  const filteredSantri = useMemo(
+    () => filterSantriList(
+      santriList,
+      normalizedSearchQuery,
+      satuanPendidikanFilter,
+      kelasFormalFilter
+    ),
+    [santriList, normalizedSearchQuery, satuanPendidikanFilter, kelasFormalFilter]
+  );
 
-    return matchesSearch && matchesSatuan && matchesKelasFormal;
-  }), [santriList, normalizedSearchQuery, satuanPendidikanFilter, kelasFormalFilter]);
-
-  const filteredUsers = useMemo(() => usersList.filter(u =>
-    u.nama.toLowerCase().includes(normalizedSearchQuery) ||
-    u.username.toLowerCase().includes(normalizedSearchQuery) ||
-    u.role.toLowerCase().includes(normalizedSearchQuery) ||
-    (u.idSantri && u.idSantri.toLowerCase().includes(normalizedSearchQuery))
-  ), [usersList, normalizedSearchQuery]);
-
-  const getWaliCredentialText = (santri: Santri) => {
-    const waliUsername = `wali_${santri.idSantri.toLowerCase()}`;
-    const userAcc = usersList.find(u => u.role === 'Wali' && (u.idSantri === santri.idSantri || u.username.toLowerCase() === waliUsername));
-    const waliPassword = userAcc ? userAcc.password : '123';
-    const appUrl = 'https://tahfidzpesmad.my.id';
-
-    return `Assalamu'alaikum Warahmatullahi Wabarakatuh,
-Yth. Bapak/Ibu Wali dari Ananda *${santri.namaSantri}* (Kelas Al-Qur'an: ${santri.kelas}; Jenjang formal: ${getFormalLabel(santri)}),
-
-Berikut informasi akses akun Portal Wali Santri Madrasah Darul Fikri:
-🌐 *Link Portal:* ${appUrl}
-👤 *Username:* ${waliUsername}
-🔑 *Password:* ${waliPassword}
-
-Fasilitas Portal Wali Santri:
-1. Memantau capaian hafalan Ziyadah & Muroja'ah ananda secara real-time
-2. Membaca Mushaf Digital 30 Juz & audio murattal
-3. Mengisi Program Pantauan Liburan Santri (Wirid Yaumiyyah al-Waqi'ah, al-Mulk, al-Insyirah & Shalat 5 Waktu Berjama'ah) ketika liburan diaktifkan oleh Ustadz
-
-Jazakumullah Khairan Katsiran.
-Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
-  };
+  const filteredUsers = useMemo(
+    () => filterUsersList(usersList, normalizedSearchQuery),
+    [usersList, normalizedSearchQuery]
+  );
 
   const handleCopyWaliCredentials = async (santri: Santri) => {
-    const text = getWaliCredentialText(santri);
+    const text = buildWaliCredentialText(santri, usersList);
     try {
       await navigator.clipboard.writeText(text);
       showToast('success', `Kredensial login Wali untuk ${santri.namaSantri} berhasil disalin! Siap dibagikan ke WhatsApp.`);
@@ -563,35 +522,16 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
     }
   };
 
-  const getWaliWhatsAppUrl = (santri: Santri) => {
-    const text = getWaliCredentialText(santri);
-    let phone = (santri.waliKontak || '').replace(/\D/g, '');
-    if (phone.startsWith('0')) {
-      phone = '62' + phone.substring(1);
-    }
-    return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-  };
-
   const handleCopyUserCredentials = async (u: User) => {
     if (u.role === 'Superadmin') {
       showToast('error', 'Kredensial akun Superadmin bersifat rahasia dan tidak dapat disalin.');
       return;
     }
-    const appUrl = 'https://tahfidzpesmad.my.id';
-    const text = `Assalamu'alaikum Warahmatullahi Wabarakatuh,
-Informasi Akun ${u.nama} (${u.role}):
-🌐 *Link Portal:* ${appUrl}
-👤 *Username:* ${u.username}
-🔑 *Password:* ${u.password}
-Role: ${u.role}${u.idSantri ? ` (ID Santri: ${u.idSantri})` : ''}
-
-Silakan buka Link Portal di atas untuk masuk ke sistem.
-Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
 
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(buildUserCredentialText(u));
       showToast('success', `Kredensial akun ${u.nama} (${u.username}) berhasil disalin! Siap dibagikan.`);
-    } catch (err) {
+    } catch {
       showToast('error', 'Gagal menyalin ke clipboard.');
     }
   };
@@ -601,18 +541,8 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
       showToast('error', 'Kredensial akun Superadmin bersifat rahasia dan tidak dapat dibagikan.');
       return;
     }
-    const appUrl = 'https://tahfidzpesmad.my.id';
-    const text = `Assalamu'alaikum Warahmatullahi Wabarakatuh,
-Informasi Akun ${u.nama} (${u.role}):
-🌐 *Link Portal:* ${appUrl}
-👤 *Username:* ${u.username}
-🔑 *Password:* ${u.password}
-Role: ${u.role}${u.idSantri ? ` (ID Santri: ${u.idSantri})` : ''}
 
-Silakan buka Link Portal di atas untuk masuk ke sistem.
-Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
-    const encoded = encodeURIComponent(text);
-    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    window.open(`https://wa.me/?text=${encodeURIComponent(buildUserCredentialText(u))}`, '_blank');
   };
 
   return (
@@ -997,7 +927,7 @@ Wassalamu'alaikum Warahmatullahi Wabarakatuh.`;
                         {/* WhatsApp Share Button if contact is available */}
                         {santri.waliKontak && (
                           <a
-                            href={getWaliWhatsAppUrl(santri)}
+                            href={buildWaliWhatsAppUrl(santri, usersList)}
                             target="_blank"
                             rel="noopener noreferrer"
                             title={`Kirim kredensial via WhatsApp ke ${santri.waliNama || 'Wali'}`}
