@@ -7,7 +7,8 @@ import {
   BinnadzorRecord,
   PembelajaranRecord,
   ActiveTab,
-  PredikatNilai
+  PredikatNilai,
+  AppConfig
 } from '../types';
 import {
   ArrowRight,
@@ -24,11 +25,11 @@ import {
 } from 'lucide-react';
 import { formatTanggalWaktu } from '../utils/dateFormatter';
 import { ScrollReveal } from './ScrollReveal';
-import { storageService } from '../services/storageService';
 import { CompactDashboardHero, HeroAction } from './dashboard/CompactDashboardHero';
 import { CompactBentoKpiCard } from './dashboard/CompactBentoKpiCard';
 import { CompactTrenBulananChart } from './dashboard/CompactTrenBulananChart';
 import { CompactActivityFeed } from './dashboard/CompactActivityFeed';
+import { AcademicContextStrip } from './dashboard/AcademicContextStrip';
 
 interface WaliDashboardProps {
   currentUser: User;
@@ -37,6 +38,7 @@ interface WaliDashboardProps {
   murojaahRecords: MurojaahRecord[];
   binnadzorRecords?: BinnadzorRecord[];
   pembelajaranRecords?: PembelajaranRecord[];
+  appConfig: AppConfig;
   setActiveTab: (tab: ActiveTab) => void;
 }
 
@@ -139,6 +141,7 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   murojaahRecords,
   binnadzorRecords = [],
   pembelajaranRecords = [],
+  appConfig,
   setActiveTab
 }) => {
   const targetSantri = useMemo(
@@ -250,7 +253,7 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   const latestCategory = latestActivity ? categoryMeta[latestActivity.category] : null;
   const LatestIcon = latestCategory?.icon || BookOpen;
   const latestRecency = getRecencyInfo(latestActivity?.timestamp);
-  const programLiburanActive = storageService.getAppConfig().programLiburanActive;
+  const programLiburanActive = appConfig.programLiburanActive;
 
   const primaryAction = programLiburanActive
     ? {
@@ -309,6 +312,8 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
         }
         actions={heroActions}
       />
+
+      <AcademicContextStrip appConfig={appConfig} santri={targetSantri} />
 
       {/* 2. COMPACT BENTO KPI GRID (2 columns mobile, 4 columns tablet & desktop) */}
       <section
