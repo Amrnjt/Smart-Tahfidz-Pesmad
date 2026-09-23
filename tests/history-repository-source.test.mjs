@@ -36,3 +36,22 @@ test('binnadzor history preserves and renders all four quality dimensions', () =
   assert.match(historyTable, />Fashohah</);
   assert.match(historyTable, />Kelancaran</);
 });
+
+
+test('non-tahfidz history preserves progress and renders assessment details on mobile and desktop', () => {
+  for (const field of ['jilid', 'halaman', 'pokokBahasan', 'tahapIstimewa', 'statusKenaikan']) {
+    assert.match(source, new RegExp(`\\b${field}: record\\.${field}\\b|${field}: record\\.${field} \\|\\|`));
+    assert.match(historyTable, new RegExp(`item\\.${field}`));
+  }
+
+  for (const field of ['hukumTajwid', 'makhrojHuruf', 'kefasihan', 'kelancaran']) {
+    assert.match(historyTable, new RegExp(`item\\.${field}`));
+  }
+
+  assert.match(historyTable, /const hasPembelajaranQualityDetails =/);
+  assert.match(historyTable, /const hasPembelajaranProgressDetails =/);
+  assert.match(historyTable, /Detail Penilaian/);
+  assert.match(historyTable, /Progres Materi/);
+  assert.match(historyTable, /Tindak Lanjut/);
+  assert.match(historyTable, /item\.rekomendasiTindakLanjut/);
+});
