@@ -23,8 +23,6 @@ import {
   BookOpen, 
   Layers, 
   HeartHandshake, 
-  AlertCircle,
-  HelpCircle,
   Award,
   ArrowLeft
 } from 'lucide-react';
