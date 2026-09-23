@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const types = readFileSync(new URL('../src/types/index.ts', import.meta.url), 'utf8');
 const storage = readFileSync(new URL('../src/services/storageService.ts', import.meta.url), 'utf8');
+const storageCore = readFileSync(new URL('../src/services/storageCore.ts', import.meta.url), 'utf8');
 const santriManagement = readFileSync(new URL('../src/components/SantriManagement.tsx', import.meta.url), 'utf8');
 const rules = readFileSync(new URL('../firestore.rules', import.meta.url), 'utf8');
 
@@ -21,7 +22,7 @@ test('academic history stores a semester snapshot instead of deriving history fr
   assert.match(types, /semester: SemesterAkademik;/);
   assert.match(types, /kelasFormal: KelasFormal;/);
   assert.match(types, /kelasAlQuran\?: string;/);
-  assert.match(storage, /ACADEMIC_HISTORY: 'academic_history'/);
+  assert.match(storageCore, /ACADEMIC_HISTORY: 'academic_history'/);
   assert.match(storage, /async upsertAcademicHistory\(/);
   assert.match(storage, /const id = `\$\{santri\.idSantri\}_\$\{safeYear\}_\$\{semester\.toLowerCase\(\)\}`/);
   assert.match(storage, /setDoc\(doc\(db, COLLECTIONS\.ACADEMIC_HISTORY, id\)/);
