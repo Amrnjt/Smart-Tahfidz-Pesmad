@@ -2,17 +2,17 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const pageMap = JSON.parse(readFileSync(new URL('../public/quran/qcf_v2_pages.json', import.meta.url), 'utf8'));
 const surahStarts = JSON.parse(readFileSync(new URL('../public/quran/qcf_surah_starts.json', import.meta.url), 'utf8'));
 const reader = readFileSync(new URL('../src/components/MushafPageReader.tsx', import.meta.url), 'utf8');
 const mushaf = readFileSync(new URL('../src/components/MushafQuran.tsx', import.meta.url), 'utf8');
 
-test('M1 ships a complete 604-page QCF V2 glyph map', () => {
-  assert.equal(Object.keys(pageMap).length, 604);
-  for (let page = 1; page <= 604; page += 1) {
-    assert.ok(Array.isArray(pageMap[String(page)]), `page ${page} is missing`);
-    assert.ok(pageMap[String(page)].length > 0, `page ${page} has no glyph lines`);
-  }
+test('M1 uses official QCF V2 page glyphs instead of a mismatched local glyph map', () => {
+  assert.match(reader, /https:\/\/api\.quran\.com\/api\/v4\/verses\/by_page/);
+  assert.match(reader, /word_fields.*code_v2,text_uthmani,line_number,page_number/s);
+  assert.match(reader, /mushaf.*'1'/s);
+  assert.match(reader, /groupWordsByLine/);
+  assert.match(reader, /grid-rows-\[repeat\(15,minmax\(0,1fr\)\)\]/);
+  assert.doesNotMatch(reader, /qcf_v2_pages\.json/);
 });
 
 test('surah start map covers all 114 surahs', () => {
@@ -26,13 +26,22 @@ test('surah start map covers all 114 surahs', () => {
   }
 });
 
-test('reader loads one QCF V2 font per page and prefetches adjacent pages', () => {
-  assert.match(reader, /fonts\/quran\/hafs\/v2\/woff2/);
+test('reader pairs Quran.com code_v2 with the matching QuranCDN V2 page font', () => {
+  assert.match(reader, /https:\/\/static\.qurancdn\.com\/fonts\/quran\/hafs\/v2\/woff2/);
   assert.match(reader, /new FontFace/);
-  assert.doesNotMatch(reader, /if\s*\(\s*document\.fonts\.check/);
   assert.match(reader, /document\.fonts\.add\(font\)/);
+  assert.match(reader, /dangerouslySetInnerHTML=\{\{ __html: word\.code_v2 \}\}/);
   assert.match(reader, /\[page - 1, page \+ 1\]/);
+  assert.match(reader, /loadOfficialQcfPage\(candidate\)/);
+  assert.match(reader, /loadQcfV2PageFont\(candidate\)/);
   assert.match(reader, /Promise\.allSettled/);
+});
+
+test('surah headers reserve the physical Mushaf rows before official word lines', () => {
+  assert.match(reader, /const headerLine = marker\.l \+ 1/);
+  assert.match(reader, /headerLine \+ 1/);
+  assert.match(reader, /marker\.b === 1/);
+  assert.match(reader, /lineMap\.get\(lineNumber\)/);
 });
 
 test('RTL page navigation uses left for next and right for previous', () => {
