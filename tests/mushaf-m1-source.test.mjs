@@ -41,7 +41,7 @@ test('surah headers reserve the physical Mushaf rows before official word lines'
   assert.match(reader, /const headerLine = marker\.l \+ 1/);
   assert.match(reader, /headerLine \+ 1/);
   assert.match(reader, /marker\.b === 1/);
-  assert.match(reader, /lineMap\.get\(lineNumber\)/);
+  assert.match(reader, /lineMap(?:ForPage)?\.get\(lineNumber\)/);
 });
 
 test('RTL page navigation uses left for next and right for previous', () => {
