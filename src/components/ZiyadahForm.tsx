@@ -1,10 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { User, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, Kelas } from '../types';
 import { SURAH_LIST } from '../data/quranSurahs';
 import { storageService } from '../services/storageService';
 import { BookPlus, BookOpen, Save, RotateCcw, Calendar, Clock } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
+import { getNextQuranContinuation } from '../utils/setoranContinuation';
 
 interface ZiyadahFormProps {
   currentUser: User;
@@ -14,6 +15,14 @@ interface ZiyadahFormProps {
   onSuccess: () => void;
   onNotify: NotifyFn;
 }
+
+const QUICK_NOTES = [
+  'Lancar dan siap melanjutkan hafalan berikutnya.',
+  'Perhatikan panjang pendek bacaan dan hukum mad.',
+  'Perbaiki makhroj pada beberapa huruf yang masih kurang jelas.',
+  'Ulangi bagian yang masih ragu sebelum menambah hafalan.',
+  'Kelancaran dan ketepatan tajwid sudah baik, pertahankan.'
+];
 
 export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
   currentUser,
@@ -34,12 +43,37 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
   const [waktuSetor, setWaktuSetor] = useState(getCurrentTimeInputFormat());
   const [surahName, setSurahName] = useState(SURAH_LIST[77].nameLatin); // default An-Naba
   const [ayatAwal, setAyatAwal] = useState<number>(1);
-  const [ayatAkhir, setAyatAkhir] = useState<number>(10);
+  const [ayatAkhir, setAyatAkhir] = useState<number | ''>(10);
   const [nilai, setNilai] = useState<PredikatNilai>('Sangat Baik');
   const [catatan, setCatatan] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectedSurah = SURAH_LIST.find(s => s.nameLatin === surahName) || SURAH_LIST[0];
+
+  useEffect(() => {
+    if (!idSantri) return;
+
+    let active = true;
+    void storageService.getLatestZiyadahForSantri(idSantri).then((latest) => {
+      if (!active) return;
+
+      if (!latest) {
+        setSurahName(SURAH_LIST[77].nameLatin);
+        setAyatAwal(1);
+        setAyatAkhir(10);
+        return;
+      }
+
+      const next = getNextQuranContinuation(latest);
+      setSurahName(next.surahName);
+      setAyatAwal(next.ayatAwal);
+      setAyatAkhir('');
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [idSantri]);
 
   const handleSurahChange = (name: string) => {
     setSurahName(name);
@@ -52,7 +86,10 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!idSantri || !surahName) return;
+    if (!idSantri || !surahName || ayatAkhir === '') {
+      onNotify('error', 'Lengkapi ayat akhir sebelum menyimpan setoran.');
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -248,7 +285,7 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
                 required
                 aria-label="Ayat Akhir"
                 value={ayatAkhir}
-                onChange={(e) => setAyatAkhir(Number(e.target.value))}
+                onChange={(e) => setAyatAkhir(e.target.value === '' ? '' : Number(e.target.value))}
                 className="ui-control w-full px-3.5 bg-white border border-slate-300 rounded-xl text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
@@ -275,6 +312,18 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
             <label className="block text-sm font-semibold text-slate-800 mb-2">
               Catatan Tajwid / Evaluasi Ustadz
             </label>
+            <div className="flex flex-wrap gap-1.5 mb-2">
+              {QUICK_NOTES.map((note) => (
+                <button
+                  key={note}
+                  type="button"
+                  onClick={() => setCatatan(prev => prev.trim() ? (prev.includes(note) ? prev : `${prev.trim()} ${note}`) : note)}
+                  className="min-h-10 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-xs font-semibold text-emerald-900 hover:bg-emerald-100 transition-colors"
+                >
+                  + {note}
+                </button>
+              ))}
+            </div>
             <textarea
               rows={3}
               aria-label="Catatan Tajwid atau Evaluasi Ustadz"
