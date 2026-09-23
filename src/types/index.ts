@@ -319,6 +319,10 @@ export interface CombinedHistoryItem {
   ayatAkhir?: number;
   surahAtauJuz?: string;
   tipeKelas?: TipeKelas;
+  jilid?: string;
+  halaman?: number;
+  pokokBahasan?: string;
+  tahapIstimewa?: string;
   statusKenaikan?: StatusKenaikan;
   hukumTajwid?: AspekKualitas;
   makhrojHuruf?: AspekKualitas;
