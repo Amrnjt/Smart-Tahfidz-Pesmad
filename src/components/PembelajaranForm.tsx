@@ -5,20 +5,17 @@ import {
   Kelas, 
   PredikatNilai, 
   PREDIKAT_NILAI_OPTIONS,
-  AspekKualitas,
   StatusKenaikan,
   STATUS_KENAIKAN_OPTIONS,
   TipeKelas
 } from '../types';
 import { 
   KURIKULUM_JILID_UMMI_DEWASA, 
-  KURIKULUM_KELAS_ISTIMEWA,
-  KURIKULUM_BINNADZOR 
+  KURIKULUM_KELAS_ISTIMEWA
 } from '../data/kurikulumTemplates';
 import { storageService } from '../services/storageService';
 import { 
   GraduationCap, 
-  CircleCheck as CheckCircle, 
   Save, 
   RotateCcw, 
   Calendar, 
@@ -129,12 +126,8 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
   const [kendalaSantri, setKendalaSantri] = useState('');
   const [rekomendasiTindakLanjut, setRekomendasiTindakLanjut] = useState('');
 
-  // Penilaian & Aspek Kualitas
+  // Penilaian pembelajaran dasar
   const [nilai, setNilai] = useState<PredikatNilai>('Baik');
-  const [hukumTajwid, setHukumTajwid] = useState<AspekKualitas>('Baik');
-  const [makhrojHuruf, setMakhrojHuruf] = useState<AspekKualitas>('Baik');
-  const [kefasihan, setKefasihan] = useState<AspekKualitas>('Baik');
-  const [kelancaran, setKelancaran] = useState<AspekKualitas>('Baik');
 
   // Status Kenaikan
   const [statusKenaikan, setStatusKenaikan] = useState<StatusKenaikan>('Lanjut Halaman');
@@ -189,10 +182,6 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
         kendalaSantri: tipeKelas === 'Kelas Istimewa' ? kendalaSantri.trim() : undefined,
         rekomendasiTindakLanjut: tipeKelas === 'Kelas Istimewa' ? rekomendasiTindakLanjut.trim() : undefined,
         nilai,
-        hukumTajwid,
-        makhrojHuruf,
-        kefasihan,
-        kelancaran,
         statusKenaikan,
         catatan: catatan.trim() || 'Pembelajaran berjalan dengan baik.',
         inputBy: currentUser.nama
@@ -212,10 +201,6 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
     setTanggalSetor(getTodayInputFormat());
     setWaktuSetor(getCurrentTimeInputFormat());
     setNilai('Baik');
-    setHukumTajwid('Baik');
-    setMakhrojHuruf('Baik');
-    setKefasihan('Baik');
-    setKelancaran('Baik');
     setStatusKenaikan('Lanjut Halaman');
     setCatatan('');
     setKendalaSantri('');
@@ -232,7 +217,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
           </div>
           <div>
             <h3 className="ui-section-title text-slate-900">Setoran Pembelajaran</h3>
-            <p className="text-xs sm:text-sm text-slate-500">Jilid Ummi Dewasa dan Kelas Istimewa dengan evaluasi progres materi.</p>
+            <p className="text-xs sm:text-sm text-slate-500">Jilid Ummi Dewasa dan Kelas Istimewa dengan pemantauan progres materi.</p>
           </div>
         </div>
 
@@ -626,150 +611,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
             </div>
           </div>
 
-          {/* 5. Evaluasi 4 Aspek Kualitas (Tajwid, Makhroj, Fashohah, Kelancaran) */}
-          <div className="p-4 rounded-2xl bg-amber-50/40 border border-slate-200  space-y-3">
-            <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-              <div>
-                <h4 className="text-xs font-semibold text-slate-900 flex items-center gap-1.5">
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Evaluasi Kualitas Bacaan Santri</span>
-                </h4>
-                <p className="text-xs text-slate-500">
-                  Pemantauan 4 pilar kualitas bacaan Al-Qur'an / materi
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setHukumTajwid('Baik');
-                    setMakhrojHuruf('Baik');
-                    setKefasihan('Baik');
-                    setKelancaran('Baik');
-                  }}
-                  className="min-h-11 text-xs font-bold px-3 py-1 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 hover:bg-emerald-200 transition cursor-pointer"
-                >
-                  Semua Baik
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setHukumTajwid('Sangat Baik');
-                    setMakhrojHuruf('Sangat Baik');
-                    setKefasihan('Sangat Baik');
-                    setKelancaran('Sangat Baik');
-                  }}
-                  className="min-h-11 text-xs font-bold px-3 py-1 rounded-md bg-teal-100 text-teal-800 border border-teal-200 hover:bg-teal-200 transition cursor-pointer"
-                >
-                  Sangat Baik
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Tajwid */}
-              <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 space-y-1">
-                <div className="flex justify-between items-center text-xs font-bold text-slate-800">
-                  <span>1. Hukum Tajwid</span>
-                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    {hukumTajwid}
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-1 pt-1">
-                  {(['Perlu Bimbingan', 'Baik', 'Mutqin'] as AspekKualitas[]).map(l => (
-                    <button
-                      key={l}
-                      type="button"
-                      onClick={() => setHukumTajwid(l)}
-                      aria-pressed={hukumTajwid === l}
-                      className={`min-h-11 py-1 text-xs font-bold rounded-lg transition ${
-                        hukumTajwid === l ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
-                    >
-                      {l === 'Perlu Bimbingan' ? 'Bimbingan' : l}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Makhroj */}
-              <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 space-y-1">
-                <div className="flex justify-between items-center text-xs font-bold text-slate-800">
-                  <span>2. Makharijul Huruf</span>
-                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    {makhrojHuruf}
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-1 pt-1">
-                  {(['Perlu Bimbingan', 'Baik', 'Mutqin'] as AspekKualitas[]).map(l => (
-                    <button
-                      key={l}
-                      type="button"
-                      onClick={() => setMakhrojHuruf(l)}
-                      aria-pressed={makhrojHuruf === l}
-                      className={`min-h-11 py-1 text-xs font-bold rounded-lg transition ${
-                        makhrojHuruf === l ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
-                    >
-                      {l === 'Perlu Bimbingan' ? 'Bimbingan' : l}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Fashohah */}
-              <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 space-y-1">
-                <div className="flex justify-between items-center text-xs font-bold text-slate-800">
-                  <span>3. Kefasihan (Fashohah)</span>
-                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    {kefasihan}
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-1 pt-1">
-                  {(['Perlu Bimbingan', 'Baik', 'Mutqin'] as AspekKualitas[]).map(l => (
-                    <button
-                      key={l}
-                      type="button"
-                      onClick={() => setKefasihan(l)}
-                      aria-pressed={kefasihan === l}
-                      className={`min-h-11 py-1 text-xs font-bold rounded-lg transition ${
-                        kefasihan === l ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
-                    >
-                      {l === 'Perlu Bimbingan' ? 'Bimbingan' : l}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Kelancaran */}
-              <div className="bg-white p-2.5 rounded-xl border border-slate-200/80 space-y-1">
-                <div className="flex justify-between items-center text-xs font-bold text-slate-800">
-                  <span>4. Kelancaran & Tartil</span>
-                  <span className="text-xs font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
-                    {kelancaran}
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-1 pt-1">
-                  {(['Perlu Bimbingan', 'Baik', 'Mutqin'] as AspekKualitas[]).map(l => (
-                    <button
-                      key={l}
-                      type="button"
-                      onClick={() => setKelancaran(l)}
-                      aria-pressed={kelancaran === l}
-                      className={`min-h-11 py-1 text-xs font-bold rounded-lg transition ${
-                        kelancaran === l ? 'bg-emerald-700 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                      }`}
-                    >
-                      {l === 'Perlu Bimbingan' ? 'Bimbingan' : l}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 6. Catatan Ustadz */}
+          {/* 5. Catatan Ustadz */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-semibold text-slate-800">
@@ -796,7 +638,7 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
               aria-label="Catatan Pembelajaran"
                 value={catatan}
               onChange={(e) => setCatatan(e.target.value)}
-              placeholder="Tulis catatan evaluasi detail santri untuk materi hari ini..."
+              placeholder="Tulis catatan perkembangan santri untuk materi hari ini..."
               className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 text-sm font-medium text-slate-800"
             ></textarea>
           </div>
