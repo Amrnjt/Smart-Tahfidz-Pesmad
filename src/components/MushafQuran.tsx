@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { SURAH_LIST } from '../data/quranSurahs';
+import { MushafPageReader } from './MushafPageReader';
 import { Search, Volume2, VolumeX, Pause, Play, Square, AlertCircle, Moon, Sun, RotateCcw, SkipBack, SkipForward, ListMusic, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface EquranAyah {
@@ -41,6 +42,10 @@ export const MushafQuran: React.FC = () => {
     const saved = localStorage.getItem('mushaf_night_mode');
     return saved === 'true';
   });
+  const [readerMode, setReaderMode] = useState<'mushaf' | 'study'>(() => {
+    const saved = localStorage.getItem('mushaf_reader_mode');
+    return saved === 'study' ? 'study' : 'mushaf';
+  });
   const [fontSizeOffset, setFontSizeOffset] = useState<'normal' | 'large' | 'xlarge'>('normal');
 
   const [showLatin, setShowLatin] = useState(true);
@@ -81,9 +86,23 @@ export const MushafQuran: React.FC = () => {
     setAudioError(null);
   };
 
+  const switchReaderMode = (nextMode: 'mushaf' | 'study') => {
+    if (nextMode === readerMode) return;
+
+    if (nextMode === 'mushaf') {
+      surahRequestRef.current += 1;
+      stopAudio();
+      setIsLoading(false);
+    }
+
+    localStorage.setItem('mushaf_reader_mode', nextMode);
+    setReaderMode(nextMode);
+  };
+
   useEffect(() => {
+    if (readerMode !== 'study') return;
     fetchSurahDetail(selectedSurahNumber);
-  }, [selectedSurahNumber]);
+  }, [selectedSurahNumber, readerMode]);
 
   useEffect(() => () => {
     surahRequestRef.current += 1;
@@ -318,6 +337,36 @@ export const MushafQuran: React.FC = () => {
     <div
       className={`p3-mushaf-page space-y-4 ${playbackMode !== 'idle' ? 'pb-[calc(24rem+env(safe-area-inset-bottom,0px))]' : 'pb-6'} ${isNightMode ? 'night-mode-active rounded-xl bg-slate-950 text-slate-100' : ''}`}
     >
+      <div
+        className={`mx-auto flex w-full max-w-4xl items-center gap-1 rounded-xl border p-1 ${isNightMode ? 'border-slate-800 bg-slate-900' : 'border-slate-200 bg-white'}`}
+        role="group"
+        aria-label="Mode tampilan Mushaf"
+      >
+        <button
+          type="button"
+          onClick={() => switchReaderMode('mushaf')}
+          aria-pressed={readerMode === 'mushaf'}
+          className={`min-h-10 flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${readerMode === 'mushaf' ? 'bg-emerald-700 text-white' : isNightMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50'}`}
+        >
+          Mode Mushaf
+        </button>
+        <button
+          type="button"
+          onClick={() => switchReaderMode('study')}
+          aria-pressed={readerMode === 'study'}
+          className={`min-h-10 flex-1 rounded-lg px-3 py-2 text-sm font-semibold transition-colors ${readerMode === 'study' ? 'bg-emerald-700 text-white' : isNightMode ? 'text-slate-300 hover:bg-slate-800' : 'text-slate-600 hover:bg-slate-50'}`}
+        >
+          Mode Belajar
+        </button>
+      </div>
+
+      {readerMode === 'mushaf' ? (
+        <MushafPageReader
+          isNightMode={isNightMode}
+          onToggleNightMode={toggleNightMode}
+        />
+      ) : (
+        <>
       <header className={`rounded-xl border p-4 sm:p-6 ${surfaceClass}`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -855,6 +904,8 @@ export const MushafQuran: React.FC = () => {
             </div>
           </details>
         </section>
+      )}
+        </>
       )}
     </div>
   );
