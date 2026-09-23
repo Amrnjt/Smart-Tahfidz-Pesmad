@@ -661,13 +661,17 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
         : side === 'left'
           ? 'rounded-l-[1.35rem] rounded-r-[0.35rem]'
           : 'rounded-l-[0.35rem] rounded-r-[1.35rem]';
+    const aspectClass =
+      side === 'single'
+        ? 'aspect-[6/13] sm:aspect-[2/3]'
+        : 'aspect-[2/3]';
 
     return (
       <article
         key={targetPage}
         aria-label={`Halaman mushaf ${targetPage}`}
         aria-current={isCurrentPage ? 'page' : undefined}
-        className={`relative aspect-[2/3] min-w-0 overflow-hidden border ${roundedClass} ${surfaceClass}`}
+        className={`relative ${aspectClass} min-w-0 overflow-hidden border ${roundedClass} ${surfaceClass}`}
       >
         <div
           aria-hidden="true"
@@ -683,7 +687,7 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
           dir="rtl"
           lang="ar"
           aria-busy={!ready}
-          className="absolute inset-x-[5%] bottom-[5.5%] top-[6.5%] grid grid-rows-[repeat(15,minmax(0,1fr))] overflow-hidden text-center"
+          className={`absolute inset-x-[4.5%] grid grid-rows-[repeat(15,minmax(0,1fr))] overflow-hidden text-center ${side === 'single' ? 'bottom-[4%] top-[4.5%] sm:bottom-[5.5%] sm:top-[6.5%]' : 'bottom-[5.5%] top-[6.5%]'}`}
         >
           {error ? (
             <div role="alert" dir="ltr" className="row-span-15 m-auto max-w-xs space-y-3 px-3 text-center">
@@ -901,11 +905,11 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
 
       <div
         data-mushaf-layout={isSpreadLayout ? 'spread' : 'single'}
-        className={`relative mx-auto ${isSpreadLayout ? 'grid aspect-[4/3] grid-cols-2' : 'aspect-[2/3]'} ${isFocusMode ? 'max-w-none' : isSpreadLayout ? 'w-full max-w-[1180px]' : 'w-full max-w-[640px]'}`}
+        className={`relative mx-auto ${isSpreadLayout ? 'grid aspect-[4/3] grid-cols-2' : 'aspect-[6/13] sm:aspect-[2/3]'} ${isFocusMode ? 'max-w-none' : isSpreadLayout ? 'w-full max-w-[1180px]' : 'w-full max-w-[640px]'}`}
         style={isFocusMode ? {
           width: isSpreadLayout
             ? 'min(calc(100vw - 1rem), 133.334dvh)'
-            : 'min(calc(100vw - 1rem), 66.667dvh)'
+            : 'min(calc(100vw - 0.5rem), 46.154dvh)'
         } : undefined}
         onClick={toggleReaderControls}
         onTouchStart={(event) => {
@@ -1075,7 +1079,7 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
 
       {!isFocusMode && (
       <p className={`mx-auto max-w-[640px] text-center text-[10px] leading-relaxed ${mutedClass}`}>
-        M3 · HP satu halaman; tablet/desktop dua halaman terbuka dengan urutan RTL seperti mushaf fisik.
+        M3 · HP memakai rasio layar modern 9:19.5 agar halaman lebih penuh; tablet/desktop tetap dua halaman terbuka RTL.
       </p>
       )}
     </section>
