@@ -122,7 +122,6 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
   // Kelas Istimewa State
   const [tahapIstimewaIndex, setTahapIstimewaIndex] = useState(0);
   const [halamanIstimewa, setHalamanIstimewa] = useState<number>(1);
-  const [kendalaSantri, setKendalaSantri] = useState('');
   const [rekomendasiTindakLanjut, setRekomendasiTindakLanjut] = useState('');
 
   // Penilaian pembelajaran dasar
@@ -237,7 +236,6 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
         halaman: tipeKelas === 'Jilid' ? halamanUmmi : tipeKelas === 'Kelas Istimewa' ? halamanIstimewa : undefined,
         pokokBahasan: tipeKelas === 'Jilid' ? pokokBahasanUmmi : selectedTahap?.targetCapaian,
         tahapIstimewa: tipeKelas === 'Kelas Istimewa' ? selectedTahap?.tingkat : undefined,
-        kendalaSantri: tipeKelas === 'Kelas Istimewa' ? kendalaSantri.trim() : undefined,
         rekomendasiTindakLanjut: tipeKelas === 'Kelas Istimewa' ? rekomendasiTindakLanjut.trim() : undefined,
         nilai,
         statusKenaikan,
@@ -261,7 +259,6 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
     setNilai('Baik');
     setStatusKenaikan('Lanjut Halaman');
     setCatatan('');
-    setKendalaSantri('');
     setRekomendasiTindakLanjut('');
   };
 
@@ -573,33 +570,6 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
                     {KURIKULUM_KELAS_ISTIMEWA[tahapIstimewaIndex]?.metodePendampingan}
                   </div>
                 </div>
-              </div>
-
-              {/* Observasi Kendala Spesifik Santri */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-slate-700">
-                  Catatan Observasi Kendala Santri (Khusus Kelas Istimewa)
-                </label>
-                <div className="flex flex-wrap gap-1.5 mb-1.5">
-                  {["Pembedaan huruf mirip (Ha/Kha, 'Ain/Hamzah)", 'Panjang pendek / Mad belum konsisten', 'Konsentrasi cepat terdistraksi', 'Pengucapan makhroj berat / cadel', 'Perlu tempo sangat lambat'].map((kd, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setKendalaSantri(prev => prev ? `${prev}, ${kd}` : kd)}
-                      className="min-h-11 text-xs font-medium px-3 py-1 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 transition"
-                    >
-                      + {kd}
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="text"
-                  aria-label="Catatan Observasi Kendala Santri"
-                value={kendalaSantri}
-                  onChange={(e) => setKendalaSantri(e.target.value)}
-                  placeholder="Misal: Kesulitan membedakan huruf Jim, Ha, dan Kha saat disambung..."
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 bg-white text-xs font-medium focus:ring-2 focus:ring-amber-600"
-                />
               </div>
 
               {/* Rekomendasi Tindak Lanjut Ustadz */}
