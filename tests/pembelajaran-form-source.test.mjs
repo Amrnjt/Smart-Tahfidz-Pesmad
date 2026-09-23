@@ -23,3 +23,11 @@ test('non-tahfidz input still records learning assessment and progress', () => {
   assert.match(source, /\bkendalaSantri:/);
   assert.match(source, /\brekomendasiTindakLanjut:/);
 });
+
+
+test('kelas istimewa input uses the shared ustadz notes instead of a separate obstacle observation field', () => {
+  assert.doesNotMatch(source, /Catatan Observasi Kendala Santri/);
+  assert.doesNotMatch(source, /useState\(['\"]['\"]\).*kendalaSantri/);
+  assert.doesNotMatch(source, /\\bkendalaSantri:/);
+  assert.match(source, /Catatan Ustadz & Rekomendasi Khusus/);
+});
