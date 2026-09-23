@@ -635,6 +635,148 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
       ? 'border-[#c9b486] bg-[#f8f0dd] text-[#2b2116] hover:bg-[#eadbbd]'
       : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50';
   const mutedClass = isDarkReader ? 'text-slate-400' : readerTheme === 'sepia' ? 'text-[#756247]' : 'text-slate-500';
+  const visiblePageLabel = isSpreadLayout
+    ? `${spreadRightPage}–${spreadLeftPage}`
+    : String(page);
+
+  const renderPageLeaf = (
+    targetPage: number,
+    side: 'single' | 'left' | 'right'
+  ) => {
+    const isCurrentPage = targetPage === page;
+    const data = isCurrentPage ? pageData : companionPageData;
+    const family = isCurrentPage ? fontFamily : companionFontFamily;
+    const ready = isCurrentPage
+      ? readerReady
+      : companionReady && !companionError;
+    const error = isCurrentPage
+      ? (loadError || fontError)
+      : companionError;
+    const lineMapForPage = groupWordsByLine(data);
+    const headerRowsForPage = getHeaderRows(targetPage);
+    const targetLabel = getPageLabel(targetPage);
+    const roundedClass =
+      side === 'single'
+        ? 'rounded-[1.35rem]'
+        : side === 'left'
+          ? 'rounded-l-[1.35rem] rounded-r-[0.35rem]'
+          : 'rounded-l-[0.35rem] rounded-r-[1.35rem]';
+
+    return (
+      <article
+        key={targetPage}
+        aria-label={`Halaman mushaf ${targetPage}`}
+        aria-current={isCurrentPage ? 'page' : undefined}
+        className={`relative aspect-[2/3] min-w-0 overflow-hidden border ${roundedClass} ${surfaceClass}`}
+      >
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-2.5 rounded-[0.9rem] border sm:inset-4 ${isDarkReader ? 'border-amber-200/15' : readerTheme === 'sepia' ? 'border-[#9b7d4d]/30' : 'border-amber-700/20'}`}
+        />
+
+        <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-2 px-4 pt-3 text-[9px] font-semibold uppercase tracking-[0.14em] sm:px-6 sm:pt-4 sm:text-[10px]">
+          <span className={`truncate ${mutedClass}`}>{targetLabel}</span>
+          <span className={mutedClass}>QCF V2</span>
+        </div>
+
+        <div
+          dir="rtl"
+          lang="ar"
+          aria-busy={!ready}
+          className="absolute inset-x-[5%] bottom-[5.5%] top-[6.5%] grid grid-rows-[repeat(15,minmax(0,1fr))] overflow-hidden text-center"
+        >
+          {error ? (
+            <div role="alert" dir="ltr" className="row-span-15 m-auto max-w-xs space-y-3 px-3 text-center">
+              <p className="text-xs text-rose-600 sm:text-sm">{error}</p>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setRetryKey((value) => value + 1);
+                }}
+                className={`inline-flex min-h-9 items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-semibold ${controlClass}`}
+              >
+                <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+                Coba lagi
+              </button>
+            </div>
+          ) : !ready ? (
+            <div role="status" dir="ltr" className={`row-span-15 m-auto px-3 text-xs sm:text-sm ${mutedClass}`}>
+              Menyiapkan halaman {targetPage}...
+            </div>
+          ) : (
+            Array.from({ length: 15 }, (_, index) => {
+              const lineNumber = index + 1;
+              const header = headerRowsForPage.get(lineNumber);
+              const words = lineMapForPage.get(lineNumber) || [];
+
+              if (header?.kind === 'surah') {
+                const surah = SURAH_LIST.find((item) => item.number === header.surahNumber);
+                return (
+                  <div
+                    key={`header-${targetPage}-${lineNumber}`}
+                    className={`flex items-center justify-center px-2 text-center font-arabic font-semibold ${isDarkReader ? 'text-amber-100' : 'text-emerald-950'}`}
+                    style={{
+                      fontSize: isSpreadLayout
+                        ? 'clamp(0.72rem, 1.55vw, 1.1rem)'
+                        : 'clamp(0.9rem, 3.5vw, 1.35rem)',
+                    }}
+                  >
+                    سورة {surah?.nameArabic || ''}
+                  </div>
+                );
+              }
+
+              if (header?.kind === 'bismillah') {
+                return (
+                  <div
+                    key={`bismillah-${targetPage}-${lineNumber}`}
+                    className={`flex items-center justify-center px-2 text-center font-arabic ${isDarkReader ? 'text-amber-50' : 'text-slate-950'}`}
+                    style={{
+                      fontSize: isSpreadLayout
+                        ? 'clamp(0.76rem, 1.65vw, 1.18rem)'
+                        : 'clamp(0.95rem, 3.7vw, 1.45rem)',
+                    }}
+                  >
+                    بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+                  </div>
+                );
+              }
+
+              return (
+                <div
+                  key={`line-${targetPage}-${lineNumber}`}
+                  className="flex min-w-0 items-center justify-center overflow-hidden whitespace-nowrap"
+                  aria-label={words.length ? `Baris mushaf ${lineNumber}` : undefined}
+                >
+                  {words.map((word, wordIndex) => (
+                    <span
+                      key={`${targetPage}-${lineNumber}-${wordIndex}-${word.code_v2}`}
+                      className="inline-block shrink-0 leading-none"
+                      title={word.text_uthmani || undefined}
+                      style={{
+                        fontFamily: `"${family}"`,
+                        fontSize: isSpreadLayout
+                          ? 'clamp(0.82rem, 1.78vw, 1.5rem)'
+                          : 'clamp(1.05rem, 4.1vw, 2rem)',
+                        WebkitFontSmoothing: 'antialiased',
+                        textRendering: 'optimizeLegibility',
+                      }}
+                      dangerouslySetInnerHTML={{ __html: word.code_v2 }}
+                    />
+                  ))}
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className={`absolute inset-x-0 bottom-2.5 text-center text-[10px] font-semibold tabular-nums sm:bottom-4 sm:text-xs ${mutedClass}`}>
+          {targetPage}
+        </div>
+      </article>
+    );
+  };
 
   return (
     <section
@@ -758,8 +900,13 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
       )}
 
       <div
-        className={`relative mx-auto aspect-[2/3] overflow-hidden rounded-[1.35rem] border ${isFocusMode ? 'max-w-none shadow-none' : 'w-full max-w-[640px] shadow-[0_20px_55px_rgba(15,23,42,0.10)]'} ${surfaceClass}`}
-        style={isFocusMode ? { width: 'min(calc(100vw - 1rem), 66.667dvh)' } : undefined}
+        data-mushaf-layout={isSpreadLayout ? 'spread' : 'single'}
+        className={`relative mx-auto ${isSpreadLayout ? 'grid aspect-[4/3] grid-cols-2' : 'aspect-[2/3]'} ${isFocusMode ? 'max-w-none' : isSpreadLayout ? 'w-full max-w-[1180px]' : 'w-full max-w-[640px]'}`}
+        style={isFocusMode ? {
+          width: isSpreadLayout
+            ? 'min(calc(100vw - 1rem), 133.334dvh)'
+            : 'min(calc(100vw - 1rem), 66.667dvh)'
+        } : undefined}
         onClick={toggleReaderControls}
         onTouchStart={(event) => {
           didSwipeRef.current = false;
@@ -783,96 +930,18 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
           }
         }}
       >
-        <div
-          aria-hidden="true"
-          className={`pointer-events-none absolute inset-2.5 rounded-[1rem] border sm:inset-4 ${isDarkReader ? 'border-amber-200/15' : readerTheme === 'sepia' ? 'border-[#9b7d4d]/30' : 'border-amber-700/20'}`}
-        />
-
-        <div className="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-5 pt-3 text-[10px] font-semibold uppercase tracking-[0.16em] sm:px-7 sm:pt-5 sm:text-xs">
-          <span className={mutedClass}>{pageLabel}</span>
-          <span className={mutedClass}>QCF V2</span>
-        </div>
-
-        <div
-          dir="rtl"
-          lang="ar"
-          aria-busy={!readerReady}
-          className="absolute inset-x-[5%] bottom-[5.5%] top-[6.5%] grid grid-rows-[repeat(15,minmax(0,1fr))] overflow-hidden text-center"
-        >
-          {loadError || fontError ? (
-            <div role="alert" dir="ltr" className="row-span-15 m-auto max-w-xs space-y-3 text-center">
-              <p className="text-sm text-rose-600">{loadError || fontError}</p>
-              <button
-                type="button"
-                onClick={() => setRetryKey((value) => value + 1)}
-                className={`inline-flex min-h-10 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${controlClass}`}
-              >
-                <RotateCcw className="h-4 w-4" aria-hidden="true" />
-                Coba lagi
-              </button>
-            </div>
-          ) : !readerReady ? (
-            <div role="status" dir="ltr" className={`row-span-15 m-auto text-sm ${mutedClass}`}>
-              Menyiapkan halaman mushaf {page}...
-            </div>
-          ) : (
-            Array.from({ length: 15 }, (_, index) => {
-              const lineNumber = index + 1;
-              const header = headerRows.get(lineNumber);
-              const words = lineMap.get(lineNumber) || [];
-
-              if (header?.kind === 'surah') {
-                const surah = SURAH_LIST.find((item) => item.number === header.surahNumber);
-                return (
-                  <div
-                    key={`header-${page}-${lineNumber}`}
-                    className={`flex items-center justify-center px-3 text-center font-arabic text-[clamp(0.9rem,3.5vw,1.35rem)] font-semibold ${isDarkReader ? 'text-amber-100' : 'text-emerald-950'}`}
-                  >
-                    سورة {surah?.nameArabic || ''}
-                  </div>
-                );
-              }
-
-              if (header?.kind === 'bismillah') {
-                return (
-                  <div
-                    key={`bismillah-${page}-${lineNumber}`}
-                    className={`flex items-center justify-center px-3 text-center font-arabic text-[clamp(0.95rem,3.7vw,1.45rem)] ${isDarkReader ? 'text-amber-50' : 'text-slate-950'}`}
-                  >
-                    بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-                  </div>
-                );
-              }
-
-              return (
-                <div
-                  key={`line-${page}-${lineNumber}`}
-                  className="flex min-w-0 items-center justify-center overflow-hidden whitespace-nowrap"
-                  aria-label={words.length ? `Baris mushaf ${lineNumber}` : undefined}
-                >
-                  {words.map((word, wordIndex) => (
-                    <span
-                      key={`${lineNumber}-${wordIndex}-${word.code_v2}`}
-                      className="inline-block shrink-0 leading-none"
-                      title={word.text_uthmani || undefined}
-                      style={{
-                        fontFamily: `"${fontFamily}"`,
-                        fontSize: 'clamp(1.05rem, 4.1vw, 2rem)',
-                        WebkitFontSmoothing: 'antialiased',
-                        textRendering: 'optimizeLegibility',
-                      }}
-                      dangerouslySetInnerHTML={{ __html: word.code_v2 }}
-                    />
-                  ))}
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        <div className={`absolute inset-x-0 bottom-2.5 text-center text-xs font-semibold tabular-nums sm:bottom-4 ${mutedClass}`}>
-          {page}
-        </div>
+        {isSpreadLayout ? (
+          <>
+            {renderPageLeaf(spreadLeftPage, 'left')}
+            {renderPageLeaf(spreadRightPage, 'right')}
+            <div
+              aria-hidden="true"
+              className={`pointer-events-none absolute inset-y-[1.5%] left-1/2 z-20 w-px -translate-x-1/2 ${isDarkReader ? 'bg-white/10 shadow-[0_0_18px_rgba(0,0,0,0.75)]' : 'bg-black/10 shadow-[0_0_18px_rgba(71,52,31,0.28)]'}`}
+            />
+          </>
+        ) : (
+          renderPageLeaf(page, 'single')
+        )}
 
         {isFocusMode && (
           <>
@@ -880,10 +949,13 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
               className={`absolute inset-x-2 top-2 z-30 transition-opacity duration-200 sm:inset-x-3 sm:top-3 ${controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="mx-auto flex max-w-[560px] items-center justify-between gap-2 rounded-2xl border border-white/10 bg-slate-950/75 px-2 py-2 text-white shadow-xl backdrop-blur-md">
+              <div className={`mx-auto flex items-center justify-between gap-2 rounded-2xl border border-white/10 bg-slate-950/75 px-2 py-2 text-white shadow-xl backdrop-blur-md ${isSpreadLayout ? 'max-w-[1080px]' : 'max-w-[560px]'}`}>
                 <div className="min-w-0 px-2">
                   <p className="truncate text-xs font-semibold sm:text-sm">{pageLabel}</p>
-                  <p className="text-[10px] text-slate-300">Halaman {page}{currentJuz ? ` · Juz ${currentJuz}` : ''}</p>
+                  <p className="text-[10px] text-slate-300">
+                    {isSpreadLayout ? `Halaman ${spreadRightPage}–${spreadLeftPage}` : `Halaman ${page}`}
+                    {currentJuz ? ` · Juz ${currentJuz}` : ''}
+                  </p>
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <button
@@ -911,10 +983,10 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
             </div>
 
             <div
-              className={`absolute inset-x-2 bottom-8 z-30 transition-opacity duration-200 sm:inset-x-3 sm:bottom-10 ${controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
+              className={`absolute inset-x-2 bottom-5 z-30 transition-opacity duration-200 sm:inset-x-3 sm:bottom-7 ${controlsVisible ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
               onClick={(event) => event.stopPropagation()}
             >
-              <div className="mx-auto flex max-w-[560px] flex-col gap-2 rounded-2xl border border-white/10 bg-slate-950/75 p-2 text-white shadow-xl backdrop-blur-md">
+              <div className={`mx-auto flex flex-col gap-2 rounded-2xl border border-white/10 bg-slate-950/75 p-2 text-white shadow-xl backdrop-blur-md ${isSpreadLayout ? 'max-w-[1080px]' : 'max-w-[560px]'}`}>
                 <div className="flex items-center justify-center gap-1">
                   {([
                     ['light', 'Terang'],
@@ -942,21 +1014,23 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
                       goPreviousPage();
                       showControls();
                     }}
-                    disabled={page <= 1}
-                    aria-label="Halaman sebelumnya"
+                    disabled={!canGoPrevious}
+                    aria-label={isSpreadLayout ? 'Spread sebelumnya' : 'Halaman sebelumnya'}
                     className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-white/10 disabled:opacity-30"
                   >
                     <ChevronRight className="h-5 w-5" aria-hidden="true" />
                   </button>
-                  <p className="text-xs font-semibold tabular-nums">{page} / {TOTAL_MUSHAF_PAGES}</p>
+                  <p className="text-xs font-semibold tabular-nums">
+                    {isSpreadLayout ? `${spreadRightPage}–${spreadLeftPage}` : page} / {TOTAL_MUSHAF_PAGES}
+                  </p>
                   <button
                     type="button"
                     onClick={() => {
                       goNextPage();
                       showControls();
                     }}
-                    disabled={page >= TOTAL_MUSHAF_PAGES}
-                    aria-label="Halaman berikutnya"
+                    disabled={!canGoNext}
+                    aria-label={isSpreadLayout ? 'Spread berikutnya' : 'Halaman berikutnya'}
                     className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-white/10 disabled:opacity-30"
                   >
                     <ChevronLeft className="h-5 w-5" aria-hidden="true" />
@@ -971,12 +1045,12 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
       {!isFocusMode && (
       <nav
         aria-label="Navigasi halaman mushaf"
-        className="mx-auto flex w-full max-w-[640px] flex-row-reverse items-center justify-between gap-2"
+        className={`mx-auto flex w-full flex-row-reverse items-center justify-between gap-2 ${isSpreadLayout ? 'max-w-[1180px]' : 'max-w-[640px]'}`}
       >
         <button
           type="button"
           onClick={goPreviousPage}
-          disabled={page <= 1}
+          disabled={!canGoPrevious}
           className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${controlClass}`}
         >
           <ChevronRight className="h-4 w-4" aria-hidden="true" />
@@ -984,13 +1058,13 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
         </button>
 
         <p className={`text-center text-xs ${mutedClass}`}>
-          Geser ke kiri untuk halaman berikutnya
+          {isSpreadLayout ? 'Geser ke kiri untuk spread berikutnya' : 'Geser ke kiri untuk halaman berikutnya'}
         </p>
 
         <button
           type="button"
           onClick={goNextPage}
-          disabled={page >= TOTAL_MUSHAF_PAGES}
+          disabled={!canGoNext}
           className={`inline-flex min-h-11 items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${controlClass}`}
         >
           <span className="hidden sm:inline">Berikutnya</span>
@@ -1001,7 +1075,7 @@ export const MushafPageReader: React.FC<MushafPageReaderProps> = ({
 
       {!isFocusMode && (
       <p className={`mx-auto max-w-[640px] text-center text-[10px] leading-relaxed ${mutedClass}`}>
-        M2 · Reader imersif: tap untuk menyembunyikan kontrol, bookmark halaman, tema terang/sepia/malam, dan mode fokus/layar penuh.
+        M3 · HP satu halaman; tablet/desktop dua halaman terbuka dengan urutan RTL seperti mushaf fisik.
       </p>
       )}
     </section>
