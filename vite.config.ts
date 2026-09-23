@@ -11,6 +11,19 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            'react-vendor': ['react', 'react-dom'],
+            'firebase-vendor': ['firebase/app', 'firebase/firestore'],
+            'charts-vendor': ['recharts'],
+            'motion-vendor': ['motion/react'],
+            'icons-vendor': ['lucide-react'],
+          },
+        },
+      },
+    },
     server: {
       host: '0.0.0.0',
       port: 3000,
