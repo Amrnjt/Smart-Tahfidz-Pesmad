@@ -50,7 +50,8 @@ test('all setoran forms resolve every class taught by the current Ustadz', () =>
     '../src/components/PembelajaranForm.tsx',
   ]) {
     const source = readFileSync(new URL(relativePath, import.meta.url), 'utf8');
-    assert.match(source, /kelasList\.filter\(kelas => isKelasDiampuOleh\(kelas, currentUser\.id\)\)/, relativePath);
+    assert.match(source, /isKelasDiampuOleh\(kelas, currentUser\.id\)/, relativePath);
+    assert.match(source, /currentUser\.kelasId && kelas\.id === currentUser\.kelasId/, relativePath);
     assert.match(source, /new Set\(myKelasList\.flatMap\(kelas => kelas\.santriIds \|\| \[\]\)\)/, relativePath);
     assert.doesNotMatch(source, /kelasList\.find\(k => k\.musyrifId === currentUser\.id\)/, relativePath);
   }
