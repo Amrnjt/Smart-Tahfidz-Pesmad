@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
-import { isNonTahfidzClass } from '../utils/classUtils';
+import { isKelasDiampuOleh, isNonTahfidzClass } from '../utils/classUtils';
 import { getNextPembelajaranContinuation } from '../utils/setoranContinuation';
 
 interface PembelajaranFormProps {
@@ -77,19 +77,20 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
   onSuccess,
   onNotify
 }) => {
-  // Find musyrif's class if any
-  const myKelas = useMemo(() => {
-    if (currentUser.role === 'admin' || currentUser.role === 'pimpinan' || currentUser.role === 'Superadmin') return undefined;
-    return kelasList.find(k => k.musyrifId === currentUser.id);
-  }, [kelasList, currentUser]);
+  // Find every class this user is allowed to teach.
+  const myKelasList = useMemo(() => {
+    const role = String(currentUser.role || '').trim().toLowerCase();
+    if (role === 'admin' || role === 'pimpinan' || role === 'superadmin') return [];
+    return kelasList.filter(kelas => isKelasDiampuOleh(kelas, currentUser.id));
+  }, [kelasList, currentUser.id, currentUser.role]);
 
-  // Determine available classes that are non-tahfidz or all
+  // Determine available students across all classes this Ustadz teaches.
   const filteredSantriList = useMemo(() => {
-    if (!myKelas || !myKelas.santriIds || myKelas.santriIds.length === 0) {
-      return santriList;
-    }
-    return santriList.filter(s => myKelas.santriIds.includes(s.idSantri));
-  }, [santriList, myKelas]);
+    if (myKelasList.length === 0) return santriList;
+    const santriIds = new Set(myKelasList.flatMap(kelas => kelas.santriIds || []));
+    if (santriIds.size === 0) return santriList;
+    return santriList.filter(santri => santriIds.has(santri.idSantri));
+  }, [santriList, myKelasList]);
 
   // Selected santri object
   const [idSantri, setIdSantri] = useState(selectedSantriId || (filteredSantriList[0]?.idSantri || ''));
