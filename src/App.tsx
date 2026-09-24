@@ -325,6 +325,7 @@ export default function App() {
                   setActiveTab={setActiveTab}
                   onSelectSantriForZiyadah={handleSelectSantriForZiyadah}
                   onOpenSetorMenu={() => setIsSetorMenuOpen(true)}
+                  onNotify={notify}
                 />
               ) : isWali ? (
                 <WaliDashboard
