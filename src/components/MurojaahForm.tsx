@@ -40,7 +40,6 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
   const mySantriList = useMemo(() => {
     if (myKelasList.length === 0) return santriList;
     const santriIds = new Set(myKelasList.flatMap(kelas => kelas.santriIds || []));
-    if (santriIds.size === 0) return santriList;
     return santriList.filter(santri => santriIds.has(santri.idSantri));
   }, [santriList, myKelasList]);
 
