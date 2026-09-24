@@ -188,9 +188,14 @@ export const ZiyadahForm: React.FC<ZiyadahFormProps> = ({
                   </option>
                 ))}
               </select>
-              {myKelas && (
-                <p className="text-xs text-emerald-700 font-semibold mt-1">
-                  Kelas: {myKelas.namaKelas} • {mySantriList.length} santri
+              {myKelasList.length > 0 && (
+                <p
+                  className="text-xs text-emerald-700 font-semibold mt-1"
+                  title={myKelasList.map(kelas => kelas.namaKelas).join(', ')}
+                >
+                  Kelas diampu: {myKelasList.length === 1
+                    ? myKelasList[0].namaKelas
+                    : `${myKelasList[0].namaKelas} +${myKelasList.length - 1} lainnya`} • {mySantriList.length} santri
                 </p>
               )}
             </div>
