@@ -48,7 +48,14 @@ export interface Kelas {
   namaKelas: string;
   tipeKelas: TipeKelas;
   musyrif?: string;
+  /**
+   * Legacy pengampu utama. Dipertahankan agar kelas lama tetap kompatibel.
+   */
   musyrifId?: string;
+  /**
+   * Daftar seluruh guru pengampu kelas. Kelas baru sebaiknya memakai field ini.
+   */
+  musyrifIds?: string[];
   santriIds: string[];
   silabusMateri?: MateriPembelajaran[];
   createdAt: string;
