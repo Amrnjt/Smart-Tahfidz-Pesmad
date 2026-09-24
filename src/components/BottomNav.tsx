@@ -58,7 +58,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   const isPimpinan = roleStr === 'pimpinan';
   const isWali = roleStr === 'wali' || roleStr.includes('wali');
   const isSantri = roleStr === 'santri';
-  const isUstadz = !isWali && !isSantri && !isPimpinan;
+  const isUstadz = roleStr === 'ustadz' || roleStr === 'superadmin';
+  const isKnownRole = isUstadz || isPimpinan || isWali || isSantri;
+
+  if (!isKnownRole) return null;
+
   const isSetorActive =
     activeTab === 'ziyadah' ||
     activeTab === 'murojaah' ||

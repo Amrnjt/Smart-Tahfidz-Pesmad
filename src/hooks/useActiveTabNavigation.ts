@@ -15,7 +15,11 @@ const VALID_TABS: ActiveTab[] = [
   'pantauan'
 ];
 
-const VIEW_ONLY_TABS = new Set<ActiveTab>(['dashboard', 'riwayat', 'mushaf']);
+const STAFF_TABS = new Set<ActiveTab>(VALID_TABS);
+const PIMPINAN_TABS = new Set<ActiveTab>(['dashboard', 'riwayat', 'mushaf']);
+const WALI_TABS = new Set<ActiveTab>(['dashboard', 'riwayat', 'mushaf', 'pantauan']);
+const SANTRI_TABS = new Set<ActiveTab>(['dashboard', 'riwayat', 'mushaf']);
+const SAFE_FALLBACK_TABS = new Set<ActiveTab>(['dashboard']);
 
 function readUrlTab(): ActiveTab {
   if (typeof window === 'undefined') return 'dashboard';
@@ -23,20 +27,20 @@ function readUrlTab(): ActiveTab {
   return VALID_TABS.includes(raw as ActiveTab) ? raw as ActiveTab : 'dashboard';
 }
 
-function isViewOnlyUser(user: User | null): boolean {
-  if (!user) return false;
+function allowedTabsForRole(user: User | null): Set<ActiveTab> {
+  if (!user) return SAFE_FALLBACK_TABS;
+
   const role = String(user.role || '').trim().toLowerCase();
-  return role === 'pimpinan' || role === 'wali' || role.includes('wali') || role === 'santri';
+  if (role === 'ustadz' || role === 'superadmin') return STAFF_TABS;
+  if (role === 'pimpinan') return PIMPINAN_TABS;
+  if (role === 'wali' || role.includes('wali')) return WALI_TABS;
+  if (role === 'santri') return SANTRI_TABS;
+  return SAFE_FALLBACK_TABS;
 }
 
 function sanitizeTab(user: User | null, tab: ActiveTab): ActiveTab {
-  if (!user) return 'dashboard';
-
-  const role = String(user.role || '').trim().toLowerCase();
-  const isWali = role === 'wali' || role.includes('wali');
-
-  if (isWali && tab === 'pantauan') return tab;
-  return isViewOnlyUser(user) && !VIEW_ONLY_TABS.has(tab) ? 'dashboard' : tab;
+  const allowedTabs = allowedTabsForRole(user);
+  return allowedTabs.has(tab) ? tab : 'dashboard';
 }
 
 function urlForTab(tab: ActiveTab): string {

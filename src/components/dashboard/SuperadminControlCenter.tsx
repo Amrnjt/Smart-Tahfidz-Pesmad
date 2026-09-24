@@ -182,7 +182,7 @@ export const SuperadminControlCenter: React.FC<SuperadminControlCenterProps> = (
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2.5 md:grid-cols-5">
+      <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
         <Metric
           label="Santri Aktif"
           value={health.activeSantri}

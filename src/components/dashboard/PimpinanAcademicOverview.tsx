@@ -87,7 +87,7 @@ export const PimpinanAcademicOverview: React.FC<PimpinanAcademicOverviewProps> =
         </button>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-5 sm:gap-3">
+      <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5 sm:gap-3">
         <StatTile
           label="Santri Aktif"
           value={summary.active}

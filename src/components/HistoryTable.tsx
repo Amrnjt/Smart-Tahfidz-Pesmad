@@ -517,12 +517,20 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     });
   };
 
+  const denyViewOnlyMutation = (): boolean => {
+    if (!isViewOnly) return false;
+    onNotify('error', 'Akun ini berada dalam mode view-only. Perubahan data setoran tidak diizinkan.');
+    return true;
+  };
+
   const handleDelete = (item: CombinedHistoryItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (denyViewOnlyMutation()) return;
     setItemToDelete(item);
   };
 
   const confirmSingleDelete = async () => {
+    if (denyViewOnlyMutation()) return;
     if (!itemToDelete) return;
     setIsDeleting(true);
     const deleterName = currentUser.nama || currentUser.username || 'Ustadz / Admin';
@@ -547,6 +555,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   };
 
   const confirmBatchDelete = async () => {
+    if (denyViewOnlyMutation()) return;
     if (visibleSelectedCount === 0) return;
     setIsBatchDeleting(true);
     const deleterName = currentUser.nama || currentUser.username || 'Ustadz / Admin';
@@ -568,6 +577,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   };
 
   const toggleSelectAll = () => {
+    if (denyViewOnlyMutation()) return;
     if (visibleSelectedCount === displayedItems.length && displayedItems.length > 0) {
       setSelectedIds(new Set());
     } else {
@@ -577,6 +587,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
   const toggleSelectItem = (id: string, e: React.SyntheticEvent) => {
     e.stopPropagation();
+    if (denyViewOnlyMutation()) return;
     setSelectedIds(prev => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -586,6 +597,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   };
 
   const openEditModal = (item: CombinedHistoryItem) => {
+    if (denyViewOnlyMutation()) return;
     setEditingItem(item);
     setEditNilai(item.nilai as PredikatNilai);
     if (item.type === 'Ziyadah') {
@@ -601,6 +613,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (denyViewOnlyMutation()) return;
     if (!editingItem) return;
     setIsSavingEdit(true);
     try {
@@ -2284,7 +2297,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       )}
 
       {/* Tempat Sampah Modal (15 Hari Soft Delete Retention) */}
-      {showTrashModal && (
+      {!isViewOnly && showTrashModal && (
         <Suspense fallback={null}>
           <TrashBinModal
             isOpen={true}
