@@ -33,12 +33,17 @@ import { CompactTrenBulananChart } from './dashboard/CompactTrenBulananChart';
 import { CompactActivityFeed } from './dashboard/CompactActivityFeed';
 import { ScrollReveal } from './ScrollReveal';
 import { AcademicContextStrip } from './dashboard/AcademicContextStrip';
+import { PimpinanAcademicOverview } from './dashboard/PimpinanAcademicOverview';
+import type { NotifyFn } from './Snackbar';
 
 const HafalanStatsChart = lazy(() =>
   import('./HafalanStatsChart').then((module) => ({ default: module.HafalanStatsChart }))
 );
 const AdaptiveDevelopmentTrend = lazy(() =>
   import('./dashboard/AdaptiveDevelopmentTrend').then((module) => ({ default: module.AdaptiveDevelopmentTrend }))
+);
+const CollectiveAcademicReportModal = lazy(() =>
+  import('./CollectiveAcademicReportModal').then((module) => ({ default: module.CollectiveAcademicReportModal }))
 );
 
 interface UstadzDashboardProps {
@@ -53,6 +58,7 @@ interface UstadzDashboardProps {
   setActiveTab: (tab: ActiveTab) => void;
   onSelectSantriForZiyadah?: (idSantri: string) => void;
   onOpenSetorMenu: () => void;
+  onNotify: NotifyFn;
 }
 
 type ActivityCategory = 'Ziyadah' | "Muroja'ah" | 'Binnadzor' | 'Pembelajaran';
@@ -77,8 +83,10 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   kelasList,
   appConfig,
   setActiveTab,
-  onOpenSetorMenu
+  onOpenSetorMenu,
+  onNotify
 }) => {
+  const [showCollectiveReport, setShowCollectiveReport] = useState(false);
   const [chartView, setChartView] = useState<'tren_setor' | 'tren_perkembangan' | 'analisis_detail'>('tren_setor');
 
   const normalizedRole = String(currentUser?.role || '').trim().toLowerCase();
@@ -326,6 +334,13 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
 
       <AcademicContextStrip appConfig={appConfig} />
 
+      {isPimpinan && (
+        <PimpinanAcademicOverview
+          santriList={santriList}
+          onOpenCollectiveReport={() => setShowCollectiveReport(true)}
+        />
+      )}
+
       {/* 2. COMPACT BENTO KPI GRID (2 columns on mobile, 4 columns on tablet & desktop) */}
       <section
         aria-label="Statistik Kunci Setoran"
@@ -540,6 +555,17 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           </Suspense>
         )}
       </ScrollReveal>
+
+      {isPimpinan && showCollectiveReport && (
+        <Suspense fallback={<div className="ui-dialog-overlay"><div className="ui-dialog-panel max-w-lg p-6 text-sm text-slate-500">Memuat rekap kolektif...</div></div>}>
+          <CollectiveAcademicReportModal
+            santriList={santriList}
+            currentUser={currentUser}
+            onClose={() => setShowCollectiveReport(false)}
+            onNotify={onNotify}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };
