@@ -35,10 +35,11 @@ export const BinnadzorForm: React.FC<BinnadzorFormProps> = ({
   onSuccess,
   onNotify
 }) => {
-  const myKelasList = useMemo(
-    () => kelasList.filter(kelas => isKelasDiampuOleh(kelas, currentUser.id)),
-    [kelasList, currentUser.id]
-  );
+  const myKelasList = useMemo(() => {
+    const role = String(currentUser.role || '').trim().toLowerCase();
+    if (role === 'admin' || role === 'pimpinan' || role === 'superadmin') return [];
+    return kelasList.filter(kelas => isKelasDiampuOleh(kelas, currentUser.id));
+  }, [kelasList, currentUser.id, currentUser.role]);
   const mySantriList = useMemo(() => {
     if (myKelasList.length === 0) return santriList;
     const santriIds = new Set(myKelasList.flatMap(kelas => kelas.santriIds || []));
