@@ -34,6 +34,7 @@ import { CompactActivityFeed } from './dashboard/CompactActivityFeed';
 import { ScrollReveal } from './ScrollReveal';
 import { AcademicContextStrip } from './dashboard/AcademicContextStrip';
 import { PimpinanAcademicOverview } from './dashboard/PimpinanAcademicOverview';
+import { SuperadminControlCenter } from './dashboard/SuperadminControlCenter';
 import type { NotifyFn } from './Snackbar';
 
 const HafalanStatsChart = lazy(() =>
@@ -54,6 +55,7 @@ interface UstadzDashboardProps {
   binnadzorRecords?: BinnadzorRecord[];
   pembelajaranRecords?: PembelajaranRecord[];
   kelasList: Kelas[];
+  userList: User[];
   appConfig: AppConfig;
   setActiveTab: (tab: ActiveTab) => void;
   onSelectSantriForZiyadah?: (idSantri: string) => void;
@@ -81,6 +83,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
   binnadzorRecords = [],
   pembelajaranRecords = [],
   kelasList,
+  userList,
   appConfig,
   setActiveTab,
   onOpenSetorMenu,
@@ -91,6 +94,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
 
   const normalizedRole = String(currentUser?.role || '').trim().toLowerCase();
   const isPimpinan = normalizedRole === 'pimpinan';
+  const isSuperadmin = normalizedRole === 'superadmin';
   const hasGlobalClassView = ['pimpinan', 'admin', 'superadmin'].includes(normalizedRole);
 
   const today = getTodayInputFormat();
@@ -334,6 +338,16 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
 
       <AcademicContextStrip appConfig={appConfig} />
 
+      {isSuperadmin && (
+        <SuperadminControlCenter
+          santriList={santriList}
+          userList={userList}
+          onOpenSantri={() => setActiveTab('santri')}
+          onOpenKelas={() => setActiveTab('kelas')}
+          onOpenCollectiveReport={() => setShowCollectiveReport(true)}
+        />
+      )}
+
       {isPimpinan && (
         <PimpinanAcademicOverview
           santriList={santriList}
@@ -556,7 +570,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
         )}
       </ScrollReveal>
 
-      {isPimpinan && showCollectiveReport && (
+      {(isPimpinan || isSuperadmin) && showCollectiveReport && (
         <Suspense fallback={<div className="ui-dialog-overlay"><div className="ui-dialog-panel max-w-lg p-6 text-sm text-slate-500">Memuat rekap kolektif...</div></div>}>
           <CollectiveAcademicReportModal
             santriList={santriList}

@@ -321,6 +321,7 @@ export default function App() {
                   binnadzorRecords={binnadzorRecords}
                   pembelajaranRecords={pembelajaranRecords}
                   kelasList={kelasList}
+                  userList={userList}
                   appConfig={appConfig}
                   setActiveTab={setActiveTab}
                   onSelectSantriForZiyadah={handleSelectSantriForZiyadah}
