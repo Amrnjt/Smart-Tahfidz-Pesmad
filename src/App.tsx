@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas } from './types';
+import { User, Santri, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Kelas, AppConfig } from './types';
 import { storageService } from './services/storageService';
 import { Navbar } from './components/Navbar';
 import { BottomNav } from './components/BottomNav';
@@ -87,6 +87,10 @@ export default function App() {
     if (!currentUser) return [];
     try { return storageService.getUsers(); } catch { return []; }
   });
+  const [appConfig, setAppConfig] = useState<AppConfig>(() => {
+    try { return storageService.getAppConfig(); }
+    catch { return { programLiburanActive: false }; }
+  });
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
   const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'success' | 'error'>('idle');
   const isSyncing = syncState === 'syncing';
@@ -106,6 +110,7 @@ export default function App() {
     setSantriList(storageService.getSantriList());
     setKelasList(storageService.getKelasList());
     setUserList(storageService.getUsers());
+    setAppConfig(storageService.getAppConfig());
   };
 
   const refreshRecentSetoran = () => {
@@ -316,6 +321,7 @@ export default function App() {
                   binnadzorRecords={binnadzorRecords}
                   pembelajaranRecords={pembelajaranRecords}
                   kelasList={kelasList}
+                  appConfig={appConfig}
                   setActiveTab={setActiveTab}
                   onSelectSantriForZiyadah={handleSelectSantriForZiyadah}
                   onOpenSetorMenu={() => setIsSetorMenuOpen(true)}
@@ -328,6 +334,7 @@ export default function App() {
                   murojaahRecords={murojaahRecords}
                   binnadzorRecords={binnadzorRecords}
                   pembelajaranRecords={pembelajaranRecords}
+                  appConfig={appConfig}
                   setActiveTab={setActiveTab}
                 />
               ) : (
@@ -338,6 +345,7 @@ export default function App() {
                   murojaahRecords={murojaahRecords}
                   binnadzorRecords={binnadzorRecords}
                   pembelajaranRecords={pembelajaranRecords}
+                  appConfig={appConfig}
                   setActiveTab={setActiveTab}
                 />
               )
