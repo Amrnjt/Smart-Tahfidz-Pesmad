@@ -367,10 +367,44 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     e.preventDefault();
     if (!newNama.trim()) return;
 
+    const generatedId = newId.trim() || `STR${(santriList.length + 1).toString().padStart(3, '0')}`;
+    const normalizedGeneratedId = generatedId.trim().toLowerCase();
+    const existingSantri = santriList.find(
+      santri => santri.idSantri.trim().toLowerCase() === normalizedGeneratedId
+    );
+    if (existingSantri) {
+      showToast(
+        'error',
+        `ID/username "${generatedId}" sudah digunakan oleh santri ${existingSantri.namaSantri}. Gunakan ID lain.`
+      );
+      return;
+    }
+
+    const existingSantriAccount = usersList.find(
+      user => user.username.trim().toLowerCase() === normalizedGeneratedId
+    );
+    if (existingSantriAccount) {
+      showToast(
+        'error',
+        `Username "${generatedId}" sudah digunakan oleh akun ${existingSantriAccount.nama}. Penambahan santri dibatalkan.`
+      );
+      return;
+    }
+
+    const waliUsername = `wali_${normalizedGeneratedId}`;
+    const existingWaliAccount = usersList.find(
+      user => user.username.trim().toLowerCase() === waliUsername
+    );
+    if (existingWaliAccount) {
+      showToast(
+        'error',
+        `Username wali "${waliUsername}" sudah digunakan oleh akun ${existingWaliAccount.nama}. Gunakan ID santri lain.`
+      );
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const generatedId = newId.trim() || `STR${(santriList.length + 1).toString().padStart(3, '0')}`;
-      
       const newSantri: Santri = {
         idSantri: generatedId,
         namaSantri: newNama.trim(),
@@ -417,7 +451,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
     if (!cleanUsername || !cleanNama || !cleanPassword) return;
 
     // Check if username already exists
-    const existingUser = usersList.find(u => u.username.toLowerCase() === cleanUsername);
+    const existingUser = usersList.find(u => u.username.trim().toLowerCase() === cleanUsername);
     if (existingUser) {
       showToast('error', `Username "${cleanUsername}" sudah digunakan oleh ${existingUser.nama}. Silakan gunakan username lain.`);
       return;
