@@ -6,6 +6,7 @@ import { RotateCw, Save, RotateCcw, Calendar, Clock, BookOpen } from 'lucide-rea
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
 import { getNextMurojaahContinuation } from '../utils/setoranContinuation';
+import { isKelasDiampuOleh } from '../utils/classUtils';
 
 interface MurojaahFormProps {
   currentUser: User;
@@ -32,11 +33,16 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
   onSuccess,
   onNotify
 }) => {
-  const myKelas = useMemo(() => kelasList.find(k => k.musyrifId === currentUser.id), [kelasList, currentUser.id]);
+  const myKelasList = useMemo(
+    () => kelasList.filter(kelas => isKelasDiampuOleh(kelas, currentUser.id)),
+    [kelasList, currentUser.id]
+  );
   const mySantriList = useMemo(() => {
-    if (!myKelas || !myKelas.santriIds || myKelas.santriIds.length === 0) return santriList;
-    return santriList.filter(s => myKelas.santriIds.includes(s.idSantri));
-  }, [santriList, myKelas]);
+    if (myKelasList.length === 0) return santriList;
+    const santriIds = new Set(myKelasList.flatMap(kelas => kelas.santriIds || []));
+    if (santriIds.size === 0) return santriList;
+    return santriList.filter(santri => santriIds.has(santri.idSantri));
+  }, [santriList, myKelasList]);
 
   const [idSantri, setIdSantri] = useState(selectedSantriId || (mySantriList[0]?.idSantri || ''));
   const [tanggalSetor, setTanggalSetor] = useState(getTodayInputFormat());
