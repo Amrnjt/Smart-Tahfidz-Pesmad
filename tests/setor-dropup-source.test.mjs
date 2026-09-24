@@ -120,3 +120,12 @@ test('Mobile navigation opts out of legacy native active indicators', () => {
   assert.match(motionFinishCss, /\.ui-app-shell > main#main-content\s*\{[\s\S]*?view-transition-name:\s*none/);
   assert.doesNotMatch(chromeTransitionCss, /view-transition-name:\s*p2-nav-active/);
 });
+
+
+test('Metode Ummi launcher uses the supplied logo image on mobile and desktop', () => {
+  assert.match(setorActions, /title: 'Metode Ummi'/);
+  assert.match(setorActions, /label: 'Metode Ummi'/);
+  assert.match(setorActions, /imageSrc: '\/ummi-logo\.jpg'/);
+  assert.match(bottomNav, /action\.imageSrc/);
+  assert.match(bottomNav, /<img/);
+});
