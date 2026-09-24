@@ -192,7 +192,15 @@ export const BottomNav: React.FC<BottomNavProps> = ({
                               className={`p2-setor-tile-icon border ${action.colorClasses.iconSurfaceBg} ${action.colorClasses.iconSurfaceText} ${action.colorClasses.iconSurfaceBorder}`}
                               aria-hidden="true"
                             >
-                              <Icon className="w-4 h-4" />
+                              {action.imageSrc ? (
+                                <img
+                                  src={action.imageSrc}
+                                  alt=""
+                                  className="w-full h-full object-cover rounded-[inherit]"
+                                />
+                              ) : (
+                                <Icon className="w-4 h-4" />
+                              )}
                             </span>
                             <span className="p2-setor-tile-copy">
                               <span className="p2-setor-tile-title">{action.title}</span>
