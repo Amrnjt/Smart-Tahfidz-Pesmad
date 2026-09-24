@@ -251,7 +251,9 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
     setKelasToEdit(k);
     setEditNamaKelas(k.namaKelas);
     setEditTipeKelas(k.tipeKelas);
-    setEditMusyrifIds(getKelasPengampuIds(k));
+    setEditMusyrifIds(
+      getKelasPengampuIds(k).filter(id => ustadzList.some(user => user.id === id))
+    );
     setEditSantriIds(k.santriIds || []);
     setEditSearchQuery('');
     setShowOtherAssignedInEdit(false);
