@@ -38,6 +38,9 @@ jobs:
           npx tsx --test tests/history-query-contract.test.ts tests/history-range-state.test.ts
           node --test tests/history-repository-source.test.mjs tests/realtime-scope-regression.test.mjs tests/no-unbounded-setoran-read.test.mjs tests/historical-mutation-regression.test.mjs tests/route-prefetch-source.test.mjs
 
+      - name: Verify soft-delete Trash regressions
+        run: node --test tests/soft-delete-trash.test.mjs
+
       - name: Verify formal academic regressions
         run: node --test tests/formal-education-source.test.mjs tests/academic-history-source.test.mjs tests/formal-promotion-source.test.mjs tests/academic-report-source.test.mjs tests/collective-academic-report-source.test.mjs tests/shared-academic-context-source.test.mjs tests/wali-academic-experience-source.test.mjs tests/santri-academic-experience-source.test.mjs tests/pimpinan-academic-experience-source.test.mjs tests/superadmin-control-center-source.test.mjs tests/cross-role-security-polish-source.test.mjs
 
