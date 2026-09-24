@@ -258,6 +258,35 @@ export function installCloudCommitGate(): void {
   ): Promise<Santri> => {
     const list = storageService.getSantriList();
     const users = storageService.getUsers();
+    const normalizedId = santri.idSantri.trim().toLowerCase();
+    const waliUsername = `wali_${normalizedId}`;
+
+    const existingSantri = list.find(
+      item => item.idSantri.trim().toLowerCase() === normalizedId
+    );
+    if (existingSantri) {
+      throw new Error(
+        `ID/username "${santri.idSantri}" sudah digunakan oleh santri ${existingSantri.namaSantri}.`
+      );
+    }
+
+    const existingSantriAccount = users.find(
+      user => user.username.trim().toLowerCase() === normalizedId
+    );
+    if (existingSantriAccount) {
+      throw new Error(
+        `Username "${santri.idSantri}" sudah digunakan oleh akun ${existingSantriAccount.nama}.`
+      );
+    }
+
+    const existingWaliAccount = users.find(
+      user => user.username.trim().toLowerCase() === waliUsername
+    );
+    if (existingWaliAccount) {
+      throw new Error(
+        `Username wali "${waliUsername}" sudah digunakan oleh akun ${existingWaliAccount.nama}.`
+      );
+    }
 
     const nextSantri = [...list];
     const santriIndex = nextSantri.findIndex((s) => s.idSantri === santri.idSantri);
@@ -265,7 +294,6 @@ export function installCloudCommitGate(): void {
     else nextSantri.push(santri);
 
     const nextUsers = users.map((user) => ({ ...user }));
-    const waliUsername = `wali_${santri.idSantri.toLowerCase()}`;
     let waliUser = nextUsers.find((u) => u.username.toLowerCase() === waliUsername);
     if (waliUser) {
       waliUser.nama = santri.waliNama
@@ -327,12 +355,19 @@ export function installCloudCommitGate(): void {
       idSantri: (user.role === 'Ustadz' || user.role === 'Superadmin') ? '' : (user.idSantri || '')
     };
 
+    const users = storageService.getUsers();
+    const existingUser = users.find(
+      current => current.username.trim().toLowerCase() === ensuredUser.username.toLowerCase()
+    );
+    if (existingUser) {
+      throw new Error(
+        `Username "${ensuredUser.username}" sudah digunakan oleh akun ${existingUser.nama}.`
+      );
+    }
+
     await setDoc(doc(db, COLLECTIONS.USERS, ensuredUser.id), cleanForFirestore(ensuredUser));
 
-    const users = storageService.getUsers();
-    const existingIndex = users.findIndex((u) => u.username.toLowerCase() === ensuredUser.username.toLowerCase());
-    if (existingIndex >= 0) users[existingIndex] = ensuredUser;
-    else users.push(ensuredUser);
+    users.push(ensuredUser);
     writeArrayCache(STORAGE_KEYS.USERS, users);
     return ensuredUser;
   };
