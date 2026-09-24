@@ -1175,17 +1175,39 @@ export const storageService = {
   async addSantri(santri: Santri, defaultPassword = '123'): Promise<Santri> {
     this.assertCanMutate('Tambah data santri');
     const list = this.getSantriList();
-    const existingIndex = list.findIndex(s => s.idSantri === santri.idSantri);
-    if (existingIndex >= 0) {
-      list[existingIndex] = santri;
-    } else {
-      list.push(santri);
-    }
-    writeArrayCache(STORAGE_KEYS.SANTRI, list);
-
     const users = this.getUsers();
+    const normalizedId = santri.idSantri.trim().toLowerCase();
+    const waliUsername = `wali_${normalizedId}`;
 
-    const waliUsername = `wali_${santri.idSantri.toLowerCase()}`;
+    const existingSantri = list.find(
+      item => item.idSantri.trim().toLowerCase() === normalizedId
+    );
+    if (existingSantri) {
+      throw new Error(
+        `ID/username "${santri.idSantri}" sudah digunakan oleh santri ${existingSantri.namaSantri}.`
+      );
+    }
+
+    const existingSantriAccount = users.find(
+      user => user.username.trim().toLowerCase() === normalizedId
+    );
+    if (existingSantriAccount) {
+      throw new Error(
+        `Username "${santri.idSantri}" sudah digunakan oleh akun ${existingSantriAccount.nama}.`
+      );
+    }
+
+    const existingWaliAccount = users.find(
+      user => user.username.trim().toLowerCase() === waliUsername
+    );
+    if (existingWaliAccount) {
+      throw new Error(
+        `Username wali "${waliUsername}" sudah digunakan oleh akun ${existingWaliAccount.nama}.`
+      );
+    }
+
+    list.push(santri);
+    writeArrayCache(STORAGE_KEYS.SANTRI, list);
     let waliUser = users.find(u => u.username.toLowerCase() === waliUsername.toLowerCase());
     if (waliUser) {
       waliUser.nama = santri.waliNama ? `Wali ${santri.namaSantri} (${santri.waliNama})` : `Wali ${santri.namaSantri}`;
@@ -1316,12 +1338,15 @@ export const storageService = {
       idSantri: (user.role === 'Ustadz' || user.role === 'Superadmin' || user.role === 'Pimpinan') ? '' : (user.idSantri || '')
     };
 
-    const existingIndex = users.findIndex(u => u.username.toLowerCase() === ensuredUser.username.toLowerCase());
+    const existingIndex = users.findIndex(
+      current => current.username.trim().toLowerCase() === ensuredUser.username.toLowerCase()
+    );
     if (existingIndex >= 0) {
-      users[existingIndex] = ensuredUser;
-    } else {
-      users.push(ensuredUser);
+      throw new Error(
+        `Username "${ensuredUser.username}" sudah digunakan oleh akun ${users[existingIndex].nama}.`
+      );
     }
+    users.push(ensuredUser);
 
     writeArrayCache(STORAGE_KEYS.USERS, users);
 
