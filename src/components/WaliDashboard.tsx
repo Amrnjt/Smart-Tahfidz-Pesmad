@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   User,
   Santri,
@@ -18,18 +18,21 @@ import {
   CalendarCheck,
   Clock3,
   GraduationCap,
+  FileText,
   MessageSquareText,
   RotateCw,
   Target,
   UserRound
 } from 'lucide-react';
-import { formatTanggalWaktu } from '../utils/dateFormatter';
+import { addDaysToDateInput, formatTanggalWaktu, getTodayInputFormat } from '../utils/dateFormatter';
 import { ScrollReveal } from './ScrollReveal';
 import { CompactDashboardHero, HeroAction } from './dashboard/CompactDashboardHero';
 import { CompactBentoKpiCard } from './dashboard/CompactBentoKpiCard';
 import { CompactTrenBulananChart } from './dashboard/CompactTrenBulananChart';
 import { CompactActivityFeed } from './dashboard/CompactActivityFeed';
 import { AcademicContextStrip } from './dashboard/AcademicContextStrip';
+import { AcademicReportModal } from './AcademicReportModal';
+import type { NotifyFn } from './Snackbar';
 
 interface WaliDashboardProps {
   currentUser: User;
@@ -40,6 +43,7 @@ interface WaliDashboardProps {
   pembelajaranRecords?: PembelajaranRecord[];
   appConfig: AppConfig;
   setActiveTab: (tab: ActiveTab) => void;
+  onNotify: NotifyFn;
 }
 
 type ActivityCategory = 'Ziyadah' | "Muroja'ah" | 'Binnadzor' | 'Pembelajaran';
@@ -142,8 +146,10 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
   binnadzorRecords = [],
   pembelajaranRecords = [],
   appConfig,
-  setActiveTab
+  setActiveTab,
+  onNotify
 }) => {
+  const [showAcademicReport, setShowAcademicReport] = useState(false);
   const targetSantri = useMemo(
     () => santriList.find(santri => santri.idSantri === currentUser.idSantri),
     [santriList, currentUser.idSantri]
@@ -241,7 +247,17 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
 
   const latestActivity = activities[0];
   const latestNote = activities.find(activity => Boolean(activity.catatan));
-  const totalRecords = activities.length;
+  const today = getTodayInputFormat();
+  const thirtyDayStart = addDaysToDateInput(today, -29);
+  const activities30Days = activities.filter(activity => {
+    const date = activity.timestamp.slice(0, 10);
+    return date >= thirtyDayStart && date <= today;
+  });
+  const activeDays30 = new Set(
+    activities30Days.map(activity => activity.timestamp.slice(0, 10)).filter(Boolean)
+  ).size;
+  const ziyadah30 = activities30Days.filter(activity => activity.category === 'Ziyadah').length;
+  const ustadzNotes30 = activities30Days.filter(activity => Boolean(activity.catatan)).length;
   const latestByCategory = (category: ActivityCategory) => activities.find(activity => activity.category === category);
   const categoryRows: { category: ActivityCategory; count: number; latest?: WaliActivity }[] = [
     { category: 'Ziyadah', count: santriZiyadah.length, latest: latestByCategory('Ziyadah') },
@@ -279,9 +295,9 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
       variant: primaryAction.variant
     },
     {
-      label: 'Buka Mushaf',
-      onClick: () => setActiveTab('mushaf'),
-      icon: BookOpen,
+      label: 'Rekap Akademik',
+      onClick: () => setShowAcademicReport(true),
+      icon: FileText,
       variant: 'secondary'
     }
   ];
@@ -295,8 +311,8 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
         roleBadge={`Wali Santri · ID ${targetSantri.idSantri}`}
         subtext={
           targetSantri.targetHafalan
-            ? `Target: ${targetSantri.targetHafalan} · Kelas ${targetSantri.kelas || '—'}`
-            : `Kelas: ${targetSantri.kelas || 'Belum ditetapkan'}`
+            ? `Target: ${targetSantri.targetHafalan} · Kelas Al-Qur'an: ${targetSantri.kelas || '—'}`
+            : `Kelas Al-Qur'an: ${targetSantri.kelas || 'Belum ditetapkan'}`
         }
         statusNotice={{
           text: programLiburanActive
@@ -321,43 +337,42 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
         className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 lg:gap-3.5"
       >
         <CompactBentoKpiCard
-          label="Setoran 12 Bulan"
-          value={totalRecords}
+          label="Aktivitas 30 Hari"
+          value={activities30Days.length}
           icon={BookOpenCheck}
-          subtitle="12 bulan terakhir"
+          subtitle="Seluruh aktivitas belajar"
           iconTone="emerald"
-          badge="12 Bln"
+          badge="30 Hari"
           onClick={() => setActiveTab('riwayat')}
         />
 
         <CompactBentoKpiCard
-          label="Ziyadah"
-          value={santriZiyadah.length}
+          label="Hari Aktif"
+          value={activeDays30}
+          icon={CalendarCheck}
+          subtitle="Hari dengan aktivitas"
+          iconTone="sky"
+          badge="30 Hari"
+          onClick={() => setActiveTab('riwayat')}
+        />
+
+        <CompactBentoKpiCard
+          label="Ziyadah 30 Hari"
+          value={ziyadah30}
           icon={BookPlus}
-          subtitle="Hafalan baru"
+          subtitle="Setoran hafalan baru"
           iconTone="teal"
           badge="Hafalan"
           onClick={() => setActiveTab('riwayat')}
         />
 
         <CompactBentoKpiCard
-          label="Muraja'ah"
-          value={santriMurojaah.length}
-          icon={RotateCw}
-          subtitle="Pengulangan"
-          iconTone="amber"
-          badge="Kelancaran"
-          onClick={() => setActiveTab('riwayat')}
-        />
-
-        <CompactBentoKpiCard
-          label="Binnadzor & Kelas"
-          value={santriBinnadzor.length + santriPembelajaran.length}
-          icon={GraduationCap}
-          subtitle="Tilawah & materi"
+          label="Catatan Ustadz"
+          value={ustadzNotes30}
+          icon={MessageSquareText}
+          subtitle="Catatan dalam 30 hari"
           iconTone="indigo"
-          badge="Kelas"
-          onClick={() => setActiveTab('riwayat')}
+          badge="Bimbingan"
         />
       </section>
 
@@ -414,7 +429,7 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-[11px] text-slate-500">Dicatat oleh:</span>
+                    <span className="text-[11px] text-slate-500">Penyimak:</span>
                     <p className="mt-0.5 truncate font-semibold text-slate-700">
                       {latestActivity.inputBy}
                     </p>
@@ -462,7 +477,7 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
                     Bimbingan Ustadz
                   </p>
                   <h2 className="text-sm font-bold text-slate-900 leading-tight">
-                    Catatan Perkembangan
+                    Catatan Ustadz Terbaru
                   </h2>
                 </div>
               </div>
@@ -525,6 +540,15 @@ export const WaliDashboard: React.FC<WaliDashboardProps> = ({
           />
         </div>
       </ScrollReveal>
+
+      {showAcademicReport && (
+        <AcademicReportModal
+          santri={targetSantri}
+          currentUser={currentUser}
+          onClose={() => setShowAcademicReport(false)}
+          onNotify={onNotify}
+        />
+      )}
     </div>
   );
 };
