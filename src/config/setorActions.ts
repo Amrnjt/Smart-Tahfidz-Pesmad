@@ -9,6 +9,7 @@ export interface SetorActionItem {
   subtitle: string;
   badge?: string;
   icon: React.ComponentType<{ className?: string }>;
+  imageSrc?: string;
   tone: 'emerald' | 'teal' | 'indigo' | 'amber';
   colorClasses: {
     bg: string;
@@ -110,9 +111,10 @@ export const SETOR_ACTIONS: SetorActionItem[] = [
   },
   {
     tab: 'pembelajaran',
-    title: 'Non-Tahfidz',
-    label: 'Non-Tahfidz',
+    title: 'Metode Ummi',
+    label: 'Metode Ummi',
     subtitle: 'Jilid & materi',
+    imageSrc: '/ummi-logo.jpg',
     badge: 'Pembelajaran',
     icon: GraduationCap,
     tone: 'amber',
