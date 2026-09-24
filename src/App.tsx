@@ -234,7 +234,8 @@ export default function App() {
   const isPimpinan = userRoleStr === 'pimpinan';
   const isWali = userRoleStr === 'wali' || userRoleStr.includes('wali');
   const isSantri = userRoleStr === 'santri';
-  const isUstadz = !isWali && !isSantri && !isPimpinan;
+  const isUstadz = userRoleStr === 'ustadz' || userRoleStr === 'superadmin';
+  const isKnownRole = isUstadz || isPimpinan || isWali || isSantri;
   const isSetorActive = ['ziyadah', 'murojaah', 'binnadzor', 'pembelajaran'].includes(activeTab);
 
   const syncStatusCopy =
@@ -284,7 +285,7 @@ export default function App() {
           syncState={syncState}
         />
 
-        {currentUser && (
+        {currentUser && isKnownRole && (
           <DesktopPrimaryNav
             activeTab={activeTab}
             setActiveTab={setActiveTab}
@@ -340,7 +341,7 @@ export default function App() {
                   setActiveTab={setActiveTab}
                   onNotify={notify}
                 />
-              ) : (
+              ) : isSantri ? (
                 <SantriDashboard
                   currentUser={currentUser}
                   santriList={santriList}
@@ -352,6 +353,13 @@ export default function App() {
                   setActiveTab={setActiveTab}
                   onNotify={notify}
                 />
+              ) : (
+                <div className="ui-bento-card p-5 sm:p-6" role="alert">
+                  <h1 className="text-base font-bold text-slate-900">Role akun tidak dikenali</h1>
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-600">
+                    Akses operasional dinonaktifkan untuk sesi ini. Hubungi Superadmin untuk memperbaiki role akun sebelum melanjutkan.
+                  </p>
+                </div>
               )
             )}
 
