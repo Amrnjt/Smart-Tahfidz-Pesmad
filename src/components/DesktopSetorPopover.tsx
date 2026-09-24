@@ -189,7 +189,16 @@ const DesktopSetorItem: React.FC<DesktopSetorItemProps> = ({ action, onSelect })
       <div
         className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-2xs transition-transform duration-150 group-hover:scale-105 ${action.colorClasses.iconBg}`}
       >
-        <Icon className="w-5 h-5 text-white stroke-[2.2]" aria-hidden="true" />
+        {action.imageSrc ? (
+          <img
+            src={action.imageSrc}
+            alt=""
+            className="w-full h-full object-cover rounded-[inherit]"
+            aria-hidden="true"
+          />
+        ) : (
+          <Icon className="w-5 h-5 text-white stroke-[2.2]" aria-hidden="true" />
+        )}
       </div>
 
       {/* Texts */}
