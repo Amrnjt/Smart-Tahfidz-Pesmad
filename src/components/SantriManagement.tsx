@@ -435,7 +435,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       onDataChanged();
       showToast('success', `Santri ${newNama.trim()} (${generatedId}) berhasil ditambahkan dan disimpan permanen.`);
     } catch (err) {
-      showToast('error', 'Gagal menambahkan data santri.');
+      showToast('error', err instanceof Error ? err.message : 'Gagal menambahkan data santri.');
     } finally {
       setIsSaving(false);
     }
@@ -479,7 +479,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       showToast('success', `Akun ${cleanNama} (Role: ${newUserRole}) berhasil dibuat & disimpan ke Cloud Firestore.`);
     } catch (err) {
       setIsSaving(false);
-      showToast('error', 'Gagal membuat akun baru.');
+      showToast('error', err instanceof Error ? err.message : 'Gagal membuat akun baru.');
     }
   };
 
