@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { getTodayInputFormat } from '../utils/dateFormatter';
 import { calculateSetoranMomentum, isSetoranActiveDay } from '../utils/scheduleHelper';
+import { isKelasDiampuOleh } from '../utils/classUtils';
 import { CompactDashboardHero, HeroAction } from './dashboard/CompactDashboardHero';
 import { CompactBentoKpiCard } from './dashboard/CompactBentoKpiCard';
 import { CompactAttentionBento, AttentionItem } from './dashboard/CompactAttentionBento';
@@ -178,7 +179,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
     const scopedClasses = hasGlobalClassView
       ? kelasList
       : kelasList.filter(kelas =>
-          kelas.musyrifId === currentUser.id
+          isKelasDiampuOleh(kelas, currentUser.id)
           || (!!currentUser.kelasId && kelas.id === currentUser.kelasId)
         );
 
@@ -206,7 +207,7 @@ export const UstadzDashboard: React.FC<UstadzDashboardProps> = ({
           : `${classNames[0] || 'Kelas'} +${scopedClasses.length - 1} lainnya`;
 
     const secondary = scopedClasses.length === 0
-      ? (hasGlobalClassView ? 'Belum ada kelompok pembelajaran' : 'Atur musyrif pada Kelola Kelas')
+      ? (hasGlobalClassView ? 'Belum ada kelompok pembelajaran' : 'Atur guru pengampu pada Kelola Kelas')
       : hasGlobalClassView
         ? `${todayScopedActivityCount} Aktivitas Hari Ini`
         : `${uniqueSantriIds.size} Santri • ${todayScopedActivityCount} Aktivitas Hari Ini`;
