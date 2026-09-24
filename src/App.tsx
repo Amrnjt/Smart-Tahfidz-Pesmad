@@ -348,6 +348,7 @@ export default function App() {
                   pembelajaranRecords={pembelajaranRecords}
                   appConfig={appConfig}
                   setActiveTab={setActiveTab}
+                  onNotify={notify}
                 />
               )
             )}

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   User,
   Santri,
@@ -16,19 +16,22 @@ import {
   BookPlus,
   BookOpenCheck,
   Clock3,
+  FileText,
   GraduationCap,
   MessageSquareText,
   RotateCw,
   Target,
   UserRound
 } from 'lucide-react';
-import { formatTanggalWaktu } from '../utils/dateFormatter';
+import { addDaysToDateInput, formatTanggalWaktu, getTodayInputFormat } from '../utils/dateFormatter';
 import { ScrollReveal } from './ScrollReveal';
 import { CompactDashboardHero, HeroAction } from './dashboard/CompactDashboardHero';
 import { CompactBentoKpiCard } from './dashboard/CompactBentoKpiCard';
 import { CompactTrenBulananChart } from './dashboard/CompactTrenBulananChart';
 import { CompactActivityFeed } from './dashboard/CompactActivityFeed';
 import { AcademicContextStrip } from './dashboard/AcademicContextStrip';
+import { AcademicReportModal } from './AcademicReportModal';
+import type { NotifyFn } from './Snackbar';
 
 interface SantriDashboardProps {
   currentUser: User;
@@ -39,6 +42,7 @@ interface SantriDashboardProps {
   pembelajaranRecords?: PembelajaranRecord[];
   appConfig: AppConfig;
   setActiveTab: (tab: ActiveTab) => void;
+  onNotify: NotifyFn;
 }
 
 type ActivityCategory = 'Ziyadah' | "Muroja'ah" | 'Binnadzor' | 'Pembelajaran';
@@ -148,8 +152,10 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   binnadzorRecords = [],
   pembelajaranRecords = [],
   appConfig,
-  setActiveTab
+  setActiveTab,
+  onNotify
 }) => {
+  const [showAcademicReport, setShowAcademicReport] = useState(false);
   const currentSantri = useMemo(
     () => santriList.find(santri => santri.idSantri === currentUser.idSantri),
     [santriList, currentUser.idSantri]
@@ -248,7 +254,21 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
   const latestActivity = activities[0];
   const latestFeedback = activities.find(activity => Boolean(activity.catatan));
   const recentActivities = activities.slice(0, 5);
-  const totalRecords = activities.length;
+  const today = getTodayInputFormat();
+  const sevenDayStart = addDaysToDateInput(today, -6);
+  const thirtyDayStart = addDaysToDateInput(today, -29);
+  const activities7Days = activities.filter(activity => {
+    const date = activity.timestamp.slice(0, 10);
+    return date >= sevenDayStart && date <= today;
+  });
+  const activities30Days = activities.filter(activity => {
+    const date = activity.timestamp.slice(0, 10);
+    return date >= thirtyDayStart && date <= today;
+  });
+  const activeDays7 = new Set(
+    activities7Days.map(activity => activity.timestamp.slice(0, 10)).filter(Boolean)
+  ).size;
+  const ziyadah30 = activities30Days.filter(activity => activity.category === 'Ziyadah').length;
   const latestCategory = latestActivity ? categoryMeta[latestActivity.category] : null;
   const LatestIcon = latestCategory?.icon || BookOpen;
   const latestRecency = getRecencyInfo(latestActivity?.timestamp);
@@ -302,14 +322,12 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
     }
   ];
 
-  if (primaryAction.target !== 'mushaf') {
-    heroActions.push({
-      label: 'Buka Mushaf',
-      onClick: () => setActiveTab('mushaf'),
-      icon: BookOpen,
-      variant: 'secondary'
-    });
-  }
+  heroActions.push({
+    label: 'Rekap Akademik Saya',
+    onClick: () => setShowAcademicReport(true),
+    icon: FileText,
+    variant: 'secondary'
+  });
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-3 sm:space-y-4 lg:space-y-5">
@@ -317,11 +335,15 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
       <CompactDashboardHero
         userName={currentSantri.namaSantri}
         greeting="Assalamu'alaikum"
-        roleBadge={`Santri · ${currentSantri.kelas || 'Pesmad'}`}
+        roleBadge={
+          currentSantri.satuanPendidikan && currentSantri.kelasFormal
+            ? `Santri · ${currentSantri.satuanPendidikan} · Kelas ${currentSantri.kelasFormal}`
+            : 'Santri · Pesmad'
+        }
         subtext={
           currentSantri.targetHafalan
-            ? `Target hafalan: ${currentSantri.targetHafalan}`
-            : 'Tingkatkan kualitas & kelancaran hafalan setiap hari.'
+            ? `Target hafalan: ${currentSantri.targetHafalan} · Kelas Al-Qur'an: ${currentSantri.kelas || '—'}`
+            : `Kelas Al-Qur'an: ${currentSantri.kelas || 'Belum ditetapkan'}`
         }
         statusNotice={{
           text: currentSantri.targetHafalan
@@ -346,42 +368,42 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
         className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 lg:gap-3.5"
       >
         <CompactBentoKpiCard
-          label="Setoran 12 Bulan"
-          value={totalRecords}
+          label="Aktivitas 7 Hari"
+          value={activities7Days.length}
           icon={BookOpenCheck}
-          subtitle="12 bulan terakhir"
+          subtitle="Seluruh aktivitas belajar"
           iconTone="emerald"
-          badge="12 Bln"
+          badge="7 Hari"
           onClick={() => setActiveTab('riwayat')}
         />
 
         <CompactBentoKpiCard
-          label="Ziyadah"
-          value={santriZiyadah.length}
+          label="Hari Aktif"
+          value={activeDays7}
+          icon={Clock3}
+          subtitle="Hari dengan aktivitas"
+          iconTone="sky"
+          badge="7 Hari"
+          onClick={() => setActiveTab('riwayat')}
+        />
+
+        <CompactBentoKpiCard
+          label="Aktivitas 30 Hari"
+          value={activities30Days.length}
+          icon={RotateCw}
+          subtitle="Konsistensi satu bulan"
+          iconTone="amber"
+          badge="30 Hari"
+          onClick={() => setActiveTab('riwayat')}
+        />
+
+        <CompactBentoKpiCard
+          label="Ziyadah 30 Hari"
+          value={ziyadah30}
           icon={BookPlus}
-          subtitle="Hafalan baru"
+          subtitle="Setoran hafalan baru"
           iconTone="teal"
           badge="Hafalan"
-          onClick={() => setActiveTab('riwayat')}
-        />
-
-        <CompactBentoKpiCard
-          label="Muraja'ah"
-          value={santriMurojaah.length}
-          icon={RotateCw}
-          subtitle="Pengulangan"
-          iconTone="amber"
-          badge="Kelancaran"
-          onClick={() => setActiveTab('riwayat')}
-        />
-
-        <CompactBentoKpiCard
-          label="Binnadzor & Kelas"
-          value={santriBinnadzor.length + santriPembelajaran.length}
-          icon={GraduationCap}
-          subtitle="Tilawah & materi"
-          iconTone="indigo"
-          badge="Kelas"
           onClick={() => setActiveTab('riwayat')}
         />
       </section>
@@ -439,7 +461,7 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-[11px] text-slate-500">Dicatat oleh:</span>
+                    <span className="text-[11px] text-slate-500">Penyimak:</span>
                     <p className="mt-0.5 truncate font-semibold text-slate-700">
                       {latestActivity.inputBy}
                     </p>
@@ -471,11 +493,11 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
           </div>
         </article>
 
-        {/* Feedback Ustadz Card */}
+        {/* Fokus Berikutnya Card */}
         <article
           id="santri-feedback-terbaru"
           className="ui-bento-card scroll-mt-24 p-4 sm:p-5 flex flex-col justify-between lg:col-span-6"
-          aria-label="Feedback Ustadz"
+          aria-label="Fokus berikutnya"
         >
           <div>
             <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
@@ -485,10 +507,10 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
                 </span>
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                    Catatan Pembina
+                    Arahan Pembina
                   </p>
                   <h2 className="text-sm font-bold text-slate-900 leading-tight">
-                    Feedback Ustadz
+                    Fokus Berikutnya
                   </h2>
                 </div>
               </div>
@@ -496,8 +518,11 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
 
             {latestFeedback ? (
               <div className="pt-3">
-                <p className="rounded-xl border border-slate-100 bg-slate-50/80 p-3 text-xs sm:text-sm font-medium italic text-slate-800 leading-relaxed">
-                  “{latestFeedback.catatan}”
+                <p className="text-[11px] font-semibold text-emerald-700">
+                  {latestFeedback.category} · {latestFeedback.material}
+                </p>
+                <p className="mt-2 rounded-xl border border-emerald-100 bg-emerald-50/60 p-3 text-xs sm:text-sm font-medium text-slate-800 leading-relaxed">
+                  {latestFeedback.catatan}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
                   <span className="font-semibold text-slate-700">
@@ -510,10 +535,10 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
               <div className="py-6 text-center">
                 <MessageSquareText className="mx-auto h-5 w-5 text-slate-400" />
                 <p className="mt-1.5 text-xs font-bold text-slate-700">
-                  Belum ada catatan tertulis dari Ustadz.
+                  Belum ada fokus khusus dari Ustadz.
                 </p>
                 <p className="text-[11px] text-slate-500">
-                  Catatan setoran akan otomatis ditampilkan saat Ustadz menyematkan pesan evaluasi.
+                  Fokus berikutnya akan muncul ketika Ustadz memberi catatan pada setoran Anda.
                 </p>
               </div>
             )}
@@ -551,6 +576,15 @@ export const SantriDashboard: React.FC<SantriDashboardProps> = ({
           />
         </div>
       </ScrollReveal>
+
+      {showAcademicReport && (
+        <AcademicReportModal
+          santri={currentSantri}
+          currentUser={currentUser}
+          onClose={() => setShowAcademicReport(false)}
+          onNotify={onNotify}
+        />
+      )}
     </div>
   );
 };
