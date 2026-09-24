@@ -1,3 +1,5 @@
+import type { Kelas } from '../types';
+
 export type ClassGroup = 'Tahfidz' | 'Binnadzor' | 'Jilid' | 'Kelas Istimewa' | string;
 
 export function getClassGroup(className: string | null | undefined): ClassGroup {
@@ -33,3 +35,21 @@ export function matchesClassGroup(className: string | null | undefined, selected
 }
 
 export const CLASS_GROUP_OPTIONS = ['Semua Kelas', 'Tahfidz', 'Binnadzor', 'Jilid', 'Kelas Istimewa'] as const;
+
+
+export function getKelasPengampuIds(kelas: Pick<Kelas, 'musyrifId' | 'musyrifIds'>): string[] {
+  const ids = [
+    ...(kelas.musyrifIds || []),
+    ...(kelas.musyrifId ? [kelas.musyrifId] : []),
+  ].map(id => String(id || '').trim()).filter(Boolean);
+
+  return Array.from(new Set(ids));
+}
+
+export function isKelasDiampuOleh(
+  kelas: Pick<Kelas, 'musyrifId' | 'musyrifIds'>,
+  userId: string | null | undefined,
+): boolean {
+  const cleanUserId = String(userId || '').trim();
+  return cleanUserId ? getKelasPengampuIds(kelas).includes(cleanUserId) : false;
+}
