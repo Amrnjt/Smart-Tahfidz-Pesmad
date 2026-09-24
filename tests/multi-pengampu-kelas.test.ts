@@ -40,6 +40,7 @@ test('KelasManagement persists musyrifIds and keeps one legacy primary id', () =
   assert.match(source, /musyrifIds: editMusyrifIds/);
   assert.match(source, /<PengampuSelector/);
   assert.match(source, /Satu kelas dapat memiliki lebih dari satu guru/);
+  assert.match(source, /getKelasPengampuIds\(k\)\.filter\(id => ustadzList\.some\(user => user\.id === id\)\)/);
 });
 
 test('all setoran forms resolve every class taught by the current Ustadz', () => {
