@@ -569,7 +569,7 @@ export function useGeneratePDF() {
         conclusion += ` Menyelesaikan ${periodBinnadzor.length} setoran Binnadzor dengan penekanan tajwid dan kelancaran.`;
       }
       if (periodPembelajaran.length > 0) {
-        conclusion += ` Melaksanakan ${periodPembelajaran.length} sesi pembelajaran materi ${data.santri?.kelas || 'Non-Tahfidz'} (Jilid Ummi Dewasa / Kelas Istimewa).`;
+        conclusion += ` Melaksanakan ${periodPembelajaran.length} sesi pembelajaran materi ${data.santri?.kelas || 'Metode Ummi'} (Jilid Ummi Dewasa / Kelas Istimewa).`;
       }
       if (sangatBaikCount > 0) conclusion += ` Sebanyak ${sangatBaikCount} sesi dinilai "Sangat Baik".`;
       if (mengulangCount > 0) conclusion += ` Terdapat ${mengulangCount} sesi yang perlu pendampingan/pengulangan.`;

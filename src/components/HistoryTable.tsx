@@ -30,6 +30,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { addDaysToDateInput, formatTanggalLengkap, formatTanggalRingkas, getTodayInputFormat, parseDateSafe } from '../utils/dateFormatter';
+import { UmmiLogoIcon } from './UmmiLogo';
 const UnduhLaporanModal = lazy(() =>
   import('./UnduhLaporanModal').then((module) => ({ default: module.UnduhLaporanModal }))
 );
@@ -2377,7 +2378,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-amber-100 text-amber-800 font-bold border border-amber-300 text-xs">
-                      <GraduationCap className="w-3 h-3" /> Materi Non-Tahfidz / Jilid
+                      <UmmiLogoIcon className="w-3 h-3" /> Materi Metode Ummi / Jilid
                     </span>
                   )}
                 </div>

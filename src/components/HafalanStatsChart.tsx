@@ -373,7 +373,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     }}
                     formatter={(value: any, name: any) => [
                       `${value} sesi`,
-                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : name === 'Binnadzor' ? '📑 Binnadzor (Tilawah)' : '📘 Pembelajaran Non-Tahfidz'
+                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : name === 'Binnadzor' ? '📑 Binnadzor (Tilawah)' : '📘 Metode Ummi'
                     ]}
                   />
                   <Legend
@@ -382,7 +382,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     iconType="circle"
                     formatter={(value) => (
                       <span className="text-xs text-slate-600 font-medium">
-                        {value === 'Ziyadah' ? 'Ziyadah' : value === 'Murojaah' ? 'Muroja\'ah' : value === 'Binnadzor' ? 'Binnadzor' : 'Pembelajaran'}
+                        {value === 'Ziyadah' ? 'Ziyadah' : value === 'Murojaah' ? 'Muroja\'ah' : value === 'Binnadzor' ? 'Binnadzor' : 'Metode Ummi'}
                       </span>
                     )}
                   />
@@ -440,7 +440,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     }}
                     formatter={(value: any, name: any) => [
                       `${value} sesi`,
-                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : name === 'Binnadzor' ? '📑 Binnadzor (Tilawah)' : '📘 Pembelajaran Non-Tahfidz'
+                      name === 'Ziyadah' ? '📖 Ziyadah (Hafalan Baru)' : name === 'Murojaah' ? '🔄 Muroja\'ah (Pengulangan)' : name === 'Binnadzor' ? '📑 Binnadzor (Tilawah)' : '📘 Metode Ummi'
                     ]}
                   />
                   <Legend
@@ -449,7 +449,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
                     iconType="circle"
                     formatter={(value) => (
                       <span className="text-xs text-slate-600 font-medium">
-                        {value === 'Ziyadah' ? 'Ziyadah' : value === 'Murojaah' ? 'Muroja\'ah' : value === 'Binnadzor' ? 'Binnadzor' : 'Pembelajaran'}
+                        {value === 'Ziyadah' ? 'Ziyadah' : value === 'Murojaah' ? 'Muroja\'ah' : value === 'Binnadzor' ? 'Binnadzor' : 'Metode Ummi'}
                       </span>
                     )}
                   />
@@ -586,7 +586,7 @@ export const HafalanStatsChart: React.FC<HafalanStatsChartProps> = ({
 
       </div>
 
-      {/* Panel Analisis 4 Pilar Kualitas Bacaan Non-Tahfidz & Binnadzor */}
+      {/* Panel Analisis 4 Pilar Kualitas Bacaan Metode Ummi & Binnadzor */}
       <div className="bg-slate-50 rounded-2xl p-4 sm:p-5 border border-emerald-100/90 shadow-xs space-y-3.5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-emerald-100 pb-3">
           <div className="flex items-center gap-2">

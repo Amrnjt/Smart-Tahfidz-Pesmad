@@ -1,5 +1,6 @@
 import { ActiveTab } from '../types';
-import { BookPlus, RotateCw, BookOpenCheck, GraduationCap } from 'lucide-react';
+import { BookPlus, RotateCw, BookOpenCheck } from 'lucide-react';
+import { UmmiLogoIcon } from '../components/UmmiLogo';
 import type React from 'react';
 
 export interface SetorActionItem {
@@ -110,11 +111,11 @@ export const SETOR_ACTIONS: SetorActionItem[] = [
   },
   {
     tab: 'pembelajaran',
-    title: 'Non-Tahfidz',
-    label: 'Non-Tahfidz',
+    title: 'Metode Ummi',
+    label: 'Metode Ummi',
     subtitle: 'Jilid & materi',
-    badge: 'Pembelajaran',
-    icon: GraduationCap,
+    badge: 'Metode Ummi',
+    icon: UmmiLogoIcon,
     tone: 'amber',
     colorClasses: {
       bg: 'bg-white',
@@ -122,14 +123,14 @@ export const SETOR_ACTIONS: SetorActionItem[] = [
       border: 'border-slate-200/90',
       hoverBg: 'hover:bg-amber-50/60',
       hoverBorder: 'hover:border-amber-300',
-      iconBg: 'bg-amber-600 text-white',
+      iconBg: 'bg-white border border-amber-200 text-amber-800',
       iconColor: 'text-amber-700',
       badgeBg: 'bg-amber-50',
       badgeText: 'text-amber-800',
       badgeBorder: 'border-amber-200',
-      iconSurfaceBg: 'bg-amber-50',
+      iconSurfaceBg: 'bg-white',
       iconSurfaceText: 'text-amber-700',
-      iconSurfaceBorder: 'border-amber-100/90',
+      iconSurfaceBorder: 'border-amber-200/90',
       tileHoverBorder: 'hover:border-amber-200/90',
       tileActiveBg: 'active:bg-amber-50/50'
     }

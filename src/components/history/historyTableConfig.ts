@@ -54,7 +54,7 @@ export function buildWhatsAppMessage(
     : jenis === 'Murojaah'
       ? "Muroja'ah (Pengulangan)"
       : jenis === 'Pembelajaran'
-        ? 'Pembelajaran Non-Tahfidz (Jilid Ummi / Istimewa)'
+        ? 'Metode Ummi (Jilid Dewasa / Istimewa)'
         : "Binnadzor (Membaca Al-Qur'an)";
 
   return (

@@ -11,7 +11,7 @@ const labels: Partial<Record<ActiveTab, string>> = {
   ziyadah: 'Ziyadah',
   murojaah: "Muroja'ah",
   binnadzor: 'Binnadzor',
-  pembelajaran: 'Non-Tahfidz'
+  pembelajaran: 'Metode Ummi'
 };
 
 export const SetoranFormNav: React.FC<SetoranFormNavProps> = ({ activeTab, onBack }) => {

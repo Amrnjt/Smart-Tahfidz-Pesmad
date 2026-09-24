@@ -26,6 +26,7 @@ import {
   Award,
   ArrowLeft
 } from 'lucide-react';
+import { UmmiLogo } from './UmmiLogo';
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
 import { isNonTahfidzClass } from '../utils/classUtils';
@@ -267,11 +268,9 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
       <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-6">
         {/* Form Header */}
         <div className="flex items-center gap-3 pb-4 border-b border-slate-100">
-          <div className="w-11 h-11 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0">
-            <GraduationCap className="w-6 h-6" />
-          </div>
+          <UmmiLogo className="w-12 h-12" />
           <div>
-            <h3 className="ui-section-title text-slate-900">Setoran Pembelajaran</h3>
+            <h3 className="ui-section-title text-slate-900">Setoran Metode Ummi</h3>
             <p className="text-xs sm:text-sm text-slate-500">Jilid Ummi Dewasa dan Kelas Istimewa dengan pemantauan progres materi.</p>
           </div>
         </div>
@@ -298,15 +297,15 @@ export const PembelajaranForm: React.FC<PembelajaranFormProps> = ({
         )}
 
         <form onSubmit={handleSubmit} className={`space-y-5 ${activeView === 'petunjuk' ? 'hidden' : ''}`} aria-busy={isSubmitting}>
-          {/* 1. Pemilihan Tipe Kelas Non-Tahfidz */}
+          {/* 1. Pemilihan Tipe Kelas Metode Ummi */}
           <div className="space-y-1">
-            <h4 className="text-sm font-bold text-slate-900">Program pembelajaran</h4>
+            <h4 className="text-sm font-bold text-slate-900">Program Metode Ummi</h4>
             <p className="text-xs text-slate-500">Pilih program yang sesuai dengan kelas dan kebutuhan santri.</p>
           </div>
           <div>
             <label className="block text-sm font-semibold text-slate-800 mb-2 flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Program Kelas Pembelajaran <span className="text-rose-500">*</span></span>
+              <span>Program Kelas Metode Ummi <span className="text-rose-500">*</span></span>
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Card Jilid Ummi Dewasa */}
