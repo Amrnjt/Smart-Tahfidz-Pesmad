@@ -33,8 +33,7 @@ test('aggregate Binnadzor keeps records independent of class membership arrays',
   const allowed = getDevelopmentAllowedSantriIds({
     selectedKelas: null,
     kelasList: [
-      { id: 'BA', namaKelas: 'Binnadzor A', tipeKelas: 'Binnadzor A', santriIds: [], createdAt: '2026-09-01' },
-      { id: 'BB', namaKelas: 'Binnadzor B', tipeKelas: 'Binnadzor B', santriIds: [], createdAt: '2026-09-01' },
+      { id: 'BIN', namaKelas: 'Binnadzor', tipeKelas: 'Binnadzor', santriIds: [], createdAt: '2026-09-01' },
     ],
     santriList: [],
     activeTipeKelas: 'Binnadzor',
@@ -42,11 +41,11 @@ test('aggregate Binnadzor keeps records independent of class membership arrays',
   assert.equal(allowed, null);
 });
 
-test('selected Binnadzor A/B class still scopes by explicit membership', () => {
+test('selected Binnadzor class still scopes by explicit membership', () => {
   const selectedKelas = {
-    id: 'BA',
-    namaKelas: 'Binnadzor A',
-    tipeKelas: 'Binnadzor A' as const,
+    id: 'BIN',
+    namaKelas: 'Binnadzor',
+    tipeKelas: 'Binnadzor' as const,
     santriIds: ['S-001'],
     createdAt: '2026-09-01',
   };
@@ -54,16 +53,16 @@ test('selected Binnadzor A/B class still scopes by explicit membership', () => {
     selectedKelas,
     kelasList: [selectedKelas],
     santriList: [],
-    activeTipeKelas: 'Binnadzor A',
+    activeTipeKelas: 'Binnadzor',
   });
   assert.deepEqual([...allowed!], ['S-001']);
 });
 
-test('empty selected Binnadzor class falls back to santri class identity', () => {
+test('empty selected Binnadzor class falls back to canonical santri class identity', () => {
   const selectedKelas = {
-    id: 'BB',
-    namaKelas: 'Binnadzor B',
-    tipeKelas: 'Binnadzor B' as const,
+    id: 'BIN',
+    namaKelas: 'Binnadzor',
+    tipeKelas: 'Binnadzor' as const,
     santriIds: [],
     createdAt: '2026-09-01',
   };
@@ -71,19 +70,19 @@ test('empty selected Binnadzor class falls back to santri class identity', () =>
     selectedKelas,
     kelasList: [selectedKelas],
     santriList: [
-      { idSantri: 'S-002', namaSantri: 'Santri B', kelas: 'Binnadzor B', targetHafalan: '-' },
-      { idSantri: 'S-003', namaSantri: 'Santri A', kelas: 'Binnadzor A', targetHafalan: '-' },
+      { idSantri: 'S-002', namaSantri: 'Santri B', kelas: 'Binnadzor', targetHafalan: '-' },
+      { idSantri: 'S-003', namaSantri: 'Santri Tahfidz', kelas: 'Tahfidz', targetHafalan: '-' },
     ],
-    activeTipeKelas: 'Binnadzor B',
+    activeTipeKelas: 'Binnadzor',
   });
   assert.deepEqual([...allowed!], ['S-002']);
 });
 
-test('empty selected class without fallback does not hide all development records', () => {
+test('empty selected Binnadzor class without fallback does not hide all development records', () => {
   const selectedKelas = {
-    id: 'BA',
-    namaKelas: 'Binnadzor A',
-    tipeKelas: 'Binnadzor A' as const,
+    id: 'BIN',
+    namaKelas: 'Binnadzor',
+    tipeKelas: 'Binnadzor' as const,
     santriIds: [],
     createdAt: '2026-09-01',
   };
@@ -91,7 +90,7 @@ test('empty selected class without fallback does not hide all development record
     selectedKelas,
     kelasList: [selectedKelas],
     santriList: [],
-    activeTipeKelas: 'Binnadzor A',
+    activeTipeKelas: 'Binnadzor',
   });
   assert.equal(allowed, null);
 });
