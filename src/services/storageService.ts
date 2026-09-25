@@ -36,6 +36,11 @@ import {
   type PantauanLiburanSubscriptionRequest,
   type RecentSetoranUpdate
 } from './realtimeService';
+import {
+  consolidateBinnadzorClasses,
+  getKelasPengampuIds,
+  isBinnadzorClass
+} from '../utils/classUtils';
 
 type StudentSetoranRecord = {
   id: string;
@@ -242,10 +247,12 @@ export const storageService = {
   },
 
   getKelasList(): Kelas[] {
-    return readArrayCache<Kelas>(STORAGE_KEYS.KELAS).map((k) => ({
+    const normalized = readArrayCache<Kelas>(STORAGE_KEYS.KELAS).map((k) => ({
       ...k,
+      namaKelas: isBinnadzorClass(k) ? 'Binnadzor' : k.namaKelas,
       tipeKelas: normalizeTipeKelas(k.tipeKelas)
     }));
+    return consolidateBinnadzorClasses(normalized);
   },
 
   getAppConfig(): AppConfig {
