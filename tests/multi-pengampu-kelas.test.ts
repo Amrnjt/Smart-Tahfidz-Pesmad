@@ -40,6 +40,12 @@ test('KelasManagement persists musyrifIds and keeps one legacy primary id', () =
   assert.match(source, /musyrifIds: editMusyrifIds/);
   assert.match(source, /<PengampuSelector/);
   assert.match(source, /Satu kelas dapat memiliki lebih dari satu guru/);
+  assert.match(source, /Tambahkan minimal satu pengampu/);
+  assert.match(source, /Tambah Pengampu/);
+  assert.match(source, /placeholder="Cari nama Ustadz\.\.\."/);
+  assert.match(source, /aria-label=\{`Hapus \${user\.nama} dari guru pengampu`\}/);
+  assert.match(source, /selectedIds\.includes\(user\.id\)/);
+  assert.match(source, /availableUsers\.map\(user =>/);
   assert.match(source, /getKelasPengampuIds\(k\)\.filter\(id => ustadzList\.some\(user => user\.id === id\)\)/);
 });
 
