@@ -27,11 +27,7 @@ export function getClassDetail(className: string | null | undefined): string {
 
 export function matchesClassGroup(className: string | null | undefined, selectedGroup: string): boolean {
   if (!selectedGroup || selectedGroup === 'Semua Kelas') return true;
-  const currentGroup = getClassGroup(className);
-  if (selectedGroup === 'Binnadzor') {
-    return currentGroup === 'Binnadzor' || currentGroup === 'Binnadzor A' || currentGroup === 'Binnadzor B';
-  }
-  return currentGroup === selectedGroup;
+  return getClassGroup(className) === selectedGroup;
 }
 
 export const CLASS_GROUP_OPTIONS = ['Semua Kelas', 'Tahfidz', 'Binnadzor', 'Jilid', 'Kelas Istimewa'] as const;
@@ -52,4 +48,57 @@ export function isKelasDiampuOleh(
 ): boolean {
   const cleanUserId = String(userId || '').trim();
   return cleanUserId ? getKelasPengampuIds(kelas).includes(cleanUserId) : false;
+}
+
+
+export function isBinnadzorClass(
+  kelas: Pick<Kelas, 'namaKelas' | 'tipeKelas'>
+): boolean {
+  return getClassGroup(kelas.namaKelas) === 'Binnadzor'
+    || getClassGroup(kelas.tipeKelas) === 'Binnadzor';
+}
+
+export function consolidateBinnadzorClasses(kelasList: Kelas[]): Kelas[] {
+  const binnadzorClasses = kelasList.filter(isBinnadzorClass);
+  if (binnadzorClasses.length === 0) return kelasList;
+
+  const canonical =
+    binnadzorClasses.find(kelas => kelas.namaKelas.trim().toLowerCase() === 'binnadzor')
+    || binnadzorClasses[0];
+
+  const santriIds = Array.from(new Set(
+    binnadzorClasses.flatMap(kelas => kelas.santriIds || []).filter(Boolean)
+  ));
+  const musyrifIds = Array.from(new Set(
+    binnadzorClasses.flatMap(kelas => getKelasPengampuIds(kelas)).filter(Boolean)
+  ));
+  const musyrifNames = Array.from(new Set(
+    binnadzorClasses
+      .flatMap(kelas => String(kelas.musyrif || '').split(','))
+      .map(name => name.trim())
+      .filter(Boolean)
+  ));
+
+  const silabusById = new Map<string, NonNullable<Kelas['silabusMateri']>[number]>();
+  binnadzorClasses.forEach(kelas => {
+    (kelas.silabusMateri || []).forEach(materi => {
+      if (!silabusById.has(materi.id)) silabusById.set(materi.id, materi);
+    });
+  });
+
+  const merged: Kelas = {
+    ...canonical,
+    namaKelas: 'Binnadzor',
+    tipeKelas: 'Binnadzor',
+    musyrif: musyrifNames.join(', '),
+    musyrifId: musyrifIds[0],
+    musyrifIds,
+    santriIds,
+    silabusMateri: Array.from(silabusById.values()),
+  };
+
+  const firstBinnadzorIndex = kelasList.findIndex(isBinnadzorClass);
+  const withoutVariants = kelasList.filter(kelas => !isBinnadzorClass(kelas));
+  withoutVariants.splice(Math.max(0, firstBinnadzorIndex), 0, merged);
+  return withoutVariants;
 }
