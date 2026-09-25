@@ -302,7 +302,7 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
           </div>
           <h3 className="text-base font-bold text-slate-900 mt-1">
             {activeTipeKelas === 'Tahfidz' && (selectedSantriId === 'ALL' ? 'Perkembangan Nilai Setoran Ziyadah' : 'Kelancaran Hafalan Santri')}
-            {(activeTipeKelas === 'Binnadzor' || activeTipeKelas === 'Binnadzor A' || activeTipeKelas === 'Binnadzor B') && (selectedSantriId === 'ALL' ? 'Perkembangan Nilai Setoran Binnadzor' : 'Kelancaran Bacaan Santri')}
+            {activeTipeKelas === 'Binnadzor' && (selectedSantriId === 'ALL' ? 'Perkembangan Nilai Setoran Binnadzor' : 'Kelancaran Bacaan Santri')}
             {activeTipeKelas === 'Jilid' && 'Tren Progres Pembelajaran Jilid'}
             {activeTipeKelas === 'Kelas Istimewa' && 'Tren Pendampingan Santri Istimewa'}
           </h3>
@@ -483,7 +483,7 @@ export const AdaptiveDevelopmentTrend: React.FC<AdaptiveDevelopmentTrendProps> =
       )}
 
       {/* CASE 2: BINNADZOR (Kelancaran & Kualitas Tilawah) */}
-      {(activeTipeKelas === 'Binnadzor' || activeTipeKelas === 'Binnadzor A' || activeTipeKelas === 'Binnadzor B') && (
+      {activeTipeKelas === 'Binnadzor' && (
         <div className="space-y-4">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
             <div className="p-3 bg-indigo-50/70 border border-indigo-200/80 rounded-xl">
