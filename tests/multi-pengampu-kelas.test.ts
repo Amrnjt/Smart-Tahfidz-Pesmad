@@ -40,13 +40,30 @@ test('KelasManagement persists musyrifIds and keeps one legacy primary id', () =
   assert.match(source, /musyrifIds: editMusyrifIds/);
   assert.match(source, /<PengampuSelector/);
   assert.match(source, /Satu kelas dapat memiliki lebih dari satu guru/);
-  assert.match(source, /Tambahkan minimal satu pengampu/);
   assert.match(source, /Tambah Pengampu/);
   assert.match(source, /placeholder="Cari nama Ustadz\.\.\."/);
   assert.match(source, /aria-label=\{`Hapus \${user\.nama} dari guru pengampu`\}/);
   assert.match(source, /selectedIds\.includes\(user\.id\)/);
   assert.match(source, /availableUsers\.map\(user =>/);
+  assert.match(source, /aria-label="Guru pengampu terpilih"/);
+  assert.match(source, /aria-expanded=\{isOpen\}/);
+  assert.match(source, /Semua Ustadz sudah dipilih/);
   assert.match(source, /getKelasPengampuIds\(k\)\.filter\(id => ustadzList\.some\(user => user\.id === id\)\)/);
+});
+
+test('pengampu picker uses searchable removable chips instead of a checkbox list', () => {
+  const source = readFileSync(new URL('../src/components/KelasManagement.tsx', import.meta.url), 'utf8');
+  const start = source.indexOf('const PengampuSelector');
+  const end = source.indexOf('export const KelasManagement', start);
+  assert.ok(start >= 0 && end > start);
+  const selector = source.slice(start, end);
+
+  assert.match(selector, /selectedUsers\.map\(user =>/);
+  assert.match(selector, /removePengampu\(user\.id\)/);
+  assert.match(selector, /addPengampu\(user\.id\)/);
+  assert.match(selector, /type="search"/);
+  assert.match(selector, /placeholder="Cari nama Ustadz\.\.\."/);
+  assert.doesNotMatch(selector, /type="checkbox"/);
 });
 
 test('all setoran forms resolve every class taught by the current Ustadz', () => {
