@@ -98,9 +98,13 @@ test('Superadmin migration rewrites class, santri, and legacy user class referen
   assert.match(block, /await batch\.commit\(\)/);
 });
 
-test('Superadmin login triggers the one-time cloud consolidation', () => {
+test('production Superadmin login triggers the one-time cloud consolidation', () => {
   const app = readFileSync(new URL('../src/App.tsx', import.meta.url), 'utf8');
   assert.match(app, /normalizedRole !== 'superadmin'/);
+  assert.match(app, /window\.location\.hostname/);
+  assert.match(app, /hostname === 'tahfidzpesmad\.my\.id'/);
+  assert.match(app, /hostname === 'www\.tahfidzpesmad\.my\.id'/);
+  assert.match(app, /if \(!isProductionHost\) return undefined/);
   assert.match(app, /storageService\.consolidateLegacyBinnadzorClasses\(\)/);
   assert.match(app, /Kelas Binnadzor berhasil disatukan/);
 });
