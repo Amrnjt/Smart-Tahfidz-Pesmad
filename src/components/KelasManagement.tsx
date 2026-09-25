@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import type { NotifyFn } from './Snackbar';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
+import { getKelasPengampuIds } from '../utils/classUtils';
 
 interface KelasManagementProps {
   kelasList: Kelas[];
@@ -28,6 +29,178 @@ interface KelasManagementProps {
   onDataChanged: () => void;
   onNotify: NotifyFn;
 }
+
+interface PengampuSelectorProps {
+  ustadzList: User[];
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+}
+
+const PengampuSelector: React.FC<PengampuSelectorProps> = ({
+  ustadzList,
+  selectedIds,
+  onChange,
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const selectedUsers = useMemo(
+    () => selectedIds
+      .map(id => ustadzList.find(user => user.id === id))
+      .filter((user): user is User => Boolean(user)),
+    [selectedIds, ustadzList]
+  );
+
+  const availableUsers = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return ustadzList.filter(user => {
+      if (selectedIds.includes(user.id)) return false;
+      if (!query) return true;
+      return user.nama.toLowerCase().includes(query)
+        || user.username.toLowerCase().includes(query);
+    });
+  }, [searchQuery, selectedIds, ustadzList]);
+
+  const removePengampu = (id: string) => {
+    onChange(selectedIds.filter(item => item !== id));
+  };
+
+  const addPengampu = (id: string) => {
+    if (selectedIds.includes(id)) return;
+    onChange([...selectedIds, id]);
+    setSearchQuery('');
+  };
+
+  const togglePopover = () => {
+    setIsOpen(prev => {
+      const next = !prev;
+      if (!next) setSearchQuery('');
+      return next;
+    });
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <label className="text-xs font-semibold text-slate-600">Guru Pengampu</label>
+        <span className="text-[11px] font-bold text-emerald-800">{selectedIds.length} dipilih</span>
+      </div>
+
+      <p className="text-xs leading-relaxed text-slate-500">
+        Satu kelas dapat memiliki lebih dari satu guru. Semua pengampu mendapat akses ke santri kelas ini untuk input setoran.
+      </p>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+        {selectedUsers.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5" aria-label="Guru pengampu terpilih">
+            {selectedUsers.map(user => (
+              <span
+                key={user.id}
+                className="inline-flex min-h-9 max-w-full items-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 pl-2.5 pr-1.5 text-xs font-semibold text-emerald-900"
+              >
+                <span className="max-w-[180px] truncate">{user.nama}</span>
+                <button
+                  type="button"
+                  onClick={() => removePengampu(user.id)}
+                  aria-label={`Hapus ${user.nama} dari guru pengampu`}
+                  className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-emerald-700 transition-colors hover:bg-emerald-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                >
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="px-1 py-1 text-xs font-medium text-slate-500">
+            Belum ada guru pengampu dipilih.
+          </p>
+        )}
+
+        <div className="relative mt-2">
+          <button
+            type="button"
+            onClick={togglePopover}
+            aria-expanded={isOpen}
+            aria-controls="pengampu-picker-popover"
+            disabled={ustadzList.length === 0}
+            className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-white px-3 text-xs font-bold text-emerald-800 transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            Tambah Pengampu
+          </button>
+
+          {isOpen && (
+            <div
+              id="pengampu-picker-popover"
+              role="dialog"
+              aria-label="Pilih guru pengampu"
+              className="absolute left-0 right-0 z-30 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl"
+            >
+              <div className="border-b border-slate-100 p-2.5">
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" aria-hidden="true" />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="Cari nama Ustadz..."
+                    aria-label="Cari guru pengampu"
+                    autoFocus
+                    className="ui-control w-full rounded-lg border border-slate-200 bg-slate-50 pl-9 pr-3 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              </div>
+
+              <div className="max-h-48 overflow-y-auto p-1.5">
+                {availableUsers.length > 0 ? (
+                  availableUsers.map(user => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      onClick={() => addPengampu(user.id)}
+                      className="flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-xs font-bold text-slate-800">{user.nama}</span>
+                        <span className="block truncate text-[11px] text-slate-500">@{user.username}</span>
+                      </span>
+                      <Plus className="h-4 w-4 flex-shrink-0 text-emerald-700" aria-hidden="true" />
+                    </button>
+                  ))
+                ) : (
+                  <p className="px-3 py-5 text-center text-xs text-slate-500">
+                    {ustadzList.length === selectedUsers.length
+                      ? 'Semua Ustadz sudah dipilih.'
+                      : 'Tidak ada Ustadz yang cocok dengan pencarian.'}
+                  </p>
+                )}
+              </div>
+
+              <div className="border-t border-slate-100 p-2 text-right">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsOpen(false);
+                    setSearchQuery('');
+                  }}
+                  className="min-h-9 rounded-lg px-3 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                >
+                  Selesai
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {ustadzList.length === 0 && (
+          <p className="mt-2 text-xs text-amber-700">
+            Belum ada akun Ustadz/Superadmin yang dapat dipilih.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export const KelasManagement: React.FC<KelasManagementProps> = ({
   kelasList,
@@ -57,7 +230,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
   // Add Form State
   const [newNamaKelas, setNewNamaKelas] = useState('');
   const [newTipeKelas, setNewTipeKelas] = useState<TipeKelas>(TIPE_KELAS_OPTIONS[0]);
-  const [newMusyrifId, setNewMusyrifId] = useState('');
+  const [newMusyrifIds, setNewMusyrifIds] = useState<string[]>([]);
   const [newSantriIds, setNewSantriIds] = useState<string[]>([]);
   const [newSearchQuery, setNewSearchQuery] = useState('');
   const [showAlreadyAssignedInAdd, setShowAlreadyAssignedInAdd] = useState(false);
@@ -65,7 +238,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
   // Edit Form State
   const [editNamaKelas, setEditNamaKelas] = useState('');
   const [editTipeKelas, setEditTipeKelas] = useState<TipeKelas>(TIPE_KELAS_OPTIONS[0]);
-  const [editMusyrifId, setEditMusyrifId] = useState('');
+  const [editMusyrifIds, setEditMusyrifIds] = useState<string[]>([]);
   const [editSantriIds, setEditSantriIds] = useState<string[]>([]);
   const [editSearchQuery, setEditSearchQuery] = useState('');
   const [showOtherAssignedInEdit, setShowOtherAssignedInEdit] = useState(false);
@@ -144,7 +317,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
   const handleOpenAdd = (preselectedIds?: string[]) => {
     setNewNamaKelas('');
     setNewTipeKelas(TIPE_KELAS_OPTIONS[0]);
-    setNewMusyrifId('');
+    setNewMusyrifIds([]);
     setNewSantriIds(preselectedIds || []);
     setNewSearchQuery('');
     setShowAlreadyAssignedInAdd(false);
@@ -157,13 +330,14 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
 
     setIsSaving(true);
     try {
-      const musyrifUser = ustadzList.find(u => u.id === newMusyrifId);
+      const pengampuUsers = ustadzList.filter(user => newMusyrifIds.includes(user.id));
       const newKelas: Kelas = {
         id: `KLS-${Date.now()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
         namaKelas: newNamaKelas.trim(),
         tipeKelas: newTipeKelas,
-        musyrif: musyrifUser?.nama || '',
-        musyrifId: newMusyrifId || undefined,
+        musyrif: pengampuUsers.map(user => user.nama).join(', '),
+        musyrifId: newMusyrifIds[0] || undefined,
+        musyrifIds: newMusyrifIds,
         santriIds: newSantriIds,
         createdAt: new Date().toISOString()
       };
@@ -171,7 +345,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
       setIsSaving(false);
       setShowAddModal(false);
       setNewNamaKelas('');
-      setNewMusyrifId('');
+      setNewMusyrifIds([]);
       setNewSantriIds([]);
       onDataChanged();
       showToast('success', `Kelas "${newKelas.namaKelas}" berhasil dibuat di Cloud dengan ${newSantriIds.length} santri.`);
@@ -185,7 +359,9 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
     setKelasToEdit(k);
     setEditNamaKelas(k.namaKelas);
     setEditTipeKelas(k.tipeKelas);
-    setEditMusyrifId(k.musyrifId || '');
+    setEditMusyrifIds(
+      getKelasPengampuIds(k).filter(id => ustadzList.some(user => user.id === id))
+    );
     setEditSantriIds(k.santriIds || []);
     setEditSearchQuery('');
     setShowOtherAssignedInEdit(false);
@@ -197,12 +373,13 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
 
     setIsSaving(true);
     try {
-      const musyrifUser = ustadzList.find(u => u.id === editMusyrifId);
+      const pengampuUsers = ustadzList.filter(user => editMusyrifIds.includes(user.id));
       await storageService.updateKelas(kelasToEdit.id, {
         namaKelas: editNamaKelas.trim(),
         tipeKelas: editTipeKelas,
-        musyrif: musyrifUser?.nama || '',
-        musyrifId: editMusyrifId || undefined,
+        musyrif: pengampuUsers.map(user => user.nama).join(', '),
+        musyrifId: editMusyrifIds[0] || undefined,
+        musyrifIds: editMusyrifIds,
         santriIds: editSantriIds
       });
       setIsSaving(false);
@@ -267,7 +444,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
             Manajemen Kelas Tahfidz
           </h3>
           <p className="text-xs text-slate-500">
-            Kelola kelas, musyrif, dan penempatan santri secara terstruktur.
+            Kelola kelas, guru pengampu, dan penempatan santri secara terstruktur.
           </p>
         </div>
         <button
@@ -383,6 +560,13 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {kelasList.map((kls) => {
             const anggota = (kls.santriIds || []).map(id => santriList.find(s => s.idSantri === id)).filter(Boolean);
+            const pengampuIds = getKelasPengampuIds(kls);
+            const pengampuNames = pengampuIds
+              .map(id => ustadzList.find(user => user.id === id)?.nama)
+              .filter((name): name is string => Boolean(name));
+            if (pengampuNames.length === 0 && kls.musyrif?.trim()) {
+              pengampuNames.push(...kls.musyrif.split(',').map(name => name.trim()).filter(Boolean));
+            }
             return (
               <div key={kls.id} className="p-5 rounded-2xl bg-white border border-slate-200 hover:border-slate-300 transition-colors flex flex-col">
                 <div className="flex items-start justify-between mb-3">
@@ -397,11 +581,25 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                   </div>
                 </div>
 
-                {kls.musyrif && (
-                  <p className="text-sm text-slate-700 mb-2">
-                    <span className="font-semibold">Musyrif:</span> {kls.musyrif}
+                <div className="mb-3">
+                  <p className="mb-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                    Guru Pengampu
                   </p>
-                )}
+                  {pengampuNames.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {pengampuNames.map(name => (
+                        <span
+                          key={name}
+                          className="rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-semibold text-emerald-900"
+                        >
+                          {name}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs font-medium text-amber-700">Belum ada guru pengampu</p>
+                  )}
+                </div>
 
                 <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 mb-3">
                   <Users className="w-3.5 h-3.5" />
@@ -427,7 +625,7 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                     className="min-h-11 flex-1 px-3 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 text-xs font-semibold border border-emerald-200 transition-colors cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <SquarePen className="w-3.5 h-3.5" />
-                    <span>Edit / Tambah Santri</span>
+                    <span>Edit Kelas & Anggota</span>
                   </button>
                   <button
                     type="button"
@@ -492,20 +690,11 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                 </select>
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Musyrif / Pembimbing</label>
-                <select
-                  aria-label="Musyrif atau Pembimbing"
-                  value={newMusyrifId}
-                  onChange={(e) => setNewMusyrifId(e.target.value)}
-                  className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="">-- Pilih Ustadz Musyrif --</option>
-                  {ustadzList.map(u => (
-                    <option key={u.id} value={u.id}>{u.nama} ({u.username})</option>
-                  ))}
-                </select>
-              </div>
+              <PengampuSelector
+                ustadzList={ustadzList}
+                selectedIds={newMusyrifIds}
+                onChange={setNewMusyrifIds}
+              />
 
               {/* SELEKSI SANTRI: HANYA YANG BELUM DITEMPATKAN KELAS (DEFAULT) */}
               <div className="space-y-2 pt-1 border-t border-slate-100">
@@ -700,19 +889,11 @@ export const KelasManagement: React.FC<KelasManagementProps> = ({
                 </select>
               </div>
 
-              <div>
-                <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Musyrif / Pembimbing</label>
-                <select
-                  value={editMusyrifId}
-                  onChange={(e) => setEditMusyrifId(e.target.value)}
-                  className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="">-- Pilih Ustadz Musyrif --</option>
-                  {ustadzList.map(u => (
-                    <option key={u.id} value={u.id}>{u.nama} ({u.username})</option>
-                  ))}
-                </select>
-              </div>
+              <PengampuSelector
+                ustadzList={ustadzList}
+                selectedIds={editMusyrifIds}
+                onChange={setEditMusyrifIds}
+              />
 
               {/* SELEKSI SANTRI EDIT: ANGGOTA KELAS INI + SANTRI BELUM PUNYA KELAS */}
               <div className="space-y-2 pt-1 border-t border-slate-100">

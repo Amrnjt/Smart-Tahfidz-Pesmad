@@ -6,6 +6,7 @@ import { RotateCw, Save, RotateCcw, Calendar, Clock, BookOpen } from 'lucide-rea
 import { getTodayInputFormat, getCurrentTimeInputFormat, formatTanggalLengkap } from '../utils/dateFormatter';
 import type { NotifyFn } from './Snackbar';
 import { getNextMurojaahContinuation } from '../utils/setoranContinuation';
+import { isKelasDiampuOleh } from '../utils/classUtils';
 
 interface MurojaahFormProps {
   currentUser: User;
@@ -32,11 +33,19 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
   onSuccess,
   onNotify
 }) => {
-  const myKelas = useMemo(() => kelasList.find(k => k.musyrifId === currentUser.id), [kelasList, currentUser.id]);
+  const myKelasList = useMemo(() => {
+    const role = String(currentUser.role || '').trim().toLowerCase();
+    if (role === 'admin' || role === 'pimpinan' || role === 'superadmin') return [];
+    return kelasList.filter(kelas =>
+      isKelasDiampuOleh(kelas, currentUser.id)
+      || (!!currentUser.kelasId && kelas.id === currentUser.kelasId)
+    );
+  }, [kelasList, currentUser.id, currentUser.kelasId, currentUser.role]);
   const mySantriList = useMemo(() => {
-    if (!myKelas || !myKelas.santriIds || myKelas.santriIds.length === 0) return santriList;
-    return santriList.filter(s => myKelas.santriIds.includes(s.idSantri));
-  }, [santriList, myKelas]);
+    if (myKelasList.length === 0) return santriList;
+    const santriIds = new Set(myKelasList.flatMap(kelas => kelas.santriIds || []));
+    return santriList.filter(santri => santriIds.has(santri.idSantri));
+  }, [santriList, myKelasList]);
 
   const [idSantri, setIdSantri] = useState(selectedSantriId || (mySantriList[0]?.idSantri || ''));
   const [tanggalSetor, setTanggalSetor] = useState(getTodayInputFormat());
@@ -183,9 +192,14 @@ export const MurojaahForm: React.FC<MurojaahFormProps> = ({
                   </option>
                 ))}
               </select>
-              {myKelas && (
-                <p className="text-xs text-teal-700 font-semibold mt-1">
-                  Kelas: {myKelas.namaKelas} • {mySantriList.length} santri
+              {myKelasList.length > 0 && (
+                <p
+                  className="text-xs text-teal-700 font-semibold mt-1"
+                  title={myKelasList.map(kelas => kelas.namaKelas).join(', ')}
+                >
+                  Kelas diampu: {myKelasList.length === 1
+                    ? myKelasList[0].namaKelas
+                    : `${myKelasList[0].namaKelas} +${myKelasList.length - 1} lainnya`} • {mySantriList.length} santri
                 </p>
               )}
             </div>

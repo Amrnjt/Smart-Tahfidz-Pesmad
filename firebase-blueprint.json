@@ -79,6 +79,7 @@
         "tipeKelas": { "type": "string" },
         "musyrif": { "type": "string" },
         "musyrifId": { "type": "string" },
+        "musyrifIds": { "type": "array" },
         "santriIds": { "type": "array" },
         "silabusMateri": { "type": "array" },
         "createdAt": { "type": "string" }
