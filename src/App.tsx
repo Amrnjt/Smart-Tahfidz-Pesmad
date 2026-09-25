@@ -130,6 +130,32 @@ export default function App() {
     return schedulePostLoginPrefetch(currentUser);
   }, [currentUser?.id, currentUser?.role]);
 
+  useEffect(() => {
+    if (!currentUser) return undefined;
+    const normalizedRole = String(currentUser.role || '').trim().toLowerCase();
+    if (normalizedRole !== 'superadmin') return undefined;
+
+    let cancelled = false;
+    void storageService.consolidateLegacyBinnadzorClasses()
+      .then(result => {
+        if (cancelled || !result.changed) return;
+        refreshMasterData();
+        notify(
+          'success',
+          `Kelas Binnadzor berhasil disatukan. ${result.normalizedSantriCount} data santri dinormalisasi.`
+        );
+      })
+      .catch(error => {
+        if (cancelled) return;
+        console.error('Binnadzor class consolidation failed:', error);
+        notify('error', 'Gagal menyatukan data kelas Binnadzor lama.');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUser?.id, currentUser?.role]);
+
   // Keep the login shell light: master-data listeners start only after a valid
   // session exists. Existing sessions still subscribe immediately on app mount.
   useEffect(() => {
