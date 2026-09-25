@@ -41,12 +41,34 @@ const PengampuSelector: React.FC<PengampuSelectorProps> = ({
   selectedIds,
   onChange,
 }) => {
-  const toggle = (id: string) => {
-    onChange(
-      selectedIds.includes(id)
-        ? selectedIds.filter(item => item !== id)
-        : [...selectedIds, id]
-    );
+  const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState('');
+
+  const selectedUsers = useMemo(
+    () => selectedIds
+      .map(id => ustadzList.find(user => user.id === id))
+      .filter((user): user is User => Boolean(user)),
+    [selectedIds, ustadzList]
+  );
+
+  const availableUsers = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+    return ustadzList.filter(user => {
+      if (selectedIds.includes(user.id)) return false;
+      if (!normalizedQuery) return true;
+      return user.nama.toLowerCase().includes(normalizedQuery)
+        || user.username.toLowerCase().includes(normalizedQuery);
+    });
+  }, [query, selectedIds, ustadzList]);
+
+  const addPengampu = (id: string) => {
+    if (selectedIds.includes(id)) return;
+    onChange([...selectedIds, id]);
+    setQuery('');
+  };
+
+  const removePengampu = (id: string) => {
+    onChange(selectedIds.filter(item => item !== id));
   };
 
   return (
@@ -58,38 +80,89 @@ const PengampuSelector: React.FC<PengampuSelectorProps> = ({
       <p className="text-xs leading-relaxed text-slate-500">
         Satu kelas dapat memiliki lebih dari satu guru. Semua pengampu mendapat akses ke santri kelas ini untuk input setoran.
       </p>
-      <div className="max-h-44 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-2 space-y-1">
-        {ustadzList.length === 0 ? (
-          <p className="px-2 py-4 text-center text-xs text-slate-500">
-            Belum ada akun Ustadz/Superadmin yang dapat dipilih.
-          </p>
-        ) : (
-          ustadzList.map(user => {
-            const checked = selectedIds.includes(user.id);
-            return (
-              <label
-                key={user.id}
-                className={`flex cursor-pointer items-center gap-2.5 rounded-lg border p-2.5 transition-colors ${
-                  checked
-                    ? 'border-emerald-300 bg-emerald-50'
-                    : 'border-transparent bg-white hover:border-slate-200'
-                }`}
-              >
+
+      <div className="flex flex-wrap gap-1.5">
+        {selectedUsers.map(user => (
+          <span
+            key={user.id}
+            className="inline-flex max-w-full items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-900"
+          >
+            <span className="truncate">{user.nama}</span>
+            <button
+              type="button"
+              onClick={() => removePengampu(user.id)}
+              aria-label={`Hapus ${user.nama} dari guru pengampu`}
+              className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-md text-emerald-700 transition-colors hover:bg-emerald-100 hover:text-emerald-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+            >
+              <X className="h-3 w-3" aria-hidden="true" />
+            </button>
+          </span>
+        ))}
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setIsOpen(open => !open)}
+            aria-expanded={isOpen}
+            aria-haspopup="listbox"
+            className="inline-flex min-h-8 items-center gap-1.5 rounded-xl border border-dashed border-emerald-300 bg-white px-2.5 py-1.5 text-xs font-bold text-emerald-800 transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+            Tambah Pengampu
+            <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+          </button>
+
+          {isOpen && (
+            <div className="absolute left-0 z-30 mt-2 w-[min(20rem,calc(100vw-3rem))] rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" aria-hidden="true" />
                 <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => toggle(user.id)}
-                  className="h-4 w-4 flex-shrink-0 rounded accent-emerald-700"
+                  type="search"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Cari nama Ustadz..."
+                  aria-label="Cari guru pengampu"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2 pl-9 pr-3 text-xs font-medium text-slate-800 outline-none transition focus:border-emerald-300 focus:bg-white focus:ring-2 focus:ring-emerald-500/20"
+                  autoFocus
                 />
-                <span className="min-w-0">
-                  <span className="block truncate text-xs font-bold text-slate-800">{user.nama}</span>
-                  <span className="block truncate text-[11px] text-slate-500">@{user.username}</span>
-                </span>
-              </label>
-            );
-          })
-        )}
+              </div>
+
+              <div role="listbox" aria-label="Daftar guru pengampu" className="mt-2 max-h-48 overflow-y-auto space-y-1">
+                {availableUsers.length === 0 ? (
+                  <p className="px-3 py-4 text-center text-xs text-slate-500">
+                    {ustadzList.length === selectedIds.length
+                      ? 'Semua guru sudah dipilih.'
+                      : 'Tidak ada guru yang cocok dengan pencarian.'}
+                  </p>
+                ) : (
+                  availableUsers.map(user => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      role="option"
+                      aria-selected={false}
+                      onClick={() => addPengampu(user.id)}
+                      className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-xs font-bold text-slate-800">{user.nama}</span>
+                        <span className="block truncate text-[11px] text-slate-500">@{user.username}</span>
+                      </span>
+                      <Plus className="h-4 w-4 flex-shrink-0 text-emerald-700" aria-hidden="true" />
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
+
+      {selectedUsers.length === 0 && (
+        <p className="text-[11px] font-medium text-amber-700">
+          Belum ada guru pengampu. Tambahkan minimal satu pengampu bila kelas akan langsung digunakan untuk setoran.
+        </p>
+      )}
     </div>
   );
 };
