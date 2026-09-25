@@ -29,6 +29,7 @@ import {
   writeArrayCache
 } from './storageCore';
 import { createDefaultAppConfig } from './academicPeriod';
+import { consolidateBinnadzorClasses, isBinnadzorClass } from '../utils/classUtils';
 
 export type RecentSetoranUpdate =
   | { type: 'ziyadah'; records: ZiyadahRecord[] }
@@ -85,7 +86,13 @@ export const realtimeService = {
           kelasList.push(normalized);
         }
       });
-      writeArrayCache(STORAGE_KEYS.KELAS, kelasList);
+      const consolidated = consolidateBinnadzorClasses(
+        kelasList.map(kelas => ({
+          ...kelas,
+          namaKelas: isBinnadzorClass(kelas) ? 'Binnadzor' : kelas.namaKelas,
+        }))
+      );
+      writeArrayCache(STORAGE_KEYS.KELAS, consolidated);
       notifyUpdate();
     }, (err) => console.warn('Kelas firestore sync error:', err));
 

@@ -13,9 +13,7 @@ export type TipeKelas =
   | 'Tahfidz'
   | 'Binnadzor'
   | 'Jilid'
-  | 'Kelas Istimewa'
-  | 'Binnadzor A'
-  | 'Binnadzor B';
+  | 'Kelas Istimewa';
 
 export const TIPE_KELAS_OPTIONS: TipeKelas[] = [
   'Tahfidz',
