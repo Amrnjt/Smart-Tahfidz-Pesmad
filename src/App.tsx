@@ -135,6 +135,12 @@ export default function App() {
     const normalizedRole = String(currentUser.role || '').trim().toLowerCase();
     if (normalizedRole !== 'superadmin') return undefined;
 
+    const hostname = window.location.hostname.trim().toLowerCase();
+    const isProductionHost =
+      hostname === 'tahfidzpesmad.my.id'
+      || hostname === 'www.tahfidzpesmad.my.id';
+    if (!isProductionHost) return undefined;
+
     let cancelled = false;
     void storageService.consolidateLegacyBinnadzorClasses()
       .then(result => {
