@@ -1238,7 +1238,13 @@ export const storageService = {
           kelasList.push(normalized);
         }
       });
-      writeArrayCache(STORAGE_KEYS.KELAS, kelasList);
+      const consolidatedKelas = consolidateBinnadzorClasses(
+        kelasList.map(kelas => ({
+          ...kelas,
+          namaKelas: isBinnadzorClass(kelas) ? 'Binnadzor' : kelas.namaKelas,
+        }))
+      );
+      writeArrayCache(STORAGE_KEYS.KELAS, consolidatedKelas);
 
       const config = appConfigSnap.exists() ? appConfigSnap.data() as AppConfig : createDefaultAppConfig();
       localStorage.setItem(STORAGE_KEYS.APP_CONFIG, JSON.stringify(config));
