@@ -20,6 +20,167 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/pesmad-app-icon-v4-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/pesmad-app-icon-v4-180.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <script>
+      (() => {
+        const RECOVERY_KEY = 'pesmad_pwa_recovery_v1';
+        const RECOVERY_WINDOW_MS = 45000;
+        let startupTimer = 0;
+        let readyClearTimer = 0;
+
+        const readRetryAt = () => {
+          try { return Number(sessionStorage.getItem(RECOVERY_KEY) || '0'); }
+          catch { return 0; }
+        };
+
+        const writeRetryAt = (value) => {
+          try { sessionStorage.setItem(RECOVERY_KEY, String(value)); }
+          catch { /* storage can be unavailable in hardened webviews */ }
+        };
+
+        const clearRetry = () => {
+          try { sessionStorage.removeItem(RECOVERY_KEY); }
+          catch { /* ignore */ }
+        };
+
+        const showRecovery = (reason = 'startup') => {
+          if (document.getElementById('pesmad-startup-recovery')) return;
+
+          const offline = reason === 'offline' || navigator.onLine === false;
+          const overlay = document.createElement('div');
+          overlay.id = 'pesmad-startup-recovery';
+          overlay.setAttribute('role', 'alert');
+          overlay.style.cssText = [
+            'position:fixed',
+            'inset:0',
+            'z-index:2147483647',
+            'display:flex',
+            'align-items:center',
+            'justify-content:center',
+            'padding:24px',
+            'background:#f8fafc',
+            'font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif',
+            'color:#0f172a'
+          ].join(';');
+
+          const card = document.createElement('div');
+          card.style.cssText = [
+            'width:min(100%,420px)',
+            'border:1px solid #dbe3ea',
+            'border-radius:24px',
+            'padding:24px',
+            'background:#ffffff',
+            'box-shadow:0 20px 50px rgba(15,23,42,.14)',
+            'text-align:center'
+          ].join(';');
+
+          const title = offline ? 'Koneksi internet terputus' : 'Smart Tahfidz perlu dimuat ulang';
+          const message = offline
+            ? 'Sambungkan internet, lalu muat ulang aplikasi. Data yang sudah tersimpan tidak dihapus.'
+            : 'Versi aplikasi di HP tampaknya tertinggal setelah pembaruan. Muat ulang untuk mengambil versi terbaru.';
+
+          card.innerHTML =
+            '<div style="width:54px;height:54px;margin:0 auto 14px;border-radius:18px;background:#ecfdf5;display:flex;align-items:center;justify-content:center;font-size:28px">↻</div>' +
+            '<h1 style="margin:0 0 8px;font-size:18px;line-height:1.35;font-weight:800">' + title + '</h1>' +
+            '<p style="margin:0 0 18px;font-size:13px;line-height:1.65;color:#64748b">' + message + '</p>';
+
+          const reload = document.createElement('button');
+          reload.type = 'button';
+          reload.textContent = offline ? 'Coba Lagi' : 'Muat Versi Terbaru';
+          reload.style.cssText = [
+            'width:100%',
+            'min-height:46px',
+            'border:0',
+            'border-radius:14px',
+            'background:#047857',
+            'color:#ffffff',
+            'font-size:14px',
+            'font-weight:800',
+            'cursor:pointer'
+          ].join(';');
+          reload.addEventListener('click', () => {
+            clearRetry();
+            const url = new URL(window.location.href);
+            url.searchParams.set('_app_refresh', String(Date.now()));
+            window.location.replace(url.toString());
+          });
+
+          card.appendChild(reload);
+          overlay.appendChild(card);
+          document.body.appendChild(overlay);
+        };
+
+        const recoverOnce = (reason) => {
+          const now = Date.now();
+          const retryAt = readRetryAt();
+
+          if (!retryAt || now - retryAt > RECOVERY_WINDOW_MS) {
+            writeRetryAt(now);
+            window.location.reload();
+            return;
+          }
+
+          showRecovery(reason);
+        };
+
+        window.__PESMAD_APP_READY__ = () => {
+          document.documentElement.dataset.pesmadReady = 'true';
+          window.clearTimeout(startupTimer);
+          window.clearTimeout(readyClearTimer);
+          readyClearTimer = window.setTimeout(clearRetry, 15000);
+        };
+
+        window.addEventListener('vite:preloadError', (event) => {
+          event.preventDefault();
+          recoverOnce('chunk');
+        });
+
+        window.addEventListener('unhandledrejection', (event) => {
+          const message = String(event.reason?.message || event.reason || '');
+          if (/Failed to fetch dynamically imported module|Importing a module script failed|Load failed/i.test(message)) {
+            event.preventDefault();
+            recoverOnce(navigator.onLine === false ? 'offline' : 'chunk');
+          }
+        });
+
+        window.addEventListener('error', (event) => {
+          const target = event.target;
+          const failedModule =
+            target instanceof HTMLScriptElement &&
+            (target.type === 'module' || target.src.includes('/assets/'));
+          const failedAsset =
+            target instanceof HTMLLinkElement &&
+            target.href.includes('/assets/');
+
+          if (failedModule || failedAsset) {
+            recoverOnce(navigator.onLine === false ? 'offline' : 'asset');
+          }
+        }, true);
+
+        window.addEventListener('online', () => {
+          if (document.getElementById('pesmad-startup-recovery')) {
+            clearRetry();
+            window.location.reload();
+          }
+        });
+
+        startupTimer = window.setTimeout(() => {
+          const root = document.getElementById('root');
+          const hasRenderedUi = Boolean(root && root.childNodes.length > 0);
+          if (!hasRenderedUi && document.documentElement.dataset.pesmadReady !== 'true') {
+            showRecovery(navigator.onLine === false ? 'offline' : 'startup');
+          }
+        }, 9000);
+
+        if ('serviceWorker' in navigator) {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker
+              .register('/sw.js', { scope: '/', updateViaCache: 'none' })
+              .then((registration) => registration.update())
+              .catch((error) => console.warn('PWA service worker registration failed:', error));
+          });
+        }
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Scheherazade+New:wght@400;600;700&display=swap" rel="stylesheet">

@@ -19,3 +19,12 @@ declare module '*.svg' {
   const src: string;
   export default src;
 }
+
+
+declare global {
+  interface Window {
+    __PESMAD_APP_READY__?: () => void;
+  }
+}
+
+export {};
