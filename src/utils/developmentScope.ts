@@ -19,16 +19,16 @@ export function getDevelopmentAllowedSantriIds({
     }
 
     const fallbackIds = santriList
-      .filter(s => s.kelas === selectedKelas.namaKelas || s.kelas === selectedKelas.tipeKelas)
+      .filter(s => s.kelas === selectedKelas.namaKelas)
       .map(s => s.idSantri);
 
-    return fallbackIds.length ? new Set(fallbackIds) : null;
+    return new Set(fallbackIds);
   }
 
   // Aggregate Binnadzor views must not depend on class membership arrays.
   // Binnadzor records are already scoped by activity type, and historical
   // class membership can be incomplete or temporarily empty.
-  if (activeTipeKelas.startsWith('Binnadzor')) {
+  if (activeTipeKelas === 'Binnadzor') {
     return null;
   }
 

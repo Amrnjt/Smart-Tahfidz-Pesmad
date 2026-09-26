@@ -27,11 +27,7 @@ export function getClassDetail(className: string | null | undefined): string {
 
 export function matchesClassGroup(className: string | null | undefined, selectedGroup: string): boolean {
   if (!selectedGroup || selectedGroup === 'Semua Kelas') return true;
-  const currentGroup = getClassGroup(className);
-  if (selectedGroup === 'Binnadzor') {
-    return currentGroup === 'Binnadzor' || currentGroup === 'Binnadzor A' || currentGroup === 'Binnadzor B';
-  }
-  return currentGroup === selectedGroup;
+  return getClassGroup(className) === selectedGroup;
 }
 
 export const CLASS_GROUP_OPTIONS = ['Semua Kelas', 'Tahfidz', 'Binnadzor', 'Jilid', 'Kelas Istimewa'] as const;
