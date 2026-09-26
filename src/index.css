@@ -309,7 +309,7 @@ textarea {
 .ui-dialog-overlay {
   position: fixed;
   inset: 0;
-  z-index: 70;
+  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -320,7 +320,7 @@ textarea {
 .ui-dialog-panel,
 .ui-dialog-frame {
   width: 100%;
-  max-height: min(88dvh, 42rem);
+  max-height: min(76dvh, 36rem);
   background: var(--surface-primary);
   border: 1px solid var(--stroke-primary);
   border-radius: var(--radius-major);
@@ -389,7 +389,7 @@ textarea {
 
   .ui-dialog-panel,
   .ui-dialog-frame {
-    max-height: calc(100dvh - 2rem);
+    max-height: min(calc(100dvh - 2rem), 48rem);
   }
 
   .ui-dialog-header,

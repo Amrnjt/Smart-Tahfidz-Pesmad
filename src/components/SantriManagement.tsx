@@ -1954,8 +1954,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
           aria-label="Tambah data santri"
           tabIndex={-1}
         >
-          <div className="ui-dialog-panel max-w-md p-4 sm:p-6 space-y-4 sm:space-y-5">
-            <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
+          <div className="ui-dialog-frame max-w-md flex flex-col">
+            <div className="ui-dialog-header">
               <h4 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
                 <UserPlus className="w-5 h-5 text-emerald-700" />
                 Tambah Data Santri Baru
@@ -1969,7 +1969,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
               </button>
             </div>
 
-            <form onSubmit={handleAddSantri} className="space-y-3.5">
+            <form onSubmit={handleAddSantri} className="min-h-0 flex-1 flex flex-col">
+              <div className="ui-dialog-body min-h-0 flex-1 overflow-y-auto space-y-3.5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
                   ID Santri / NIS (Opsional)
@@ -2106,8 +2107,9 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
               <div className="p-3 bg-emerald-50/70 rounded-xl border border-emerald-200 text-xs text-emerald-900 leading-snug">
                 Sistem otomatis membuatkan akun login <b>Wali</b> (<code className="font-mono bg-white px-1 rounded">wali_idsantri</code>) dan akun login <b>Santri</b> (<code className="font-mono bg-white px-1 rounded">idsantri</code>) untuk diakses di rumah.
               </div>
+              </div>
 
-              <div className="ui-dialog-footer">
+              <div className="ui-dialog-footer px-4 pb-4 sm:px-6 sm:pb-6">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
