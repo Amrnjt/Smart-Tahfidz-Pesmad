@@ -8,8 +8,8 @@ const trash = readFileSync(new URL('../src/components/TrashBinModal.tsx', import
 
 test('mobile dialogs keep breathing room instead of consuming the full viewport', () => {
   assert.match(css, /\.ui-dialog-overlay[\s\S]*padding: 1rem;/);
-  assert.match(css, /max-height: min\(88dvh, 42rem\);/);
-  assert.match(css, /@media \(min-width: 640px\)[\s\S]*max-height: calc\(100dvh - 2rem\);/);
+  assert.match(css, /max-height: min\(76dvh, 36rem\);/);
+  assert.match(css, /@media \(min-width: 640px\)[\s\S]*max-height: min\(calc\(100dvh - 2rem\), 48rem\);/);
 });
 
 test('santri management dialog forms stack fields on narrow screens', () => {
