@@ -212,7 +212,7 @@ export const TrashBinModal: React.FC<TrashBinModalProps> = ({
       aria-labelledby="trash-modal-title"
     >
       <div
-        className="ui-dialog-panel max-w-4xl max-h-[90vh] flex flex-col p-0 overflow-hidden"
+        className="ui-dialog-panel max-w-4xl flex flex-col p-0 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

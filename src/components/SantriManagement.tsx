@@ -1290,7 +1290,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
             aria-label={isGraduation ? 'Preview kelulusan kelas IX' : `Preview kenaikan kelas ${promotionPreviewClass}`}
             tabIndex={-1}
           >
-            <div className="ui-dialog-panel max-w-lg p-5 sm:p-6 space-y-5">
+            <div className="ui-dialog-panel max-w-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
               <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
                 <div>
                   <h4 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
@@ -1413,7 +1413,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
           aria-label={`Riwayat akademik ${historySantri.namaSantri}`}
           tabIndex={-1}
         >
-          <div className="ui-dialog-panel max-w-lg p-5 sm:p-6 space-y-5">
+          <div className="ui-dialog-panel max-w-lg p-4 sm:p-6 space-y-4 sm:space-y-5">
             <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
               <div>
                 <h4 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
@@ -1511,7 +1511,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
           aria-label="Edit data santri"
           tabIndex={-1}
         >
-          <div className="ui-dialog-panel max-w-md p-5 sm:p-6 space-y-5">
+          <div className="ui-dialog-panel max-w-md p-4 sm:p-6 space-y-4 sm:space-y-5">
             <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
               <h4 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
                 <SquarePen className="w-5 h-5 text-emerald-700" />
@@ -1540,7 +1540,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Kelas Al-Qur'an
@@ -1604,7 +1604,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Nama Wali Santri
@@ -1664,7 +1664,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
           aria-label="Edit akun pengguna"
           tabIndex={-1}
         >
-          <div className="ui-dialog-panel max-w-md p-5 sm:p-6 space-y-5">
+          <div className="ui-dialog-panel max-w-md p-4 sm:p-6 space-y-4 sm:space-y-5">
             <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
               <h4 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
                 <SquarePen className="w-5 h-5 text-emerald-700" />
@@ -1700,7 +1700,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                   <span>Username Login dan Password Superadmin dirahasiakan demi keamanan sistem.</span>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
                       Username Login <span className="text-rose-500">*</span>
@@ -1813,7 +1813,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
           aria-label="Konfirmasi hapus santri"
           tabIndex={-1}
         >
-          <div className="ui-dialog-panel max-w-md p-5 sm:p-6 space-y-5">
+          <div className="ui-dialog-panel max-w-md p-4 sm:p-6 space-y-4 sm:space-y-5">
             <div className="flex items-center gap-3 text-rose-600 pb-2 border-b border-slate-100">
               <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle className="w-5 h-5 text-rose-600" />
@@ -1895,7 +1895,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
           aria-label="Konfirmasi hapus akun pengguna"
           tabIndex={-1}
         >
-          <div className="ui-dialog-panel max-w-md p-5 sm:p-6 space-y-5">
+          <div className="ui-dialog-panel max-w-md p-4 sm:p-6 space-y-4 sm:space-y-5">
             <div className="flex items-center gap-3 text-rose-600 pb-2 border-b border-slate-100">
               <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center flex-shrink-0">
                 <AlertTriangle className="w-5 h-5 text-rose-600" />
@@ -1954,7 +1954,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
           aria-label="Tambah data santri"
           tabIndex={-1}
         >
-          <div className="ui-dialog-panel max-w-md p-5 sm:p-6 space-y-5">
+          <div className="ui-dialog-panel max-w-md p-4 sm:p-6 space-y-4 sm:space-y-5">
             <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
               <h4 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
                 <UserPlus className="w-5 h-5 text-emerald-700" />
@@ -1997,7 +1997,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Kelas Al-Qur'an
@@ -2062,7 +2062,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Nama Wali Santri
@@ -2138,7 +2138,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
           aria-label="Tambah akun pengguna"
           tabIndex={-1}
         >
-          <div className="ui-dialog-panel max-w-md p-5 sm:p-6 space-y-5">
+          <div className="ui-dialog-panel max-w-md p-4 sm:p-6 space-y-4 sm:space-y-5">
             <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-200">
               <h4 className="font-extrabold text-slate-800 text-base flex items-center gap-2">
                 <Shield className="w-5 h-5 text-emerald-700" />
@@ -2182,7 +2182,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-slate-700 mb-1">
                     Role Hak Akses

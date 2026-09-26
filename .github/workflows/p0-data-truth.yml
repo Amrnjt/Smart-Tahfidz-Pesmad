@@ -47,6 +47,9 @@ jobs:
       - name: Verify Binnadzor class model
         run: npx tsx --test tests/binnadzor-class-model.test.ts
 
+      - name: Verify mobile dialog contract
+        run: node --test tests/mobile-dialog-contract.test.mjs
+
       - name: Verify formal academic regressions
         run: node --test tests/formal-education-source.test.mjs tests/academic-history-source.test.mjs tests/formal-promotion-source.test.mjs tests/academic-report-source.test.mjs tests/collective-academic-report-source.test.mjs tests/shared-academic-context-source.test.mjs tests/wali-academic-experience-source.test.mjs tests/santri-academic-experience-source.test.mjs tests/pimpinan-academic-experience-source.test.mjs tests/superadmin-control-center-source.test.mjs tests/cross-role-security-polish-source.test.mjs
 
