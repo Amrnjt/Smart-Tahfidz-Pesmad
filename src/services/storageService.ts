@@ -36,11 +36,6 @@ import {
   type PantauanLiburanSubscriptionRequest,
   type RecentSetoranUpdate
 } from './realtimeService';
-import {
-  consolidateBinnadzorClasses,
-  getKelasPengampuIds,
-  isBinnadzorClass
-} from '../utils/classUtils';
 
 type StudentSetoranRecord = {
   id: string;
@@ -247,177 +242,10 @@ export const storageService = {
   },
 
   getKelasList(): Kelas[] {
-    const normalized = readArrayCache<Kelas>(STORAGE_KEYS.KELAS).map((k) => ({
+    return readArrayCache<Kelas>(STORAGE_KEYS.KELAS).map((k) => ({
       ...k,
-      namaKelas: isBinnadzorClass(k) ? 'Binnadzor' : k.namaKelas,
       tipeKelas: normalizeTipeKelas(k.tipeKelas)
     }));
-    return consolidateBinnadzorClasses(normalized);
-  },
-
-  async consolidateLegacyBinnadzorClasses(): Promise<{
-    changed: boolean;
-    mergedClassCount: number;
-    normalizedSantriCount: number;
-  }> {
-    // This is a one-time master-data migration, so keep it Superadmin-only.
-    this.assertCanManageAccounts();
-    this.assertCanMutate('Gabungkan kelas Binnadzor');
-
-    const [kelasSnap, santriSnap, userSnap] = await Promise.all([
-      getDocs(collection(db, COLLECTIONS.KELAS)),
-      getDocs(collection(db, COLLECTIONS.SANTRI)),
-      getDocs(collection(db, COLLECTIONS.USERS)),
-    ]);
-
-    const rawKelas: Kelas[] = kelasSnap.docs.map(docSnap => {
-      const data = docSnap.data() as Kelas;
-      return { ...data, id: data.id || docSnap.id };
-    });
-    const candidates = rawKelas.filter(isBinnadzorClass);
-    const candidateIds = new Set(candidates.map(kelas => kelas.id));
-    const candidateSantriIds = new Set(
-      candidates.flatMap(kelas => kelas.santriIds || []).filter(Boolean)
-    );
-
-    const rawSantri: Santri[] = santriSnap.docs.map(docSnap => {
-      const data = docSnap.data() as Santri;
-      return { ...data, idSantri: data.idSantri || docSnap.id };
-    });
-    const targetSantriIds = new Set<string>(candidateSantriIds);
-    rawSantri.forEach(santri => {
-      if (normalizeKelas(santri.kelas) === 'Binnadzor') {
-        targetSantriIds.add(santri.idSantri);
-      }
-    });
-
-    if (candidates.length === 0 && targetSantriIds.size === 0) {
-      return { changed: false, mergedClassCount: 0, normalizedSantriCount: 0 };
-    }
-
-    let canonical = candidates.length > 0
-      ? consolidateBinnadzorClasses(rawKelas).find(isBinnadzorClass)
-      : undefined;
-
-    if (!canonical) {
-      const preferredId = 'KLS-BINNADZOR';
-      const idTaken = rawKelas.some(kelas => kelas.id === preferredId);
-      canonical = {
-        id: idTaken ? `${preferredId}-${Date.now()}` : preferredId,
-        namaKelas: 'Binnadzor',
-        tipeKelas: 'Binnadzor',
-        musyrif: '',
-        musyrifIds: [],
-        santriIds: [],
-        silabusMateri: [],
-        createdAt: new Date().toISOString(),
-      };
-    }
-
-    canonical = {
-      ...canonical,
-      namaKelas: 'Binnadzor',
-      tipeKelas: 'Binnadzor',
-      santriIds: Array.from(targetSantriIds),
-    };
-
-    const canonicalId = canonical.id;
-    const removedClassIds = candidates
-      .map(kelas => kelas.id)
-      .filter(id => id !== canonicalId);
-
-    const canonicalSource = candidates.find(kelas => kelas.id === canonicalId);
-    const canonicalSourceSantri = new Set(canonicalSource?.santriIds || []);
-    const membershipChanged =
-      canonicalSourceSantri.size !== targetSantriIds.size
-      || Array.from(targetSantriIds).some(id => !canonicalSourceSantri.has(id));
-
-    const classNeedsRewrite =
-      candidates.length !== 1
-      || !canonicalSource
-      || canonicalSource.namaKelas.trim().toLowerCase() !== 'binnadzor'
-      || String(canonicalSource.tipeKelas || '').trim().toLowerCase() !== 'binnadzor'
-      || membershipChanged;
-
-    const santriToNormalize = rawSantri.filter(
-      santri => targetSantriIds.has(santri.idSantri) && santri.kelas.trim() !== 'Binnadzor'
-    );
-
-    const rawUsers: User[] = userSnap.docs.map(docSnap => {
-      const data = docSnap.data() as User;
-      return { ...data, id: data.id || docSnap.id };
-    });
-    const usersToNormalize = rawUsers.filter(
-      user => Boolean(user.kelasId) && removedClassIds.includes(user.kelasId || '')
-    );
-
-    const changed =
-      classNeedsRewrite
-      || removedClassIds.length > 0
-      || santriToNormalize.length > 0
-      || usersToNormalize.length > 0;
-
-    if (!changed) {
-      return {
-        changed: false,
-        mergedClassCount: candidates.length,
-        normalizedSantriCount: 0,
-      };
-    }
-
-    const operationCount =
-      1 + removedClassIds.length + santriToNormalize.length + usersToNormalize.length;
-    if (operationCount > 450) {
-      throw new Error('Migrasi kelas Binnadzor terlalu besar untuk satu operasi Cloud.');
-    }
-
-    const batch = writeBatch(db);
-    batch.set(doc(db, COLLECTIONS.KELAS, canonicalId), cleanForFirestore(canonical));
-    removedClassIds.forEach(id => {
-      batch.delete(doc(db, COLLECTIONS.KELAS, id));
-    });
-    santriToNormalize.forEach(santri => {
-      batch.set(
-        doc(db, COLLECTIONS.SANTRI, santri.idSantri),
-        { kelas: 'Binnadzor' },
-        { merge: true }
-      );
-    });
-    usersToNormalize.forEach(user => {
-      batch.set(
-        doc(db, COLLECTIONS.USERS, user.id),
-        { kelasId: canonicalId },
-        { merge: true }
-      );
-    });
-    await batch.commit();
-
-    const nextKelas = [
-      ...rawKelas.filter(kelas => !candidateIds.has(kelas.id)),
-      canonical,
-    ];
-    writeArrayCache(STORAGE_KEYS.KELAS, nextKelas);
-
-    const nextSantri = rawSantri.map(santri =>
-      targetSantriIds.has(santri.idSantri)
-        ? { ...santri, kelas: 'Binnadzor' }
-        : santri
-    );
-    writeArrayCache(STORAGE_KEYS.SANTRI, nextSantri);
-
-    const removedIdSet = new Set(removedClassIds);
-    const nextUsers = rawUsers.map(user =>
-      user.kelasId && removedIdSet.has(user.kelasId)
-        ? { ...user, kelasId: canonicalId }
-        : user
-    );
-    writeArrayCache(STORAGE_KEYS.USERS, nextUsers);
-
-    return {
-      changed: true,
-      mergedClassCount: Math.max(1, candidates.length),
-      normalizedSantriCount: santriToNormalize.length,
-    };
   },
 
   getAppConfig(): AppConfig {
@@ -1238,13 +1066,7 @@ export const storageService = {
           kelasList.push(normalized);
         }
       });
-      const consolidatedKelas = consolidateBinnadzorClasses(
-        kelasList.map(kelas => ({
-          ...kelas,
-          namaKelas: isBinnadzorClass(kelas) ? 'Binnadzor' : kelas.namaKelas,
-        }))
-      );
-      writeArrayCache(STORAGE_KEYS.KELAS, consolidatedKelas);
+      writeArrayCache(STORAGE_KEYS.KELAS, kelasList);
 
       const config = appConfigSnap.exists() ? appConfigSnap.data() as AppConfig : createDefaultAppConfig();
       localStorage.setItem(STORAGE_KEYS.APP_CONFIG, JSON.stringify(config));

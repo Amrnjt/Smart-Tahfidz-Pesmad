@@ -1551,7 +1551,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
                   >
                     <option value="Tahfidz">Tahfidz</option>
-                    <option value="Binnadzor">Binnadzor</option>
+                    <option value="Binnadzor A">Binnadzor A</option>
+                    <option value="Binnadzor B">Binnadzor B</option>
                     <option value="Jilid">Jilid</option>
                     <option value="Kelas Istimewa">Kelas Istimewa</option>
                   </select>
@@ -2008,7 +2009,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
                     className="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:bg-white focus:outline-none"
                   >
                     <option value="Tahfidz">Tahfidz</option>
-                    <option value="Binnadzor">Binnadzor</option>
+                    <option value="Binnadzor A">Binnadzor A</option>
+                    <option value="Binnadzor B">Binnadzor B</option>
                     <option value="Jilid">Jilid</option>
                     <option value="Kelas Istimewa">Kelas Istimewa</option>
                   </select>
