@@ -320,7 +320,7 @@ textarea {
 .ui-dialog-panel,
 .ui-dialog-frame {
   width: 100%;
-  max-height: min(76dvh, 36rem);
+  max-height: min(72dvh, 34rem);
   background: var(--surface-primary);
   border: 1px solid var(--stroke-primary);
   border-radius: var(--radius-major);

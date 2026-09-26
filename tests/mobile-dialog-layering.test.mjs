@@ -15,7 +15,7 @@ test('page transition does not leave transform on the page content', () => {
 
 test('mobile dialogs float above persistent app chrome with compact height', () => {
   assert.match(css, /\.ui-dialog-overlay[\s\S]*z-index: 100;/);
-  assert.match(css, /max-height: min\(76dvh, 36rem\);/);
+  assert.match(css, /max-height: min\(72dvh, 34rem\);/);
 });
 
 test('add santri keeps header and actions outside its scrollable body', () => {
@@ -23,6 +23,9 @@ test('add santri keeps header and actions outside its scrollable body', () => {
   const end = santri.indexOf('{/* Modal Tambah User Akun Baru */}', start);
   assert.ok(start >= 0 && end > start);
   const block = santri.slice(start, end);
+  assert.match(santri, /import \{ createPortal \} from 'react-dom';/);
+  assert.match(block, /createPortal\(/);
+  assert.match(block, /document\.body/);
   assert.match(block, /ui-dialog-frame max-w-md flex flex-col/);
   assert.match(block, /ui-dialog-header/);
   assert.match(block, /ui-dialog-body min-h-0 flex-1 overflow-y-auto/);

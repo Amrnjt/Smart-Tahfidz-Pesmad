@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   KELAS_FORMAL_OPTIONS,
   SATUAN_PENDIDIKAN_FORMAL_OPTIONS,
@@ -1945,7 +1946,7 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
       )}
 
       {/* Modal Tambah Santri */}
-      {showAddModal && (
+      {showAddModal && createPortal(
         <div
           ref={addSantriDialogRef}
           className="ui-dialog-overlay"
@@ -2127,7 +2128,8 @@ export const SantriManagement: React.FC<SantriManagementProps> = ({
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Modal Tambah User Akun Baru */}
