@@ -1,6 +1,6 @@
 /* Page transitions animate live content; navigation stays mounted. */
 :root {
-  --chrome-local-page-duration: 260ms;
+  --chrome-local-page-duration: 320ms;
   --chrome-transition-ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -37,7 +37,7 @@
 }
 
 @media (max-width: 767px) {
-  :root { --chrome-local-page-duration: 240ms; }
+  :root { --chrome-local-page-duration: 300ms; }
 }
 
 @media (prefers-reduced-motion: reduce) {
