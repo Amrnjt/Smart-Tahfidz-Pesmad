@@ -78,34 +78,59 @@ function setDraw(pdf: jsPDF, c: [number, number, number]) { pdf.setDrawColor(c[0
  */
 function drawQuranMark(pdf: jsPDF, x: number, y: number, w: number, h: number): void {
   const midX = x + (w / 2);
-  const topY = y + 1;
-  const bottomY = y + h - 1;
+  const topY = y + 1.3;
+  const bottomY = y + h - 1.2;
+  const pageInset = 0.75;
+  const pageTop = topY + 0.7;
 
+  // Solid open-book emblem: two clean page planes meeting at a visible spine.
+  setFill(pdf, C.goldLight);
   setDraw(pdf, C.goldLight);
-  pdf.setLineWidth(0.55);
+  pdf.setLineWidth(0.35);
 
-  // Open-book silhouette: two pages meeting at the center/spine.
-  pdf.line(midX, topY + 0.7, x + 0.9, topY);
-  pdf.line(x + 0.9, topY, x + 0.9, bottomY - 1.2);
-  pdf.line(x + 0.9, bottomY - 1.2, midX, bottomY);
-  pdf.line(midX, bottomY, midX, topY + 0.7);
+  pdf.lines(
+    [
+      [midX - x - 0.55, 0.7],
+      [-(midX - x - 1.4), -0.7],
+      [-0.35, bottomY - pageTop - 0.8],
+      [midX - x - 1.3, 1.15],
+      [0.5, -(bottomY - topY - 0.35)]
+    ],
+    x + pageInset,
+    pageTop,
+    [1, 1],
+    'FD',
+    true
+  );
 
-  pdf.line(midX, topY + 0.7, x + w - 0.9, topY);
-  pdf.line(x + w - 0.9, topY, x + w - 0.9, bottomY - 1.2);
-  pdf.line(x + w - 0.9, bottomY - 1.2, midX, bottomY);
+  pdf.lines(
+    [
+      [w - (midX - x) - 0.55, -0.7],
+      [0.35, bottomY - pageTop - 0.8],
+      [-(w - (midX - x) - 1.3), 1.15],
+      [-0.5, -(bottomY - topY - 0.35)]
+    ],
+    midX + 0.55,
+    pageTop + 0.7,
+    [1, 1],
+    'FD',
+    true
+  );
 
-  // Page details keep the icon recognizable at small print size.
+  // Dark inner gutter gives the mark a clear Qur'an/book silhouette at small size.
+  setDraw(pdf, C.emeraldDeep);
+  pdf.setLineWidth(0.5);
+  pdf.line(midX, topY + 1.0, midX, bottomY - 0.6);
+
+  // Minimal page fold accents; intentionally sparse for clean printing.
+  setDraw(pdf, [255, 255, 255]);
   pdf.setLineWidth(0.28);
-  pdf.line(x + 2.0, topY + 2.4, midX - 0.7, topY + 2.8);
-  pdf.line(x + 2.0, topY + 4.2, midX - 0.7, topY + 4.6);
-  pdf.line(x + 2.0, topY + 6.0, midX - 0.7, topY + 6.4);
-  pdf.line(midX + 0.7, topY + 2.8, x + w - 2.0, topY + 2.4);
-  pdf.line(midX + 0.7, topY + 4.6, x + w - 2.0, topY + 4.2);
-  pdf.line(midX + 0.7, topY + 6.4, x + w - 2.0, topY + 6.0);
+  pdf.line(x + 2.0, topY + 3.0, midX - 1.0, topY + 3.5);
+  pdf.line(midX + 1.0, topY + 3.5, x + w - 2.0, topY + 3.0);
 
-  // Small bookmark at the lower spine.
-  pdf.setFillColor(C.goldLight[0], C.goldLight[1], C.goldLight[2]);
-  pdf.triangle(midX - 0.65, bottomY - 0.6, midX + 0.65, bottomY - 0.6, midX, bottomY + 0.7, 'F');
+  // Compact bookmark under the spine.
+  setFill(pdf, C.gold);
+  pdf.triangle(midX - 0.8, bottomY - 0.2, midX + 0.8, bottomY - 0.2, midX, bottomY + 1.25, 'F');
 }
 
 function drawSectionHeader(pdf: jsPDF, title: string, margin: number, contentW: number, y: number): number {
@@ -254,8 +279,8 @@ export function useGeneratePDF() {
       pdf.setGState(pdf.GState({ opacity: 1 }));
 
       setFill(pdf, C.emerald);
-      pdf.roundedRect(margin + 6, y + 7, 10, 14, 1, 1, 'F');
-      drawQuranMark(pdf, margin + 6.6, y + 8.1, 8.8, 11.8);
+      pdf.roundedRect(margin + 5.5, y + 6.5, 11, 15, 1.2, 1.2, 'F');
+      drawQuranMark(pdf, margin + 6.0, y + 7.2, 10, 13.2);
 
       // Title
       setText(pdf, C.white);
