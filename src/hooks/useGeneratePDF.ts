@@ -78,59 +78,92 @@ function setDraw(pdf: jsPDF, c: [number, number, number]) { pdf.setDrawColor(c[0
  */
 function drawQuranMark(pdf: jsPDF, x: number, y: number, w: number, h: number): void {
   const midX = x + (w / 2);
-  const topY = y + 1.3;
-  const bottomY = y + h - 1.2;
-  const pageInset = 0.75;
-  const pageTop = topY + 0.7;
 
-  // Solid open-book emblem: two clean page planes meeting at a visible spine.
+  const drawPolygon = (
+    points: Array<[number, number]>,
+    style: 'S' | 'F' | 'FD' = 'S'
+  ) => {
+    if (points.length < 3) return;
+    const relative = points.slice(1).map((point, index) => [
+      point[0] - points[index][0],
+      point[1] - points[index][1]
+    ]);
+    pdf.lines(relative, points[0][0], points[0][1], [1, 1], style, true);
+  };
+
+  // Rehal / Qur'an stand, inspired by the supplied reference.
+  // Draw it first so the open-book silhouette sits naturally in front.
+  setDraw(pdf, C.gold);
+  pdf.setLineWidth(1.15);
+  pdf.line(x + 1.0, y + h - 0.8, x + w - 1.2, y + h - 4.0);
+  pdf.line(x + w - 1.0, y + h - 0.8, x + 1.2, y + h - 4.0);
+
+  // Crescent: gold disc with an emerald cut-out keeps the icon fully vector.
   setFill(pdf, C.goldLight);
+  pdf.circle(midX - 0.55, y + 2.25, 1.55, 'F');
+  setFill(pdf, C.emeraldDark);
+  pdf.circle(midX - 0.05, y + 1.85, 1.32, 'F');
+
+  // Five-point star beside the crescent.
+  const starCx = midX + 1.55;
+  const starCy = y + 2.0;
+  const starOuter = 0.82;
+  const starInner = 0.34;
+  const starPoints: Array<[number, number]> = [];
+  for (let i = 0; i < 10; i++) {
+    const angle = (-Math.PI / 2) + (i * Math.PI / 5);
+    const radius = i % 2 === 0 ? starOuter : starInner;
+    starPoints.push([
+      starCx + Math.cos(angle) * radius,
+      starCy + Math.sin(angle) * radius
+    ]);
+  }
+  setFill(pdf, C.goldLight);
+  drawPolygon(starPoints, 'F');
+
+  // Open Qur'an silhouette: bold outer pages, central spine, and sparse page rules.
   setDraw(pdf, C.goldLight);
-  pdf.setLineWidth(0.35);
+  pdf.setLineWidth(0.62);
 
-  pdf.lines(
-    [
-      [midX - x - 0.55, 0.7],
-      [-(midX - x - 1.4), -0.7],
-      [-0.35, bottomY - pageTop - 0.8],
-      [midX - x - 1.3, 1.15],
-      [0.5, -(bottomY - topY - 0.35)]
-    ],
-    x + pageInset,
-    pageTop,
-    [1, 1],
-    'FD',
-    true
-  );
+  const leftPage: Array<[number, number]> = [
+    [midX - 0.2, y + 5.55],
+    [x + 1.45, y + 4.72],
+    [x + 0.72, y + 9.35],
+    [midX - 0.2, y + 10.85]
+  ];
+  const rightPage: Array<[number, number]> = [
+    [midX + 0.2, y + 5.55],
+    [x + w - 1.45, y + 4.72],
+    [x + w - 0.72, y + 9.35],
+    [midX + 0.2, y + 10.85]
+  ];
+  drawPolygon(leftPage, 'S');
+  drawPolygon(rightPage, 'S');
 
-  pdf.lines(
-    [
-      [w - (midX - x) - 0.55, -0.7],
-      [0.35, bottomY - pageTop - 0.8],
-      [-(w - (midX - x) - 1.3), 1.15],
-      [-0.5, -(bottomY - topY - 0.35)]
-    ],
-    midX + 0.55,
-    pageTop + 0.7,
-    [1, 1],
-    'FD',
-    true
-  );
+  // Heavy lower edge reproduces the strong book silhouette from the reference.
+  pdf.setLineWidth(0.92);
+  pdf.line(x + 0.72, y + 9.35, midX, y + 11.18);
+  pdf.line(midX, y + 11.18, x + w - 0.72, y + 9.35);
 
-  // Dark inner gutter gives the mark a clear Qur'an/book silhouette at small size.
-  setDraw(pdf, C.emeraldDeep);
-  pdf.setLineWidth(0.5);
-  pdf.line(midX, topY + 1.0, midX, bottomY - 0.6);
+  // Central gutter.
+  setDraw(pdf, C.gold);
+  pdf.setLineWidth(0.44);
+  pdf.line(midX, y + 5.45, midX, y + 10.78);
 
-  // Minimal page fold accents; intentionally sparse for clean printing.
-  setDraw(pdf, [255, 255, 255]);
-  pdf.setLineWidth(0.28);
-  pdf.line(x + 2.0, topY + 3.0, midX - 1.0, topY + 3.5);
-  pdf.line(midX + 1.0, topY + 3.5, x + w - 2.0, topY + 3.0);
+  // Minimal page accents; enough to read as Qur'an pages even at header size.
+  setDraw(pdf, C.goldLight);
+  pdf.setLineWidth(0.26);
+  pdf.line(x + 1.62, y + 6.15, midX - 0.82, y + 6.62);
+  pdf.line(x + 1.48, y + 7.03, midX - 0.82, y + 7.48);
+  pdf.line(x + 1.34, y + 7.92, midX - 0.82, y + 8.34);
 
-  // Compact bookmark under the spine.
+  pdf.line(midX + 0.82, y + 6.62, x + w - 1.62, y + 6.15);
+  pdf.line(midX + 0.82, y + 7.48, x + w - 1.48, y + 7.03);
+  pdf.line(midX + 0.82, y + 8.34, x + w - 1.34, y + 7.92);
+
+  // Small lower point visually ties the book to the crossed stand.
   setFill(pdf, C.gold);
-  pdf.triangle(midX - 0.8, bottomY - 0.2, midX + 0.8, bottomY - 0.2, midX, bottomY + 1.25, 'F');
+  pdf.triangle(midX - 0.48, y + 10.86, midX + 0.48, y + 10.86, midX, y + 11.45, 'F');
 }
 
 function drawSectionHeader(pdf: jsPDF, title: string, margin: number, contentW: number, y: number): number {
@@ -278,8 +311,11 @@ export function useGeneratePDF() {
       pdf.roundedRect(margin + 4, y + 5, 14, 18, 1.5, 1.5, 'F');
       pdf.setGState(pdf.GState({ opacity: 1 }));
 
-      setFill(pdf, C.emerald);
-      pdf.roundedRect(margin + 5.5, y + 6.5, 11, 15, 1.2, 1.2, 'F');
+      // Dark emerald badge + warm-gold mark, matching the report palette.
+      setFill(pdf, C.emeraldDark);
+      setDraw(pdf, C.gold);
+      pdf.setLineWidth(0.25);
+      pdf.roundedRect(margin + 5.5, y + 6.5, 11, 15, 1.2, 1.2, 'FD');
       drawQuranMark(pdf, margin + 6.0, y + 7.2, 10, 13.2);
 
       // Title
