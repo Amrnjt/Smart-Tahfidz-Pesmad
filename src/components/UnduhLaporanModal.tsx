@@ -25,7 +25,9 @@ import {
   CircleAlert as AlertCircle,
   Loader as Loader2,
   Calendar,
-  CalendarRange
+  CalendarRange,
+  Search,
+  Users
 } from 'lucide-react';
 import { useAccessibleDialog } from '../hooks/useAccessibleDialog';
 
@@ -76,6 +78,35 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
     : null;
 
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
+  const [santriSearch, setSantriSearch] = useState('');
+  const [isSantriSearchOpen, setIsSantriSearchOpen] = useState(false);
+
+  const selectedSantri = useMemo(
+    () => santriList.find(s => s.idSantri === selectedSantriId) || null,
+    [santriList, selectedSantriId]
+  );
+
+  const filteredSantri = useMemo(() => {
+    const query = santriSearch.trim().toLocaleLowerCase('id-ID');
+    const sorted = [...santriList].sort((a, b) =>
+      a.namaSantri.localeCompare(b.namaSantri, 'id-ID', { sensitivity: 'base' })
+    );
+
+    if (!query) return sorted;
+
+    return sorted.filter(s => {
+      const haystack = [
+        s.namaSantri,
+        s.idSantri,
+        s.kelas
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase('id-ID');
+
+      return haystack.includes(query);
+    });
+  }, [santriList, santriSearch]);
 
   const reportSantri = isViewOnly
     ? targetSantri
@@ -281,23 +312,130 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
           )}
 
           {!isViewOnly && santriList.length > 0 && (
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            <div
+              onFocusCapture={() => setIsSantriSearchOpen(true)}
+              onBlurCapture={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+                  setIsSantriSearchOpen(false);
+                }
+              }}
+            >
+              <label
+                htmlFor="report-santri-search"
+                className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5"
+              >
                 Pilih Santri
               </label>
 
-              <select
-                value={selectedSantriId}
-                onChange={e => setSelectedSantriId(e.target.value)}
-                className="w-full min-w-0 py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="">Semua Santri (Gabungan)</option>
-                {santriList.map(s => (
-                  <option key={s.idSantri} value={s.idSantri}>
-                    {s.namaSantri} ({s.idSantri})
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <Search
+                  className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 pointer-events-none"
+                  aria-hidden="true"
+                />
+                <input
+                  id="report-santri-search"
+                  type="search"
+                  value={santriSearch}
+                  onChange={(event) => {
+                    setSantriSearch(event.target.value);
+                    setSelectedSantriId('');
+                    setIsSantriSearchOpen(true);
+                  }}
+                  onFocus={() => setIsSantriSearchOpen(true)}
+                  placeholder="Cari nama, ID/NIS, atau kelas..."
+                  autoComplete="off"
+                  aria-expanded={isSantriSearchOpen}
+                  aria-controls="report-santri-search-results"
+                  className="w-full min-w-0 py-2.5 pl-10 pr-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 placeholder:text-slate-400 placeholder:font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              {selectedSantri && (
+                <div className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-bold text-emerald-950">
+                      {selectedSantri.namaSantri}
+                    </p>
+                    <p className="truncate text-[11px] text-emerald-700">
+                      {selectedSantri.idSantri}{selectedSantri.kelas ? ` • ${selectedSantri.kelas}` : ''}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedSantriId('');
+                      setSantriSearch('');
+                      setIsSantriSearchOpen(true);
+                    }}
+                    className="shrink-0 rounded-lg px-2.5 py-1.5 text-[11px] font-bold text-emerald-800 hover:bg-emerald-100"
+                  >
+                    Ganti
+                  </button>
+                </div>
+              )}
+
+              {isSantriSearchOpen && (
+                <div
+                  id="report-santri-search-results"
+                  className="mt-2 max-h-56 overflow-y-auto rounded-xl border border-slate-200 bg-white shadow-sm"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedSantriId('');
+                      setSantriSearch('');
+                      setIsSantriSearchOpen(false);
+                    }}
+                    className={`flex w-full items-center gap-3 border-b border-slate-100 px-3 py-2.5 text-left transition hover:bg-slate-50 ${!selectedSantriId ? 'bg-emerald-50/60' : ''}`}
+                  >
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600">
+                      <Users className="h-4 w-4" aria-hidden="true" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-800">Semua Santri (Gabungan)</p>
+                      <p className="text-[11px] text-slate-500">Cetak laporan gabungan seluruh santri</p>
+                    </div>
+                  </button>
+
+                  {filteredSantri.length > 0 ? (
+                    filteredSantri.map(s => (
+                      <button
+                        key={s.idSantri}
+                        type="button"
+                        onClick={() => {
+                          setSelectedSantriId(s.idSantri);
+                          setSantriSearch(`${s.namaSantri} (${s.idSantri})`);
+                          setIsSantriSearchOpen(false);
+                        }}
+                        className={`flex w-full items-start justify-between gap-3 border-b border-slate-100 px-3 py-2.5 text-left transition last:border-b-0 hover:bg-emerald-50/60 ${selectedSantriId === s.idSantri ? 'bg-emerald-50' : ''}`}
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-bold text-slate-800">{s.namaSantri}</p>
+                          <p className="truncate text-[11px] text-slate-500">
+                            {s.idSantri}{s.kelas ? ` • ${s.kelas}` : ''}
+                          </p>
+                        </div>
+                        {selectedSantriId === s.idSantri && (
+                          <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" aria-hidden="true" />
+                        )}
+                      </button>
+                    ))
+                  ) : (
+                    <div className="px-4 py-5 text-center">
+                      <p className="text-xs font-bold text-slate-700">Santri tidak ditemukan</p>
+                      <p className="mt-1 text-[11px] text-slate-500">
+                        Coba cari dengan nama, ID/NIS, atau nama kelas lain.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!selectedSantri && !isSantriSearchOpen && (
+                <p className="mt-1.5 text-[11px] text-slate-500">
+                  Belum memilih santri berarti laporan gabungan semua santri.
+                </p>
+              )}
             </div>
           )}
 

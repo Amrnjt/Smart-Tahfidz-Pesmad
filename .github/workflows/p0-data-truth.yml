@@ -56,6 +56,9 @@ jobs:
       - name: Verify monthly PDF header
         run: node --test tests/monthly-pdf-header.test.mjs
 
+      - name: Verify PDF santri search
+        run: node --test tests/pdf-santri-search.test.mjs
+
       - name: Verify formal academic regressions
         run: node --test tests/formal-education-source.test.mjs tests/academic-history-source.test.mjs tests/formal-promotion-source.test.mjs tests/academic-report-source.test.mjs tests/collective-academic-report-source.test.mjs tests/shared-academic-context-source.test.mjs tests/wali-academic-experience-source.test.mjs tests/santri-academic-experience-source.test.mjs tests/pimpinan-academic-experience-source.test.mjs tests/superadmin-control-center-source.test.mjs tests/cross-role-security-polish-source.test.mjs
 
