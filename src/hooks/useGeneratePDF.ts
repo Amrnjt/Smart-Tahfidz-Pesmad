@@ -72,6 +72,42 @@ function setFill(pdf: jsPDF, c: [number, number, number]) { pdf.setFillColor(c[0
 function setText(pdf: jsPDF, c: [number, number, number]) { pdf.setTextColor(c[0], c[1], c[2]); }
 function setDraw(pdf: jsPDF, c: [number, number, number]) { pdf.setDrawColor(c[0], c[1], c[2]); }
 
+/**
+ * Compact Al-Qur'an mark for the report header.
+ * Drawn as vector paths so it stays crisp on print/PDF without an external image asset.
+ */
+function drawQuranMark(pdf: jsPDF, x: number, y: number, w: number, h: number): void {
+  const midX = x + (w / 2);
+  const topY = y + 1;
+  const bottomY = y + h - 1;
+
+  setDraw(pdf, C.goldLight);
+  pdf.setLineWidth(0.55);
+
+  // Open-book silhouette: two pages meeting at the center/spine.
+  pdf.line(midX, topY + 0.7, x + 0.9, topY);
+  pdf.line(x + 0.9, topY, x + 0.9, bottomY - 1.2);
+  pdf.line(x + 0.9, bottomY - 1.2, midX, bottomY);
+  pdf.line(midX, bottomY, midX, topY + 0.7);
+
+  pdf.line(midX, topY + 0.7, x + w - 0.9, topY);
+  pdf.line(x + w - 0.9, topY, x + w - 0.9, bottomY - 1.2);
+  pdf.line(x + w - 0.9, bottomY - 1.2, midX, bottomY);
+
+  // Page details keep the icon recognizable at small print size.
+  pdf.setLineWidth(0.28);
+  pdf.line(x + 2.0, topY + 2.4, midX - 0.7, topY + 2.8);
+  pdf.line(x + 2.0, topY + 4.2, midX - 0.7, topY + 4.6);
+  pdf.line(x + 2.0, topY + 6.0, midX - 0.7, topY + 6.4);
+  pdf.line(midX + 0.7, topY + 2.8, x + w - 2.0, topY + 2.4);
+  pdf.line(midX + 0.7, topY + 4.6, x + w - 2.0, topY + 4.2);
+  pdf.line(midX + 0.7, topY + 6.4, x + w - 2.0, topY + 6.0);
+
+  // Small bookmark at the lower spine.
+  pdf.setFillColor(C.goldLight[0], C.goldLight[1], C.goldLight[2]);
+  pdf.triangle(midX - 0.65, bottomY - 0.6, midX + 0.65, bottomY - 0.6, midX, bottomY + 0.7, 'F');
+}
+
 function drawSectionHeader(pdf: jsPDF, title: string, margin: number, contentW: number, y: number): number {
   // Icon box
   setFill(pdf, C.emerald);
@@ -211,7 +247,7 @@ export function useGeneratePDF() {
       setFill(pdf, C.gold);
       pdf.roundedRect(margin, y + 27, contentW, 1.2, 0, 0, 'F');
 
-      // Logo placeholder box
+      // Al-Qur'an mark — vector, crisp on screen and print.
       setFill(pdf, [255, 255, 255]);
       pdf.setGState(pdf.GState({ opacity: 0.15 }));
       pdf.roundedRect(margin + 4, y + 5, 14, 18, 1.5, 1.5, 'F');
@@ -219,10 +255,7 @@ export function useGeneratePDF() {
 
       setFill(pdf, C.emerald);
       pdf.roundedRect(margin + 6, y + 7, 10, 14, 1, 1, 'F');
-      setText(pdf, C.goldLight);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(14);
-      pdf.text('Q', margin + 11, y + 15, { align: 'center' });
+      drawQuranMark(pdf, margin + 6.6, y + 8.1, 8.8, 11.8);
 
       // Title
       setText(pdf, C.white);
