@@ -465,10 +465,129 @@ export function useGeneratePDF() {
         }
       }
 
-      // ════════ GRAFIK PROGRES ════════
+      // ════════ GRAFIK PROGRES BERDASARKAN WAKTU ════════
       if (data.options.includeChart && allPeriod.length > 0) {
+        if (y > pageH - 62) { pdf.addPage(); y = margin; }
+        y = drawSectionHeader(pdf, 'Tren Progres Setoran', margin, contentW, y);
+
+        const trendBuckets: { label: string; detail: string; value: number }[] = [];
+
+        if (data.periodRange) {
+          let m = data.periodRange.startMonth;
+          let yr = data.periodRange.startYear;
+
+          while (true) {
+            const value = allPeriod.filter(record => {
+              const parsed = parseDateSafe(record.timestamp);
+              return parsed.getFullYear() === yr && parsed.getMonth() === m;
+            }).length;
+
+            trendBuckets.push({
+              label: `${NAMA_BULAN[m].slice(0, 3)} ${String(yr).slice(-2)}`,
+              detail: `${NAMA_BULAN[m]} ${yr}`,
+              value
+            });
+
+            if (yr === data.periodRange.endYear && m === data.periodRange.endMonth) break;
+            m++;
+            if (m > 11) {
+              m = 0;
+              yr++;
+            }
+          }
+        } else {
+          const daysInMonth = new Date(data.period.year, data.period.month + 1, 0).getDate();
+          let weekIndex = 1;
+
+          for (let startDay = 1; startDay <= daysInMonth; startDay += 7) {
+            const endDay = Math.min(startDay + 6, daysInMonth);
+            const value = allPeriod.filter(record => {
+              const parsed = parseDateSafe(record.timestamp);
+              return parsed.getFullYear() === data.period.year
+                && parsed.getMonth() === data.period.month
+                && parsed.getDate() >= startDay
+                && parsed.getDate() <= endDay;
+            }).length;
+
+            trendBuckets.push({
+              label: `M${weekIndex}`,
+              detail: `${startDay}–${endDay} ${NAMA_BULAN[data.period.month].slice(0, 3)}`,
+              value
+            });
+            weekIndex++;
+          }
+        }
+
+        const trendChartH = 42;
+        const trendTop = y;
+        const plotX = margin + 13;
+        const plotY = trendTop + 6;
+        const plotW = contentW - 18;
+        const plotH = trendChartH - 17;
+        const trendMax = Math.max(...trendBuckets.map(bucket => bucket.value), 1);
+
+        setFill(pdf, C.slateBg);
+        pdf.roundedRect(margin, trendTop, contentW, trendChartH, 2, 2, 'F');
+
+        setText(pdf, C.slateMid);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(6.5);
+        pdf.text(
+          data.periodRange ? 'Jumlah setoran per bulan' : 'Jumlah setoran per minggu',
+          margin + 3,
+          trendTop + 4
+        );
+
+        // Grid horizontal + label skala.
+        setDraw(pdf, C.slateBorder);
+        pdf.setLineWidth(0.2);
+        [0, 0.5, 1].forEach(ratio => {
+          const gy = plotY + plotH - (plotH * ratio);
+          pdf.line(plotX, gy, plotX + plotW, gy);
+
+          setText(pdf, C.slateLight);
+          pdf.setFontSize(5.5);
+          pdf.text(String(Math.round(trendMax * ratio)), plotX - 2, gy + 1.5, { align: 'right' });
+        });
+
+        const pointCount = trendBuckets.length;
+        const pointGap = pointCount > 1 ? plotW / (pointCount - 1) : 0;
+        const points = trendBuckets.map((bucket, index) => {
+          const px = pointCount > 1 ? plotX + (index * pointGap) : plotX + (plotW / 2);
+          const py = plotY + plotH - ((bucket.value / trendMax) * plotH);
+          return { ...bucket, x: px, y: py };
+        });
+
+        setDraw(pdf, C.emerald);
+        pdf.setLineWidth(0.7);
+        for (let i = 1; i < points.length; i++) {
+          pdf.line(points[i - 1].x, points[i - 1].y, points[i].x, points[i].y);
+        }
+
+        const labelEvery = Math.max(1, Math.ceil(points.length / 10));
+        points.forEach((point, index) => {
+          setFill(pdf, C.emerald);
+          pdf.circle(point.x, point.y, 1.25, 'F');
+
+          setText(pdf, C.emeraldDeep);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(6);
+          pdf.text(String(point.value), point.x, Math.max(trendTop + 7, point.y - 2), { align: 'center' });
+
+          const showLabel = index % labelEvery === 0 || index === points.length - 1;
+          if (showLabel) {
+            setText(pdf, C.slateLight);
+            pdf.setFont('helvetica', 'normal');
+            pdf.setFontSize(points.length > 10 ? 4.8 : 5.5);
+            pdf.text(point.label, point.x, trendTop + trendChartH - 3, { align: 'center' });
+          }
+        });
+
+        y += trendChartH + 5;
+
+        // ════════ RINGKASAN AKTIVITAS & EVALUASI ════════
         if (y > pageH - 55) { pdf.addPage(); y = margin; }
-        y = drawSectionHeader(pdf, 'Grafik Aktivitas & Evaluasi', margin, contentW, y);
+        y = drawSectionHeader(pdf, 'Ringkasan Aktivitas & Evaluasi', margin, contentW, y);
 
         const chartH = 38;
         setFill(pdf, C.slateBg);
