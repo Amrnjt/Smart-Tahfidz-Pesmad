@@ -8,7 +8,7 @@ const boundary = readFileSync(new URL('../src/components/AppErrorBoundary.tsx', 
 const sw = readFileSync(new URL('../public/sw.js', import.meta.url), 'utf8');
 
 test('installed app registers a service worker and handles Vite preload errors', () => {
-  assert.match(indexHtml, /serviceWorker\.register\('\/sw\.js'/);
+  assert.match(indexHtml, /serviceWorker[\s\S]*\.register\('\/sw\.js'/);
   assert.match(indexHtml, /vite:preloadError/);
   assert.match(indexHtml, /pesmad_pwa_recovery_v1/);
   assert.match(indexHtml, /RECOVERY_WINDOW_MS = 45000/);
