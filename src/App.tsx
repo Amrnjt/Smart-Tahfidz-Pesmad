@@ -435,6 +435,7 @@ export default function App() {
                 pembelajaranRecords={pembelajaranRecords}
                 onDataChanged={refreshData}
                 santriList={santriList}
+                kelasList={kelasList}
                 onNotify={notify}
               />
             )}
