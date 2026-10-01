@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import type jsPDF from 'jspdf';
 import { ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri, User } from '../types';
 import { formatTanggalLengkap, parseDateSafe } from '../utils/dateFormatter';
-import { getClassGroup, isNonTahfidzClass } from '../utils/classUtils';
+import { isNonTahfidzClass } from '../utils/classUtils';
 
 export interface ReportOptions {
   includeIdentity: boolean;
@@ -26,6 +26,7 @@ export interface ReportPeriodRange {
 
 export interface ReportData {
   santri: Santri | null;
+  kelasNama?: string;
   currentUser: User;
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
@@ -290,9 +291,15 @@ export function useGeneratePDF() {
       const mengulangCount = allPeriod.filter(r => r.nilai === 'Mengulang').length;
       const totalSetoran = allPeriod.length;
 
-      const santriName = data.santri?.namaSantri || data.currentUser.nama || 'Santri';
-      const santriId = data.santri?.idSantri || data.currentUser.idSantri || data.currentUser.username || '-';
-      const santriKelas = getClassGroup(data.santri?.kelas) || '-';
+      const normalizedReportRole = String(data.currentUser.role || '').trim().toLowerCase();
+      const isCombinedStaffReport = !data.santri && normalizedReportRole !== 'wali' && normalizedReportRole !== 'santri';
+      const santriName = isCombinedStaffReport
+        ? 'Semua Santri (Gabungan)'
+        : data.santri?.namaSantri || data.currentUser.nama || 'Santri';
+      const santriId = isCombinedStaffReport
+        ? '-'
+        : data.santri?.idSantri || data.currentUser.idSantri || data.currentUser.username || '-';
+      const santriKelas = data.kelasNama || data.santri?.kelas || '-';
       const santriTarget = data.santri?.targetHafalan || '-';
       const isNonTahfidz = isNonTahfidzClass(data.santri?.kelas) || periodPembelajaran.length > 0 || (periodBinnadzor.length > 0 && periodZiyadah.length === 0);
 
