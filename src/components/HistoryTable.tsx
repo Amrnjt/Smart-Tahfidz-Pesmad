@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useState, useMemo, useEffect } from 'react';
-import { User, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri, PredikatNilai, PREDIKAT_NILAI_OPTIONS, CombinedHistoryItem } from '../types';
+import { User, ZiyadahRecord, MurojaahRecord, BinnadzorRecord, PembelajaranRecord, Santri, Kelas, PredikatNilai, PREDIKAT_NILAI_OPTIONS, CombinedHistoryItem } from '../types';
 import { storageService } from '../services/storageService';
 import { SURAH_LIST } from '../data/quranSurahs';
 import {
@@ -70,11 +70,12 @@ interface HistoryTableProps {
   pembelajaranRecords?: PembelajaranRecord[];
   onDataChanged: () => void;
   santriList?: Santri[];
+  kelasList?: Kelas[];
   onNotify: NotifyFn;
 }
 
 export const HistoryTable: React.FC<HistoryTableProps> = ({
-  currentUser, ziyadahRecords, murojaahRecords, binnadzorRecords, pembelajaranRecords, onDataChanged, santriList = [], onNotify
+  currentUser, ziyadahRecords, murojaahRecords, binnadzorRecords, pembelajaranRecords, onDataChanged, santriList = [], kelasList = [], onNotify
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [kategoriFilter, setKategoriFilter] = useState<KategoriFilter>('ALL');
@@ -188,28 +189,25 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
   const historyHasMore = dateFilterMode === 'all' && archiveHistory.hasMore;
   const refreshHistory = dateFilterMode === 'all' ? archiveHistory.refresh : rangeHistory.refresh;
 
-  // Filter kelas memakai nama kelas operasional/riil yang tersimpan pada data santri
-  // (contoh: "Binnadzor A"), bukan tipe/kelompok kelas hasil normalisasi.
-  const santriClassById = useMemo(() => {
-    const map = new Map<string, string>();
-    santriList.forEach((santri) => {
-      const namaKelas = String(santri.kelas || '').trim();
-      if (namaKelas) map.set(santri.idSantri, namaKelas);
-    });
-    return map;
-  }, [santriList]);
-
+  // Filter kelas bersumber langsung dari daftar kelas yang dikelola di Manajemen Kelas.
+  // Value filter memakai ID kelas agar tidak bergantung pada nama/tipe kelas.
   const kelasOptions = useMemo(
-    () => Array.from(new Set(santriClassById.values()))
-      .sort((a, b) => a.localeCompare(b, 'id', { numeric: true, sensitivity: 'base' })),
-    [santriClassById]
+    () => [...kelasList]
+      .filter((kelas) => Boolean(kelas.id && kelas.namaKelas))
+      .sort((a, b) => a.namaKelas.localeCompare(b.namaKelas, 'id', { numeric: true, sensitivity: 'base' })),
+    [kelasList]
+  );
+
+  const selectedKelas = useMemo(
+    () => kelasFilter === 'ALL' ? null : kelasOptions.find((kelas) => kelas.id === kelasFilter) || null,
+    [kelasFilter, kelasOptions]
   );
 
   useEffect(() => {
-    if (kelasFilter !== 'ALL' && !kelasOptions.includes(kelasFilter)) {
+    if (kelasFilter !== 'ALL' && !selectedKelas) {
       setKelasFilter('ALL');
     }
-  }, [kelasFilter, kelasOptions]);
+  }, [kelasFilter, selectedKelas]);
 
   const reportRecords = useMemo(() => {
     const ziyadah: ZiyadahRecord[] = [];
@@ -408,7 +406,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
     return combinedItems.filter(item => {
       if (!matchesDate(item)) return false;
       if (!matchesCategory(item, kategoriFilter)) return false;
-      if (kelasFilter !== 'ALL' && santriClassById.get(item.idSantri) !== kelasFilter) return false;
+      if (kelasFilter !== 'ALL' && (!selectedKelas || !(selectedKelas.santriIds || []).includes(item.idSantri))) return false;
 
       const q = searchQuery.toLowerCase().trim();
       if (q) {
@@ -425,7 +423,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
       const matchesNilai = nilaiFilter === 'ALL' || item.nilai === nilaiFilter;
       return matchesNilai;
     });
-  }, [combinedItems, dateFilterMode, activeMonthKey, customStartDate, customEndDate, kategoriFilter, kelasFilter, santriClassById, searchQuery, nilaiFilter]);
+  }, [combinedItems, dateFilterMode, activeMonthKey, customStartDate, customEndDate, kategoriFilter, kelasFilter, selectedKelas, searchQuery, nilaiFilter]);
 
   // Prepare the filtered result for the date accordion without changing the current layout yet.
   const displayedDateGroups = useMemo(
@@ -886,8 +884,8 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
                     className="ui-control w-full px-3 bg-white border border-slate-300 rounded-xl text-sm font-semibold text-slate-800"
                   >
                     <option value="ALL">Semua Kelas</option>
-                    {kelasOptions.map((namaKelas) => (
-                      <option key={namaKelas} value={namaKelas}>{namaKelas}</option>
+                    {kelasOptions.map((kelas) => (
+                      <option key={kelas.id} value={kelas.id}>{kelas.namaKelas}</option>
                     ))}
                   </select>
                 </label>
@@ -1115,9 +1113,9 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
               className="ui-control px-3 bg-slate-50 border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 cursor-pointer min-w-[150px]"
             >
               <option value="ALL">Semua Kelas</option>
-              {kelasOptions.map((namaKelas) => (
-                <option key={namaKelas} value={namaKelas}>{namaKelas}</option>
-              ))}
+              {kelasOptions.map((kelas) => (
+                      <option key={kelas.id} value={kelas.id}>{kelas.namaKelas}</option>
+                    ))}
             </select>
             <select
               aria-label="Filter nilai setoran"
@@ -2223,7 +2221,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
           Menampilkan <b className="text-slate-800 font-extrabold">{displayedItems.length}</b> setoran
           {' '}(<b className="text-emerald-800">{activePeriodLabel}</b>
           {kategoriFilter !== 'ALL' && <> &bull; Kategori <b className="text-slate-700">{kategoriFilter}</b></>}
-          {kelasFilter !== 'ALL' && <> &bull; Kelas <b className="text-slate-700">{kelasFilter}</b></>})
+          {selectedKelas && <> &bull; Kelas <b className="text-slate-700">{selectedKelas.namaKelas}</b></>})
           {' '}dari {combinedItems.length} data yang telah dimuat
         </span>
         <span className="text-xs text-emerald-800 font-semibold hidden lg:inline">Data Mutaba'ah Terverifikasi</span>
