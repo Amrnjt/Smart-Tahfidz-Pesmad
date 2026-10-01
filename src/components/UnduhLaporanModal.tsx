@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   User,
@@ -6,7 +6,8 @@ import {
   MurojaahRecord,
   BinnadzorRecord,
   PembelajaranRecord,
-  Santri
+  Santri,
+  Kelas
 } from '../types';
 import {
   useGeneratePDF,
@@ -16,6 +17,7 @@ import {
   ReportPeriodRange
 } from '../hooks/useGeneratePDF';
 import { parseDateSafe } from '../utils/dateFormatter';
+import { isKelasDiampuOleh } from '../utils/classUtils';
 import {
   X,
   Download,
@@ -36,6 +38,7 @@ interface UnduhLaporanModalProps {
   onClose: () => void;
   currentUser: User;
   santriList: Santri[];
+  kelasList?: Kelas[];
   ziyadahRecords: ZiyadahRecord[];
   murojaahRecords: MurojaahRecord[];
   binnadzorRecords?: BinnadzorRecord[];
@@ -47,6 +50,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   onClose,
   currentUser,
   santriList,
+  kelasList = [],
   ziyadahRecords,
   murojaahRecords,
   binnadzorRecords = [],
@@ -77,18 +81,67 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
     ? santriList.find(s => s.idSantri === targetSantriId) || null
     : null;
 
+  const normalizedRole = String(currentUser.role || '').trim().toLowerCase();
+
+  const sortedKelas = useMemo(
+    () => [...kelasList]
+      .filter(kelas => Boolean(kelas.id && kelas.namaKelas))
+      .sort((a, b) => a.namaKelas.localeCompare(b.namaKelas, 'id', { numeric: true, sensitivity: 'base' })),
+    [kelasList]
+  );
+
+  const ustadzManagedKelas = useMemo(() => {
+    if (normalizedRole !== 'ustadz') return [];
+    return sortedKelas.filter(kelas =>
+      isKelasDiampuOleh(kelas, currentUser.id)
+      || (!!currentUser.kelasId && kelas.id === currentUser.kelasId)
+    );
+  }, [sortedKelas, normalizedRole, currentUser.id, currentUser.kelasId]);
+
+  const selectableKelas = normalizedRole === 'ustadz' && ustadzManagedKelas.length > 0
+    ? ustadzManagedKelas
+    : sortedKelas;
+
+  const accessibleSantriList = useMemo(() => {
+    if (normalizedRole !== 'ustadz' || ustadzManagedKelas.length === 0) return santriList;
+    const ids = new Set(ustadzManagedKelas.flatMap(kelas => kelas.santriIds || []));
+    return santriList.filter(santri => ids.has(santri.idSantri));
+  }, [santriList, normalizedRole, ustadzManagedKelas]);
+
+  const [selectedKelasId, setSelectedKelasId] = useState<string>('ALL');
   const [selectedSantriId, setSelectedSantriId] = useState<string>('');
   const [santriSearch, setSantriSearch] = useState('');
   const [isSantriSearchOpen, setIsSantriSearchOpen] = useState(false);
 
+  const selectedKelas = useMemo(
+    () => selectedKelasId === 'ALL'
+      ? null
+      : selectableKelas.find(kelas => kelas.id === selectedKelasId) || null,
+    [selectableKelas, selectedKelasId]
+  );
+
+  useEffect(() => {
+    if (selectedKelasId !== 'ALL' && !selectedKelas) {
+      setSelectedKelasId('ALL');
+      setSelectedSantriId('');
+      setSantriSearch('');
+    }
+  }, [selectedKelasId, selectedKelas]);
+
+  const classScopedSantriList = useMemo(() => {
+    if (!selectedKelas) return accessibleSantriList;
+    const ids = new Set(selectedKelas.santriIds || []);
+    return accessibleSantriList.filter(santri => ids.has(santri.idSantri));
+  }, [accessibleSantriList, selectedKelas]);
+
   const selectedSantri = useMemo(
-    () => santriList.find(s => s.idSantri === selectedSantriId) || null,
-    [santriList, selectedSantriId]
+    () => classScopedSantriList.find(s => s.idSantri === selectedSantriId) || null,
+    [classScopedSantriList, selectedSantriId]
   );
 
   const filteredSantri = useMemo(() => {
     const query = santriSearch.trim().toLocaleLowerCase('id-ID');
-    const sorted = [...santriList].sort((a, b) =>
+    const sorted = [...classScopedSantriList].sort((a, b) =>
       a.namaSantri.localeCompare(b.namaSantri, 'id-ID', { sensitivity: 'base' })
     );
 
@@ -106,24 +159,32 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
 
       return haystack.includes(query);
     });
-  }, [santriList, santriSearch]);
+  }, [classScopedSantriList, santriSearch]);
 
-  const reportSantri = isViewOnly
-    ? targetSantri
-    : santriList.find(s => s.idSantri === selectedSantriId) || null;
+  const reportSantri = isViewOnly ? targetSantri : selectedSantri;
+
+  const reportScopeSantriIds = useMemo(() => {
+    if (isViewOnly) return null;
+    if (selectedSantriId) return new Set([selectedSantriId]);
+    if (selectedKelas) return new Set(selectedKelas.santriIds || []);
+    if (normalizedRole === 'ustadz' && ustadzManagedKelas.length > 0) {
+      return new Set(ustadzManagedKelas.flatMap(kelas => kelas.santriIds || []));
+    }
+    return null;
+  }, [isViewOnly, selectedSantriId, selectedKelas, normalizedRole, ustadzManagedKelas]);
 
   const reportZiyadah = isViewOnly
     ? scopedZiyadah
-    : ziyadahRecords.filter(r => !selectedSantriId || r.idSantri === selectedSantriId);
+    : ziyadahRecords.filter(r => !reportScopeSantriIds || reportScopeSantriIds.has(r.idSantri));
   const reportMurojaah = isViewOnly
     ? scopedMurojaah
-    : murojaahRecords.filter(r => !selectedSantriId || r.idSantri === selectedSantriId);
+    : murojaahRecords.filter(r => !reportScopeSantriIds || reportScopeSantriIds.has(r.idSantri));
   const reportBinnadzor = isViewOnly
     ? scopedBinnadzor
-    : binnadzorRecords.filter(r => !selectedSantriId || r.idSantri === selectedSantriId);
+    : binnadzorRecords.filter(r => !reportScopeSantriIds || reportScopeSantriIds.has(r.idSantri));
   const reportPembelajaran = isViewOnly
     ? scopedPembelajaran
-    : pembelajaranRecords.filter(r => !selectedSantriId || r.idSantri === selectedSantriId);
+    : pembelajaranRecords.filter(r => !reportScopeSantriIds || reportScopeSantriIds.has(r.idSantri));
 
   const availablePeriods = useMemo(() => {
     const allRecords = [
@@ -212,6 +273,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
   const handleDownload = async () => {
     await generatePDF({
       santri: reportSantri,
+      kelasNama: selectedKelas?.namaKelas,
       currentUser,
       ziyadahRecords: reportZiyadah,
       murojaahRecords: reportMurojaah,
@@ -311,7 +373,37 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
             </div>
           )}
 
-          {!isViewOnly && santriList.length > 0 && (
+          {!isViewOnly && selectableKelas.length > 0 && (
+            <div>
+              <label
+                htmlFor="report-kelas-select"
+                className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5"
+              >
+                Pilih Kelas
+              </label>
+              <select
+                id="report-kelas-select"
+                value={selectedKelasId}
+                onChange={(event) => {
+                  setSelectedKelasId(event.target.value);
+                  setSelectedSantriId('');
+                  setSantriSearch('');
+                  setIsSantriSearchOpen(false);
+                }}
+                className="w-full min-w-0 py-2.5 px-3.5 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              >
+                <option value="ALL">Semua Kelas</option>
+                {selectableKelas.map(kelas => (
+                  <option key={kelas.id} value={kelas.id}>{kelas.namaKelas}</option>
+                ))}
+              </select>
+              <p className="mt-1.5 text-[11px] text-slate-500">
+                Pilih kelas terlebih dahulu untuk membatasi daftar santri dan laporan PDF.
+              </p>
+            </div>
+          )}
+
+          {!isViewOnly && accessibleSantriList.length > 0 && (
             <div
               onFocusCapture={() => setIsSantriSearchOpen(true)}
               onBlurCapture={(event) => {
@@ -392,8 +484,14 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
                       <Users className="h-4 w-4" aria-hidden="true" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-slate-800">Semua Santri (Gabungan)</p>
-                      <p className="text-[11px] text-slate-500">Cetak laporan gabungan seluruh santri</p>
+                      <p className="text-xs font-bold text-slate-800">
+                        {selectedKelas ? `Semua Santri — ${selectedKelas.namaKelas}` : 'Semua Santri (Gabungan)'}
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        {selectedKelas
+                          ? `Cetak laporan gabungan ${classScopedSantriList.length} santri dari kelas ini`
+                          : 'Cetak laporan gabungan seluruh santri dalam cakupan akses'}
+                      </p>
                     </div>
                   </button>
 
@@ -433,7 +531,7 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
 
               {!selectedSantri && !isSantriSearchOpen && (
                 <p className="mt-1.5 text-[11px] text-slate-500">
-                  Belum memilih santri berarti laporan gabungan semua santri.
+                  Belum memilih santri berarti laporan gabungan {selectedKelas ? `kelas ${selectedKelas.namaKelas}` : 'semua santri dalam cakupan akses'}.
                 </p>
               )}
             </div>
