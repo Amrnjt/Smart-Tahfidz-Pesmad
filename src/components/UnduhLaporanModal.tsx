@@ -311,8 +311,8 @@ export const UnduhLaporanModal: React.FC<UnduhLaporanModalProps> = ({
     },
     {
       key: 'includeChart',
-      label: 'Grafik Progres Hafalan',
-      desc: 'Visualisasi bar chart setoran'
+      label: 'Grafik Progres & Evaluasi',
+      desc: 'Tren setoran per minggu/bulan dan ringkasan aktivitas'
     },
     {
       key: 'includeNotes',
