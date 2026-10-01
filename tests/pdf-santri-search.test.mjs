@@ -21,7 +21,7 @@ test('santri search covers name, id and class while preserving combined report o
 
 test('selected santri remains visible and can be changed', () => {
   assert.match(source, /selectedSantri &&/);
-  assert.match(source, />Ganti<\/button>/);
+  assert.match(source, />\s*Ganti\s*<\/button>/);
   assert.match(source, /Santri tidak ditemukan/);
 });
 
