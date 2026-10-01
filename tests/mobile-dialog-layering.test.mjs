@@ -19,7 +19,7 @@ test('mobile dialogs float above persistent app chrome with compact height', () 
 });
 
 test('add santri keeps header and actions outside its scrollable body', () => {
-  const start = santri.indexOf('aria-label="Tambah data santri"');
+  const start = santri.indexOf('{showAddModal && createPortal(');
   const end = santri.indexOf('{/* Modal Tambah User Akun Baru */}', start);
   assert.ok(start >= 0 && end > start);
   const block = santri.slice(start, end);
