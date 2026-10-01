@@ -2341,6 +2341,7 @@ export const HistoryTable: React.FC<HistoryTableProps> = ({
             onClose={() => setShowReportModal(false)}
             currentUser={currentUser}
             santriList={santriList}
+            kelasList={kelasList}
             ziyadahRecords={reportRecords.ziyadah}
             murojaahRecords={reportRecords.murojaah}
             binnadzorRecords={reportRecords.binnadzor}

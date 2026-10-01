@@ -24,3 +24,19 @@ test('selected santri remains visible and can be changed', () => {
   assert.match(source, />Ganti<\/button>/);
   assert.match(source, /Santri tidak ditemukan/);
 });
+
+
+test('PDF download filters santri from managed class list before searching', () => {
+  assert.match(source, /id="report-kelas-select"/);
+  assert.match(source, /<option value="ALL">Semua Kelas<\/option>/);
+  assert.match(source, /selectableKelas\.map/);
+  assert.match(source, /selectedKelas\.santriIds/);
+  assert.match(source, /classScopedSantriList/);
+});
+
+test('changing report class clears stale santri selection and combined report stays class-scoped', () => {
+  assert.match(source, /setSelectedKelasId\(event\.target\.value\)/);
+  assert.match(source, /setSelectedSantriId\(''\)/);
+  assert.match(source, /reportScopeSantriIds/);
+  assert.match(source, /kelasNama: selectedKelas\?\.namaKelas/);
+});
