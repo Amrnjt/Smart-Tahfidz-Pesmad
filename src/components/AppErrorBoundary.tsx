@@ -9,6 +9,7 @@ type AppErrorBoundaryState = {
 };
 
 export class AppErrorBoundary extends React.Component<AppErrorBoundaryProps, AppErrorBoundaryState> {
+  declare readonly props: Readonly<AppErrorBoundaryProps>;
   state: AppErrorBoundaryState = { hasError: false };
 
   static getDerivedStateFromError(): AppErrorBoundaryState {
