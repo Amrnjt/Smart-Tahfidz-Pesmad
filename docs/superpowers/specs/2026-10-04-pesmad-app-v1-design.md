@@ -1,7 +1,7 @@
 # Pesmad App V1 — Architecture Design
 
 Date: 2026-10-04
-Status: Approved design, pending implementation-plan review
+Status: Design approved in chat; written spec pending user review
 Owner context: Pesmad digital ecosystem
 
 ## 1. Goal
@@ -31,6 +31,7 @@ Pesmad App V1 must:
 - Current frontend stack: React 19, Vite, TypeScript, Firebase/Firestore.
 - Existing roles: `Superadmin`, `Ustadz`, `Pimpinan`, `Wali`, `Santri`.
 - Current authentication is legacy application authentication against the Firestore `users` collection and still depends on stored username/password fields.
+- The current legacy `User` model has no dedicated active/disabled flag. V1 therefore treats a matching eligible legacy user as migratable unless Pesmad Identity later marks the account inactive.
 - Current Tahfidz data model already separates master data and setoran collections such as `santri`, `kelas`, `ziyadah`, `murojaah`, `binnadzor`, and `pembelajaran`.
 - Existing performance work explicitly avoids unbounded loading of all setoran collections at startup.
 
@@ -72,7 +73,7 @@ diniyah.tahfidzpesmad.my.id
 
 V1 only requires the existing Tahfidz domain and the new Pesmad App domain. No redirect is added from `tahfidzpesmad.my.id` to Pesmad App.
 
-The new Pesmad App is deployed as its own Vercel project linked to a new repository, tentatively named `Pesmad-App`.
+The new portal repository is named **`Pesmad-App`** and is deployed as its own Vercel project named **`pesmad-app`**.
 
 ## 4. Pesmad App Technology Choice
 
@@ -155,15 +156,25 @@ Migration is **lazy**, performed when an eligible internal user first signs in t
 ### First Pesmad App login
 
 1. User submits the same Smart Tahfidz username/password they already know.
-2. Pesmad App server verifies those credentials against the legacy Smart Tahfidz user source.
-3. The server confirms the account is active and role is one of the V1-eligible internal roles.
-4. If the identity has not yet been migrated, Pesmad App creates or links a Firebase Authentication user using an internal deterministic identifier while preserving the user's current password.
-5. Pesmad App creates the central Pesmad Identity profile and default module permissions.
+2. Pesmad App server verifies those credentials against the legacy Smart Tahfidz `users` source.
+3. The server confirms the legacy role is `Superadmin`, `Pimpinan`, or `Ustadz`.
+4. If the identity has not yet been migrated, Pesmad App creates or links a Firebase Authentication user while preserving the user's current password.
+5. Pesmad App creates the central Pesmad Identity profile with `active: true` and default module permissions.
 6. The portal establishes a secure authenticated session.
+
+### Firebase internal identifier
+
+The user never has to type an email address. Pesmad App stores an internal Firebase email derived deterministically and safely from the normalized username, using a one-way hash and the reserved `.invalid` domain, for example:
+
+```text
+u_<stable-hash>@pesmad.invalid
+```
+
+The mapping from normalized username to Firebase UID/internal email is held in Pesmad Identity. The raw password is never used to derive the identifier.
 
 ### Subsequent Pesmad App logins
 
-Subsequent logins use Firebase Authentication, while the UI continues to ask for the same username/password. The user does not need to know any internal email/identifier used by Firebase Authentication.
+The login form continues to accept username/password. The server resolves the username to the migrated Firebase identity, authenticates against Firebase Authentication, verifies `PesmadUser.active`, then issues the portal session. The internal Firebase email remains invisible to users.
 
 ### Transitional legacy password rule
 
@@ -183,7 +194,8 @@ Session requirements:
 
 - cookie is `HttpOnly`;
 - cookie is `Secure` in production;
-- cookie uses an appropriate `SameSite` policy;
+- cookie uses `SameSite=Lax`;
+- cookie is scoped to the Pesmad App host unless a later SSO design explicitly changes that scope;
 - server routes verify the session before returning protected data;
 - logout revokes/clears the portal session;
 - role and module access are read from the current Pesmad Identity profile, not trusted from client state.
@@ -212,11 +224,11 @@ Superadmin receives a `Pengguna & Akses` area where module access can be set to 
 
 Pesmad App uses a registry so the dashboard can represent both active and future modules consistently.
 
-V1 registry:
+V1 target registry:
 
 ```text
 Smart Tahfidz       ACTIVE
-Sistem Kinerja      ACTIVE
+Sistem Kinerja      ACTIVE after its V1 auth/integration release gate passes
 Keuangan            COMING_SOON
 Diniyah             COMING_SOON
 Data Santri         COMING_SOON
@@ -245,7 +257,7 @@ The default dashboard contains:
 - authenticated user's name and role;
 - active academic period when available;
 - summary metrics for Smart Tahfidz;
-- summary metrics for Sistem Kinerja;
+- summary metrics for Sistem Kinerja when the Kinerja release gate is active;
 - active-module cards with launch actions;
 - visible COMING_SOON module cards;
 - resilient unavailable/error states per module;
@@ -265,7 +277,7 @@ Shows scoped information only:
 
 ## 11. Dashboard Aggregator
 
-The browser calls a Pesmad App server endpoint such as:
+The browser calls a Pesmad App server endpoint:
 
 ```text
 GET /api/dashboard
@@ -304,6 +316,8 @@ Example:
 }
 ```
 
+Dashboard summary data may be cached server-side for at most **120 seconds**. `Perbarui Data` bypasses that summary cache. Authentication and permission checks are never bypassed by the summary cache.
+
 ## 12. Smart Tahfidz Integration
 
 V1 Tahfidz integration is **read-only** from Pesmad App.
@@ -326,7 +340,7 @@ A future materialized document such as `portalSummaries/current` may replace the
 
 Pesmad App does not query the Kinerja PostgreSQL database directly.
 
-Sistem Kinerja exposes a dedicated integration endpoint, for example:
+Sistem Kinerja exposes a dedicated integration endpoint:
 
 ```text
 GET /api/integrations/pesmad/summary
@@ -353,7 +367,7 @@ If a metric cannot be truthfully calculated from available data, it returns `nul
 
 For Ustadz, the Kinerja integration supports user-scoped summary data. Pimpinan receives read-only institution-level summary. Superadmin receives institution-level administrative access.
 
-The integration endpoint is authenticated server-to-server and is not an open anonymous KPI endpoint.
+The integration endpoint uses a server-to-server bearer token stored as an encrypted environment variable on both Pesmad App and Sistem Kinerja. The endpoint rejects requests without the expected token. The token is never included in browser bundles or client responses.
 
 ## 14. Kinerja Authentication for V1
 
@@ -381,7 +395,7 @@ Requirements:
 - COMING_SOON modules never produce network errors because they are not called;
 - adapter errors are logged server-side without exposing secrets to the browser.
 
-Dashboard summary responses may be cached for approximately 1–5 minutes. Authentication, permission, and session responses must not be served from stale PWA caches.
+Each downstream adapter uses an explicit short timeout. A timeout is rendered as `unavailable`; it does not turn `/api/dashboard` into a global 500 response when other sections can still be served.
 
 ## 16. PWA Requirements
 
@@ -403,8 +417,10 @@ Caching policy:
 - static versioned assets: cache-first;
 - navigation/app shell: network-first with safe cached fallback;
 - `/api/auth/*`: network-only/no-store;
-- `/api/dashboard`: network-first or short server cache, never stale-forever;
-- permission/profile responses: network-first/no-store when authorization changes could matter.
+- `/api/dashboard`: network-first; server may reuse a summary for at most 120 seconds;
+- permission/profile responses: network-only/no-store.
+
+When offline, the PWA may render the previously cached non-sensitive shell, but must show protected/live data as unavailable rather than replaying cached authentication, permission, or dashboard payloads.
 
 Smart Tahfidz keeps its existing PWA independently. Users may have both Smart Tahfidz and Pesmad App installed as separate icons.
 
@@ -416,11 +432,11 @@ Security requirements:
 - all protected Pesmad App API routes verify authenticated session;
 - every module launch/summary checks module permission;
 - Firebase Admin/server credentials stay in Vercel encrypted environment variables;
-- Kinerja integration secrets/tokens stay server-side;
+- Kinerja integration token stays server-side;
 - sensitive downstream base URLs and privileged credentials are not embedded in public client bundles;
 - no plaintext password is added to Pesmad Identity;
 - legacy plaintext credential dependence is treated as transitional technical debt, not copied into new systems;
-- logs must not print user passwords, session cookies, service-account JSON, or integration tokens.
+- logs must not print user passwords, session cookies, service-account JSON, Firebase ID tokens, or integration tokens.
 
 ## 18. Production Rollout
 
@@ -482,7 +498,7 @@ Implementation is staged so existing Smart Tahfidz production remains stable.
 
 ### P7 — Production Domain
 
-- create/reuse Vercel project for Pesmad App;
+- create/reuse Vercel project `pesmad-app` linked to `Pesmad-App`;
 - deploy production;
 - attach `app.tahfidzpesmad.my.id`;
 - verify `tahfidzpesmad.my.id` remains attached only to Smart Tahfidz and is not redirected.
@@ -514,11 +530,11 @@ V1 is complete only when all of the following are true:
 3. Wali and Santri are not admitted to Pesmad App V1.
 4. Pesmad App uses secure authenticated sessions and server-side permission checks.
 5. The dashboard shows real, bounded Tahfidz summary data.
-6. The dashboard shows real Kinerja summary data with no fabricated KPI fallbacks.
+6. The dashboard shows real Kinerja summary data with no fabricated KPI fallbacks after the Kinerja ACTIVE release gate passes.
 7. Tahfidz and Kinerja failures are isolated from each other in the portal UI.
 8. Pimpinan remains view-only for operational modules.
 9. Only Superadmin can manage Pesmad App module access.
 10. Keuangan, Diniyah, Data Santri, and Laporan Terpadu are visible as COMING_SOON and are not falsely active.
-11. Pesmad App is installable as a PWA and does not cache authentication/permission data unsafely.
+11. Pesmad App is installable as a PWA and does not cache authentication/permission/dashboard payloads unsafely.
 12. Preview deployment passes mobile, desktop, auth, permission, integration-failure, and PWA verification before production domain attachment.
 13. `app.tahfidzpesmad.my.id` serves Pesmad App while the Smart Tahfidz production domain remains unchanged.
